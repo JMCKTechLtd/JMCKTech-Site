@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 3: ServiceNow ITSM - Work Notes & Comments (Fixed)</title>
+    <style>
+        :root {
+            --primary-color: #2e51bb;
+            --secondary-color: #71a8fc;
+            --dark-text: #2a3e4c;
+            --light-text: #6c757d;
+            --border-color: #d8dbe0;
+            --bg-light: #f8f9fa;
+            --bg-lighter: #ffffff;
+            --low-color: #6ed051;
+            --medium-color: #ffcb3d;
+            --high-color: #ff9e3d;
+            --critical-color: #ec5050;
+            --open-color: #71a8fc;
+            --in-progress-color: #ffcb3d;
+            --pending-color: #9c9c9c;
+            --resolved-color: #6ed051;
+            --closed-color: #6c757d;
+            --hover-bg: rgba(113, 168, 252, 0.07);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background-color: #f2f2f2;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1920px;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header and Navigation styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1e40a0 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            height: 50px;
+            z-index: 100;
+        }
+        
+        .logo {
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+        }
+        
+        .header-controls {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-weight: bold;
+            border: 2px solid white;
+        }
+
+        .navbar {
+            background-color: white;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            padding: 0 10px;
+            height: 40px;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+        }
+        
+        .nav-item {
+            padding: 0 12px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: var(--dark-text);
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .nav-item.active {
+            border-bottom: 3px solid var(--primary-color);
+            font-weight: 600;
+            background-color: rgba(113, 168, 252, 0.1);
+        }
+
+        .subnav {
+            background-color: var(--bg-light);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 20px;
+            display: flex;
+            height: 45px;
+            align-items: center;
+            gap: 8px;
+        }
+        .view-controls { display:flex; gap:4px; }
+        .view-button {
+            padding: 6px 12px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            display:flex; align-items:center; gap:5px;
+            transition:.2s;
+        }
+        .view-button:hover{ background:#f0f0f0; }
+        .view-button.active{ background:var(--primary-color); color:#fff; border-color:var(--primary-color); box-shadow:0 2px 4px rgba(46,81,187,.3); }
+        .tickets-count { margin-left:auto; color:var(--primary-color); font-weight:600; font-size:14px; }
+
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-lighter);
+            overflow: hidden;
+        }
+
+        .toolbar {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,.05);
+        }
+        .light-text { color: var(--light-text); }
+
+        /* Ticket List */
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+            background-color: white;
+            padding: 20px;
+        }
+        
+        .ticket-card {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .ticket-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: var(--secondary-color);
+        }
+        
+        .ticket-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 12px;
+        }
+        
+        .ticket-number {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .ticket-status { margin-left:auto; }
+        
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-open { background-color: rgba(113, 168, 252, 0.15); color: var(--open-color); }
+        .status-in-progress { background-color: rgba(255, 203, 61, 0.15); color: #b8860b; }
+        .status-pending { background-color: rgba(156, 156, 156, 0.15); color: var(--pending-color); }
+        .status-resolved { background-color: rgba(110, 208, 81, 0.15); color: var(--resolved-color); }
+        
+        .ticket-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--dark-text);
+            margin-bottom: 8px;
+        }
+        
+        .ticket-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: var(--light-text);
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .ticket-description {
+            color: var(--dark-text);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+        
+        .work-notes-preview {
+            background-color: var(--bg-light);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 13px;
+        }
+        
+        .notes-count {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .latest-note {
+            color: var(--dark-text);
+            font-style: italic;
+        }
+
+        /* Dashboard */
+        .dashboard { display:none; padding:16px; background:#fff; overflow:auto; }
+        .dashboard.show{ display:block; }
+        .kpi-grid{ display:grid; grid-template-columns:repeat(5,minmax(160px,1fr)); gap:12px; margin-bottom:16px; }
+        .kpi{ background:linear-gradient(135deg,#f8f9fa 0%,#eef3ff 100%); border:1px solid var(--border-color); border-radius:10px; padding:14px; }
+        .kpi .label{ font-size:12px; color:var(--light-text); }
+        .kpi .value{ font-size:22px; font-weight:700; color:var(--dark-text); }
+        .charts{ display:grid; grid-template-columns:repeat(2,minmax(280px,1fr)); gap:16px; }
+        .chart-card{ border:1px solid var(--border-color); border-radius:10px; padding:12px; background:#fff; }
+        .chart-title{ font-size:14px; color:var(--dark-text); margin-bottom:8px; font-weight:600; }
+        canvas{ width:100%; height:260px; }
+
+        /* Modal Styles */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .modal {
+            background-color: white;
+            border-radius: 8px;
+            width: 800px;
+            max-width: 95%;
+            max-height: 95vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(30px) scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-backdrop.show .modal {
+            transform: translateY(0) scale(1);
+        }
+        
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--light-text);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+        
+        .modal-close:hover {
+            color: var(--dark-text);
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            max-height: calc(95vh - 200px);
+        }
+        
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background-color: var(--bg-light);
+        }
+
+        /* Timeline Styles */
+        .timeline { margin-bottom: 24px; }
+        .timeline-title { font-size:16px; font-weight:600; margin-bottom:16px; color:var(--dark-text); }
+        .timeline-item { display:flex; gap:15px; padding-bottom:20px; position:relative; }
+        .timeline-icon {
+            width: 32px; height: 32px; background-color: var(--secondary-color);
+            border-radius: 50%; display:flex; align-items:center; justify-content:center; color:#fff;
+            font-size:14px; flex-shrink:0; position:relative; z-index:1; box-shadow:0 2px 4px rgba(113,168,252,.3);
+        }
+        .timeline-item:not(:last-child) .timeline-icon::after {
+            content:""; position:absolute; top:32px; left:50%; transform:translateX(-50%);
+            width:2px; height:40px; background:#e9ecef; z-index:0;
+        }
+        .timeline-content { flex:1; background:var(--bg-light); border-radius:8px; padding:16px; font-size:13px; border:1px solid var(--border-color); }
+        .timeline-header { display:flex; justify-content:space-between; margin-bottom:8px; }
+        .timeline-user { font-weight:600; color:var(--primary-color); }
+        .timeline-time { font-size:12px; color:var(--light-text); }
+        .timeline-message { margin-top:8px; line-height:1.5; }
+
+        /* Form Styles */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display:block; margin-bottom:8px; font-size:14px; font-weight:600; color:var(--dark-text); }
+        .form-control {
+            width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: 14px; transition: all 0.2s ease; background: #fff;
+        }
+        .form-control:focus { outline:none; border-color:var(--secondary-color); box-shadow:0 0 0 3px rgba(113,168,252,.2); }
+        textarea.form-control { min-height: 100px; resize: vertical; }
+        
+        .btn {
+            padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
+            border: none; transition:.2s;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,.15); }
+        .btn-primary { background: var(--primary-color); color:#fff; }
+        .btn-secondary { background: #fff; border:1px solid var(--border-color); color:var(--dark-text); }
+        .btn-secondary:hover{ background:#f8f9fa; }
+
+        /* Notification */
+        .notification {
+            position: fixed; top: 20px; right: 20px; background: #fff; border-radius: 8px;
+            box-shadow:0 8px 24px rgba(0,0,0,.2); padding:16px 20px; display:flex; align-items:center; gap:12px;
+            width: 350px; max-width: calc(100% - 40px); z-index: 1010; transform: translateX(400px); transition:.3s;
+            border-left:4px solid var(--primary-color);
+        }
+        .notification.show { transform: translateX(0); }
+        .notification.success { border-left-color: var(--low-color); }
+        .notification-icon { width:28px; height:28px; border-radius:50%; background:var(--primary-color); color:#fff; display:grid; place-items:center; font-size:16px; }
+        .notification.success .notification-icon{ background:var(--low-color); }
+        .notification-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+        .notification-message { font-size:13px; color:var(--light-text); }
+
+        .task-instructions {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f1f8e9 100%);
+            border: 1px solid #90caf9;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .task-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .task-description {
+            color: var(--dark-text);
+            line-height: 1.4;
+        }
+
+        /* Simple read-only rows for non-incidents */
+        .ro-list .ro-item{ border:1px solid var(--border-color); border-radius:8px; padding:14px; margin-bottom:12px; }
+        .empty { padding: 40px; text-align: center; color: var(--light-text); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- KEEPING INSTRUCTIONS AS-IS -->
+        <div class="task-instructions">
+            <div class="task-title">Lab 3: Work Notes & Comments</div>
+            <div class="task-description">
+                <strong>Task:</strong> Practice adding work notes to tickets. Click on a ticket to view its details and activity timeline. Add work notes to document your progress and communicate with team members. Watch how new notes appear in the timeline.
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">ServiceNow</div>
+            <div class="header-controls">
+                <div class="user-avatar">JS</div>
+            </div>
+        </header>
+        
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-item active" data-tab="incidents">Incidents</div>
+            <div class="nav-item" data-tab="requests">Service Requests</div>
+            <div class="nav-item" data-tab="knowledge">Knowledge Base</div>
+        </nav>
+
+        <!-- Subnav like Lab 1 -->
+        <div class="subnav">
+            <div class="view-controls">
+                <div class="view-button active" data-view="list">📋 List</div>
+                <div class="view-button" data-view="dashboard">📊 Dashboard</div>
+            </div>
+            <div class="tickets-count" id="ticketsCount">—</div>
+        </div>
+        
+        <div class="content-wrapper">
+            <div class="main-content">
+                <div class="toolbar" id="toolbar">
+                    <div id="toolbarHint" class="light-text">Tip: Click a ticket to view timeline and add work notes.</div>
+        <div class="list-controls" id="labControls">
+            <button class="btn btn-secondary" id="resetLab" type="button">Reset Lab</button>
+            <button class="btn btn-primary" id="closeLab" type="button">Close Lab</button>
+        </div>
+                </div>
+
+                <!-- LIST VIEW -->
+                <div class="list-container" id="listView">
+                    <div id="ticketList"></div>
+                    <div id="roList" class="ro-list" style="display:none"></div>
+                </div>
+
+                <!-- DASHBOARD VIEW -->
+                <div class="dashboard" id="dashboardView">
+                    <div class="kpi-grid" id="kpiGrid"></div>
+                    <div class="charts">
+                        <div class="chart-card">
+                            <div class="chart-title">Records by State</div>
+                            <canvas id="stateChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">Work Notes per Ticket</div>
+                            <canvas id="notesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ticket Detail Modal (PRIMARY FLOW UNCHANGED) -->
+    <div class="modal-backdrop" id="ticketModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Ticket Details</div>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="timeline">
+                    <div class="timeline-title">Activity Timeline</div>
+                    <div id="timelineContainer"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Add work notes</label>
+                    <textarea class="form-control" id="workNotesInput" placeholder="Document your work, findings, or next steps..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelBtn">Close</button>
+                <button class="btn btn-primary" id="addNoteBtn">Add Work Note</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div class="notification-icon">✓</div>
+        <div class="notification-content">
+            <div class="notification-title" id="notificationTitle">Success</div>
+            <div class="notification-message" id="notificationMessage">Work note added successfully</div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- DATA (same semantics as original) ----------
+        const tickets = [
+            {
+                id: 1,
+                number: "INC0010023",
+                shortDescription: "Printer not working in Marketing department",
+                caller: "Sarah Johnson",
+                assignmentGroup: "IT Support",
+                assignedTo: "John Smith",
+                updated: "Today, 10:45 AM",
+                priority: "High",
+                state: "In Progress",
+                description: "Users in the Marketing department on the 3rd floor are unable to print to the shared HP LaserJet printer. The printer appears to be powered on but jobs are stuck in the queue.",
+                workNotes: [
+                    { user: "System", time: "Today, 9:45 AM", message: "Incident created and assigned to IT Support group", type: "system" },
+                    { user: "John Smith", time: "Today, 10:15 AM", message: "Checked printer status - device is online but print queue shows multiple stuck jobs. Restarting print spooler service.", type: "work_note" },
+                    { user: "John Smith", time: "Today, 10:45 AM", message: "Print spooler restart completed. Clearing stuck jobs from queue and testing print functionality.", type: "work_note" }
+                ]
+            },
+            {
+                id: 2,
+                number: "INC0010022",
+                shortDescription: "Email access issues on mobile device",
+                caller: "Michael Chen",
+                assignmentGroup: "IT Support",
+                assignedTo: "Lisa Brown",
+                updated: "Today, 2:30 PM",
+                priority: "Medium",
+                state: "In Progress",
+                description: "Unable to access company email on iPhone. Authentication keeps failing despite correct credentials.",
+                workNotes: [
+                    { user: "System", time: "Today, 9:30 AM", message: "Incident created", type: "system" },
+                    { user: "Lisa Brown", time: "Today, 2:30 PM", message: "Contacted user to verify account settings. Issue appears to be related to two-factor authentication setup on mobile device.", type: "work_note" }
+                ]
+            },
+            {
+                id: 3,
+                number: "INC0010021",
+                shortDescription: "VPN connection drops frequently",
+                caller: "Robert Williams",
+                assignmentGroup: "Network Team",
+                assignedTo: "Mike Wilson",
+                updated: "Today, 11:20 AM",
+                priority: "High",
+                state: "Open",
+                description: "VPN connection drops every 10-15 minutes requiring reconnection. Issue started yesterday and affects productivity.",
+                workNotes: [
+                    { user: "System", time: "Today, 8:30 AM", message: "Incident created and assigned to Network Team", type: "system" },
+                    { user: "Mike Wilson", time: "Today, 11:20 AM", message: "Initial analysis shows intermittent packet loss. Checking network infrastructure and VPN server logs for anomalies.", type: "work_note" }
+                ]
+            }
+        ];
+        const requests = [
+            { id: 101, number: "REQ0010501", shortDescription: "Request access to Shared Drive - Finance", requester: "Anna Patel", state: "Open", updated: "Today, 10:10 AM", priority: "Low" },
+            { id: 102, number: "REQ0010500", shortDescription: "Laptop Replacement", requester: "James Parker", state: "In Progress", updated: "Yesterday, 4:20 PM", priority: "Medium" }
+        ];
+        const knowledge = [
+            { id: 201, number: "KB0001201", title: "Resetting your VPN credentials", state: "Published", updated: "2025-08-20", views: 214 },
+            { id: 202, number: "KB0001200", title: "Fixing printer queue issues", state: "Published", updated: "2025-08-18", views: 356 },
+            { id: 203, number: "KB0001199", title: "Configure email on iOS", state: "Draft", updated: "2025-08-10", views: 489 }
+        ];
+
+        // ---------- STATE ----------
+        let tab = "incidents"; // incidents | requests | knowledge
+        let view = "list";     // list | dashboard
+        let currentTicket = null;
+
+        // ---------- UTIL ----------
+        const $ = s => document.querySelector(s);
+        const $$ = s => Array.from(document.querySelectorAll(s));
+        const statusClass = s => `status-${String(s||'').toLowerCase().replaceAll(' ','-')}`;
+        const priorityClass = p => `priority-${String(p||'').toLowerCase()}`;
+
+        // ---------- INIT ----------
+        function init() {
+            bind();
+            render();
+        }
+
+        function bind() {
+            // Tabs
+            $$('.nav-item').forEach(i => i.addEventListener('click', () => {
+                tab = i.dataset.tab;
+                setActiveTabs();
+                view = 'list';
+                render();
+            }));
+            // View toggle
+            $$('.view-button').forEach(b => b.addEventListener('click', () => {
+                view = b.dataset.view;
+                setViewBtns();
+                render();
+            }));
+            // Modal events
+            $('#modalClose').addEventListener('click', closeModal);
+            $('#cancelBtn').addEventListener('click', closeModal);
+            $('#addNoteBtn').addEventListener('click', addWorkNote);
+            // Enter to add (Shift+Enter newline)
+            $('#workNotesInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addWorkNote(); }
+            });
+            // Escape closes
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+            // Resize to keep charts crisp
+            window.addEventListener('resize', () => { if (view === 'dashboard') drawDashboard(); });
+        }
+
+        // ---------- RENDER ----------
+        function render() {
+            // counts & hint
+            $('#ticketsCount').textContent = `${dataForTab().length} ${labelFor(tab)}`;
+            $('#toolbarHint').textContent = view==='list'
+              ? (tab==='incidents' ? 'Tip: Click a ticket to view timeline and add work notes.' : 'Read‑only list for this module.')
+              : 'Dashboard shows KPIs and charts for the current module.';
+
+            // views
+            $('#listView').style.display = view==='list' ? 'block' : 'none';
+            $('#dashboardView').classList.toggle('show', view==='dashboard');
+
+            // sections
+            if (view==='list') {
+                if (tab==='incidents') { $('#ticketList').style.display='block'; $('#roList').style.display='none'; renderTickets(); }
+                else { $('#ticketList').style.display='none'; $('#roList').style.display='block'; renderReadOnly(); }
+            } else {
+                drawDashboard();
+            }
+
+            setActiveTabs();
+            setViewBtns();
+        }
+
+        function labelFor(t){ return t==='knowledge' ? 'articles' : t; }
+        function setActiveTabs(){ $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.tab===tab)); }
+        function setViewBtns(){ $$('.view-button').forEach(b=>b.classList.toggle('active', b.dataset.view===view)); }
+        function dataForTab(){ if (tab==='incidents') return tickets; if (tab==='requests') return requests; if (tab==='knowledge') return knowledge; return []; }
+
+        // List (Incidents)
+        function renderTickets() {
+            const ticketList = $('#ticketList');
+            ticketList.innerHTML = '';
+            tickets.forEach(ticket => ticketList.appendChild(createTicketCard(ticket)));
+        }
+
+        function createTicketCard(ticket) {
+            const card = document.createElement('div');
+            card.className = 'ticket-card';
+            const workNotesCount = ticket.workNotes.filter(n => n.type === 'work_note').length;
+            const latestNote = ticket.workNotes[ticket.workNotes.length - 1];
+            const sclass = statusClass(ticket.state);
+
+            card.innerHTML = `
+                <div class="ticket-header">
+                    <div class="ticket-number">${ticket.number}</div>
+                    <div class="ticket-status"><span class="status-badge ${sclass}">${ticket.state}</span></div>
+                </div>
+                <div class="ticket-title">${ticket.shortDescription}</div>
+                <div class="ticket-meta">
+                    <span>Caller: ${ticket.caller}</span>
+                    <span>Assigned: ${ticket.assignedTo}</span>
+                    <span>Priority: ${ticket.priority}</span>
+                    <span>Updated: ${ticket.updated}</span>
+                </div>
+                <div class="ticket-description">${ticket.description}</div>
+                <div class="work-notes-preview">
+                    <div class="notes-count">${workNotesCount} work notes</div>
+                    ${latestNote && latestNote.type === 'work_note' ? 
+                        `<div class="latest-note">Latest: "${latestNote.message.substring(0, 120)}${latestNote.message.length > 120 ? '...' : ''}"</div>` 
+                        : '<div class="latest-note">No work notes yet</div>'}
+                </div>`;
+
+            card.addEventListener('click', () => openTicketModal(ticket));
+            return card;
+        }
+
+        // Read-only lists for other tabs (keeps format simple)
+        function renderReadOnly(){
+            const box = $('#roList'); box.innerHTML='';
+            if (tab==='requests'){
+                dataForTab().forEach(r=>{
+                    const d=document.createElement('div'); d.className='ro-item';
+                    d.innerHTML = `<div style="display:flex;gap:8px;align-items:center"><strong style="color:var(--primary-color)">${r.number}</strong><span style="margin-left:auto" class="status-badge ${statusClass(r.state)}">${r.state}</span></div>
+                    <div style="font-weight:600;margin-top:6px">${r.shortDescription}</div>
+                    <div style="color:var(--light-text);font-size:12px;margin-top:4px">Requester: ${r.requester} • Priority: ${r.priority} • Updated: ${r.updated}</div>`;
+                    box.appendChild(d);
+                });
+            } else if (tab==='knowledge'){
+                dataForTab().forEach(k=>{
+                    const d=document.createElement('div'); d.className='ro-item';
+                    d.innerHTML = `<div style="display:flex;gap:8px;align-items:center"><strong style="color:var(--primary-color)">${k.number}</strong><span style="margin-left:auto" class="status-badge ${statusClass(k.state)}">${k.state}</span></div>
+                    <div style="font-weight:600;margin-top:6px">${k.title}</div>
+                    <div style="color:var(--light-text);font-size:12px;margin-top:4px">Updated: ${k.updated} • Views: ${k.views}</div>`;
+                    box.appendChild(d);
+                });
+            }
+            if (!dataForTab().length) box.innerHTML = '<div class="empty">No records found.</div>';
+        }
+
+        // Modal (primary flow unchanged)
+        function openTicketModal(ticket) {
+            currentTicket = ticket;
+            $('#modalTitle').textContent = `${ticket.number} - ${ticket.shortDescription}`;
+            renderTimeline(ticket.workNotes);
+            $('#workNotesInput').value = '';
+            $('#ticketModal').classList.add('show');
+        }
+
+        function renderTimeline(workNotes) {
+            const container = $('#timelineContainer');
+            container.innerHTML = '';
+            workNotes.forEach(note => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                const icon = note.type === 'system' ? '⚙️' : '✎';
+                item.innerHTML = `
+                    <div class="timeline-icon">${icon}</div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <div class="timeline-user">${note.user}</div>
+                            <div class="timeline-time">${note.time}</div>
+                        </div>
+                        <div class="timeline-message">${note.message}</div>
+                    </div>`;
+                container.appendChild(item);
+            });
+        }
+
+        function closeModal() {
+            $('#ticketModal').classList.remove('show');
+            currentTicket = null;
+        }
+
+        function addWorkNote() {
+            const noteText = $('#workNotesInput').value.trim();
+            if (!noteText || !currentTicket) return;
+
+            const now = new Date();
+            const hh = String((now.getHours()%12)||12).padStart(2,'0');
+            const mm = String(now.getMinutes()).padStart(2,'0');
+            const ampm = now.getHours()>=12 ? 'PM' : 'AM';
+            const timeString = `Today, ${hh}:${mm} ${ampm}`;
+
+            const newNote = { user: "You", time: timeString, message: noteText, type: "work_note" };
+            currentTicket.workNotes.push(newNote);
+            currentTicket.updated = timeString;
+
+            // Persist back into list
+            const idx = tickets.findIndex(t => t.id === currentTicket.id);
+            if (idx !== -1) tickets[idx] = currentTicket;
+
+            renderTimeline(currentTicket.workNotes);
+            $('#workNotesInput').value = '';
+            render(); // updates list + dashboard
+            showNotification('Success', 'Work note added successfully');
+        }
+
+        // Dashboard
+        function drawDashboard(){
+            const list = dataForTab();
+            // KPIs
+            const kpi = {
+                total: list.length,
+                open: list.filter(r => (r.state||'')==='Open').length,
+                inprog: list.filter(r => (r.state||'')==='In Progress').length,
+                pending: list.filter(r => (r.state||'')==='Pending').length,
+                resolved: list.filter(r => (r.state||'')==='Resolved').length
+            };
+            $('#kpiGrid').innerHTML = `
+              <div class="kpi"><div class="label">Total ${labelFor(tab)}</div><div class="value">${kpi.total}</div></div>
+              <div class="kpi"><div class="label">Open</div><div class="value">${kpi.open}</div></div>
+              <div class="kpi"><div class="label">In Progress</div><div class="value">${kpi.inprog}</div></div>
+              <div class="kpi"><div class="label">Pending</div><div class="value">${kpi.pending}</div></div>
+              <div class="kpi"><div class="label">Resolved</div><div class="value">${kpi.resolved}</div></div>`;
+
+            drawBar('stateChart', countBy(list, 'state'));
+            if (tab==='incidents'){
+                const m={}; tickets.forEach(t=>m[t.number]=t.workNotes.filter(n=>n.type==='work_note').length);
+                drawBar('notesChart', m);
+            } else {
+                drawBar('notesChart', {});
+            }
+        }
+
+        function countBy(list, key){
+            const m={}; (list||[]).forEach(r=>{ const k=r[key]||'Unknown'; m[k]=(m[k]||0)+1; }); return m;
+        }
+        function drawBar(id, map){
+            const c=document.getElementById(id), ctx=c.getContext('2d');
+            const labels=Object.keys(map), values=Object.values(map);
+            const w=c.width=c.clientWidth, h=c.height=c.clientHeight;
+            ctx.clearRect(0,0,w,h);
+            const pad=30, slot=(w-pad*2)/(labels.length||1), bw=slot*0.6, gap=slot*0.4;
+            // axes
+            ctx.strokeStyle='#d8dbe0'; ctx.lineWidth=1;
+            ctx.beginPath(); ctx.moveTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.moveTo(pad,pad); ctx.lineTo(pad,h-pad); ctx.stroke();
+            // bars
+            const maxVal=Math.max(1,...values,1);
+            labels.forEach((lab,i)=>{
+                const x=pad+i*slot+gap/2;
+                const bh=(h-pad*2)*(values[i]/maxVal);
+                const y=h-pad-bh;
+                ctx.fillStyle='#2e51bb';
+                ctx.fillRect(x,y,bw,bh);
+                ctx.fillStyle='#2a3e4c'; ctx.font='12px Segoe UI'; ctx.textAlign='center';
+                ctx.fillText(values[i], x+bw/2, y-6);
+                ctx.save(); ctx.translate(x+bw/2, h-pad+14); ctx.rotate(-Math.PI/8);
+                ctx.fillStyle='#6c757d'; ctx.fillText(lab,0,0); ctx.restore();
+            });
+        }
+
+        // Notification
+        function showNotification(title, message) {
+            $('#notificationTitle').textContent = title;
+            $('#notificationMessage').textContent = message;
+            const n = $('#notification');
+            n.classList.add('show','success');
+            setTimeout(()=>n.classList.remove('show','success'), 3000);
+        }
+
+        // START
+        init();
+    </script>
+
+<script>
+(function () {
+  function wireLabButtons() {
+    var resetBtn = document.querySelector('#resetLab');
+    var closeBtn = document.querySelector('#closeLab');
+    if (resetBtn && !resetBtn.dataset._wired) {
+      resetBtn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        try { window.location.reload(); } catch (err) { console.error(err); }
+      });
+      resetBtn.dataset._wired = '1';
+    }
+    if (closeBtn && !closeBtn.dataset._wired) {
+      closeBtn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        try { window.close(); } catch (err) { console.error(err); }
+        setTimeout(function(){ try { window.location.href = 'about:blank'; } catch(e){} }, 300);
+      });
+      closeBtn.dataset._wired = '1';
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireLabButtons);
+  } else {
+    wireLabButtons();
+  }
+
+  try {
+    var mo = new MutationObserver(function(){ wireLabButtons(); });
+    mo.observe(document.body || document.documentElement, { subtree: true, childList: true });
+  } catch (e) {}
+})();
+</script>
+
+</body>
+</html>

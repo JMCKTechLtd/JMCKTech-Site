@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 2: ServiceNow ITSM - Ticket Editing & Status Updates (Fixed)</title>
+  <style>
+    :root {
+      --primary-color:#2e51bb;
+      --secondary-color:#71a8fc;
+      --dark-text:#2a3e4c;
+      --light-text:#6c757d;
+      --border-color:#d8dbe0;
+      --bg-light:#f8f9fa;
+      --bg-lighter:#ffffff;
+      --low-color:#6ed051;
+      --medium-color:#ffcb3d;
+      --high-color:#ff9e3d;
+      --critical-color:#ec5050;
+      --open-color:#71a8fc;
+      --in-progress-color:#ffcb3d;
+      --pending-color:#9c9c9c;
+      --resolved-color:#6ed051;
+      --closed-color:#6c757d;
+      --hover-bg:rgba(113,168,252,.07);
+    }
+    *{box-sizing:border-box;font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;margin:0;padding:0}
+    body{background:#f2f2f2;height:100vh;display:flex;flex-direction:column}
+    .app-container{flex:1;display:flex;flex-direction:column;max-width:1920px;margin:0 auto;box-shadow:0 0 20px rgba(0,0,0,.1)}
+    .header{background:linear-gradient(135deg,var(--primary-color) 0%,#1e40a0 100%);color:#fff;display:flex;align-items:center;padding:0 20px;height:50px;z-index:100}
+    .logo{font-weight:700;font-size:18px;letter-spacing:.5px;display:flex;align-items:center}
+    .header-controls{margin-left:auto;display:flex;align-items:center;gap:15px}
+    .user-avatar{width:32px;height:32px;border-radius:50%;background:#e0e0e0;display:flex;align-items:center;justify-content:center;color:var(--primary-color);font-weight:700;border:2px solid #fff}
+    .navbar{background:#fff;border-bottom:1px solid var(--border-color);display:flex;padding:0 10px;height:40px;align-items:center;box-shadow:0 2px 4px rgba(0,0,0,.03)}
+    .nav-item{padding:0 12px;height:40px;display:flex;align-items:center;font-size:14px;color:var(--dark-text);border-bottom:3px solid transparent;cursor:pointer;transition:.2s}
+    .nav-item:hover{background:rgba(0,0,0,.05)}
+    .nav-item.active{border-bottom:3px solid var(--primary-color);font-weight:600;background:rgba(113,168,252,.1)}
+    .subnav{background:var(--bg-light);border-bottom:1px solid var(--border-color);padding:0 20px;display:flex;height:45px;align-items:center}
+    .view-controls{display:flex;gap:4px}
+    .view-button{padding:6px 12px;background:#fff;border:1px solid var(--border-color);border-radius:4px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:.2s}
+    .view-button:hover{background:#f0f0f0}
+    .view-button.active{background:var(--primary-color);color:#fff;border-color:var(--primary-color);box-shadow:0 2px 4px rgba(46,81,187,.3)}
+    .tickets-count{margin-left:auto;color:var(--primary-color);font-weight:600;font-size:14px}
+    .content-wrapper{display:flex;flex:1;overflow:hidden}
+    .main-content{flex:1;display:flex;flex-direction:column;background:#fff;overflow:hidden}
+    .toolbar{padding:15px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+    .btn{padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;border:none;transition:.2s}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+    .btn-primary{background:var(--primary-color);color:#fff}
+    .btn-primary:hover{background:#1e40a0}
+    .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+    .list-container{flex:1;overflow-y:auto;background:#fff}
+    .list-header{display:grid;grid-template-columns:var(--grid-cols,40px 100px minmax(280px,1fr) 130px 130px 130px 100px);border-bottom:2px solid var(--border-color);font-size:12px;font-weight:600;color:var(--light-text);padding:12px 15px;position:sticky;top:0;background:var(--bg-light);z-index:1}
+    .list-item{display:grid;grid-template-columns:var(--grid-cols,40px 100px minmax(280px,1fr) 130px 130px 130px 100px);border-bottom:1px solid var(--border-color);padding:14px 15px;font-size:13px;color:var(--dark-text);cursor:pointer;transition:.2s}
+    .list-item:hover{background:var(--hover-bg);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+    .list-item.selected{background:rgba(113,168,252,.15);border-left:4px solid var(--primary-color)}
+    .row-checkbox{display:flex;align-items:center;justify-content:center}
+    .list-cell{display:flex;align-items:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .list-cell.ticket-number{color:var(--primary-color);font-weight:600}
+    .status-badge{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;text-transform:uppercase;letter-spacing:.5px}
+    .status-open{background:rgba(113,168,252,.15);color:var(--open-color)}
+    .status-in-progress{background:rgba(255,203,61,.15);color:#b8860b}
+    .status-pending{background:rgba(156,156,156,.15);color:var(--pending-color)}
+    .status-resolved{background:rgba(110,208,81,.15);color:var(--resolved-color)}
+    .status-closed{background:rgba(108,117,125,.15);color:var(--closed-color)}
+    .priority-badge{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500}
+    .priority-dot{width:10px;height:10px;border-radius:50%}
+    .priority-low{background:var(--low-color)}
+    .priority-medium{background:var(--medium-color)}
+    .priority-high{background:var(--high-color)}
+    .priority-critical{background:var(--critical-color)}
+    .dashboard{display:none;padding:16px;background:#fff;overflow-y:auto}
+    .dashboard.show{display:block}
+    .kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+    .kpi{background:linear-gradient(135deg,#f8f9fa 0%,#eef3ff 100%);border:1px solid var(--border-color);border-radius:10px;padding:14px}
+    .kpi .label{font-size:12px;color:var(--light-text)}
+    .kpi .value{font-size:22px;font-weight:700;color:var(--dark-text)}
+    .charts{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:16px}
+    .chart-card{border:1px solid var(--border-color);border-radius:10px;padding:12px;background:#fff}
+    .chart-title{font-size:14px;color:var(--dark-text);margin-bottom:8px;font-weight:600}
+    canvas{width:100%;height:260px}
+    .modal-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s ease}
+    .modal{background:#fff;border-radius:8px;width:700px;max-width:95%;max-height:95vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,.3);transform:translateY(30px) scale(.95);transition:transform .3s ease}
+    .modal-backdrop.show{opacity:1;visibility:visible}
+    .modal-backdrop.show .modal{transform:translateY(0) scale(1)}
+    .modal-header{padding:20px 24px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%)}
+    .modal-title{font-size:18px;font-weight:600;color:var(--dark-text)}
+    .modal-close{background:none;border:none;font-size:24px;color:var(--light-text);cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:.2s}
+    .modal-close:hover{color:var(--dark-text);background:rgba(0,0,0,.1)}
+    .modal-body{padding:24px;overflow-y:auto;max-height:calc(95vh - 200px)}
+    .modal-footer{padding:20px 24px;border-top:1px solid var(--border-color);display:flex;justify-content:flex-end;gap:12px;background:var(--bg-light)}
+    .btn-secondary{background:#fff;border:1px solid var(--border-color);color:var(--dark-text)}
+    .btn-secondary:hover{background:#f8f9fa}
+    .form-group{margin-bottom:20px}
+    .form-label{display:block;margin-bottom:8px;font-size:14px;font-weight:600;color:var(--dark-text)}
+    .form-control,.form-select{width:100%;padding:10px 14px;border:1px solid var(--border-color);border-radius:6px;font-size:14px;transition:.2s;background:#fff}
+    .form-control:focus,.form-select:focus{outline:none;border-color:var(--secondary-color);box-shadow:0 0 0 3px rgba(113,168,252,.2)}
+    textarea.form-control{min-height:120px;resize:vertical}
+    .form-row{display:flex;gap:20px;margin-bottom:20px}
+    .form-col{flex:1}
+    .notification{position:fixed;top:20px;right:20px;background:#fff;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:16px 20px;display:flex;align-items:center;gap:12px;width:350px;max-width:calc(100% - 40px);z-index:1010;transform:translateX(400px);transition:transform .3s ease-out;border-left:4px solid var(--primary-color)}
+    .notification.show{transform:translateX(0)}
+    .notification.success{border-left-color:var(--low-color)}
+    .notification-icon{width:28px;height:28px;border-radius:50%;background:var(--primary-color);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .notification.success .notification-icon{background:var(--low-color)}
+    .notification-content{flex:1}
+    .notification-title{font-size:14px;font-weight:600;margin-bottom:4px}
+    .notification-message{font-size:13px;color:var(--light-text)}
+    .task-instructions{background:linear-gradient(135deg,#e3f2fd 0%,#f1f8e9 100%);border:1px solid #90caf9;border-radius:8px;padding:16px;margin:20px;position:sticky;top:0;z-index:10}
+    .task-title{font-weight:600;color:var(--primary-color);margin-bottom:8px;font-size:16px}
+    .task-description{color:var(--dark-text);line-height:1.4}
+    .empty{padding:30px;text-align:center;color:var(--light-text)}
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="task-instructions">
+      <div class="task-title">Lab 2: Ticket Editing & Status Updates</div>
+      <div class="task-description">
+        <strong>Task:</strong> Edit incident tickets and update their status. <em>Primary functions (selection & editing) are untouched.</em> You can also switch modules and view a lightweight dashboard.
+      </div>
+    </div>
+
+    <header class="header">
+      <div class="logo">ServiceNow</div>
+      <div class="header-controls"><div class="user-avatar">JS</div></div>
+    </header>
+
+    <nav class="navbar">
+      <div class="nav-item active" data-tab="incidents">Incidents</div>
+      <div class="nav-item" data-tab="requests">Service Requests</div>
+      <div class="nav-item" data-tab="knowledge">Knowledge Base</div>
+      <div class="nav-item" data-tab="problems">Problems</div>
+    </nav>
+
+    <div class="subnav">
+      <div class="view-controls">
+        <div class="view-button active" data-view="list">📋 List</div>
+        <div class="view-button" data-view="dashboard">📊 Dashboard</div>
+      </div>
+      <div class="tickets-count" id="ticketsCount">—</div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="main-content">
+        <div class="toolbar">
+          <button class="btn btn-primary" id="editBtn" disabled>✏️ Edit</button>
+          <div class="tickets-count" id="toolbarHint" style="margin-left:auto;color:var(--light-text)"></div>
+          <div class="list-controls" id="labControls">
+            <button class="btn btn-secondary" id="resetLab" type="button">Reset Lab</button>
+            <button class="btn btn-primary" id="closeLab" type="button">Close Lab</button>
+          </div>
+        </div>
+
+        <!-- LIST -->
+        <div class="list-container" id="listView">
+          <div class="list-header" id="listHeader"></div>
+          <div id="ticketList"></div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div class="dashboard" id="dashboardView">
+          <div class="kpi-grid" id="kpiGrid"></div>
+          <div class="charts">
+            <div class="chart-card">
+              <div class="chart-title">Records by State</div>
+              <canvas id="stateChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">Records by Priority</div>
+              <canvas id="priorityChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal (unchanged primary function) -->
+  <div class="modal-backdrop" id="ticketModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Edit Ticket</div>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-col">
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select class="form-select" id="statusSelect">
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Pending">Pending</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Closed">Closed</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-col">
+            <div class="form-group">
+              <label class="form-label">Priority</label>
+              <select class="form-select" id="prioritySelect">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Critical">Critical</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-col">
+            <div class="form-group">
+              <label class="form-label">Assigned to</label>
+              <select class="form-select" id="assignedSelect">
+                <option value="Unassigned">Unassigned</option>
+                <option value="John Smith">John Smith</option>
+                <option value="Lisa Brown">Lisa Brown</option>
+                <option value="Mike Wilson">Mike Wilson</option>
+                <option value="IT Support">IT Support</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-col">
+            <div class="form-group">
+              <label class="form-label">Assignment group</label>
+              <select class="form-select" id="groupSelect">
+                <option value="IT Support">IT Support</option>
+                <option value="Network Team">Network Team</option>
+                <option value="Help Desk">Help Desk</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Short description</label>
+          <input type="text" class="form-control" id="shortDescInput">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" id="descInput"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="saveBtn">Update Ticket</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  <div class="notification" id="notification">
+    <div class="notification-icon">✓</div>
+    <div class="notification-content">
+      <div class="notification-title" id="notificationTitle">Success</div>
+      <div class="notification-message" id="notificationMessage">Ticket updated successfully</div>
+    </div>
+  </div>
+
+  <script>
+    const tickets = [
+      {id:1,number:"INC0010023",shortDescription:"Printer not working in Marketing department",caller:"Sarah Johnson",assignmentGroup:"IT Support",assignedTo:"John Smith",updated:"Today, 10:45 AM",priority:"High",state:"In Progress",description:"Users in the Marketing department on the 3rd floor are unable to print to the shared HP LaserJet printer. The printer appears to be powered on but jobs are stuck in the queue. This issue started this morning and affects multiple users."},
+      {id:2,number:"INC0010022",shortDescription:"Email access issues on mobile device",caller:"Michael Chen",assignmentGroup:"IT Support",assignedTo:"Unassigned",updated:"Today, 9:30 AM",priority:"Medium",state:"Open",description:"Unable to access company email on iPhone. Authentication keeps failing despite correct credentials."},
+      {id:3,number:"INC0010021",shortDescription:"VPN connection drops frequently",caller:"Robert Williams",assignmentGroup:"Network Team",assignedTo:"Lisa Brown",updated:"Today, 8:30 AM",priority:"High",state:"In Progress",description:"VPN connection drops every 10-15 minutes requiring reconnection. Issue started yesterday."},
+      {id:4,number:"INC0010020",shortDescription:"New employee account setup",caller:"HR Department",assignmentGroup:"IT Support",assignedTo:"John Smith",updated:"Today, 9:00 AM",priority:"Low",state:"Resolved",description:"Set up new employee with company accounts and access permissions."},
+      {id:5,number:"INC0010019",shortDescription:"Monitor not displaying correctly",caller:"David Miller",assignmentGroup:"IT Support",assignedTo:"IT Support",updated:"Yesterday, 3:15 PM",priority:"Medium",state:"Pending",description:"External monitor shows distorted colors and flickering. Issue intermittent."}
+    ];
+    const requests = [
+      {id:101, number:"REQ0010501", shortDescription:"Request access to Shared Drive - Finance", requester:"Anna Patel", assignmentGroup:"IT Support", assignedTo:"Unassigned", updated:"Today, 10:10 AM", priority:"Low", state:"Open"},
+      {id:102, number:"REQ0010500", shortDescription:"Laptop Replacement", requester:"James Parker", assignmentGroup:"Hardware Team", assignedTo:"Tom Reed", updated:"Yesterday, 4:20 PM", priority:"Medium", state:"In Progress"},
+      {id:103, number:"REQ0010499", shortDescription:"Software Installation - Visio", requester:"Maria Gomez", assignmentGroup:"Software Team", assignedTo:"Unassigned", updated:"Today, 8:05 AM", priority:"Low", state:"Pending"}
+    ];
+    const knowledge = [
+      {id:201, number:"KB0001201", title:"Resetting your VPN credentials", category:"Network", updated:"2025-08-20", views:214, state:"Published"},
+      {id:202, number:"KB0001200", title:"Fixing printer queue issues", category:"Hardware", updated:"2025-08-18", views:356, state:"Published"},
+      {id:203, number:"KB0001199", title:"Configure email on iOS", category:"Email", updated:"2025-08-10", views:489, state:"Draft"}
+    ];
+    const problems = [
+      {id:301, number:"PRB0000761", shortDescription:"Intermittent VPN drops for remote staff", openedBy:"Lisa Brown", assignmentGroup:"Network Team", assignedTo:"Network Queue", updated:"Today, 11:00 AM", priority:"High", state:"Open"},
+      {id:302, number:"PRB0000760", shortDescription:"Print server spooler crashes", openedBy:"IT Ops", assignmentGroup:"Infrastructure", assignedTo:"Ian Cole", updated:"Yesterday, 1:40 PM", priority:"Critical", state:"In Progress"}
+    ];
+
+    let currentTab = "incidents";
+    let currentView = "list";
+    let selectedTickets = new Set();
+    let currentTicket = null;
+
+    const el = s => document.querySelector(s);
+    const els = s => Array.from(document.querySelectorAll(s));
+    const statusClass = s => `status-${String(s||'').toLowerCase().replaceAll(' ','-')}`;
+    const priorityClass = p => `priority-${String(p||'').toLowerCase()}`;
+    const setGrid = cols => document.documentElement.style.setProperty('--grid-cols', cols);
+
+    function init(){ setupEvents(); render(); }
+    function setupEvents(){
+      els('.nav-item').forEach(i=>i.addEventListener('click', ()=>{
+        currentTab = i.dataset.tab;
+        currentView = 'list';
+        selectedTickets.clear();
+        render();
+      }));
+      els('.view-button').forEach(b=>b.addEventListener('click', ()=>{ currentView = b.dataset.view; render(); }));
+      el('#editBtn').addEventListener('click', openEditModal);
+      el('#modalClose').addEventListener('click', closeModal);
+      el('#cancelBtn').addEventListener('click', closeModal);
+      el('#saveBtn').addEventListener('click', saveTicket);
+      document.addEventListener('keydown', (e)=>{ if (e.key==='Escape') closeModal(); });
+    }
+
+    function render(){
+      els('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.tab===currentTab));
+      els('.view-button').forEach(b=>b.classList.toggle('active', b.dataset.view===currentView));
+      el('#toolbarHint').textContent = currentView==='list' ? (currentTab==='incidents' ? 'Select exactly one ticket to enable Edit.' : 'Viewing read‑only list.') : 'Interactive KPIs & charts for the current module.';
+      const data = getCurrentData();
+      el('#ticketsCount').textContent = `${data.length} ${labelFor(currentTab)}`;
+      el('#listView').style.display = currentView==='list' ? 'block' : 'none';
+      el('#dashboardView').classList.toggle('show', currentView==='dashboard');
+      if (currentView==='list') renderList(); else renderDashboard();
+    }
+
+    function labelFor(tab){
+      switch(tab){
+        case 'incidents': return 'tickets';
+        case 'requests': return 'requests';
+        case 'knowledge': return 'articles';
+        case 'problems': return 'problems';
+        default: return 'items';
+      }
+    }
+    function getCurrentData(){
+      if (currentTab==='incidents') return tickets;
+      if (currentTab==='requests') return requests;
+      if (currentTab==='knowledge') return knowledge;
+      if (currentTab==='problems') return problems;
+      return [];
+    }
+
+    function renderList(){
+      const header = el('#listHeader');
+      const body = el('#ticketList');
+      body.innerHTML = '';
+
+      if (currentTab==='incidents'){
+        setGrid('40px 100px minmax(280px,1fr) 130px 130px 130px 100px');
+        header.innerHTML = `
+          <div><input type="checkbox" id="selectAll"></div>
+          <div>Number</div><div>Short description</div><div>Caller</div><div>Assigned to</div><div>Status</div><div>Priority</div>`;
+        getCurrentData().forEach(t => body.appendChild(incidentRow(t)));
+        const selectAll = el('#selectAll');
+        if (selectAll){
+          selectAll.addEventListener('change', (e)=>{
+            selectedTickets.clear();
+            if (e.target.checked){ tickets.forEach(t=>selectedTickets.add(t.id)); }
+            renderList();
+            updateButtonStates();
+          });
+        }
+        updateButtonStates();
+      } else if (currentTab==='requests'){
+        setGrid('100px minmax(320px,1fr) 160px 160px 140px 120px');
+        header.innerHTML = `<div>Number</div><div>Short description</div><div>Requester</div><div>Assignment group</div><div>Status</div><div>Priority</div>`;
+        requests.forEach(r => body.appendChild(readonlyRow([r.number, r.shortDescription, r.requester, r.assignmentGroup, r.state, badgePriority(r.priority)])));
+      } else if (currentTab==='knowledge'){
+        setGrid('120px minmax(360px,1fr) 160px 160px 120px');
+        header.innerHTML = `<div>Number</div><div>Title</div><div>Category</div><div>Updated</div><div>Views</div>`;
+        knowledge.forEach(k => body.appendChild(readonlyRow([k.number, k.title, k.category, k.updated, String(k.views)])));
+      } else if (currentTab==='problems'){
+        setGrid('120px minmax(320px,1fr) 160px 160px 140px 120px');
+        header.innerHTML = `<div>Number</div><div>Short description</div><div>Opened by</div><div>Assignment group</div><div>Status</div><div>Priority</div>`;
+        problems.forEach(p => body.appendChild(readonlyRow([p.number, p.shortDescription, p.openedBy, p.assignmentGroup, p.state, badgePriority(p.priority)])));
+      }
+
+      if (!getCurrentData().length){
+        body.innerHTML = `<div class="empty">No records found.</div>`;
+      }
+    }
+
+    function badgePriority(p){ return `<div class="priority-badge"><div class="priority-dot ${priorityClass(p)}"></div>${p}</div>`; }
+
+    function incidentRow(ticket){
+      const row = document.createElement('div');
+      row.className = 'list-item';
+      row.dataset.ticketId = ticket.id;
+      const st = statusClass(ticket.state);
+      const pr = priorityClass(ticket.priority);
+      if (selectedTickets.has(ticket.id)) row.classList.add('selected');
+      row.innerHTML = `
+        <div class="row-checkbox"><input type="checkbox" class="ticket-checkbox" data-ticket-id="${ticket.id}" ${selectedTickets.has(ticket.id) ? 'checked':''}></div>
+        <div class="list-cell ticket-number">${ticket.number}</div>
+        <div class="list-cell" title="${ticket.shortDescription}">${ticket.shortDescription}</div>
+        <div class="list-cell">${ticket.caller}</div>
+        <div class="list-cell">${ticket.assignedTo}</div>
+        <div class="list-cell"><span class="status-badge ${st}">${ticket.state}</span></div>
+        <div class="list-cell"><div class="priority-badge"><div class="priority-dot ${pr}"></div>${ticket.priority}</div></div>`;
+      const cb = row.querySelector('.ticket-checkbox');
+      cb.addEventListener('change', (e)=>{ e.stopPropagation(); handleTicketSelection(ticket.id, e.target.checked); });
+      row.addEventListener('click', (e)=>{
+        if (!e.target.classList.contains('ticket-checkbox')){ cb.checked = !cb.checked; handleTicketSelection(ticket.id, cb.checked); }
+      });
+      return row;
+    }
+
+    function readonlyRow(cells){
+      const row = document.createElement('div');
+      row.className = 'list-item';
+      row.innerHTML = cells.map(html => `<div class="list-cell">${html}</div>`).join('');
+      return row;
+    }
+
+    function handleTicketSelection(id, isSelected){
+      if (isSelected) selectedTickets.add(id); else selectedTickets.delete(id);
+      updateRowSelection();
+      updateButtonStates();
+    }
+    function updateRowSelection(){
+      document.querySelectorAll('.list-item').forEach(row=>{
+        const id = parseInt(row.dataset.ticketId);
+        if (!isNaN(id)) row.classList.toggle('selected', selectedTickets.has(id));
+      });
+    }
+    function updateButtonStates(){
+      const canEdit = currentTab==='incidents' && selectedTickets.size===1;
+      el('#editBtn').disabled = !canEdit;
+    }
+
+    function openEditModal(){
+      if (currentTab!=='incidents' || selectedTickets.size!==1) return;
+      const id = Array.from(selectedTickets)[0];
+      currentTicket = tickets.find(t=>t.id===id);
+      if (!currentTicket) return;
+      el('#modalTitle').textContent = `Edit ${currentTicket.number}`;
+      el('#statusSelect').value = currentTicket.state;
+      el('#prioritySelect').value = currentTicket.priority;
+      el('#assignedSelect').value = currentTicket.assignedTo;
+      el('#groupSelect').value = currentTicket.assignmentGroup;
+      el('#shortDescInput').value = currentTicket.shortDescription;
+      el('#descInput').value = currentTicket.description;
+      el('#ticketModal').classList.add('show');
+    }
+    function closeModal(){ el('#ticketModal').classList.remove('show'); currentTicket = null; }
+    function saveTicket(){
+      if (!currentTicket) return;
+      const idx = tickets.findIndex(t=>t.id===currentTicket.id);
+      if (idx===-1) return;
+      tickets[idx] = {
+        ...currentTicket,
+        state: el('#statusSelect').value,
+        priority: el('#prioritySelect').value,
+        assignedTo: el('#assignedSelect').value,
+        assignmentGroup: el('#groupSelect').value,
+        shortDescription: el('#shortDescInput').value,
+        description: el('#descInput').value,
+        updated: 'Just now'
+      };
+      closeModal();
+      renderList();
+      showNotification('Success', `${tickets[idx].number} updated successfully`);
+      renderDashboard();
+    }
+
+    function renderDashboard(){
+      const data = getCurrentData();
+      const kpi = {
+        total: data.length,
+        open: data.filter(r => (r.state||'')==='Open').length,
+        inprog: data.filter(r => (r.state||'')==='In Progress').length,
+        pending: data.filter(r => (r.state||'')==='Pending').length,
+        resolved: data.filter(r => (r.state||'')==='Resolved').length
+      };
+      el('#kpiGrid').innerHTML = `
+        <div class="kpi"><div class="label">Total ${labelFor(currentTab)}</div><div class="value">${kpi.total}</div></div>
+        <div class="kpi"><div class="label">Open</div><div class="value">${kpi.open}</div></div>
+        <div class="kpi"><div class="label">In Progress</div><div class="value">${kpi.inprog}</div></div>
+        <div class="kpi"><div class="label">Pending</div><div class="value">${kpi.pending}</div></div>
+        <div class="kpi"><div class="label">Resolved</div><div class="value">${kpi.resolved}</div></div>`;
+      drawBarChart('stateChart', countBy(data,'state'));
+      drawBarChart('priorityChart', countBy(data,'priority'));
+    }
+    function countBy(list, key){
+      const m = {}; list.forEach(r=>{ const k = r[key] || 'Unknown'; m[k] = (m[k]||0)+1; }); return m;
+    }
+    function drawBarChart(id, map){
+      const c = document.getElementById(id);
+      const ctx = c.getContext('2d');
+      const labels = Object.keys(map);
+      const values = Object.values(map);
+      const w = c.width = c.clientWidth;
+      const h = c.height = c.clientHeight;
+      ctx.clearRect(0,0,w,h);
+      const pad = 30;
+      const maxVal = Math.max(1, ...values, 1);
+      const slot = (w - pad*2) / (labels.length || 1);
+      const barW = slot * 0.6;
+      const gap = slot * 0.4;
+      ctx.strokeStyle = '#d8dbe0'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad, h-pad); ctx.lineTo(w-pad, h-pad); ctx.moveTo(pad, pad); ctx.lineTo(pad, h-pad); ctx.stroke();
+      labels.forEach((lab,i)=>{
+        const x = pad + i*slot + gap/2;
+        const barH = (h - pad*2) * (values[i] / maxVal);
+        const y = h - pad - barH;
+        ctx.fillStyle = '#2e51bb'; ctx.fillRect(x, y, barW, barH);
+        ctx.fillStyle = '#2a3e4c'; ctx.font = '12px Segoe UI'; ctx.textAlign = 'center';
+        ctx.fillText(values[i], x + barW/2, y - 6);
+        ctx.save(); ctx.translate(x + barW/2, h - pad + 14); ctx.rotate(-Math.PI/8);
+        ctx.fillStyle = '#6c757d'; ctx.fillText(lab, 0, 0); ctx.restore();
+      });
+    }
+    function showNotification(title, message){
+      el('#notificationTitle').textContent = title;
+      el('#notificationMessage').textContent = message;
+      const n = el('#notification'); n.classList.add('show','success');
+      setTimeout(()=>n.classList.remove('show','success'), 3000);
+    }
+    window.addEventListener('resize', ()=>{ if (currentView==='dashboard') renderDashboard(); });
+    init();
+  </script>
+
+<script>
+(function () {
+  function wireLabButtons() {
+    var resetBtn = document.querySelector('#resetLab');
+    var closeBtn = document.querySelector('#closeLab');
+    if (resetBtn && !resetBtn.dataset._wired) {
+      resetBtn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        try { window.location.reload(); } catch (err) { console.error(err); }
+      });
+      resetBtn.dataset._wired = '1';
+    }
+    if (closeBtn && !closeBtn.dataset._wired) {
+      closeBtn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        try { window.close(); } catch (err) { console.error(err); }
+        setTimeout(function(){ try { window.location.href = 'about:blank'; } catch(e){} }, 300);
+      });
+      closeBtn.dataset._wired = '1';
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireLabButtons);
+  } else {
+    wireLabButtons();
+  }
+
+  // Re-wire on dynamic DOM changes
+  try {
+    var mo = new MutationObserver(function(){ wireLabButtons(); });
+    mo.observe(document.body || document.documentElement, { subtree: true, childList: true });
+  } catch (e) {}
+})();
+</script>
+
+</body>
+</html>
