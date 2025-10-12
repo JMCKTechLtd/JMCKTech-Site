@@ -1,17 +1,1080 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>First Line • Lab 01</title>
-  <link rel="stylesheet" href="/shared/app.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 1: ServiceNow ITSM - Ticket Viewing & Navigation (Fixed)</title>
+    <style>
+        :root {
+            --primary-color: #2e51bb;
+            --secondary-color: #71a8fc;
+            --dark-text: #2a3e4c;
+            --light-text: #6c757d;
+            --border-color: #d8dbe0;
+            --bg-light: #f8f9fa;
+            --bg-lighter: #ffffff;
+            --low-color: #6ed051;
+            --medium-color: #ffcb3d;
+            --high-color: #ff9e3d;
+            --critical-color: #ec5050;
+            --open-color: #71a8fc;
+            --in-progress-color: #ffcb3d;
+            --pending-color: #9c9c9c;
+            --resolved-color: #6ed051;
+            --closed-color: #6c757d;
+            --hover-bg: rgba(113, 168, 252, 0.07);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background-color: #f2f2f2;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1920px;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1e40a0 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            height: 50px;
+            z-index: 100;
+        }
+        
+        .logo {
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .header-controls {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-weight: bold;
+            border: 2px solid white;
+        }
+
+        /* Navigation */
+        .navbar {
+            background-color: white;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            padding: 0 10px;
+            height: 40px;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+        }
+        
+        .nav-item {
+            padding: 0 12px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: var(--dark-text);
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .nav-item.active {
+            border-bottom: 3px solid var(--primary-color);
+            font-weight: 600;
+            background-color: rgba(113, 168, 252, 0.1);
+        }
+        
+        .subnav {
+            background-color: var(--bg-light);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 20px;
+            display: flex;
+            height: 45px;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .view-controls {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .view-button {
+            padding: 6px 12px;
+            background-color: var(--bg-lighter);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+        
+        .view-button:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .view-button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(46, 81, 187, 0.3);
+        }
+
+        /* Main Content */
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-lighter);
+            overflow: hidden;
+        }
+        
+        .toolbar {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .list-controls {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .tickets-count {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Ticket/List */
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+            background-color: white;
+        }
+        
+        .list-header {
+            display: grid;
+            grid-template-columns: var(--grid-cols, 100px minmax(300px, 1fr) 150px 150px 150px 120px 100px);
+            border-bottom: 2px solid var(--border-color);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--light-text);
+            padding: 12px 15px;
+            position: sticky;
+            top: 0;
+            background-color: var(--bg-light);
+            z-index: 1;
+        }
+        
+        .list-item {
+            display: grid;
+            grid-template-columns: var(--grid-cols, 100px minmax(300px, 1fr) 150px 150px 150px 120px 100px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 15px;
+            font-size: 13px;
+            color: var(--dark-text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .list-item:hover {
+            background-color: var(--hover-bg);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .list-cell {
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .list-cell.ticket-number {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-open { background-color: rgba(113, 168, 252, 0.15); color: var(--open-color); }
+        .status-in-progress { background-color: rgba(255, 203, 61, 0.15); color: #b8860b; }
+        .status-pending { background-color: rgba(156, 156, 156, 0.15); color: var(--pending-color); }
+        .status-resolved { background-color: rgba(110, 208, 81, 0.15); color: var(--resolved-color); }
+        .status-closed { background-color: rgba(108, 117, 125, 0.15); color: var(--closed-color); }
+        
+        .priority-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .priority-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .priority-low { background-color: var(--low-color); }
+        .priority-medium { background-color: var(--medium-color); }
+        .priority-high { background-color: var(--high-color); }
+        .priority-critical { background-color: var(--critical-color); }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+            padding: 16px;
+            background: white;
+            overflow-y: auto;
+        }
+        .dashboard.show { display: block; }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .kpi {
+            background: linear-gradient(135deg, #f8f9fa 0%, #eef3ff 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 14px;
+        }
+        .kpi .label { font-size: 12px; color: var(--light-text); }
+        .kpi .value { font-size: 22px; font-weight: 700; color: var(--dark-text); }
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .chart-card {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            background: #fff;
+        }
+        .chart-title { font-size: 14px; color: var(--dark-text); margin-bottom: 8px; font-weight: 600; }
+        canvas { width: 100%; height: 260px; }
+
+        /* Modal Styles */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .modal {
+            background-color: white;
+            border-radius: 8px;
+            width: 760px;
+            max-width: 95%;
+            max-height: 95vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(30px) scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-backdrop.show .modal {
+            transform: translateY(0) scale(1);
+        }
+        
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--light-text);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+        
+        .modal-close:hover {
+            color: var(--dark-text);
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            max-height: calc(95vh - 200px);
+        }
+        
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background-color: var(--bg-light);
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-secondary {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            color: var(--dark-text);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #f8f9fa;
+        }
+        .btn-primary { background: var(--primary-color); color: #fff; }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 16px;
+            padding: 12px;
+            background-color: var(--bg-light);
+            border-radius: 6px;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: var(--dark-text);
+            width: 180px;
+            flex-shrink: 0;
+        }
+        
+        .info-value {
+            color: var(--dark-text);
+            flex: 1;
+        }
+
+        .info-value select, .info-value input, .info-value textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            background: #fff;
+        }
+
+        .description-section {
+            margin-top: 20px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--dark-text);
+        }
+        
+        .description-text {
+            background-color: var(--bg-light);
+            padding: 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            line-height: 1.5;
+        }
+
+        .task-instructions {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f1f8e9 100%);
+            border: 1px solid #90caf9;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .task-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .task-description {
+            color: var(--dark-text);
+            line-height: 1.4;
+        }
+
+        /* Empty state */
+        .empty {
+            padding: 40px;
+            text-align: center;
+            color: var(--light-text);
+        }
+    </style>
 </head>
 <body>
-  <main class="wrap">
-    <h1>First Line • Lab 01</h1>
-    <p>This is a placeholder for your Udemy lab.</p>
-    <p><a href="/">← Back to Labs Hub</a></p>
-  </main>
-  <script src="/shared/app.js"></script>
+    <div class="app-container">
+        <div class="task-instructions">
+            <div class="task-title">Lab 1: Ticket Viewing & Navigation</div>
+            <div class="task-description">
+                <strong>Task:</strong> Practice navigating the different modules, switch between <em>List</em> and <em>Dashboard</em>, and view/update record details. Your changes persist while the page is open.
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">ServiceNow</div>
+            <div class="header-controls">
+                <div class="user-avatar">JS</div>
+            </div>
+        </header>
+        
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-item active" data-tab="incidents">Incidents</div>
+            <div class="nav-item" data-tab="requests">Service Requests</div>
+            <div class="nav-item" data-tab="knowledge">Knowledge Base</div>
+            <div class="nav-item" data-tab="problems">Problems</div>
+        </nav>
+        
+        <div class="subnav">
+            <div class="view-controls">
+                <div class="view-button active" data-view="list">📋 List</div>
+                <div class="view-button" data-view="dashboard">📊 Dashboard</div>
+            </div>
+            <div class="tickets-count" id="ticketsCount" style="margin-left:auto">—</div>
+        </div>
+        
+        <div class="content-wrapper">
+            <div class="main-content">
+                <div class="toolbar" id="toolbar">
+                    <div id="toolbarHint" class="light-text"></div>
+                    <div class="list-controls" id="labControls">
+                        <button class="btn btn-secondary" id="resetLab" type="button">Reset Lab</button>
+                        <button class="btn btn-primary" id="closeLab" type="button">Close Lab</button>
+                    </div>
+</div>
+                
+                <!-- LIST VIEW -->
+                <div class="list-container" id="listView">
+                    <div class="list-header" id="listHeader"></div>
+                    <div id="listBody"></div>
+                </div>
+
+                <!-- DASHBOARD VIEW -->
+                <div class="dashboard" id="dashboardView">
+                    <div class="kpi-grid" id="kpiGrid"></div>
+                    <div class="charts">
+                        <div class="chart-card">
+                            <div class="chart-title">Records by State</div>
+                            <canvas id="stateChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">Records by Priority</div>
+                            <canvas id="priorityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detail Modal -->
+    <div class="modal-backdrop" id="recordModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Details</div>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeBtn">Close</button>
+                <button class="btn btn-primary" id="saveBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ------------------ DATA ------------------
+        const db = {
+            incidents: [
+                {
+                    number: "INC0010023",
+                    shortDescription: "Printer not working in Marketing department",
+                    caller: "Sarah Johnson",
+                    assignmentGroup: "IT Support",
+                    assignedTo: "John Smith",
+                    updated: "Today, 10:45 AM",
+                    priority: "High",
+                    state: "In Progress",
+                    description: "Users in the Marketing department on the 3rd floor are unable to print to the shared HP LaserJet printer. The printer appears to be powered on but jobs are stuck in the queue. This issue started this morning and affects multiple users."
+                },
+                {
+                    number: "INC0010022", 
+                    shortDescription: "Email access issues on mobile device",
+                    caller: "Michael Chen",
+                    assignmentGroup: "IT Support", 
+                    assignedTo: "Unassigned",
+                    updated: "Today, 9:30 AM",
+                    priority: "Medium",
+                    state: "Open",
+                    description: "Unable to access company email on iPhone. Authentication keeps failing despite correct credentials."
+                },
+                {
+                    number: "INC0010021",
+                    shortDescription: "VPN connection drops frequently", 
+                    caller: "Robert Williams",
+                    assignmentGroup: "Network Team",
+                    assignedTo: "Lisa Brown",
+                    updated: "Today, 8:30 AM",
+                    priority: "High", 
+                    state: "In Progress",
+                    description: "VPN connection drops every 10-15 minutes requiring reconnection. Issue started yesterday."
+                },
+                {
+                    number: "INC0010020",
+                    shortDescription: "New employee account setup",
+                    caller: "HR Department", 
+                    assignmentGroup: "IT Support",
+                    assignedTo: "John Smith", 
+                    updated: "Today, 9:00 AM",
+                    priority: "Low",
+                    state: "Resolved", 
+                    description: "Set up new employee with company accounts and access permissions."
+                },
+                {
+                    number: "INC0010019",
+                    shortDescription: "Monitor not displaying correctly",
+                    caller: "David Miller",
+                    assignmentGroup: "IT Support", 
+                    assignedTo: "IT Support",
+                    updated: "Yesterday, 3:15 PM", 
+                    priority: "Medium",
+                    state: "Pending",
+                    description: "External monitor shows distorted colors and flickering. Issue intermittent."
+                }
+            ],
+            requests: [
+                { number: "REQ0010501", shortDescription: "Request access to Shared Drive - Finance", requester: "Anna Patel", assignmentGroup: "IT Support", assignedTo: "Unassigned", updated: "Today, 10:10 AM", priority: "Low", state: "Open", description: "Needs read-only access to Finance shared drive." },
+                { number: "REQ0010500", shortDescription: "Laptop Replacement", requester: "James Parker", assignmentGroup: "Hardware Team", assignedTo: "Tom Reed", updated: "Yesterday, 4:20 PM", priority: "Medium", state: "In Progress", description: "Old laptop out of warranty, replacement approved." },
+                { number: "REQ0010499", shortDescription: "Software Installation - Visio", requester: "Maria Gomez", assignmentGroup: "Software Team", assignedTo: "Unassigned", updated: "Today, 8:05 AM", priority: "Low", state: "Pending", description: "Install Microsoft Visio Standard." }
+            ],
+            knowledge: [
+                { number: "KB0001201", title: "Resetting your VPN credentials", category: "Network", updated: "2025-08-20", views: 214, state: "Published", description: "Step-by-step guide to reset VPN credentials and troubleshoot login." },
+                { number: "KB0001200", title: "Fixing printer queue issues", category: "Hardware", updated: "2025-08-18", views: 356, state: "Published", description: "How to clear stuck jobs and reset print spooler." },
+                { number: "KB0001199", title: "Configure email on iOS", category: "Email", updated: "2025-08-10", views: 489, state: "Draft", description: "Screenshots and steps for adding corporate email to iPhone/iPad." }
+            ],
+            problems: [
+                { number: "PRB0000761", shortDescription: "Intermittent VPN drops for remote staff", openedBy: "Lisa Brown", assignmentGroup: "Network Team", assignedTo: "Network Queue", updated: "Today, 11:00 AM", priority: "High", state: "Open", description: "Multiple incidents linked showing frequent VPN disconnections." },
+                { number: "PRB0000760", shortDescription: "Print server spooler crashes", openedBy: "IT Ops", assignmentGroup: "Infrastructure", assignedTo: "Ian Cole", updated: "Yesterday, 1:40 PM", priority: "Critical", state: "In Progress", description: "Spooler service crashes under load; root cause under investigation." }
+            ]
+        };
+
+        // ------------------ STATE ------------------
+        let currentTab = "incidents"; // incidents | requests | knowledge | problems
+        let currentView = "list";     // list | dashboard
+        let editedRecord = null;
+
+        // ------------------ UTIL ------------------
+        const el = sel => document.querySelector(sel);
+        const els = sel => Array.from(document.querySelectorAll(sel));
+        const statusClass = s => `status-${s.toLowerCase().replaceAll(" ", "-")}`;
+        const priorityClass = p => `priority-${p.toLowerCase()}`;
+        const setGrid = cols => {
+            el(":root").style.setProperty("--grid-cols", cols);
+        };
+
+        // ------------------ RENDER ------------------
+        function init() {
+            setupEventListeners();
+            render();
+        }
+
+        function render() {
+            // Update active nav
+            els(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.tab === currentTab));
+            els(".view-button").forEach(b => b.classList.toggle("active", b.dataset.view === currentView));
+
+            // Toolbar hint
+            el("#toolbarHint").textContent = currentView === "list"
+              ? "Tip: Click a row to view and update details."
+              : "Tip: Hover bars for values. Switch tabs to compare modules.";
+
+            // Count
+            const count = db[currentTab].length;
+            el("#ticketsCount").textContent = `${count} ${labelFor(currentTab)}`;
+
+            // Views
+            el("#listView").style.display = currentView === "list" ? "block" : "none";
+            el("#dashboardView").classList.toggle("show", currentView === "dashboard");
+
+            if (currentView === "list") renderList();
+            else renderDashboard();
+        }
+
+        function labelFor(tab) {
+            switch(tab) {
+                case "incidents": return "tickets";
+                case "requests": return "requests";
+                case "knowledge": return "articles";
+                case "problems": return "problems";
+                default: return "items";
+            }
+        }
+
+        function renderList() {
+            const listHeader = el("#listHeader");
+            const listBody = el("#listBody");
+            listBody.innerHTML = "";
+
+            if (currentTab === "incidents") {
+                setGrid("120px minmax(280px,1fr) 160px 160px 160px 140px 120px");
+                listHeader.innerHTML = "<div>Number</div><div>Short description</div><div>Caller</div><div>Assignment group</div><div>Assigned to</div><div>Updated</div><div>Priority</div>";
+                db.incidents.forEach(rec => listBody.appendChild(rowIncident(rec)));
+            } else if (currentTab === "requests") {
+                setGrid("120px minmax(320px,1fr) 160px 160px 160px 140px 120px");
+                listHeader.innerHTML = "<div>Number</div><div>Short description</div><div>Requester</div><div>Assignment group</div><div>Assigned to</div><div>Updated</div><div>Priority</div>";
+                db.requests.forEach(rec => listBody.appendChild(rowRequest(rec)));
+            } else if (currentTab === "knowledge") {
+                setGrid("120px minmax(360px,1fr) 160px 160px 140px 160px");
+                listHeader.innerHTML = "<div>Number</div><div>Title</div><div>Category</div><div>Updated</div><div>Views</div><div>State</div>";
+                db.knowledge.forEach(rec => listBody.appendChild(rowKnowledge(rec)));
+            } else if (currentTab === "problems") {
+                setGrid("120px minmax(320px,1fr) 160px 160px 160px 140px 120px");
+                listHeader.innerHTML = "<div>Number</div><div>Short description</div><div>Opened by</div><div>Assignment group</div><div>Assigned to</div><div>Updated</div><div>Priority</div>";
+                db.problems.forEach(rec => listBody.appendChild(rowProblem(rec)));
+            }
+
+            if (!db[currentTab].length) {
+                listBody.innerHTML = '<div class="empty">No records found.</div>';
+            }
+        }
+
+        function rowIncident(ticket) {
+            const row = document.createElement('div');
+            row.className = 'list-item';
+            row.innerHTML = `
+                <div class="list-cell ticket-number">${ticket.number}</div>
+                <div class="list-cell" title="${ticket.shortDescription}">${ticket.shortDescription}</div>
+                <div class="list-cell">${ticket.caller}</div>
+                <div class="list-cell">${ticket.assignmentGroup}</div>
+                <div class="list-cell">${ticket.assignedTo}</div>
+                <div class="list-cell">${ticket.updated}</div>
+                <div class="list-cell">
+                    <div class="priority-badge">
+                        <div class="priority-dot ${priorityClass(ticket.priority)}"></div>
+                        ${ticket.priority}
+                    </div>
+                </div>`;
+            row.addEventListener('click', () => openModal("incidents", ticket));
+            return row;
+        }
+
+        function rowRequest(r) {
+            const row = document.createElement('div');
+            row.className = 'list-item';
+            row.innerHTML = `
+                <div class="list-cell ticket-number">${r.number}</div>
+                <div class="list-cell" title="${r.shortDescription}">${r.shortDescription}</div>
+                <div class="list-cell">${r.requester}</div>
+                <div class="list-cell">${r.assignmentGroup}</div>
+                <div class="list-cell">${r.assignedTo}</div>
+                <div class="list-cell">${r.updated}</div>
+                <div class="list-cell">
+                    <div class="priority-badge">
+                        <div class="priority-dot ${priorityClass(r.priority)}"></div>
+                        ${r.priority}
+                    </div>
+                </div>`;
+            row.addEventListener('click', () => openModal("requests", r));
+            return row;
+        }
+
+        function rowKnowledge(k) {
+            const row = document.createElement('div');
+            row.className = 'list-item';
+            row.innerHTML = `
+                <div class="list-cell ticket-number">${k.number}</div>
+                <div class="list-cell" title="${k.title}">${k.title}</div>
+                <div class="list-cell">${k.category}</div>
+                <div class="list-cell">${k.updated}</div>
+                <div class="list-cell">${k.views}</div>
+                <div class="list-cell"><span class="status-badge ${statusClass(k.state)}">${k.state}</span></div>`;
+            row.addEventListener('click', () => openModal("knowledge", k));
+            return row;
+        }
+
+        function rowProblem(p) {
+            const row = document.createElement('div');
+            row.className = 'list-item';
+            row.innerHTML = `
+                <div class="list-cell ticket-number">${p.number}</div>
+                <div class="list-cell" title="${p.shortDescription}">${p.shortDescription}</div>
+                <div class="list-cell">${p.openedBy}</div>
+                <div class="list-cell">${p.assignmentGroup}</div>
+                <div class="list-cell">${p.assignedTo}</div>
+                <div class="list-cell">${p.updated}</div>
+                <div class="list-cell">
+                    <div class="priority-badge">
+                        <div class="priority-dot ${priorityClass(p.priority)}"></div>
+                        ${p.priority}
+                    </div>
+                </div>`;
+            row.addEventListener('click', () => openModal("problems", p));
+            return row;
+        }
+
+        // ------------------ MODAL ------------------
+        function openModal(type, record) {
+            editedRecord = { type, record };
+            el("#modalTitle").textContent = `${record.number || record.title} — ${type.charAt(0).toUpperCase()+type.slice(1)}`;
+
+            const fields = [];
+            if (type === "incidents" || type === "requests" || type === "problems") {
+                fields.push(
+                    field("State", select("state", record.state, ["Open","In Progress","Pending","Resolved","Closed"])),
+                    field("Priority", select("priority", record.priority, ["Low","Medium","High","Critical"])),
+                    field("Assignment Group", input("assignmentGroup", record.assignmentGroup)),
+                    field("Assigned To", input("assignedTo", record.assignedTo)),
+                    field("Updated", input("updated", record.updated))
+                );
+                if (type === "incidents") fields.unshift(field("Caller", input("caller", record.caller)));
+                if (type === "requests") fields.unshift(field("Requester", input("requester", record.requester)));
+                if (type === "problems") fields.unshift(field("Opened By", input("openedBy", record.openedBy)));
+            } else if (type === "knowledge") {
+                fields.push(
+                    field("Title", input("title", record.title)),
+                    field("Category", input("category", record.category)),
+                    field("State", select("state", record.state, ["Draft","Published"])),
+                    field("Updated", input("updated", record.updated)),
+                    field("Views", input("views", record.views))
+                );
+            }
+
+            const descSection = `
+                <div class="description-section">
+                    <div class="section-title">Description</div>
+                    <div class="info-value">
+                        <textarea id="descField" rows="5">${record.description || ""}</textarea>
+                    </div>
+                </div>`;
+
+            el("#modalBody").innerHTML = fields.join("") + descSection;
+            el("#recordModal").classList.add("show");
+        }
+
+        function field(label, controlHtml) {
+            return `<div class="info-row"><div class="info-label">${label}:</div><div class="info-value">${controlHtml}</div></div>`;
+        }
+        function input(name, value) {
+            return `<input data-field="${name}" value="${escapeHtml(value ?? "")}"/>`;
+        }
+        function select(name, value, options) {
+            const opts = options.map(o => `<option ${o===value?"selected":""}>${o}</option>`).join("");
+            return `<select data-field="${name}">${opts}</select>`;
+        }
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+        }
+
+        function saveModal() {
+            if (!editedRecord) return;
+            const { type, record } = editedRecord;
+            const container = el("#modalBody");
+            container.querySelectorAll("[data-field]").forEach(inp => {
+                const key = inp.getAttribute("data-field");
+                record[key] = inp.value;
+            });
+            const desc = el("#descField");
+            if (desc) record.description = desc.value;
+
+            // Simple updated stamp
+            record.updated = new Date().toLocaleString();
+
+            // Re-render list and dashboard
+            render();
+            closeModal();
+        }
+
+        function closeModal() {
+            el("#recordModal").classList.remove("show");
+            editedRecord = null;
+        }
+
+        // ------------------ DASHBOARD ------------------
+        function renderDashboard() {
+            // KPIs
+            const list = db[currentTab];
+            const kpiGrid = el("#kpiGrid");
+            const totals = {
+                total: list.length,
+                open: list.filter(r => (r.state||"").startsWith("Open")).length + list.filter(r => (r.state||"") === "Open").length,
+                inprog: list.filter(r => (r.state||"") === "In Progress").length,
+                pending: list.filter(r => (r.state||"") === "Pending").length,
+                resolved: list.filter(r => (r.state||"") === "Resolved").length,
+                critical: list.filter(r => (r.priority||"") === "Critical").length
+            };
+            kpiGrid.innerHTML = `
+                <div class="kpi"><div class="label">Total ${labelFor(currentTab)}</div><div class="value">${totals.total}</div></div>
+                <div class="kpi"><div class="label">Open</div><div class="value">${totals.open}</div></div>
+                <div class="kpi"><div class="label">In Progress</div><div class="value">${totals.inprog}</div></div>
+                <div class="kpi"><div class="label">Pending</div><div class="value">${totals.pending}</div></div>
+                <div class="kpi"><div class="label">Resolved</div><div class="value">${totals.resolved}</div></div>
+            `;
+
+            // Charts
+            drawBarChart("stateChart", countBy(list, "state"));
+            drawBarChart("priorityChart", countBy(list, "priority"));
+        }
+
+        function countBy(list, key) {
+            const map = {};
+            list.forEach(r => {
+                const k = (r[key] || "Unknown");
+                map[k] = (map[k] || 0) + 1;
+            });
+            return map;
+        }
+
+        function drawBarChart(canvasId, dataMap) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext("2d");
+            const labels = Object.keys(dataMap);
+            const values = Object.values(dataMap);
+            const w = canvas.width = canvas.clientWidth;
+            const h = canvas.height = canvas.clientHeight;
+            ctx.clearRect(0,0,w,h);
+
+            // padding
+            const pad = 30;
+            const maxVal = Math.max(1, ...values);
+            const barW = (w - pad*2) / (labels.length || 1) * 0.6;
+            const gap = (w - pad*2) / (labels.length || 1) * 0.4;
+
+            // axes
+            ctx.strokeStyle = "#d8dbe0";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(pad, h - pad);
+            ctx.lineTo(w - pad, h - pad);
+            ctx.moveTo(pad, pad);
+            ctx.lineTo(pad, h - pad);
+            ctx.stroke();
+
+            // bars
+            labels.forEach((lab, i) => {
+                const x = pad + i * (barW + gap) + gap/2;
+                const barH = (h - pad*2) * (values[i] / maxVal);
+                const y = h - pad - barH;
+                ctx.fillStyle = "#2e51bb";
+                ctx.fillRect(x, y, barW, barH);
+
+                // value
+                ctx.fillStyle = "#2a3e4c";
+                ctx.font = "12px Segoe UI";
+                ctx.textAlign = "center";
+                ctx.fillText(values[i], x + barW/2, y - 6);
+
+                // label
+                ctx.save();
+                ctx.translate(x + barW/2, h - pad + 14);
+                ctx.rotate(-Math.PI/8);
+                ctx.fillStyle = "#6c757d";
+                ctx.fillText(lab, 0, 0);
+                ctx.restore();
+            });
+        }
+
+        // ------------------ EVENTS ------------------
+        function setupEventListeners() {
+            // Modal buttons
+            el("#modalClose").addEventListener("click", closeModal);
+            el("#closeBtn").addEventListener("click", closeModal);
+            el("#saveBtn").addEventListener("click", saveModal);
+
+            // Navigation tabs
+            els(".nav-item").forEach(item => {
+                item.addEventListener("click", () => {
+                    currentTab = item.dataset.tab;
+                    currentView = "list"; // default back to list for clarity
+                    render();
+                });
+            });
+
+            // View buttons
+            els(".view-button").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    currentView = btn.dataset.view;
+                    render();
+                });
+            });
+
+            // Close modal with escape key
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") closeModal();
+            });
+
+            // Handle resize for crisp canvas
+            window.addEventListener("resize", () => {
+                if (currentView === "dashboard") renderDashboard();
+            });
+        }
+
+        // ------------------ START ------------------
+        init();
+    
+function hookLabControls() {
+  const resetBtn = document.querySelector("#resetLab");
+  const closeBtn = document.querySelector("#closeLab");
+
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      window.location.reload();
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      window.close();
+      setTimeout(() => { window.location.href = "about:blank"; }, 300);
+    });
+  }
+}
+
+</script>
+
+<script>
+(function () {
+  function wireLabButtons() {
+    var resetBtn = document.querySelector('#resetLab');
+    var closeBtn = document.querySelector('#closeLab');
+    if (resetBtn && !resetBtn.dataset._wired) {
+      resetBtn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        try { window.location.reload(); } catch (err) { console.error(err); }
+      });
+      resetBtn.dataset._wired = '1';
+    }
+    if (closeBtn && !closeBtn.dataset._wired) {
+      closeBtn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        try { window.close(); } catch (err) { console.error(err); }
+        setTimeout(function(){ try { window.location.href = 'about:blank'; } catch(e){} }, 300);
+      });
+      closeBtn.dataset._wired = '1';
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireLabButtons);
+  } else {
+    wireLabButtons();
+  }
+
+  // Also re-wire after any dynamic re-render in case the toolbar is rebuilt
+  var mo = new MutationObserver(function(){ wireLabButtons(); });
+  mo.observe(document.documentElement, { subtree: true, childList: true });
+})();
+</script>
+
 </body>
 </html>
