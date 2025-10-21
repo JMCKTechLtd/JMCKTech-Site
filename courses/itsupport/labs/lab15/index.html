@@ -1,19 +1,532 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Lab 15: Placeholder</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows Lab 15 – IP Configuration</title>
+<style>
+/* ==== Desktop background (matches template) ==== */
+html,body{height:100%;margin:0;font-family:Segoe UI, Roboto, Arial, Helvetica, sans-serif}
+body{background:linear-gradient(120deg,#1976d2,#0d47a1);color:#111;overflow:hidden}
+#desktop{position:absolute;inset:0 0 48px 0;padding:14px}
+
+/* ==== Windows (simulation) ==== */
+.window{position:absolute;background:#fff;border:1px solid #c9c9c9;border-radius:10px;box-shadow:0 14px 40px rgba(0,0,0,.35);display:none;flex-direction:column;overflow:hidden}
+.window-header{background:#e9e9e9;padding:8px 10px;display:flex;align-items:center;gap:8px;cursor:move;border-bottom:1px solid #cfcfcf;user-select:none}
+.window-title{font-weight:600;flex:1}
+.window-controls{display:flex;gap:6px}
+.window-control{width:24px;height:24px;border-radius:6px;background:#dcdcdc;display:grid;place-items:center;cursor:pointer}
+.window-control:hover{background:#cfcfcf}
+.window-body{padding:10px;overflow:auto;background:#fff;flex:1}
+
+/* ==== Instructions window ==== */
+#instructionsWindow{left:20px;top:20px;width:460px;height:380px;display:flex}
+#instructionsWindow .window-body ol{margin:0 0 6px 18px}
+#instructionsWindow .window-body ol li{margin:6px 0}
+#instructionsWindow .window-body .btnrow{margin-top:10px;display:flex;gap:8px}
+button{border:1px solid #c9c9c9;background:#efefef;padding:6px 10px;border-radius:6px;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+
+/* ==== Command Prompt window (inline input like real cmd) ==== */
+#cmdWindow{left:260px;top:90px;width:760px;height:480px}
+#cmdWindow .window-body{padding:0;background:#0c0c0c;color:#0f0;font-family:Consolas, "Courier New", monospace;font-size:14px;display:flex;flex-direction:column}
+.cmd-output{white-space:pre-wrap;line-height:1.35;padding:12px;flex:1;overflow:auto}
+.cmd-prompt{color:#0f0;white-space:pre}
+/* Blinking block caret */
+.caret{display:inline-block;width:10px;height:1em;background:#0f0;margin-left:2px;animation:blink 1s steps(1,end) infinite;vertical-align:bottom}
+@keyframes blink{50%{opacity:0}}
+
+/* ==== Toast ==== */
+#toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#2e7d32;color:#fff;padding:10px 14px;border-radius:10px;display:none;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+
+/* ==== Taskbar + tray (matches template) ==== */
+.taskbar{position:absolute;bottom:0;width:100vw;height:48px;background:rgba(0,0,0,0.8);backdrop-filter:blur(20px);display:flex;align-items:center;padding:0 10px;z-index:100;border-top:1px solid rgba(255,255,255,0.1);overflow:hidden;box-sizing:border-box}
+.start-button{color:white;font-weight:600;display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;transition:all 0.2s ease;font-size:14px;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.35);cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06)}
+.start-button:hover{background-color:rgba(255,255,255,0.32);border-color:rgba(255,255,255,0.5)}
+.windows-logo{width:20px;height:20px;margin-right:2px;display:inline-block}
+.taskbar-icons{display:flex;gap:8px;margin-left:10px}
+.system-tray{display:flex;align-items:center;color:white;font-size:13px;padding:0 6px;white-space:nowrap;gap:6px;margin-left:auto}
+.tray-chip{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:10px;cursor:pointer;user-select:none;box-shadow:0 2px 8px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.06);transition:transform .12s ease, background .15s ease, border-color .15s ease}
+.tray-chip:hover{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.35);transform:translateY(-1px)}
+.tray-time{min-width:78px;justify-content:center;font-variant-numeric:tabular-nums}
+
+/* ==== Start Menu (reduced height only) ==== */
+.start-menu{position:absolute;bottom:52px;left:12px;width:520px;height:360px;background:rgba(30,30,30,0.97);color:white;border:1px solid rgba(255,255,255,0.12);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.4);backdrop-filter:blur(16px);display:none;overflow:hidden auto;z-index:200}
+.start-menu-header{padding:16px 20px;background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.1);font-weight:600;font-size:16px}
+.start-menu-body{display:grid;grid-template-columns:1fr 1fr;height:calc(100% - 60px)}
+.start-menu-left{padding:16px;background:rgba(255,255,255,0.02);border-right:1px solid rgba(255,255,255,0.08)}
+.start-menu-right{padding:16px}
+.app-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:8px;cursor:pointer;transition:background 0.2s ease;margin-bottom:8px}
+.app-item:hover{background:rgba(255,255,255,0.08)}
+.app-item .icon{width:32px;height:32px;border-radius:6px;background:#0078d4;display:flex;align-items:center;justify-content:center;font-size:16px}
+.instructions-icon{background:linear-gradient(45deg,#ff6b35,#f7931e)!important}
+.app-list{max-height:100%;overflow-y:auto}
+
+/* Utilities */
+.hidden{display:none!important}
+
+/* === Tray Popover + Calendar (ported from template) === */
+.tray-popover {
+  position: absolute; display: none; min-width: 300px;
+  background: rgba(30,30,30,0.97); color: white;
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4); z-index: 400; overflow: hidden; backdrop-filter: blur(16px);
+}
+.tray-popover .pop-header { padding: 12px 16px; background: rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; font-size: 13px; }
+.tray-popover .pop-body { padding: 14px 16px; font-size: 13px; max-height: 380px; overflow:auto; }
+.row { display:flex; align-items:center; gap:10px; }
+.muted { opacity:0.85; }
+
+.calendar{ width:100%; user-select:none; }
+.calendar .big-clock{ font-size:28px; font-weight:700; margin-bottom:6px; }
+.calendar .small-date{ opacity:.9; margin-bottom:10px; }
+.calendar .cal-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.calendar .month{ font-weight:600; }
+.calendar .grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:12px; }
+.calendar .dow{ text-align:center; opacity:.8; padding:4px 0; }
+.calendar .day{ text-align:center; padding:6px 0; border-radius:6px; }
+.calendar .day.today{ background:#1976d2; color:#fff; }
+.calendar .day.other{ opacity:.35; }
+
+</style>
 </head>
 <body>
-  <div class="lab-container">
-    <div class="lab-header">
-      <div class="lab-title">Lab 15: Placeholder</div>
+  <div id="desktop">
+    <!-- Instructions window (open by default) -->
+    <div class="window" id="instructionsWindow" style="display:flex">
+      <div class="window-header">
+        <div class="window-title">Lab 15: ipconfig /all • Release • Renew – Instructions</div>
+        <div class="window-controls">
+          <div class="window-control" data-minimize title="Minimize">−</div>
+          <div class="window-control" data-maximize title="Maximize">□</div>
+          <div class="window-control" data-close title="Close">✕</div>
+        </div>
+      </div>
+      <div class="window-body">
+        <p><strong>Goal:</strong> Diagnose an APIPA address and restore proper DHCP configuration. Your changes persist while the page is open.</p>
+        <ol>
+          <li>Open <strong>Command Prompt</strong> from the Start menu.</li>
+          <li>Run <code>ipconfig /all</code> — observe the <strong>APIPA</strong> address (<code>169.254.x.x</code>).</li>
+          <li>Run <code>ipconfig /release</code> — addresses should clear.</li>
+          <li>Run <code>ipconfig /renew</code> — obtain a valid DHCP lease.</li>
+          <li>Run <code>ipconfig /all</code> again and note: <em>Host Name, IPv4 Address, Subnet Mask, Default Gateway, DNS Servers</em>.</li>
+        </ol>
+        <div class="btnrow">
+          <button id="resetLab">Reset Lab</button>
+          <button id="closeBrowser">Close Lab</button>
+        </div>
+      </div>
     </div>
-    <div class="task-panel">
-      <div class="task-title">🔧 Task</div>
-      <p>This is a placeholder for Lab 15. Replace this file with your actual lab content.</p>
+
+    <!-- Command Prompt window (opens from Start Menu) -->
+    <div class="window" id="cmdWindow">
+      <div class="window-header">
+        <div class="window-title">Command Prompt</div>
+        <div class="window-controls">
+          <div class="window-control" data-minimize title="Minimize">−</div>
+          <div class="window-control" data-maximize title="Maximize">□</div>
+          <div class="window-control" data-close title="Close">✕</div>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="cmd-output" id="cmdOut">Microsoft Windows [Version 10.0.19045.4529]
+(c) Microsoft Corporation. All rights reserved.
+
+</div>
+      </div>
     </div>
   </div>
+
+  <!-- Taskbar -->
+  <div class="taskbar">
+    <div class="start-button" id="startButton" title="Start">
+      <span class="windows-logo">
+        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="8" height="8" fill="#00BCF9"/>
+          <rect x="11" y="1" width="8" height="8" fill="#00BCF9"/>
+          <rect x="1" y="11" width="8" height="8" fill="#00BCF9"/>
+          <rect x="11" y="11" width="8" height="8" fill="#00BCF9"/>
+        </svg>
+      </span>
+      Start
+    </div>
+    <div class="taskbar-icons"></div>
+    <div class="system-tray" id="systemTray">
+      <div class="tray-chip tray-time" id="trayTimeChip" title="Date and time">
+        <span id="trayTime">--:--</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Menu -->
+  <div class="start-menu" id="startMenu">
+    <div class="start-menu-header">Start</div>
+    <div class="start-menu-body">
+      <div class="start-menu-left">
+        <div class="app-item" data-app="instructions">
+          <div class="icon instructions-icon">📋</div>
+          <span>Instructions</span>
+        </div>
+      </div>
+      <div class="start-menu-right">
+        <div class="app-list">
+          <div class="app-item" data-app="cmd">
+            <div class="icon">⌨️</div>
+            <span>Command Prompt</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  /* ===== Helpers ===== */
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  /* ===== Elements ===== */
+  const startButton = $('#startButton');
+  const startMenu = $('#startMenu');
+  const instructionsWindow = $('#instructionsWindow');
+  const cmdWindow = $('#cmdWindow');
+  const cmdOut = $('#cmdOut');
+  const resetLab = $('#resetLab');
+  const closeBrowser = $('#closeBrowser');
+  const toast = $('#toast');
+
+  /* ===== Start Menu toggle ===== */
+  function toggleStart(){ startMenu.style.display = (startMenu.style.display==='block') ? 'none' : 'block'; }
+  function hideStart(){ startMenu.style.display = 'none'; }
+  startButton.addEventListener('click', (e)=>{ e.stopPropagation(); toggleStart(); });
+  document.addEventListener('click', (e)=>{ if (!startMenu.contains(e.target) && e.target!==startButton) hideStart(); });
+  startButton.addEventListener('contextmenu', (e)=>{ e.preventDefault(); hideStart(); });
+
+  /* ===== Launchers ===== */
+  function showWin(w){
+    $$('.window').forEach(win => { if (win!==instructionsWindow && win!==w) win.style.display = 'none'; });
+    w.style.display='flex';
+  }
+  function openCmd(){
+    showWin(cmdWindow);
+    setTimeout(()=>renderLive(), 50);
+  }
+  $$('.app-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const app = el.dataset.app; hideStart();
+      if (app==='instructions') instructionsWindow.style.display='flex';
+      if (app==='cmd') openCmd();
+    });
+  });
+
+  /* ===== Window controls & dragging ===== */
+  document.querySelectorAll('[data-close]').forEach(btn=>{
+    btn.addEventListener('click',(e)=>{ e.stopPropagation(); btn.closest('.window').style.display='none'; });
+  });
+  document.querySelectorAll('[data-minimize]').forEach(btn=>{
+    btn.addEventListener('click',(e)=>{ e.stopPropagation(); btn.closest('.window').style.display='none'; });
+  });
+  document.querySelectorAll('[data-maximize]').forEach(btn=>{
+    btn.addEventListener('click',(e)=>{
+      e.preventDefault(); e.stopPropagation();
+      const w = btn.closest('.window');
+      const maximized = w.dataset.max === '1';
+      if (maximized){
+        if (w.id==='instructionsWindow') { w.style.width='460px'; w.style.height='380px'; w.style.top='20px'; w.style.left='20px'; }
+        if (w.id==='cmdWindow') { w.style.width='760px'; w.style.height='480px'; w.style.top='90px'; w.style.left='260px'; }
+        w.dataset.max = '0';
+      } else {
+        w.style.width='100%'; w.style.height='calc(100% - 48px)'; w.style.top='0'; w.style.left='0';
+        w.dataset.max = '1';
+      }
+    });
+  });
+  let dragWin=null, sx=0, sy=0, ix=0, iy=0, dragging=false;
+  document.querySelectorAll('.window-header').forEach(h=>{
+    h.addEventListener('mousedown', e=>{
+      if (e.target.closest('.window-control')) return;
+      e.preventDefault(); dragWin = h.closest('.window'); dragging=true;
+      sx=e.clientX; sy=e.clientY; ix=parseInt(dragWin.style.left||getComputedStyle(dragWin).left); iy=parseInt(dragWin.style.top||getComputedStyle(dragWin).top);
+      document.addEventListener('mousemove', onDrag); document.addEventListener('mouseup', stopDrag);
+    });
+  });
+  function onDrag(e){ if(!dragging||!dragWin) return; dragWin.style.left=(ix + (e.clientX-sx))+'px'; dragWin.style.top=(iy + (e.clientY-sy))+'px'; }
+  function stopDrag(){ dragging=false; dragWin=null; document.removeEventListener('mousemove', onDrag); document.removeEventListener('mouseup', stopDrag); }
+
+  /* ===== Toast ===== */
+  function flash(msg, ms=1600){ toast.textContent=msg; toast.style.display='block'; setTimeout(()=>toast.style.display='none', ms); }
+
+  /* ===== CMD (inline input with blinking caret) ===== */
+  const promptText = 'C\\Users\\Administrator>';
+  let buffer = '';
+  let netState = 'apipa'; // 'apipa' -> 'released' -> 'dhcp'
+
+  function write(line=''){ cmdOut.textContent += line + '\n'; cmdOut.scrollTop = cmdOut.scrollHeight; }
+
+  function renderLive(){
+    // ensure one live line at the end
+    let live = document.getElementById('liveLine');
+    if(!live){
+      live = document.createElement('div');
+      live.id='liveLine';
+      live.innerHTML = `<span class="cmd-prompt">${promptText}</span><span id="cmdTyped"></span><span class="caret" id="cmdCaret"></span>`;
+      cmdOut.appendChild(live);
+    }
+    const typed = document.getElementById('cmdTyped');
+    if (typed) typed.textContent = buffer;
+    cmdOut.scrollTop = cmdOut.scrollHeight;
+  }
+  function ready(){ buffer=''; renderLive(); }
+
+  function ipconfigAll(){
+    const host = 'LABWIN10';
+    if (netState==='apipa'){
+      return `Windows IP Configuration
+
+   Host Name . . . . . . . . . . . . : ${host}
+   Primary Dns Suffix  . . . . . . . :
+   Node Type . . . . . . . . . . . . : Hybrid
+   IP Routing Enabled. . . . . . . . : No
+   WINS Proxy Enabled. . . . . . . . : No
+
+Ethernet adapter Ethernet:
+
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : Intel(R) Ethernet Connection
+   Physical Address. . . . . . . . . : 00-15-5D-01-02-03
+   DHCP Enabled. . . . . . . . . . . : Yes
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::1111:2222:3333:4444%12
+   IPv4 Address. . . . . . . . . . . : 169.254.88.10(Preferred)
+   Subnet Mask . . . . . . . . . . . : 255.255.0.0
+   Default Gateway . . . . . . . . . :
+   DHCPv6 IAID . . . . . . . . . . . : 123456789
+   DNS Servers . . . . . . . . . . . : 0.0.0.0
+   NetBIOS over Tcpip. . . . . . . . : Enabled`;
+    }
+    if (netState==='released'){
+      return `Windows IP Configuration
+
+   Host Name . . . . . . . . . . . . : ${host}
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . :`;
+    }
+    // dhcp
+    return `Windows IP Configuration
+
+   Host Name . . . . . . . . . . . . : ${host}
+   Primary Dns Suffix  . . . . . . . :
+   Node Type . . . . . . . . . . . . : Hybrid
+   IP Routing Enabled. . . . . . . . : No
+   WINS Proxy Enabled. . . . . . . . : No
+
+Ethernet adapter Ethernet:
+
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : Intel(R) Ethernet Connection
+   Physical Address. . . . . . . . . : 00-15-5D-01-02-03
+   DHCP Enabled. . . . . . . . . . . : Yes
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::aaaa:bbbb:cccc:dddd%12
+   IPv4 Address. . . . . . . . . . . : 192.168.1.100(Preferred)
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 192.168.1.1
+   DHCP Server . . . . . . . . . . . : 192.168.1.1
+   DNS Servers . . . . . . . . . . . : 8.8.8.8
+   Lease Obtained. . . . . . . . . . : ${new Date().toLocaleString()}
+   Lease Expires . . . . . . . . . . : ${new Date(Date.now()+8*3600*1000).toLocaleString()}
+   NetBIOS over Tcpip. . . . . . . . : Enabled`;
+  }
+
+  function runIpconfigRelease(){
+    document.getElementById('liveLine')?.remove();
+    netState = 'released';
+    const seq = [
+      'Windows IP Configuration\n',
+      'Successfully released the IP address for adapter Ethernet.\n'
+    ];
+    let i=0; const step=()=>{ write(seq[i]); i++; if(i<seq.length){ setTimeout(step, 400);} else { flash('IP address released'); ready(); } };
+    step();
+  }
+
+  function runIpconfigRenew(){
+    document.getElementById('liveLine')?.remove();
+    write('Windows IP Configuration\n');
+    write('Attempting to renew the IP address for adapter Ethernet...\n');
+    setTimeout(()=>{
+      netState = 'dhcp';
+      write('Successfully renewed the IP address for adapter Ethernet.');
+      flash('DHCP lease obtained successfully');
+      ready();
+    }, 1200);
+  }
+
+  function handle(cmd){
+    const c = cmd.trim();
+    if (!c) { write(''); return ready(); }
+    const lc = c.toLowerCase();
+    if (lc === 'cls') { cmdOut.textContent=''; return ready(); }
+    if (lc === 'help') { write('Commands: ipconfig, ipconfig /all, ipconfig /release, ipconfig /renew, cls, help'); return ready(); }
+    if (lc === 'ipconfig' || lc === 'ipconfig /all') { 
+      document.getElementById('liveLine')?.remove();
+      write(promptText + buffer);
+      write(ipconfigAll());
+      return ready(); 
+    }
+    if (lc === 'ipconfig /release') { 
+      write(promptText + buffer);
+      return runIpconfigRelease(); 
+    }
+    if (lc === 'ipconfig /renew') { 
+      write(promptText + buffer);
+      return runIpconfigRenew(); 
+    }
+    write(`'${cmd}' is not recognized as an internal or external command,
+operable program or batch file.`);
+    return ready();
+  }
+
+  // Global key handler (only when CMD window is visible)
+  document.addEventListener('keydown', (e)=>{
+    if (cmdWindow.style.display !== 'flex') return;
+    if (e.key === 'Enter'){
+      e.preventDefault(); document.getElementById('liveLine')?.remove();
+      write(promptText + buffer);
+      const line = buffer; buffer='';
+      handle(line);
+      return;
+    }
+    if (e.key === 'Backspace'){
+      e.preventDefault(); buffer = buffer.slice(0,-1); renderLive(); return;
+    }
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey){
+      e.preventDefault(); buffer += e.key; renderLive(); return;
+    }
+  });
+
+  // Clicking inside the output focuses the live line
+  cmdOut.addEventListener('mousedown', ()=>{ renderLive(); });
+
+  // Reset & Close
+  resetLab.addEventListener('click', ()=>{
+    cmdOut.textContent = 'Microsoft Windows [Version 10.0.19045.4529]\n(c) Microsoft Corporation. All rights reserved.\n\n';
+    buffer='';
+    netState = 'apipa';
+    cmdWindow.style.display='none';
+    instructionsWindow.style.display='flex';
+    flash('Lab reset to initial state');
+  });
+  closeBrowser.addEventListener('click', ()=>{ flash('Closing lab...'); window.close(); setTimeout(()=>{ window.location.href='about:blank'; }, 300); });
+
+  /* ===== Time only (no calendar popover) ===== */
+  const trayTime = document.getElementById('trayTime');
+  function two(n){ return n.toString().padStart(2,'0'); }
+  function updateTime(){ const d=new Date(); trayTime.textContent = two(d.getHours()) + ':' + two(d.getMinutes()); }
+  setInterval(updateTime, 60000); updateTime();
+
+  // Init: show instructions
+  instructionsWindow.style.display='flex';
+});
+
+/* ==== Tray/Popover helpers (ported from template) ==== */
+const systemTray = document.getElementById('systemTray');
+const trayTimeChipExisting = document.getElementById('trayTimeChip');
+
+function makePopover(html){
+  const el = document.createElement('div');
+  el.className = 'tray-popover';
+  el.innerHTML = html;
+  document.body.appendChild(el);
+  return el;
+}
+function togglePopover(popover, anchor){
+  const r = anchor.getBoundingClientRect();
+  popover.style.right  = (window.innerWidth - r.right) + 'px';
+  popover.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+  const open = popover.style.display === 'block';
+  document.querySelectorAll('.tray-popover').forEach(p=>p.style.display='none');
+  if (!open) popover.style.display='block';
+}
+
+/* ==== Time / Calendar popover ==== */
+const timePopover = makePopover(`
+  <div class="pop-header">Date & time</div>
+  <div class="pop-body">
+    <div class="calendar">
+      <div class="big-clock" id="bigClock">--:--</div>
+      <div class="small-date" id="smallDate">-- ---, ----</div>
+      <div class="cal-header">
+        <span id="prevMonth" style="cursor:pointer">‹</span>
+        <span class="month" id="monthLabel">Month Year</span>
+        <span id="nextMonth" style="cursor:pointer">›</span>
+      </div>
+      <div class="grid" id="calGrid">
+        <div class="dow">Su</div><div class="dow">Mo</div><div class="dow">Tu</div>
+        <div class="dow">We</div><div class="dow">Th</div><div class="dow">Fr</div><div class="dow">Sa</div>
+      </div>
+    </div>
+  </div>
+`);
+
+/* Click binding for tray time chip */
+if (trayTimeChipExisting) {
+  trayTimeChipExisting.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    updateClockAndDate();
+    ensureCalendarRendered();
+    togglePopover(timePopover, trayTimeChipExisting);
+  });
+}
+
+/* Click-away hide for popovers */
+document.addEventListener('click', (e)=>{
+  if (!systemTray.contains(e.target) && !e.target.closest('.tray-popover')) {
+    document.querySelectorAll('.tray-popover').forEach(p=>p.style.display='none');
+  }
+});
+document.querySelectorAll('.tray-popover').forEach(p => p.addEventListener('click', e => e.stopPropagation()));
+
+/* ==== Big clock + calendar rendering ==== */
+function updateClockAndDate(){
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const bigClock = document.getElementById('bigClock');
+  const smallDate = document.getElementById('smallDate');
+  if (bigClock) bigClock.textContent = `${hh}:${mm}`;
+  if (smallDate) smallDate.textContent = now.toLocaleDateString(undefined, { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+}
+
+/* Calendar state + renderer */
+let calRef = new Date();
+function ensureCalendarRendered(){ renderCalendar(calRef); }
+function renderCalendar(refDate){
+  const monthLabel = document.getElementById('monthLabel');
+  const grid = document.getElementById('calGrid');
+  if (!monthLabel || !grid) return;
+  Array.from(grid.querySelectorAll('.day')).forEach(d=>d.remove());
+  const y = refDate.getFullYear(), m = refDate.getMonth();
+  monthLabel.textContent = new Date(y, m, 1).toLocaleString(undefined, {month:'long', year:'numeric'});
+  const first = new Date(y, m, 1);
+  const startDow = first.getDay();
+  const daysIn = new Date(y, m+1, 0).getDate();
+  const prevDays = new Date(y, m, 0).getDate();
+  for(let i=startDow-1; i>=0; i--){ const el=document.createElement('div'); el.className='day other'; el.textContent=(prevDays - i); grid.appendChild(el); }
+  const today = new Date();
+  const highlight = (today.getFullYear()===y && today.getMonth()===m) ? today.getDate() : -1;
+  for(let d=1; d<=daysIn; d++){ const el=document.createElement('div'); el.className='day'; el.textContent=d; if(d===highlight) el.classList.add('today'); grid.appendChild(el); }
+  const totalCells = grid.querySelectorAll('.dow').length + grid.querySelectorAll('.day').length;
+  const rem = totalCells % 7;
+  if (rem !== 0){ const need = 7 - rem; for(let d=1; d<=need; d++){ const el=document.createElement('div'); el.className='day other'; el.textContent=d; grid.appendChild(el); } }
+}
+document.addEventListener('click', (e)=>{
+  if (e.target && e.target.id === 'prevMonth'){ e.stopPropagation(); calRef = new Date(calRef.getFullYear(), calRef.getMonth()-1, 1); ensureCalendarRendered(); }
+  if (e.target && e.target.id === 'nextMonth'){ e.stopPropagation(); calRef = new Date(calRef.getFullYear(), calRef.getMonth()+1, 1); ensureCalendarRendered(); }
+});
+
+</script>
 </body>
 </html>
