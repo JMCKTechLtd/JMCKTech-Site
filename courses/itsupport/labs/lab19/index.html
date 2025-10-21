@@ -1,19 +1,516 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Lab 19: Placeholder</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 19: Outlook - Additional Mailboxes</title>
+  <style>
+    /* ===== Theme ===== */
+    :root{
+      --brand1:#0078d4; --brand2:#106ebe;
+      --ink:#2c3e50; --muted:#5a6c7d;
+      --line:#e1e5e9; --bg:#f8f9fa; --card:#ffffff;
+      --accent1:#667eea; --accent2:#764ba2;
+      --success1:#28a745; --success2:#20c997;
+      --warn1:#ffb020;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:var(--bg); color:var(--ink); line-height:1.4}
+
+    /* ===== Header (with File/Home tabs) ===== */
+    .header{
+      background:linear-gradient(135deg, var(--brand1), var(--brand2));
+      color:#fff; padding:0 24px; display:flex; align-items:center; gap:16px;
+      height:52px; box-shadow:0 2px 8px rgba(0,0,0,.1)
+    }
+    .tabs{display:flex; gap:4px}
+    .tab{
+      padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:700; font-size:14px; user-select:none;
+      background:rgba(255,255,255,.12)
+    }
+    .tab.active{ background:#fff; color:#0f172a; box-shadow:0 2px 10px rgba(0,0,0,.15) }
+    .appTitle{margin-left:8px; font-weight:600}
+    .spacer{flex:1}
+    .user{font-size:13px; background:rgba(255,255,255,.12); padding:6px 12px; border-radius:16px}
+
+    /* ===== Ribbon/Nav (Home only) ===== */
+    .nav{
+      display:flex; gap:8px; background:#fff; border-bottom:1px solid var(--line); padding:10px 20px;
+      box-shadow:0 1px 3px rgba(0,0,0,.05)
+    }
+    .nav .btn{
+      background:linear-gradient(135deg, var(--accent1), var(--accent2)); color:#fff; border:none; border-radius:6px; padding:9px 14px;
+      font-weight:700; cursor:not-allowed; opacity:.5
+    }
+    .hintBadge{margin-left:auto; font-size:12px; color:#475569}
+
+    /* ===== Main layout (Home) ===== */
+    .main{ display:flex; height:calc(100vh - 52px - 44px); gap:1px; background:#e1e5e9 }
+    .sidebar{
+      width:240px; background:#fff; padding:16px; overflow:auto; box-shadow:2px 0 8px rgba(0,0,0,.05)
+    }
+    .sidebar h3{
+      font-size:12.5px; margin:18px 0 8px; color:#495057; font-weight:800; text-transform:uppercase; letter-spacing:.5px
+    }
+    .tree{ list-style:none; margin:0; padding:0 }
+    .node{
+      display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:13px;
+      transition:background .2s
+    }
+    .node:hover{ background:#f8f9fa }
+    .pill{ margin-left:auto; background:var(--brand1); color:#fff; font-size:11px; padding:2px 6px; border-radius:10px; font-weight:800 }
+    .children{ list-style:none; margin:4px 0 6px 22px; padding-left:10px; border-left:2px dashed #eef1f5; display:none }
+    .node.expand + .children{ display:block }
+
+    .listPane{
+      width:360px; background:#fff; padding:16px; overflow:auto; border-right:1px solid var(--line)
+    }
+    .listPane h4{ margin:0 0 12px; font-size:16px; color:#495057; font-weight:800 }
+    .emails{ list-style:none; margin:0; padding:0 }
+    .emails li{
+      padding:12px; font-size:13px; border-bottom:1px solid #f1f3f4; border-radius:8px; margin-bottom:4px; cursor:pointer; transition:.2s
+    }
+    .emails li:hover{ background:#f8f9fa; transform:translateX(2px) }
+    .emails li.unread{
+      font-weight:700; background:linear-gradient(90deg, rgba(102,126,234,.06), rgba(255,255,255,0));
+      border-left:3px solid var(--accent1)
+    }
+    .time{ float:right; color:#6c757d; font-size:12px }
+
+    .view{ flex:1; background:#fff; padding:24px; overflow:auto; display:flex; flex-direction:column }
+
+    /* ===== Instructions card ===== */
+    .lab{
+      background:linear-gradient(135deg, #e3f2fd, #f1f8e9);
+      border:2px solid #90caf9; border-radius:12px; padding:24px 28px; box-shadow:0 4px 20px rgba(0,0,0,.08)
+    }
+    .labHead{ display:flex; align-items:center; gap:16px; margin-bottom:16px }
+    .badge{
+      background:linear-gradient(135deg, #4facfe, #00f2fe); color:#fff; padding:8px 16px; border-radius:20px;
+      font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:.5px; box-shadow:0 4px 15px rgba(79,172,254,.3)
+    }
+    .lab h1{ margin:0; font-size:22px }
+    .desc{ font-size:15px; color:var(--muted); margin:10px 0 18px; font-style:italic }
+    .lab ol{
+      margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:14px; list-style:none; counter-reset:step
+    }
+    .lab li{
+      background:#f8f9ff; border:2px solid #e3e8ff; border-radius:10px; padding:14px 18px; position:relative; transition:.2s; counter-increment:step; font-size:14px
+    }
+    .lab li:hover{ border-color:var(--accent1); transform:translateY(-2px); box-shadow:0 4px 20px rgba(102,126,234,.15) }
+    .lab li::before{
+      content:counter(step); position:absolute; left:-10px; top:10px; width:20px; height:20px; border-radius:50%;
+      background:linear-gradient(135deg, var(--accent1), var(--accent2)); color:#fff; display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:11px; border:2px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.2)
+    }
+    .lab b{ color:var(--accent1) }
+
+    /* ===== Backstage (File) ===== */
+    .backstage{
+      position:fixed; inset:52px 0 0 0; display:none; z-index:40;
+      background:linear-gradient(135deg,#f8fafc,#eef2ff);
+      border-top:1px solid var(--line)
+    }
+    .bsWrap{ display:flex; height:calc(100vh - 52px) }
+    .bsLeft{
+      width:240px; background:#0f172a; color:#e2e8f0; padding:16px; display:flex; flex-direction:column; gap:8px
+    }
+    .bsLeft h4{ margin:6px 0 8px; font-size:13px; color:#a5b4fc; text-transform:uppercase; letter-spacing:.6px }
+    .bsItem{
+      padding:10px 12px; border-radius:8px; cursor:pointer; font-weight:700; color:#e2e8f0; transition:.15s
+    }
+    .bsItem:hover{ background:#1e293b }
+    .bsItem.active{ background:#334155 }
+    .bsRight{ flex:1; padding:22px 26px; overflow:auto }
+    .bsHeader{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px }
+    .backToMail{
+      border:2px solid #e2e8f0; background:#fff; padding:8px 14px; border-radius:8px; font-weight:800; cursor:pointer
+    }
+    .tileGrid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:16px }
+    .tile{
+      background:#fff; border:2px solid #e5e7eb; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,.06);
+      display:flex; flex-direction:column; gap:10px
+    }
+    .tile h5{ margin:0; font-size:16px }
+    .tile p{ margin:0; color:#475569; font-size:13px }
+    .tile .act{
+      margin-top:6px; align-self:flex-start; background:linear-gradient(135deg, var(--accent1), var(--accent2));
+      color:#fff; border:none; border-radius:8px; padding:8px 12px; font-weight:800; cursor:pointer
+    }
+
+    /* ===== Add Mailbox Modal (from File) ===== */
+    .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; z-index:60; backdrop-filter:blur(4px) }
+    .modalWrap{ position:fixed; inset:0; display:none; z-index:70; align-items:center; justify-content:center; padding:20px }
+    .dialog{
+      width:100%; max-width:700px; max-height:560px; background:#fff; border:none; border-radius:16px; box-shadow:0 24px 80px rgba(0,0,0,.25);
+      display:flex; flex-direction:column; overflow:hidden; font-size:14px
+    }
+    .dh{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:linear-gradient(135deg, #f8f9fa, #e9ecef); border-bottom:2px solid #e9ecef; font-weight:800; font-size:16px; color:#495057 }
+    .content{ flex:1; display:flex; flex-direction:column; gap:14px; padding:20px; overflow:auto }
+    .row{ display:flex; align-items:center; gap:12px }
+    .label{ width:180px; text-align:right; color:#495057; font-weight:700 }
+    .input{
+      flex:1; border:2px solid #e9ecef; border-radius:8px; padding:10px 14px; font-size:14px; transition:border-color .2s; background:#fff
+    }
+    .input:focus{ outline:none; border-color:var(--accent1); box-shadow:0 0 0 3px rgba(102,126,234,.12) }
+    .hint{ font-size:12px; color:#6b7280; margin-top:-2px }
+    .choices{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px }
+    .chip{ border:2px solid #e9ecef; padding:6px 10px; border-radius:999px; cursor:pointer; transition:.2s; font-weight:700 }
+    .chip:hover{ border-color:#cbd5e1 }
+    .chip[data-value*="hr@blockshell.app"]{ border-color:#b6e3c1; background:#f3fff6 }
+
+    .df{ display:flex; justify-content:flex-end; gap:12px; padding:16px 20px; border-top:2px solid #f1f3f4; background:#fafbfc }
+    .btn{ padding:10px 20px; border:2px solid #e9ecef; background:#fff; border-radius:8px; cursor:pointer; font-weight:800; transition:.15s }
+    .btn:hover{ border-color:#cbd5e1; transform:translateY(-1px) }
+    .btn.primary{ background:linear-gradient(135deg, var(--accent1), var(--accent2)); color:#fff; border-color:var(--accent1); box-shadow:0 4px 15px rgba(102,126,234,.3) }
+    .btn.primary:disabled{ opacity:.6; cursor:not-allowed; transform:none; box-shadow:none }
+
+    /* ===== Toast ===== */
+    .toast{
+      position:fixed; left:50%; bottom:40px; transform:translateX(-50%);
+      background:linear-gradient(135deg, var(--success1), var(--success2)); color:#fff; padding:16px 24px; border-radius:12px; display:none; z-index:80;
+      font-weight:800; box-shadow:0 8px 32px rgba(40,167,69,.4); animation:slideUp .3s ease
+    }
+    @keyframes slideUp{ from{ transform:translate(-50%, 100px); opacity:0 } to{ transform:translate(-50%, 0); opacity:1 } }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 900px){
+      .main{ flex-direction:column; height:auto }
+      .sidebar, .listPane{ width:100% }
+      .lab ol{ grid-template-columns:1fr }
+      .dialog{ margin:10px; height:calc(100vh - 40px) }
+    }
+  </style>
 </head>
 <body>
-  <div class="lab-container">
-    <div class="lab-header">
-      <div class="lab-title">Lab 19: Placeholder</div>
+  <!-- Header with File/Home -->
+  <div class="header">
+    <div class="tabs">
+      <div class="tab" id="fileTab">File</div>
+      <div class="tab active" id="homeTab">Home</div>
     </div>
-    <div class="task-panel">
-      <div class="task-title">🔧 Task</div>
-      <p>This is a placeholder for Lab 19. Replace this file with your actual lab content.</p>
+    <div class="appTitle">Outlook</div>
+    <div class="spacer"></div>
+    <div class="user">alex@blockshell.app</div>
+  </div>
+
+  <!-- Home ribbon (non-interactive; nudges learner to use File) -->
+  <div class="nav" id="homeRibbon">
+    <button class="btn" title="Use File &gt; Add Mailbox for this lab" disabled>New Email</button>
+    <div class="hintBadge">Follow the lab: File → Add Mailbox</div>
+  </div>
+
+  <!-- MAIN (Home view) -->
+  <div class="main" id="homeMain">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h3>Favorites</h3>
+      <ul class="tree" id="favorites">
+        <li class="node">📥 Inbox <span class="pill">9</span></li>
+        <li class="node">📤 Sent Items</li>
+        <li class="node">🗑️ Deleted Items <span class="pill">2</span></li>
+        <li class="node">🧩 BlockShell Labs <span class="pill">5</span></li>
+      </ul>
+
+      <h3>alex@blockshell.app</h3>
+      <ul class="tree">
+        <li class="node">📥 Inbox <span class="pill">9</span></li>
+        <li class="node">📝 Drafts</li>
+      </ul>
+
+      <h3>Shared Mailboxes</h3>
+      <ul class="tree" id="sharedTree">
+        <li class="node">📫 Support Team (support@blockshell.app)</li>
+        <!-- New mailboxes append here -->
+      </ul>
+    </aside>
+
+    <!-- Email list -->
+    <section class="listPane">
+      <h4 id="listTitle">All Mail</h4>
+      <ul class="emails" id="emailList">
+        <li class="unread" data-email-item>
+          Welcome to BlockShell <span class="time">10:12</span>
+          <ul>
+            <li>Kick off your labs today</li>
+          </ul>
+        </li>
+        <li class="unread" data-email-item>
+          Weekly Update <span class="time">09:03</span>
+          <ul><li>Team notes and next steps</li></ul>
+        </li>
+        <li data-email-item>
+          Support Team (support@blockshell.app) <span class="time">08:00</span>
+          <ul><li>Shared mailbox best practices</li></ul>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Email view -->
+    <section class="view">
+      <div class="lab">
+        <div class="labHead">
+          <span class="badge">Lab — Additional Mailbox</span>
+          <h1>Outlook — Add a Shared Mailbox via File Menu</h1>
+        </div>
+        <p class="desc">
+          Follow the classic Outlook flow to add a shared mailbox you have delegate access to.
+        </p>
+        <ol>
+          <li>Click the <b>File</b> tab at the top-left to open the Account (Backstage) view.</li>
+          <li>Select <b>Add Mailbox</b>.</li>
+          <li>In <b>Mailbox name or address</b>, type or choose <b>HR Team (hr@blockshell.app)</b>, then press <b>Add</b> (or <b>Enter</b>).</li>
+          <li>Click <b>Back to Mail</b> to return to Outlook. Expand <b>Shared Mailboxes</b> and verify <b>HR Team</b> appears. Open <b>Inbox</b> and click an email to mark it read.</li>
+        </ol>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== Backstage / File ===== -->
+  <div class="backstage" id="backstage">
+    <div class="bsWrap">
+      <aside class="bsLeft">
+        <h4>Account</h4>
+        <div class="bsItem active">Info</div>
+        <div class="bsItem">Automatic Replies</div>
+        <div class="bsItem">Rules & Alerts</div>
+        <div class="bsItem">Manage Add-ins</div>
+      </aside>
+      <section class="bsRight">
+        <div class="bsHeader">
+          <h2 style="margin:0">Account Information</h2>
+          <button class="backToMail" id="backToMailBtn">Back to Mail</button>
+        </div>
+        <div class="tileGrid">
+          <div class="tile">
+            <h5>Account Settings</h5>
+            <p>Manage accounts, delegates, and mailbox access.</p>
+            <button class="act" id="addMailboxTile">Add Mailbox</button>
+          </div>
+          <div class="tile">
+            <h5>Delegation</h5>
+            <p>Grant send on behalf permissions to colleagues.</p>
+            <button class="act" disabled title="Not part of this lab">Open</button>
+          </div>
+          <div class="tile">
+            <h5>Mailbox Cleanup</h5>
+            <p>Archive old items and reduce mailbox size.</p>
+            <button class="act" disabled title="Not part of this lab">Open</button>
+          </div>
+        </div>
+        <p style="margin-top:14px; color:#475569; font-size:13px">
+          Tip: For this lab, use <b>Add Mailbox</b>. You can type the mailbox or click the suggested chip in the dialog.
+        </p>
+      </section>
     </div>
   </div>
+
+  <!-- ===== Add Mailbox Modal ===== -->
+  <div class="overlay" id="overlay"></div>
+  <div class="modalWrap" id="modalWrap" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-label="Add Shared Mailbox">
+      <div class="dh">
+        Add Shared Mailbox
+        <button class="btn" id="closeModal">✖</button>
+      </div>
+      <div class="content">
+        <div class="row">
+          <div class="label">Mailbox name or address:</div>
+          <input id="mbxInput" class="input" type="text" placeholder="e.g. HR Team or hr@blockshell.app" autocomplete="off" aria-label="Mailbox name or address">
+        </div>
+        <div class="hint">Start typing to enable <b>Add</b>, or click a suggestion below. Press <b>Enter</b> to confirm.</div>
+        <div class="choices" id="suggestions">
+          <span class="chip" data-value="HR Team (hr@blockshell.app)">HR Team (hr@blockshell.app)</span>
+          <span class="chip" data-value="Finance Approvals (finance@blockshell.app)">Finance Approvals (finance@blockshell.app)</span>
+          <span class="chip" data-value="Projects (projects@blockshell.app)">Projects (projects@blockshell.app)</span>
+        </div>
+      </div>
+      <div class="df">
+        <button class="btn" id="cancelModal">Cancel</button>
+        <button class="btn primary" id="addMailbox" disabled>Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">✅ Mailbox added successfully: HR Team (hr@blockshell.app)</div>
+
+  <script>
+    // Helpers
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+
+    // Tabs: File vs Home
+    const fileTab = $('#fileTab'), homeTab = $('#homeTab');
+    const backstage = $('#backstage');
+    const homeRibbon = $('#homeRibbon');
+    const homeMain = $('#homeMain');
+
+    function showFile(){
+      fileTab.classList.add('active'); homeTab.classList.remove('active');
+      backstage.style.display='block';
+      homeRibbon.style.display='none';
+      homeMain.style.display='none';
+    }
+    function showHome(){
+      homeTab.classList.add('active'); fileTab.classList.remove('active');
+      backstage.style.display='none';
+      homeRibbon.style.display='flex';
+      homeMain.style.display='flex';
+    }
+    fileTab.addEventListener('click', showFile);
+    homeTab.addEventListener('click', showHome);
+
+    // Backstage actions
+    $('#backToMailBtn').addEventListener('click', showHome);
+    $('#addMailboxTile').addEventListener('click', openAddMailboxModal);
+
+    // Unread click handling (mark read)
+    document.addEventListener('DOMContentLoaded', () => {
+      const list = $('#emailList');
+      list.addEventListener('click', (e) => {
+        if (e.target instanceof HTMLAnchorElement) e.preventDefault();
+        const item = e.target.closest('li[data-email-item]');
+        if (!item || !list.contains(item)) return;
+        item.classList.remove('unread');
+      });
+    });
+
+    // Sidebar expand/collapse + mailbox inbox loader
+    const sharedTree = $('#sharedTree');
+    const emailList = $('#emailList');
+    const listTitle = $('#listTitle');
+
+    document.addEventListener('click', (e) => {
+      const node = e.target.closest('.node');
+      if (!node) return;
+      const next = node.nextElementSibling;
+      if (next && next.classList.contains('children')) {
+        node.classList.toggle('expand');
+      }
+    });
+
+    // Add Mailbox Modal
+    const overlay = $('#overlay');
+    const modalWrap = $('#modalWrap');
+    const closeModal = $('#closeModal');
+    const cancelModal = $('#cancelModal');
+    const addMailboxBtn = $('#addMailbox');
+    const mbxInput = $('#mbxInput');
+    const suggestions = $('#suggestions');
+    const toast = $('#toast');
+
+    function openAddMailboxModal(){
+      overlay.style.display='block';
+      modalWrap.style.display='flex';
+      modalWrap.setAttribute('aria-hidden','false');
+      mbxInput.value='';
+      addMailboxBtn.disabled=true;
+      setTimeout(()=>mbxInput.focus(), 50);
+    }
+    function closeAddMailboxModal(){
+      overlay.style.display='none';
+      modalWrap.style.display='none';
+      modalWrap.setAttribute('aria-hidden','true');
+    }
+    closeModal.addEventListener('click', closeAddMailboxModal);
+    cancelModal.addEventListener('click', closeAddMailboxModal);
+    overlay.addEventListener('click', closeAddMailboxModal);
+
+    mbxInput.addEventListener('input', () => {
+      addMailboxBtn.disabled = mbxInput.value.trim().length === 0;
+    });
+
+    suggestions.addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      mbxInput.value = chip.dataset.value || chip.textContent.trim();
+      addMailboxBtn.disabled = false;
+      mbxInput.focus();
+    });
+
+    // Create mailbox nodes
+    function createMailboxNode(display){
+      const liNode = document.createElement('li');
+      liNode.className = 'node expand';
+      liNode.textContent = '📫 ' + display;
+
+      const ulChildren = document.createElement('ul');
+      ulChildren.className = 'children';
+
+      const inboxNode = document.createElement('li');
+      inboxNode.className = 'node';
+      inboxNode.textContent = '📥 Inbox';
+      inboxNode.dataset.mailboxInbox = display;
+
+      const sentNode = document.createElement('li');
+      sentNode.className = 'node';
+      sentNode.textContent = '📤 Sent Items';
+
+      ulChildren.appendChild(inboxNode);
+      ulChildren.appendChild(sentNode);
+
+      return { liNode, ulChildren, inboxNode };
+    }
+
+    function loadMailboxInbox(display){
+      listTitle.textContent = display + ' — Inbox';
+      emailList.innerHTML = `
+        <li class="unread" data-email-item>
+          Welcome: ${display} <span class="time">11:20</span>
+          <ul><li>You now have access to this shared mailbox. Review onboarding notes.</li></ul>
+        </li>
+        <li class="unread" data-email-item>
+          Action Required: Policy Updates <span class="time">10:55</span>
+          <ul><li>Please acknowledge updated policies by Friday.</li></ul>
+        </li>
+        <li data-email-item>
+          Systems Notice <span class="time">09:10</span>
+          <ul><li>New ticketing workflow for requests</li></ul>
+        </li>
+      `;
+    }
+
+    function addMailbox(display){
+      const { liNode, ulChildren } = createMailboxNode(display);
+      sharedTree.appendChild(liNode);
+      sharedTree.appendChild(ulChildren);
+
+      ulChildren.addEventListener('click', (e) => {
+        const node = e.target.closest('.node');
+        if (!node) return;
+        if (node.dataset.mailboxInbox === display) {
+          loadMailboxInbox(display);
+        }
+      });
+
+      // Toast
+      toast.textContent = '✅ Mailbox added successfully: ' + display;
+      toast.style.display='block';
+      setTimeout(()=> toast.style.display='none', 3500);
+    }
+
+    // Confirm add (button + Enter)
+    addMailboxBtn.addEventListener('click', () => {
+      const value = mbxInput.value.trim();
+      if (!value) return;
+      addMailbox(value);
+      closeAddMailboxModal();
+    });
+    mbxInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !addMailboxBtn.disabled) {
+        addMailboxBtn.click();
+      }
+    });
+
+    // Accessibility affordance: If user adds mailbox while still in File,
+    // they must click "Back to Mail" to see it (as per the lab flow).
+    $('#backToMailBtn').addEventListener('click', () => {
+      showHome();
+    });
+
+    // Default view is Home; learners must click File → Add Mailbox
+    // Also allow clicking File tab text anywhere in header.
+  </script>
 </body>
 </html>

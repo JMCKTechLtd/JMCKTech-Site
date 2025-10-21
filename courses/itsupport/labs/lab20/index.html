@@ -1,19 +1,552 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Lab 20: Placeholder</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 20: Outlook - Manage Add-ins</title>
+  <style>
+    /* ===== Theme ===== */
+    :root{
+      --brand1:#0078d4; --brand2:#106ebe;
+      --ink:#2c3e50; --muted:#5a6c7d;
+      --line:#e1e5e9; --bg:#f8f9fa; --card:#ffffff;
+      --accent1:#667eea; --accent2:#764ba2;
+      --success1:#28a745; --success2:#20c997;
+      --warn1:#ffb020;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:var(--bg); color:var(--ink); line-height:1.4}
+
+    /* ===== Header (with File/Home tabs) ===== */
+    .header{
+      background:linear-gradient(135deg, var(--brand1), var(--brand2));
+      color:#fff; padding:0 24px; display:flex; align-items:center; gap:16px;
+      height:52px; box-shadow:0 2px 8px rgba(0,0,0,.1)
+    }
+    .tabs{display:flex; gap:4px}
+    .tab{
+      padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:700; font-size:14px; user-select:none;
+      background:rgba(255,255,255,.12)
+    }
+    .tab.active{ background:#fff; color:#0f172a; box-shadow:0 2px 10px rgba(0,0,0,.15) }
+    .appTitle{margin-left:8px; font-weight:600}
+    .spacer{flex:1}
+    .user{font-size:13px; background:rgba(255,255,255,.12); padding:6px 12px; border-radius:16px}
+
+    /* ===== Ribbon/Nav (Home only) ===== */
+    .nav{
+      display:flex; gap:12px; align-items:center; background:#fff; border-bottom:1px solid var(--line); padding:10px 20px;
+      box-shadow:0 1px 3px rgba(0,0,0,.05)
+    }
+    .nav .btn{
+      background:linear-gradient(135deg, var(--accent1), var(--accent2)); color:#fff; border:none; border-radius:6px; padding:9px 14px;
+      font-weight:700; cursor:not-allowed; opacity:.5
+    }
+    .hintBadge{margin-left:auto; font-size:12px; color:#475569}
+
+    /* Add-ins group */
+    .addinsGroup{
+      display:flex; align-items:center; gap:8px; margin-left:8px; padding-left:12px; border-left:1px solid #e5e7eb
+    }
+    .addinBtn{
+      border:2px solid #e5e7eb; background:#fff; padding:8px 10px; border-radius:8px; font-weight:800; cursor:pointer;
+      transition:.15s; display:flex; align-items:center; gap:8px
+    }
+    .addinBtn[disabled]{opacity:.5; cursor:not-allowed}
+    .addinIcon{width:18px; height:18px; border-radius:4px; background:linear-gradient(135deg, var(--accent1), var(--accent2))}
+
+    /* ===== Main layout (Home) ===== */
+    .main{ display:flex; height:calc(100vh - 52px - 44px); gap:1px; background:#e1e5e9 }
+    .sidebar{
+      width:240px; background:#fff; padding:16px; overflow:auto; box-shadow:2px 0 8px rgba(0,0,0,.05)
+    }
+    .sidebar h3{
+      font-size:12.5px; margin:18px 0 8px; color:#495057; font-weight:800; text-transform:uppercase; letter-spacing:.5px
+    }
+    .tree{ list-style:none; margin:0; padding:0 }
+    .node{
+      display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:13px;
+      transition:background .2s
+    }
+    .node:hover{ background:#f8f9fa }
+    .pill{ margin-left:auto; background:var(--brand1); color:#fff; font-size:11px; padding:2px 6px; border-radius:10px; font-weight:800 }
+    .children{ list-style:none; margin:4px 0 6px 22px; padding-left:10px; border-left:2px dashed #eef1f5; display:none }
+    .node.expand + .children{ display:block }
+
+    .listPane{
+      width:360px; background:#fff; padding:16px; overflow:auto; border-right:1px solid var(--line)
+    }
+    .listPane h4{ margin:0 0 12px; font-size:16px; color:#495057; font-weight:800 }
+    .emails{ list-style:none; margin:0; padding:0 }
+    .emails li{
+      padding:12px; font-size:13px; border-bottom:1px solid #f1f3f4; border-radius:8px; margin-bottom:4px; cursor:pointer; transition:.2s
+    }
+    .emails li:hover{ background:#f8f9fa; transform:translateX(2px) }
+    .emails li.unread{
+      font-weight:700; background:linear-gradient(90deg, rgba(102,126,234,.06), rgba(255,255,255,0));
+      border-left:3px solid var(--accent1)
+    }
+    .time{ float:right; color:#6c757d; font-size:12px }
+
+    .view{ flex:1; background:#fff; padding:24px; overflow:auto; display:flex; flex-direction:column; position:relative }
+
+    /* ===== Instructions card ===== */
+    .lab{
+      background:linear-gradient(135deg, #e3f2fd, #f1f8e9);
+      border:2px solid #90caf9; border-radius:12px; padding:24px 28px; box-shadow:0 4px 20px rgba(0,0,0,.08)
+    }
+    .labHead{ display:flex; align-items:center; gap:16px; margin-bottom:16px }
+    .badge{
+      background:linear-gradient(135deg, #4facfe, #00f2fe); color:#fff; padding:8px 16px; border-radius:20px;
+      font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:.5px; box-shadow:0 4px 15px rgba(79,172,254,.3)
+    }
+    .lab h1{ margin:0; font-size:22px }
+    .desc{ font-size:15px; color:var(--muted); margin:10px 0 18px; font-style:italic }
+    .lab ol{
+      margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:14px; list-style:none; counter-reset:step
+    }
+    .lab li{
+      background:#f8f9ff; border:2px solid #e3e8ff; border-radius:10px; padding:14px 18px; position:relative; transition:.2s; counter-increment:step; font-size:14px
+    }
+    .lab li:hover{ border-color:var(--accent1); transform:translateY(-2px); box-shadow:0 4px 20px rgba(102,126,234,.15) }
+    .lab li::before{
+      content:counter(step); position:absolute; left:-10px; top:10px; width:20px; height:20px; border-radius:50%;
+      background:linear-gradient(135deg, var(--accent1), var(--accent2)); color:#fff; display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:11px; border:2px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.2)
+    }
+    .lab b{ color:var(--accent1) }
+
+    /* ===== Backstage (File) ===== */
+    .backstage{
+      position:fixed; inset:52px 0 0 0; display:none; z-index:40;
+      background:linear-gradient(135deg,#f8fafc,#eef2ff);
+      border-top:1px solid var(--line)
+    }
+    .bsWrap{ display:flex; height:calc(100vh - 52px) }
+    .bsLeft{
+      width:240px; background:#0f172a; color:#e2e8f0; padding:16px; display:flex; flex-direction:column; gap:8px
+    }
+    .bsLeft h4{ margin:6px 0 8px; font-size:13px; color:#a5b4fc; text-transform:uppercase; letter-spacing:.6px }
+    .bsItem{
+      padding:10px 12px; border-radius:8px; cursor:pointer; font-weight:700; color:#e2e8f0; transition:.15s
+    }
+    .bsItem:hover{ background:#1e293b }
+    .bsItem.active{ background:#334155 }
+    .bsRight{ flex:1; padding:22px 26px; overflow:auto }
+    .bsHeader{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px }
+    .backToMail{
+      border:2px solid #e2e8f0; background:#fff; padding:8px 14px; border-radius:8px; font-weight:800; cursor:pointer
+    }
+    .tileGrid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:16px }
+    .tile{
+      background:#fff; border:2px solid #e5e7eb; border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,.06);
+      display:flex; flex-direction:column; gap:10px
+    }
+    .tile h5{ margin:0; font-size:16px }
+    .tile p{ margin:0; color:#475569; font-size:13px }
+    .tile .act{
+      margin-top:6px; align-self:flex-start; background:linear-gradient(135deg, var(--accent1), var(--accent2));
+      color:#fff; border:none; border-radius:8px; padding:8px 12px; font-weight:800; cursor:pointer
+    }
+    .tile .act[disabled]{opacity:.6; cursor:not-allowed}
+
+    /* ===== Add-ins Modal (marketplace quick-pick) ===== */
+    .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; z-index:60; backdrop-filter:blur(4px) }
+    .modalWrap{ position:fixed; inset:0; display:none; z-index:70; align-items:center; justify-content:center; padding:20px }
+    .dialog{
+      width:100%; max-width:820px; max-height:640px; background:#fff; border:none; border-radius:16px; box-shadow:0 24px 80px rgba(0,0,0,.25);
+      display:flex; flex-direction:column; overflow:hidden; font-size:14px
+    }
+    .dh{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:linear-gradient(135deg, #f8f9fa, #e9ecef); border-bottom:2px solid #e9ecef; font-weight:800; font-size:16px; color:#495057 }
+    .content{ flex:1; display:flex; flex-direction:column; gap:14px; padding:20px; overflow:auto }
+    .searchRow{ display:flex; gap:10px }
+    .input{
+      flex:1; border:2px solid #e9ecef; border-radius:8px; padding:10px 14px; font-size:14px; transition:border-color .2s; background:#fff
+    }
+    .input:focus{ outline:none; border-color:var(--accent1); box-shadow:0 0 0 3px rgba(102,126,234,.12) }
+    .grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:14px }
+    .card{
+      border:2px solid #edf2f7; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; transition:.15s
+    }
+    .card:hover{ border-color:#cbd5e1; transform:translateY(-1px) }
+    .app{
+      display:flex; align-items:center; gap:10px
+    }
+    .logo{ width:26px; height:26px; border-radius:6px; background:linear-gradient(135deg, var(--accent1), var(--accent2)) }
+    .appName{ font-weight:800 }
+    .small{ font-size:12px; color:#64748b }
+    .tags{ display:flex; gap:6px; flex-wrap:wrap }
+    .tag{ font-size:11px; padding:4px 8px; border:1px solid #e2e8f0; border-radius:999px; color:#334155; background:#f8fafc }
+    .df{ display:flex; justify-content:flex-end; gap:12px; padding:16px 20px; border-top:2px solid #f1f3f4; background:#fafbfc }
+    .btn{ padding:10px 20px; border:2px solid #e9ecef; background:#fff; border-radius:8px; cursor:pointer; font-weight:800; transition:.15s }
+    .btn:hover{ border-color:#cbd5e1; transform:translateY(-1px) }
+    .btn.primary{ background:linear-gradient(135deg, var(--accent1), var(--accent2)); color:#fff; border-color:var(--accent1); box-shadow:0 4px 15px rgba(102,126,234,.3) }
+    .btn.primary:disabled{ opacity:.6; cursor:not-allowed; transform:none; box-shadow:none }
+
+    /* ===== Toast ===== */
+    .toast{
+      position:fixed; left:50%; bottom:40px; transform:translateX(-50%);
+      background:linear-gradient(135deg, var(--success1), var(--success2)); color:#fff; padding:16px 24px; border-radius:12px; display:none; z-index:80;
+      font-weight:800; box-shadow:0 8px 32px rgba(40,167,69,.4); animation:slideUp .3s ease
+    }
+    @keyframes slideUp{ from{ transform:translate(-50%, 100px); opacity:0 } to{ transform:translate(-50%, 0); opacity:1 } }
+
+    /* ===== Task Pane (appears when opening an add-in) ===== */
+    .taskPane{
+      position:absolute; top:0; right:0; width:320px; height:100%; background:#f8fafc; border-left:2px solid #e2e8f0;
+      display:none; flex-direction:column
+    }
+    .taskPane .tpHead{ padding:12px; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #e2e8f0; background:#fff }
+    .taskPane .tpTitle{ font-weight:800 }
+    .taskPane .tpBody{ padding:12px; font-size:13px; color:#475569; overflow:auto }
+    .tpClose{ border:2px solid #e9ecef; background:#fff; border-radius:6px; font-weight:800; padding:6px 10px; cursor:pointer }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 900px){
+      .main{ flex-direction:column; height:auto }
+      .sidebar, .listPane{ width:100% }
+      .lab ol{ grid-template-columns:1fr }
+      .dialog{ margin:10px; height:calc(100vh - 40px) }
+      .taskPane{ width:100%; height:300px; position:relative }
+    }
+  </style>
 </head>
 <body>
-  <div class="lab-container">
-    <div class="lab-header">
-      <div class="lab-title">Lab 20: Placeholder</div>
+  <!-- Header with File/Home -->
+  <div class="header">
+    <div class="tabs">
+      <div class="tab" id="fileTab">File</div>
+      <div class="tab active" id="homeTab">Home</div>
     </div>
-    <div class="task-panel">
-      <div class="task-title">🔧 Task</div>
-      <p>This is a placeholder for Lab 20. Replace this file with your actual lab content.</p>
+    <div class="appTitle">Outlook</div>
+    <div class="spacer"></div>
+    <div class="user">alex@blockshell.app</div>
+  </div>
+
+  <!-- Home ribbon -->
+  <div class="nav" id="homeRibbon">
+    <button class="btn" title="Use File → Manage Add-ins for this lab" disabled>New Email</button>
+
+    <div class="addinsGroup" id="addinsGroup">
+      <span style="font-size:12px; color:#475569; font-weight:800">Add-ins:</span>
+      <!-- Add-in buttons appear here once installed -->
+      <button class="addinBtn" id="zoomBtn" style="display:none">
+        <span class="addinIcon"></span> Zoom
+      </button>
+      <button class="addinBtn" id="trelloBtn" style="display:none">
+        <span class="addinIcon"></span> Trello
+      </button>
+      <button class="addinBtn" id="translatorBtn" style="display:none">
+        <span class="addinIcon"></span> Translator
+      </button>
+    </div>
+
+    <div class="hintBadge" id="hintBadge">Follow the lab: File → Manage Add-ins</div>
+  </div>
+
+  <!-- MAIN (Home view) -->
+  <div class="main" id="homeMain">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h3>Favorites</h3>
+      <ul class="tree" id="favorites">
+        <li class="node">📥 Inbox <span class="pill">9</span></li>
+        <li class="node">📤 Sent Items</li>
+        <li class="node">🗑️ Deleted Items <span class="pill">2</span></li>
+        <li class="node">🧩 BlockShell Labs <span class="pill">5</span></li>
+      </ul>
+
+      <h3>alex@blockshell.app</h3>
+      <ul class="tree">
+        <li class="node">📥 Inbox <span class="pill">9</span></li>
+        <li class="node">📝 Drafts</li>
+      </ul>
+
+      <h3>Shared Mailboxes</h3>
+      <ul class="tree" id="sharedTree">
+        <li class="node">📫 Support Team (support@blockshell.app)</li>
+      </ul>
+    </aside>
+
+    <!-- Email list -->
+    <section class="listPane">
+      <h4 id="listTitle">All Mail</h4>
+      <ul class="emails" id="emailList">
+        <li class="unread" data-email-item>
+          Welcome to BlockShell <span class="time">10:12</span>
+          <ul><li>Kick off your labs today</li></ul>
+        </li>
+        <li class="unread" data-email-item>
+          Weekly Update <span class="time">09:03</span>
+          <ul><li>Team notes and next steps</li></ul>
+        </li>
+        <li data-email-item>
+          Systems Notice <span class="time">08:00</span>
+          <ul><li>New ticketing workflow for requests</li></ul>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Email view -->
+    <section class="view">
+      <div class="lab">
+        <div class="labHead">
+          <span class="badge">Lab — Manage Add-ins</span>
+          <h1>Outlook — Install an Add-in via File &gt; Manage Add-ins</h1>
+        </div>
+        <p class="desc">
+          Use the classic Backstage flow to add an Outlook add-in, then verify it appears on the Home ribbon and opens a task pane.
+        </p>
+        <ol>
+          <li>Click the <b>File</b> tab at the top-left to open the Backstage (Account) view.</li>
+          <li>Select <b>Manage Add-ins</b>.</li>
+          <li>In the <b>Add-ins Gallery</b>, choose <b>Zoom for Outlook</b> and click <b>Add</b>.</li>
+          <li>Click <b>Back to Mail</b>. On the Home ribbon, click the <b>Zoom</b> add-in button to open its task pane and confirm installation.</li>
+        </ol>
+      </div>
+
+      <!-- Task Pane (appears when an add-in button is clicked) -->
+      <aside class="taskPane" id="taskPane">
+        <div class="tpHead">
+          <div class="tpTitle" id="tpTitle">Add-in</div>
+          <button class="tpClose" id="tpClose">Close</button>
+        </div>
+        <div class="tpBody" id="tpBody">
+          <!-- Filled dynamically -->
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <!-- ===== Backstage / File ===== -->
+  <div class="backstage" id="backstage">
+    <div class="bsWrap">
+      <aside class="bsLeft">
+        <h4>Account</h4>
+        <div class="bsItem">Info</div>
+        <div class="bsItem">Automatic Replies</div>
+        <div class="bsItem">Rules &amp; Alerts</div>
+        <div class="bsItem active" id="manageAddinsItem">Manage Add-ins</div>
+      </aside>
+      <section class="bsRight">
+        <div class="bsHeader">
+          <h2 style="margin:0">Add-ins Gallery</h2>
+          <button class="backToMail" id="backToMailBtn">Back to Mail</button>
+        </div>
+
+        <p style="margin:0 0 10px; color:#475569; font-size:13px">
+          Browse and add trusted add-ins to enhance your Outlook experience. Select an add-in and click <b>Add</b>.
+        </p>
+
+        <div class="tileGrid" id="gallery">
+          <div class="tile">
+            <h5>Zoom for Outlook</h5>
+            <p>Schedule and manage Zoom meetings from Outlook.</p>
+            <button class="act" data-addin="Zoom">Add</button>
+          </div>
+          <div class="tile">
+            <h5>Trello Connector</h5>
+            <p>Create cards from emails and track work.</p>
+            <button class="act" data-addin="Trello">Add</button>
+          </div>
+          <div class="tile">
+            <h5>Translator</h5>
+            <p>Translate emails instantly in your mailbox.</p>
+            <button class="act" data-addin="Translator">Add</button>
+          </div>
+          <div class="tile">
+            <h5>Salesforce</h5>
+            <p>Relate emails to Salesforce records.</p>
+            <button class="act" data-addin="Salesforce" disabled title="Not part of this lab">Add</button>
+          </div>
+        </div>
+
+        <p style="margin-top:14px; color:#475569; font-size:13px">
+          Tip: For this lab, install <b>Zoom for Outlook</b>. You can explore others later.
+        </p>
+      </section>
     </div>
   </div>
+
+  <!-- ===== Modal (for future expansion; currently unused but kept consistent with other labs) ===== -->
+  <div class="overlay" id="overlay"></div>
+  <div class="modalWrap" id="modalWrap" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-label="Manage Add-ins">
+      <div class="dh">
+        Manage Add-ins
+        <button class="btn" id="closeModal">✖</button>
+      </div>
+      <div class="content">
+        <div class="searchRow">
+          <input class="input" type="text" placeholder="Search add-ins (e.g., Zoom, Trello, Translator)" />
+          <button class="btn">Search</button>
+        </div>
+        <div class="grid">
+          <!-- Cards would be injected here if using the modal variant -->
+        </div>
+      </div>
+      <div class="df">
+        <button class="btn" id="cancelModal">Close</button>
+        <button class="btn primary" id="addSelected" disabled>Add Selected</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">✅ Add-in added successfully</div>
+
+  <script>
+    // Helpers
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+
+    // Tabs: File vs Home
+    const fileTab = $('#fileTab'), homeTab = $('#homeTab');
+    const backstage = $('#backstage');
+    const homeRibbon = $('#homeRibbon');
+    const homeMain = $('#homeMain');
+    const hintBadge = $('#hintBadge');
+
+    function showFile(){
+      fileTab.classList.add('active'); homeTab.classList.remove('active');
+      backstage.style.display='block';
+      homeRibbon.style.display='none';
+      homeMain.style.display='none';
+    }
+    function showHome(){
+      homeTab.classList.add('active'); fileTab.classList.remove('active');
+      backstage.style.display='none';
+      homeRibbon.style.display='flex';
+      homeMain.style.display='flex';
+    }
+    fileTab.addEventListener('click', showFile);
+    homeTab.addEventListener('click', showHome);
+
+    // Backstage actions
+    $('#backToMailBtn').addEventListener('click', () => {
+      showHome();
+    });
+
+    // Unread click handling (mark read)
+    document.addEventListener('DOMContentLoaded', () => {
+      const list = $('#emailList');
+      list.addEventListener('click', (e) => {
+        const item = e.target.closest('li[data-email-item]');
+        if (!item || !list.contains(item)) return;
+        item.classList.remove('unread');
+      });
+    });
+
+    // Sidebar expand/collapse
+    document.addEventListener('click', (e) => {
+      const node = e.target.closest('.node');
+      if (!node) return;
+      const next = node.nextElementSibling;
+      if (next && next.classList.contains('children')) {
+        node.classList.toggle('expand');
+      }
+    });
+
+    // ===== Add-ins install logic =====
+    const installed = new Set();
+    const toast = $('#toast');
+    const zoomBtn = $('#zoomBtn');
+    const trelloBtn = $('#trelloBtn');
+    const translatorBtn = $('#translatorBtn');
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.style.display='block';
+      setTimeout(()=> toast.style.display='none', 3500);
+    }
+
+    function reflectInstalled(){
+      // Update ribbon buttons visibility based on installed add-ins
+      zoomBtn.style.display = installed.has('Zoom') ? 'inline-flex' : 'none';
+      trelloBtn.style.display = installed.has('Trello') ? 'inline-flex' : 'none';
+      translatorBtn.style.display = installed.has('Translator') ? 'inline-flex' : 'none';
+
+      // Update hint
+      hintBadge.textContent = installed.size
+        ? 'Add-in installed — try it from the Home ribbon'
+        : 'Follow the lab: File → Manage Add-ins';
+
+      // Disable "Add" buttons for installed apps
+      $$('#gallery .act').forEach(btn => {
+        const name = btn.dataset.addin;
+        if (!name) return;
+        btn.disabled = installed.has(name);
+        btn.textContent = installed.has(name) ? 'Added' : 'Add';
+      });
+    }
+
+    // Gallery "Add" buttons
+    $$('#gallery .act').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const name = btn.dataset.addin;
+        if (!name) return;
+        installed.add(name);
+        reflectInstalled();
+        showToast('✅ Add-in added successfully: ' + name);
+      });
+    });
+
+    // ===== Task Pane behavior =====
+    const taskPane = $('#taskPane');
+    const tpTitle = $('#tpTitle');
+    const tpBody = $('#tpBody');
+    const tpClose = $('#tpClose');
+
+    function openTaskPane(name){
+      tpTitle.textContent = name + ' Add-in';
+      // Simple mocked content per add-in
+      let html = '';
+      if (name === 'Zoom'){
+        html = `
+          <p><b>Zoom for Outlook</b> is installed.</p>
+          <p>Create and insert Zoom meeting details into your email.</p>
+          <ul>
+            <li>Start instant meeting</li>
+            <li>Schedule meeting</li>
+            <li>Insert meeting link</li>
+          </ul>
+        `;
+      } else if (name === 'Trello'){
+        html = `
+          <p><b>Trello Connector</b> is installed.</p>
+          <p>Create a card from this email and choose a board/list.</p>
+          <ul>
+            <li>Board: BlockShell Roadmap</li>
+            <li>List: Backlog</li>
+            <li>Action: Create card</li>
+          </ul>
+        `;
+      } else if (name === 'Translator'){
+        html = `
+          <p><b>Translator</b> is installed.</p>
+          <p>Highlight text in the email to translate. Choose language:</p>
+          <select>
+            <option>French</option>
+            <option>Spanish</option>
+            <option>German</option>
+            <option>Japanese</option>
+          </select>
+        `;
+      } else {
+        html = `<p>${name} add-in is installed.</p>`;
+      }
+      tpBody.innerHTML = html;
+      taskPane.style.display = 'flex';
+    }
+    tpClose.addEventListener('click', () => taskPane.style.display='none');
+
+    // Ribbon buttons open task pane
+    zoomBtn.addEventListener('click', () => openTaskPane('Zoom'));
+    trelloBtn.addEventListener('click', () => openTaskPane('Trello'));
+    translatorBtn.addEventListener('click', () => openTaskPane('Translator'));
+
+    // Default: show Home first, but learner must click File → Manage Add-ins
+    // Clicking "File" tab anywhere in the header works.
+  </script>
 </body>
 </html>
