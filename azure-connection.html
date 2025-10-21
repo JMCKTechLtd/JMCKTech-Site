@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Static Web Apps - Complete Machine Setup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0078d4 0%, #0063b1 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 15s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.3; }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .prerequisites {
+            background: linear-gradient(135deg, #fff4e6 0%, #ffe0b2 100%);
+            border-left: 5px solid #ff9800;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .prerequisites h2 {
+            color: #e65100;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .prerequisites ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .prerequisites li {
+            padding: 0.5rem 0;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .prerequisites li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #ff9800;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .step {
+            margin: 2.5rem 0;
+            border-left: 4px solid #0078d4;
+            padding-left: 2rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            border-left-color: #2196f3;
+            transform: translateX(5px);
+        }
+
+        .step::before {
+            content: attr(data-step);
+            position: absolute;
+            left: -1.75rem;
+            top: 0;
+            width: 3rem;
+            height: 3rem;
+            background: linear-gradient(135deg, #0078d4 0%, #0063b1 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,120,212,0.4);
+            font-size: 1.1rem;
+        }
+
+        .step h3 {
+            color: #0078d4;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+            margin-left: 1.5rem;
+        }
+
+        .step h4 {
+            color: #555;
+            margin: 1rem 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+
+        .step p {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow-x: auto;
+            position: relative;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .code-block::before {
+            content: 'BASH';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: #0078d4;
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .note {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .warning {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border-left: 4px solid #ff6f00;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-left: 4px solid #4caf50;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .section-title {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            padding: 1rem 2rem;
+            margin: 3rem -2rem 2rem -2rem;
+            border-left: 6px solid #0078d4;
+            font-size: 1.6rem;
+            color: #0078d4;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .troubleshooting {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-top: 3rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .troubleshooting h3 {
+            color: #c62828;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .troubleshooting h4 {
+            color: #d32f2f;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .troubleshooting ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .troubleshooting li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .troubleshooting li:before {
+            content: "⚠";
+            position: absolute;
+            left: 0;
+            color: #c62828;
+        }
+
+        .checklist {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .checklist h3 {
+            color: #7b1fa2;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .checklist ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .checklist li {
+            padding: 0.7rem 0;
+            padding-left: 2rem;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .checklist li:hover {
+            padding-left: 2.5rem;
+        }
+
+        .checklist li:before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            color: #7b1fa2;
+            font-size: 1.3rem;
+        }
+
+        .oneliner {
+            background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .oneliner h3 {
+            color: #3949ab;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            border-radius: 8px;
+        }
+
+        .footer p {
+            color: #0078d4;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d32f2f;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .content {
+                padding: 1rem;
+            }
+            
+            .step {
+                padding-left: 1.5rem;
+            }
+
+            .step::before {
+                left: -1.5rem;
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Azure Static Web Apps Setup</h1>
+            <p>Complete Configuration Guide for New Linux Machines</p>
+        </div>
+
+        <div class="content">
+            <div class="prerequisites">
+                <h2>📋 Prerequisites</h2>
+                <ul>
+                    <li>Azure subscription with Static Web Apps access</li>
+                    <li>GitHub account with repository access</li>
+                    <li>Your organization's Azure AD/Entra ID permissions</li>
+                </ul>
+            </div>
+
+            <div class="step" data-step="1">
+                <h3>Initial System Setup</h3>
+                
+                <h4>Update System Packages</h4>
+                <div class="code-block">
+sudo apt update && sudo apt upgrade -y
+                </div>
+
+                <h4>Install Essential Tools</h4>
+                <div class="code-block">
+sudo apt install -y git curl wget gnupg lsb-release ca-certificates
+                </div>
+            </div>
+
+            <div class="step" data-step="2">
+                <h3>Install Azure CLI</h3>
+                
+                <h4>Add Microsoft Repository and Install</h4>
+                <div class="code-block">
+curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+
+AZ_REPO=$(lsb_release -cs)
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+
+sudo apt update
+sudo apt install azure-cli
+                </div>
+
+                <h4>Verify Installation</h4>
+                <div class="code-block">
+az --version
+                </div>
+            </div>
+
+            <div class="step" data-step="3">
+                <h3>Install Git and Configure</h3>
+                
+                <h4>Configure Git (Global Settings)</h4>
+                <div class="code-block">
+git config --global user.name "Your Name"
+git config --global user.email "your.email@yourdomain.com"
+git config --global init.defaultBranch master
+                </div>
+
+                <h4>Set up Credential Helper (Optional)</h4>
+                <div class="code-block">
+git config --global credential.helper cache
+                </div>
+            </div>
+
+            <div class="step" data-step="4">
+                <h3>Azure Authentication</h3>
+                
+                <h4>Login to Azure CLI</h4>
+                <div class="code-block">
+az login
+                </div>
+                <div class="note">
+                    This will open a browser window for authentication
+                </div>
+
+                <h4>If Using Organizational Account with Device Code (Alternative)</h4>
+                <div class="code-block">
+az login --use-device-code
+                </div>
+
+                <h4>Verify Subscription Access</h4>
+                <div class="code-block">
+az account list --output table
+                </div>
+
+                <h4>Set Default Subscription (if multiple)</h4>
+                <div class="code-block">
+az account set --subscription "Your-Subscription-Name"
+                </div>
+            </div>
+
+            <div class="step" data-step="5">
+                <h3>Clone Your Repository</h3>
+                
+                <h4>Navigate to Your Working Directory</h4>
+                <div class="code-block">
+mkdir -p ~/projects
+cd ~/projects
+                </div>
+
+                <h4>Clone the Repository</h4>
+                <div class="code-block">
+git clone https://github.com/your-organization/JMCKTech-Site.git
+cd JMCKTech-Site
+                </div>
+
+                <div class="note">
+                    <strong>OR</strong> if using SSH:
+                </div>
+                <div class="code-block">
+git clone git@github.com:your-organization/JMCKTech-Site.git
+cd JMCKTech-Site
+                </div>
+            </div>
+
+            <div class="step" data-step="6">
+                <h3>Set Up Static Web Apps CLI</h3>
+                <div class="note">Optional but Recommended</div>
+                
+                <h4>Install Azure Static Web Apps CLI</h4>
+                <div class="code-block">
+npm install -g @azure/static-web-apps-cli
+                </div>
+
+                <h4>Or install via curl</h4>
+                <div class="code-block">
+curl -L -o swa.zip https://github.com/Azure/static-web-apps-cli/releases/latest/download/static-web-apps-cli-linux-x64.zip
+sudo unzip swa.zip -d /usr/local/bin
+sudo chmod +x /usr/local/bin/swa
+                </div>
+
+                <h4>Verify SWA CLI</h4>
+                <div class="code-block">
+swa --version
+                </div>
+            </div>
+
+            <div class="step" data-step="7">
+                <h3>Configure Local Development</h3>
+                
+                <h4>Test Local Build (if applicable)</h4>
+                <div class="code-block">
+# Navigate to your project directory
+cd ~/projects/JMCKTech-Site
+
+# Test the site structure
+ls -la
+                </div>
+
+                <h4>Run Local Development Server with SWA CLI</h4>
+                <div class="code-block">
+swa start ./ --api-location ./api
+                </div>
+
+                <h4>OR with simple HTTP server:</h4>
+                <div class="code-block">
+python3 -m http.server 8000
+# or
+npx http-server -p 8000
+                </div>
+            </div>
+
+            <div class="step" data-step="8">
+                <h3>Verify Azure Static Web Apps Connection</h3>
+                
+                <h4>List Your Static Web Apps</h4>
+                <div class="code-block">
+az staticwebapp list --output table
+                </div>
+
+                <h4>Get Specific App Details</h4>
+                <div class="code-block">
+az staticwebapp show --name "your-app-name" --resource-group "your-resource-group"
+                </div>
+
+                <h4>Test Deployment Configuration</h4>
+                <div class="code-block">
+az staticwebapp environment list --name "your-app-name" --resource-group "your-resource-group"
+                </div>
+            </div>
+
+            <div class="step" data-step="9">
+                <h3>Set Up Deployment Credentials</h3>
+                <div class="note">If Needed</div>
+                
+                <h4>Create Deployment Token</h4>
+                <div class="code-block">
+az staticwebapp secrets list --name "your-app-name" --resource-group "your-resource-group"
+                </div>
+
+                <h4>Or create new deployment token</h4>
+                <div class="code-block">
+az staticwebapp create-invitation --name "your-app-name" --resource-group "your-resource-group"
+                </div>
+            </div>
+
+            <div class="step" data-step="10">
+                <h3>Test Complete Workflow</h3>
+                
+                <h4>Make a Test Change</h4>
+                <div class="code-block">
+echo "<!-- Test deployment -->" >> index.html
+                </div>
+
+                <h4>Commit and Push</h4>
+                <div class="code-block">
+git add index.html
+git commit -m "Test deployment from new machine"
+git push origin master
+                </div>
+
+                <h4>Monitor Deployment</h4>
+                <div class="code-block">
+# Watch deployment logs
+az staticwebapp show --name "your-app-name" --resource-group "your-resource-group" --query "repositoryUrl"
+
+# Or check in Azure portal
+echo "Check deployment at: https://portal.azure.com"
+                </div>
+            </div>
+
+            <div class="step" data-step="11">
+                <h3>Verify Production Deployment</h3>
+                
+                <div class="warning">
+                    ⏱️ Wait 2-3 minutes, then test:
+                </div>
+                
+                <div class="code-block">
+curl -I https://lively-ocean-054bef103.2.azurestaticapps.net/
+                </div>
+
+                <h4>Check specific lab</h4>
+                <div class="code-block">
+curl -I https://lively-ocean-054bef103.2.azurestaticapps.net/courses/firstline/labs/lab01/
+                </div>
+            </div>
+
+            <div class="step" data-step="12">
+                <h3>Security and Organization Access</h3>
+                
+                <h4>If Using Enterprise Authentication</h4>
+                <div class="code-block">
+# Verify organizational access
+az ad signed-in-user show
+
+# Check group memberships (if applicable)
+az ad user get-member-groups --id $(az ad signed-in-user show --query id -o tsv)
+                </div>
+
+                <h4>Set Resource Group Context (Optional)</h4>
+                <div class="code-block">
+az configure --defaults group=your-resource-group
+                </div>
+
+                <div class="success">
+                    <strong>✅ Setup Complete!</strong> Your development environment is ready.
+                </div>
+            </div>
+
+            <h2 class="section-title">🔧 Troubleshooting Common Issues</h2>
+
+            <div class="troubleshooting">
+                <h4>Permission Denied on Git Push</h4>
+                <div class="code-block">
+# If SSH key needed:
+ssh-keygen -t rsa -b 4096 -C "your.email@yourdomain.com"
+cat ~/.ssh/id_rsa.pub
+# Add to GitHub SSH keys
+                </div>
+
+                <h4>Azure CLI Authentication Issues</h4>
+                <div class="code-block">
+# Clear cached credentials
+az logout
+
+# Re-authenticate
+az login
+                </div>
+
+                <h4>Static Web Apps Not Found</h4>
+                <div class="code-block">
+# Check if you're in correct subscription
+az account show
+
+# List all resources
+az resource list --resource-type "Microsoft.Web/staticSites"
+                </div>
+
+                <h4>Git Repository Access Issues</h4>
+                <div class="note">
+                    If repository is private, ensure you have:
+                    <ul style="margin-top: 0.5rem;">
+                        <li>GitHub access to organization</li>
+                        <li>Correct repository permissions</li>
+                        <li>PAT (Personal Access Token) if required</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="checklist">
+                <h3>✓ Quick Verification Checklist</h3>
+                <ul>
+                    <li><code>az --version</code> shows Azure CLI installed</li>
+                    <li><code>git --version</code> shows Git installed</li>
+                    <li><code>az login</code> successful</li>
+                    <li><code>git clone</code> successful</li>
+                    <li>Can access repository files locally</li>
+                    <li><code>git push origin master</code> works</li>
+                    <li>Azure portal shows deployment in progress</li>
+                    <li>Production site updates within 3 minutes</li>
+                </ul>
+            </div>
+
+            <div class="oneliner">
+                <h3>🚀 One-Liner Setup (For Future Reference)</h3>
+                <div class="code-block">
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash && git clone https://github.com/your-organization/JMCKTech-Site.git && cd JMCKTech-Site && az login
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>🎯 This guide ensures you have a complete development and deployment environment for your Azure Static Web Apps training portal on any new Linux machine.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

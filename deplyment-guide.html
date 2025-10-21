@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Deployment Guide - Azure Static Web Apps</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0078d4 0%, #0063b1 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .prerequisites {
+            background: #fff4e6;
+            border-left: 4px solid #ff9800;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+        }
+
+        .prerequisites h2 {
+            color: #e65100;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .prerequisites ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .prerequisites li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .prerequisites li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #ff9800;
+            font-weight: bold;
+        }
+
+        .step {
+            margin: 2rem 0;
+            border-left: 3px solid #0078d4;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .step::before {
+            content: attr(data-step);
+            position: absolute;
+            left: -1.5rem;
+            top: 0;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: #0078d4;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,120,212,0.3);
+        }
+
+        .step h3 {
+            color: #0078d4;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            margin-left: 1rem;
+        }
+
+        .step p {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow-x: auto;
+            position: relative;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .code-block::before {
+            content: 'BASH';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: #0078d4;
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .code-block.html::before {
+            content: 'HTML';
+            background: #e44d26;
+        }
+
+        .action-note {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .warning {
+            background: #fff3e0;
+            border-left: 4px solid #ff6f00;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .section-title {
+            background: #f5f5f5;
+            padding: 1rem 2rem;
+            margin: 2rem -2rem;
+            border-left: 5px solid #0078d4;
+            font-size: 1.5rem;
+            color: #0078d4;
+            font-weight: bold;
+        }
+
+        .quick-ref {
+            background: #f0f4f8;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        .quick-ref h3 {
+            color: #0078d4;
+            margin-bottom: 1rem;
+        }
+
+        .troubleshooting {
+            background: #ffebee;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+        }
+
+        .troubleshooting h3 {
+            color: #c62828;
+            margin-bottom: 1rem;
+        }
+
+        .troubleshooting ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .troubleshooting li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .troubleshooting li:before {
+            content: "⚠";
+            position: absolute;
+            left: 0;
+            color: #c62828;
+        }
+
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .content {
+                padding: 1rem;
+            }
+            
+            .step {
+                padding-left: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Lab Deployment Guide</h1>
+            <p>Complete workflow for deploying labs to Azure Static Web Apps</p>
+        </div>
+
+        <div class="content">
+            <div class="prerequisites">
+                <h2>📋 Prerequisites</h2>
+                <ul>
+                    <li>Git repository initialized and connected to Azure Static Web Apps</li>
+                    <li>Azure deployment already configured and working</li>
+                    <li>Access to terminal/command line</li>
+                </ul>
+            </div>
+
+            <h2 class="section-title">Deployment Workflow</h2>
+
+            <div class="step" data-step="1">
+                <h3>Determine Next Lab Number</h3>
+                <div class="code-block">
+# Check current lab directories
+ls -la courses/firstline/labs/
+                </div>
+                <div class="action-note">
+                    <strong>Action:</strong> Count the existing lab directories to determine next number (e.g., if labs 01-10 exist, next is 11)
+                </div>
+            </div>
+
+            <div class="step" data-step="2">
+                <h3>Create Lab Directory</h3>
+                <div class="code-block">
+# Replace [number] with actual lab number (e.g., 11)
+mkdir -p courses/firstline/labs/lab[number]/
+                </div>
+            </div>
+
+            <div class="step" data-step="3">
+                <h3>Create Lab HTML Files</h3>
+                <div class="code-block">
+# Create main lab page
+cat > courses/firstline/labs/lab[number]/index.html << 'EOF'
+[PASTE YOUR FULL LAB HTML CONTENT HERE - NO TRUNCATION]
+EOF
+
+# Create any additional lab files (like simulation HTML)
+cat > courses/firstline/labs/lab[number]/[filename].html << 'EOF'
+[PASTE ADDITIONAL HTML FILES IF NEEDED]
+EOF
+                </div>
+            </div>
+
+            <div class="step" data-step="4">
+                <h3>Verify Files Created</h3>
+                <div class="code-block">
+# Check files were created correctly
+ls -la courses/firstline/labs/lab[number]/
+cat courses/firstline/labs/lab[number]/index.html | head -20
+                </div>
+            </div>
+
+            <div class="step" data-step="5">
+                <h3>Git Add & Commit</h3>
+                <div class="code-block">
+# Add the new lab directory
+git add courses/firstline/labs/lab[number]/
+
+# Commit with descriptive message
+git commit -m "Add Lab [number]: [Lab Title]"
+
+# Verify commit
+git log --oneline -3
+                </div>
+            </div>
+
+            <div class="step" data-step="6">
+                <h3>Deploy to Azure</h3>
+                <div class="code-block">
+# Push to trigger Azure deployment
+git push origin master
+                </div>
+            </div>
+
+            <div class="step" data-step="7">
+                <h3>Wait for Deployment</h3>
+                <div class="warning">
+                    ⏱️ Wait 2-3 minutes for Azure Static Web Apps to deploy<br>
+                    Check deployment status in Azure portal if needed
+                </div>
+            </div>
+
+            <div class="step" data-step="8">
+                <h3>Test Lab Access</h3>
+                <ul style="margin-left: 1rem;">
+                    <li>Navigate to: <code style="background: #f5f5f5; padding: 0.2rem 0.5rem; border-radius: 3px;">https://lively-ocean-054bef103.2.azurestaticapps.net/courses/firstline/labs/lab[number]/</code></li>
+                    <li>Verify lab loads correctly</li>
+                    <li>Test all interactive elements</li>
+                </ul>
+            </div>
+
+            <div class="step" data-step="9">
+                <h3>Update Main Portal Index</h3>
+                <div class="code-block">
+# Edit the main index.html to add new lab to listing
+# Add new lab card to appropriate section 
+# (ServiceNow ITSM Labs or BIOS Configuration Labs)
+                </div>
+            </div>
+
+            <div class="step" data-step="10">
+                <h3>Deploy Index Update</h3>
+                <div class="code-block">
+git add index.html
+git commit -m "Update portal: Add Lab [number] to main index"
+git push origin master
+                </div>
+            </div>
+
+            <div class="step" data-step="11">
+                <h3>Final Verification</h3>
+                <ul style="margin-left: 1rem;">
+                    <li>Wait 2-3 minutes for deployment</li>
+                    <li>Visit main portal: <code style="background: #f5f5f5; padding: 0.2rem 0.5rem; border-radius: 3px;">https://lively-ocean-054bef103.2.azurestaticapps.net/</code></li>
+                    <li>Verify new lab appears in the correct section</li>
+                    <li>Test navigation to the new lab</li>
+                </ul>
+                <div class="success-box">
+                    <strong>✅ Deployment Complete!</strong> Your lab is now live and accessible.
+                </div>
+            </div>
+
+            <h2 class="section-title">Quick Reference</h2>
+
+            <div class="quick-ref">
+                <h3>Lab Card Templates</h3>
+                <p>When updating <code>index.html</code>, use these templates for new labs:</p>
+                
+                <h4 style="margin-top: 1.5rem; color: #0078d4;">For ServiceNow ITSM Labs:</h4>
+                <div class="code-block html">
+&lt;div class="lab-card itsm-card"&gt;
+    &lt;div class="lab-meta"&gt;
+        &lt;span class="lab-difficulty [beginner|intermediate|advanced]"&gt;[Difficulty]&lt;/span&gt;
+        &lt;span&gt;Lab [number]&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;h3&gt;[Lab Title]&lt;/h3&gt;
+    &lt;p&gt;[Lab Description]&lt;/p&gt;
+    &lt;a href="labs/lab[number]/" class="lab-link"&gt;Start Lab&lt;/a&gt;
+&lt;/div&gt;
+                </div>
+
+                <h4 style="margin-top: 1.5rem; color: #0078d4;">For BIOS Configuration Labs:</h4>
+                <div class="code-block html">
+&lt;div class="lab-card bios-card"&gt;
+    &lt;div class="lab-meta"&gt;
+        &lt;span class="lab-difficulty [beginner|intermediate|advanced]"&gt;[Difficulty]&lt;/span&gt;
+        &lt;span&gt;Lab [number]&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;h3&gt;[Lab Title]&lt;/h3&gt;
+    &lt;p&gt;[Lab Description]&lt;/p&gt;
+    &lt;a href="labs/lab[number]/" class="lab-link"&gt;Start Lab&lt;/a&gt;
+&lt;/div&gt;
+                </div>
+            </div>
+
+            <div class="troubleshooting">
+                <h3>🔧 Troubleshooting</h3>
+                
+                <h4 style="margin-top: 1rem;">If lab doesn't appear:</h4>
+                <ul>
+                    <li>Check Azure deployment logs</li>
+                    <li>Verify file paths are correct</li>
+                    <li>Ensure HTML files have proper structure</li>
+                </ul>
+
+                <h4 style="margin-top: 1rem;">If authentication issues:</h4>
+                <ul>
+                    <li>Verify Microsoft Entra ID configuration</li>
+                    <li>Check Static Web Apps authentication settings</li>
+                </ul>
+
+                <div style="margin-top: 1.5rem; padding: 1rem; background: white; border-radius: 4px;">
+                    <strong>Remember:</strong> Always test each lab thoroughly after deployment!
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: #f5f5f5; border-radius: 8px;">
+                <p style="color: #0078d4; font-size: 1.1rem; font-weight: bold;">
+                    This workflow ensures consistent, reliable lab deployments to your Azure Static Web Apps training portal.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
