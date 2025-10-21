@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lab 27: Microsoft Intune Admin Center</title>
+<style>
+:root{
+  --bg:#ffffff; --text:#242424; --muted:#6b7280; --border:#e5e5e5; --panel-2:#fafafa;
+  --blue:#2563eb; --ok:#16a34a; --warn:#f59e0b; --err:#dc2626;
+  --shadow:0 1px 2px rgba(0,0,0,.06),0 6px 16px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--panel-2);color:var(--text);font-family:"Segoe UI", SegoeUI, system-ui, -apple-system, Roboto, Arial, sans-serif}
+
+/* Shell */
+.shell{display:grid;grid-template-columns:240px 1fr;grid-template-rows:48px 1fr;min-height:100vh}
+
+/* Top bar */
+.topbar{grid-column:1/-1;background:#1f2937;color:#fff;display:flex;align-items:center;gap:12px;padding:0 14px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600}
+.brand .dot{width:26px;height:26px;border-radius:6px;background:#60a5fa;position:relative}
+.brand .dot:after{content:"";position:absolute;right:-6px;bottom:-6px;width:12px;height:12px;border-radius:50%;background:#34d399;box-shadow:0 0 0 2px rgba(0,0,0,.25)}
+.top-actions{margin-left:auto;display:flex;gap:8px}
+button{border:1px solid #dcdcdc;background:#fff;color:var(--text);padding:6px 10px;border-radius:6px;cursor:pointer}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+button:hover{filter:brightness(.98)}
+button:disabled{opacity:.6;cursor:not-allowed}
+
+/* Sidebar */
+.sidebar{background:#f3f4f6;border-right:1px solid var(--border);padding:10px 8px}
+.nav-section{color:#6b7280;font-size:12px;margin:8px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:#1f2937;cursor:pointer}
+.nav-item:hover{background:#e9eefc}
+.nav-item.active{background:#e0ebff;border:1px solid #c9ddff}
+
+/* Main */
+.main{padding:16px}
+
+/* Page head */
+.page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.page-title{font-size:18px;font-weight:600}
+.page-title .small{margin-left:8px;font-size:12px;color:#6b7280}
+
+/* Cards/grid */
+.grid{display:grid;gap:12px;margin-top:12px}
+.grid.cols-4{grid-template-columns:repeat(4,1fr)}
+.grid.cols-2{grid-template-columns:2fr 3fr}
+@media (max-width:1200px){.grid.cols-4{grid-template-columns:repeat(2,1fr)}.grid.cols-2{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow)}
+.card .card-h{padding:10px 12px;border-bottom:1px solid var(--border);font-weight:600;color:#111827}
+.card .card-b{padding:12px}
+.kpi{display:flex;align-items:center;gap:10px;font-size:28px;font-weight:700;color:#111827}
+.kpi .ok{color:var(--ok)} .kpi .warn{color:var(--warn)} .kpi .err{color:var(--err)}
+.small{font-size:12px;color:var(--muted)}
+.badge{font-size:12px;border-radius:999px;padding:2px 8px;border:1px solid var(--border);background:#f9fafb;color:#374151}
+
+/* Table */
+.table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--border);border-radius:6px;background:#fff;overflow:hidden}
+.table th,.table td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:14px}
+.table tr:hover td{background:#f9fbff}
+.table tr.selected td{background:#e0ebff !important}
+.chip{display:inline-block;padding:2px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
+.chip.ok{background:#eaf7ef;color:#14532d;border-color:#cdebd7}
+.chip.err{background:#fdecec;color:#7f1d1d;border-color:#f5c2c2}
+.chip.warn{background:#fff6e5;color:#7a5200;border-color:#f6d9a8}
+.chip.mdm{background:#eaf2ff;color:#1e40af;border-color:#cfe0ff}
+
+/* Notice/toast */
+.notice{background:#eef6ff;border:1px solid #cfe0ff;color:#1e40af;border-radius:6px;padding:10px 12px;font-size:14px}
+.toast{position:fixed;right:16px;bottom:16px;background:#111827;color:#fff;border-radius:8px;padding:10px 12px;display:none;box-shadow:var(--shadow)}
+.toast.show{display:block}
+
+/* Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;align-items:center;justify-content:center;padding:20px}
+.modal{background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);max-width:720px;width:100%}
+.modal .m-h{padding:12px;border-bottom:1px solid var(--border);font-weight:600}
+.modal .m-b{padding:12px}
+.modal .m-f{padding:12px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* Windows Settings (device-side enrollment) */
+.win-card{border:1px solid var(--border);background:#fff;border-radius:8px;box-shadow:var(--shadow);margin-top:8px}
+.win-header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
+.win-body{padding:12px}
+.pill{padding:2px 10px;border-radius:999px;border:1px solid var(--border);background:#f9fafb;font-size:12px}
+.row{display:flex;gap:10px;align-items:center;margin:8px 0}
+input[type=email],input[type=password]{width:100%;padding:8px 10px;border:1px solid #d0d0d0;border-radius:6px}
+progress{width:100%}
+
+/* Task checklist */
+.tasklist label{display:flex;align-items:center;gap:10px;margin:6px 0}
+.tasklist input[type="checkbox"]{accent-color:var(--blue)}
+</style>
+</head>
+<body>
+  <div class="shell">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="brand"><div class="dot" aria-hidden="true"></div><div>Microsoft Intune admin center</div></div>
+      <div class="top-actions">
+        <button id="resetBtn">Reset Lab</button>
+        <button id="closeBtn">Close Lab</button>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="nav-section">Navigation</div>
+      <div class="nav-item active" data-page="dashboard">📊 Dashboard</div>
+      <div class="nav-item" data-page="devices">💻 Devices</div>
+
+      <!-- Additional items for the look/feel (no navigation) -->
+      <div class="nav-section">Manage</div>
+      <div class="nav-item">🗂️ All services</div>
+      <div class="nav-item">📦 Apps</div>
+      <div class="nav-item">🛡️ Endpoint security</div>
+      <div class="nav-item">📈 Reports</div>
+      <div class="nav-item">👤 Users</div>
+      <div class="nav-item">👥 Groups</div>
+      <div class="nav-item">🏢 Tenant administration</div>
+      <div class="nav-item">🛠️ Troubleshooting + support</div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main"><div id="page"></div></main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Device-side enrollment modal -->
+  <div class="modal-backdrop" id="enrollModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="enrollTitle">
+      <div class="m-h" id="enrollTitle">Windows Settings — Access work or school</div>
+      <div class="m-b" id="enrollBody"></div>
+      <div class="m-f"><button id="closeEnroll">Close</button></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const qs = s=>document.querySelector(s);
+  const qsa = s=>Array.from(document.querySelectorAll(s));
+
+  const state = {
+    page:'dashboard',
+    tasks:{ openedDevices:false, startedEnroll:false, signedIn:false, deviceListed:false, syncedOnce:false, compliant:false },
+    selectedName:null, // selected device name
+    devices:[
+      // Learner device (hidden until enrolled)
+      {name:'BlockShell-Laptop', user:'Alex', mgmt:'—', compliance:'—', os:'Windows 11', isLearner:true, present:false, wipePending:false},
+      {name:'FIN-WS-07', user:'Amara', mgmt:'MDM enrolled', compliance:'Not compliant', os:'Windows 11', wipePending:false},
+      {name:'HR-LT-12', user:'Lewis', mgmt:'MDM enrolled', compliance:'In grace period', os:'Windows 10', wipePending:false},
+      {name:'ENG-DESK-21', user:'Mina', mgmt:'MDM enrolled', compliance:'Not evaluated', os:'Windows 11', wipePending:false},
+      {name:'OPS-AND-09', user:'Carlos', mgmt:'MDM enrolled', compliance:'Compliant', os:'Android', wipePending:false},
+      {name:'MAC-Design-02', user:'Tara', mgmt:'MDM enrolled', compliance:'Compliant', os:'macOS', wipePending:false},
+      {name:'SALES-SUR-03', user:'Priya', mgmt:'—', compliance:'—', os:'iOS/iPadOS', wipePending:false}
+    ],
+    syncCount:0,
+    connected:false,          // Windows Settings connected to Blockshell.app
+    modalSyncArmed:false      // set when Info (Sync) pressed; commit on Close
+  };
+
+  const learner = ()=> state.devices.find(d=>d.isLearner);
+  const visibleDevices = ()=> state.devices.filter(d=>!d.isLearner || d.present);
+
+  function toast(m){const t=qs('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);}
+
+  function setActiveNav(){
+    qsa('.nav-item[data-page]').forEach(n=>{
+      const page=n.getAttribute('data-page');
+      n.classList.toggle('active', page===state.page);
+    });
+  }
+
+  function counts(){
+    const d=visibleDevices();
+    return {
+      enrolled:d.filter(x=>x.mgmt==='MDM enrolled').length,
+      notCompliant:d.filter(x=>x.compliance==='Not compliant').length,
+      totalsByOS:{
+        Windows:d.filter(x=>x.os.includes('Windows') && x.mgmt==='MDM enrolled').length,
+        Android:d.filter(x=>x.os==='Android').length,
+        iOS:d.filter(x=>x.os==='iOS/iPadOS').length,
+        macOS:d.filter(x=>x.os==='macOS').length,
+        total:d.length
+      }
+    };
+  }
+
+  function instructionsCard(){
+    return `
+      <div class="card">
+        <div class="card-h">Tasks</div>
+        <div class="card-b">
+          <div class="tasklist">
+            <label><input type="checkbox" id="t-opened" disabled> 1) Open <strong>Devices</strong>.</label>
+            <label><input type="checkbox" id="t-enroll" disabled> 2) Click <strong>Add work account</strong> and choose <em>Connect</em>.</label>
+            <label><input type="checkbox" id="t-signin" disabled> 3) Sign in with <code>alex@blockshell.app</code> / <code>Pa55w.rd!</code>.</label>
+            <label><input type="checkbox" id="t-listed" disabled> 4) Confirm <em>BlockShell-Laptop</em> appears under <strong>All devices</strong>.</label>
+            <label><input type="checkbox" id="t-sync1" disabled> 5) With the device selected, click <strong>Sync</strong> (in the portal). Status becomes <em>MDM enrolled</em> / <em>Pending</em>.</label>
+            <label><input type="checkbox" id="t-compliant" disabled> 6) Open <strong>Add work account</strong> again ➜ click <strong>Info (Sync)</strong>, then <strong>Close</strong>. A second later the device turns <em>Compliant</em>.</label>
+          </div>
+          <div class="small" style="margin-top:8px">Select any device to open details. You can Sync/Wipe other devices for realism.</div>
+        </div>
+      </div>
+    `;
+  }
+  function updateTaskChecks(){
+    const map = [
+      ['openedDevices','#t-opened'],
+      ['startedEnroll','#t-enroll'],
+      ['signedIn','#t-signin'],
+      ['deviceListed','#t-listed'],
+      ['syncedOnce','#t-sync1'],
+      ['compliant','#t-compliant'],
+    ];
+    map.forEach(([k,sel])=>{
+      const el=qs(sel); if(el) el.checked = !!state.tasks[k];
+    });
+  }
+
+  /* Pages */
+  function render(){ setActiveNav(); if(state.page==='dashboard') renderDashboard(); else if(state.page==='devices') renderDevices(); }
+
+  function renderDashboard(){
+    const c=counts(); const l=learner();
+    const enrolledOk = l.present && l.mgmt==='MDM enrolled';
+    qs('#page').innerHTML = `
+      <div class="page-head"><div class="page-title">My Dashboard <span class="small">Private dashboard</span></div></div>
+      ${instructionsCard()}
+      <div class="grid cols-4">
+        <div class="card"><div class="card-h">Device enrollment</div><div class="card-b">
+          <div class="kpi"><span class="${enrolledOk?'ok':''}">${enrolledOk?'OK ✅':'—'}</span></div>
+          <div class="small">${c.enrolled} devices currently enrolled via MDM</div>
+        </div></div>
+        <div class="card"><div class="card-h">Device compliance</div><div class="card-b">
+          <div class="kpi"><span class="${c.notCompliant?'err':''}">${c.notCompliant}</span> <span class="small">devices not in compliance</span></div>
+        </div></div>
+        <div class="card"><div class="card-h">Device configuration</div><div class="card-b">
+          <div class="kpi"><span class="${enrolledOk?'ok':''}">${enrolledOk?'OK ✅':'—'}</span></div>
+          <div class="small">No policies with error or conflict</div>
+        </div></div>
+        <div class="card"><div class="card-h">Client apps</div><div class="card-b">
+          <div class="kpi"><span class="warn">11 ⚠️</span> <span class="small">apps have installation failures</span></div>
+        </div></div>
+      </div>
+      <div class="grid cols-2" style="margin-top:12px">
+        <div class="card"><div class="card-h">Intune enrolled devices</div><div class="card-b">
+          <div class="small">LAST UPDATED: just now</div>
+          <div style="margin-top:8px">
+            <div class="row"><strong>Windows</strong> — ${c.totalsByOS.Windows}</div>
+            <div class="row"><strong>Android</strong> — ${c.totalsByOS.Android}</div>
+            <div class="row"><strong>iOS/iPadOS</strong> — ${c.totalsByOS.iOS}</div>
+            <div class="row"><strong>macOS</strong> — ${c.totalsByOS.macOS}</div>
+            <div class="row"><strong>Total</strong> — ${c.totalsByOS.total}</div>
+          </div>
+        </div></div>
+        <div class="card"><div class="card-h">Welcome to the Microsoft Intune admin center</div><div class="card-b">
+          <p>Use the left navigation to open <strong>Devices</strong>. Enrollment happens on the Windows device (Add work account). Use <strong>Sync</strong> to refresh status and compliance.</p>
+        </div></div>
+      </div>
+    `;
+    updateTaskChecks();
+  }
+
+  function renderDevices(){
+    const list = visibleDevices();
+    if(state.selectedName && !list.some(d=>d.name===state.selectedName)) state.selectedName=null;
+
+    qs('#page').innerHTML = `
+      <div class="page-head">
+        <div class="page-title">Devices</div>
+        <div class="page-actions">
+          <button id="syncBtn">Sync</button>
+          <button id="openEnroll" class="primary">Add work account</button>
+        </div>
+      </div>
+
+      ${instructionsCard()}
+
+      <div class="tabs"><div class="tab">All devices</div></div>
+
+      <div class="grid cols-2">
+        <div>
+          <table class="table">
+            <thead>
+              <tr><th>Name</th><th>Primary user</th><th>Management</th><th>Compliance</th><th>OS</th></tr>
+            </thead>
+            <tbody id="devBody">
+              ${list.map(d=>deviceRow(d, d.name===state.selectedName)).join('')}
+            </tbody>
+          </table>
+          <div class="small" style="margin-top:8px">Select a device to view details and actions.</div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="card-h">Device details</div>
+            <div class="card-b" id="detailPane">
+              ${renderDetails(list.find(d=>d.name===state.selectedName))}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    qs('#devBody').addEventListener('click', (e)=>{
+      const tr = e.target.closest('tr[data-name]'); if(!tr) return;
+      state.selectedName = tr.getAttribute('data-name');
+      renderDevices();
+    });
+
+    qs('#openEnroll').onclick = openEnrollModal;
+    qs('#syncBtn').onclick = ()=> portalSyncSelected();
+    state.tasks.openedDevices = true; updateTaskChecks();
+  }
+
+  function chip(t,k){return `<span class="chip ${k||''}">${t}</span>`;}
+  function deviceRow(d, selected){
+    const mgmt = d.mgmt==='MDM enrolled' ? chip('MDM enrolled','mdm') : (d.mgmt==='—'? chip('—','err'): chip(d.mgmt));
+    let ck=''; if(d.compliance==='Compliant') ck='ok'; else if(d.compliance==='Not compliant') ck='err'; else if(d.compliance==='In grace period') ck='warn';
+    const comp=chip(d.compliance, ck || (d.compliance==='—'?'':'warn'));
+    const badges = [
+      d.isLearner && d.present ? '<span class="badge">Your device</span>' : '',
+      d.wipePending ? '<span class="chip warn">Wipe pending</span>' : ''
+    ].filter(Boolean).join(' ');
+    return `<tr data-name="${d.name}" class="${selected?'selected':''}">
+      <td>${d.name} ${badges}</td><td>${d.user||'—'}</td><td>${mgmt}</td><td>${comp}</td><td>${d.os}</td></tr>`;
+  }
+
+  function renderDetails(d){
+    if(!d) return `<div class="small">No device selected.</div>`;
+    const actionBar = `
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button id="detailSync">Sync</button>
+        <button id="detailWipe" ${d.isLearner?'disabled':''}>Wipe</button>
+      </div>
+    `;
+    const info = `
+      <div class="small">Name</div><div>${d.name}</div>
+      <div class="small" style="margin-top:6px">Primary user</div><div>${d.user||'—'}</div>
+      <div class="small" style="margin-top:6px">OS</div><div>${d.os}</div>
+      <div class="small" style="margin-top:6px">Management</div><div>${d.mgmt}</div>
+      <div class="small" style="margin-top:6px">Compliance</div><div>${d.compliance}</div>
+      ${d.wipePending ? `<div class="small" style="margin-top:6px">Wipe status</div><div>Pending</div>` : ``}
+    `;
+    setTimeout(()=>{
+      const btnS=qs('#detailSync'); if(btnS) btnS.onclick = ()=> portalSyncSelected(d.name);
+      const btnW=qs('#detailWipe'); if(btnW) btnW.onclick = ()=> wipeDevice(d.name);
+    },0);
+    return actionBar + info;
+  }
+
+  /* Enrollment modal (Windows device-side) */
+  function openEnrollModal(){
+    qs('#enrollModal').style.display='flex';
+    renderWinSettings();
+    state.tasks.startedEnroll = true; updateTaskChecks();
+  }
+  qs('#closeEnroll').onclick = ()=>{
+    qs('#enrollModal').style.display='none';
+    // If the learner pressed Info (Sync), flip to Compliant a moment after closing
+    if(state.modalSyncArmed){
+      state.modalSyncArmed = false;
+      const dev = learner();
+      if(dev.present && dev.compliance!=='Compliant'){
+        setTimeout(()=>{
+          dev.compliance='Compliant';
+          state.tasks.compliant = true;
+          toast('Device is now Compliant');
+          rerender();
+        }, 1100);
+      }
+    }
+  };
+
+  function renderWinSettings(){
+    const b=qs('#enrollBody');
+    b.innerHTML = `
+      <div class="win-card">
+        <div class="win-header">
+          <div>Accounts ▸ Access work or school</div>
+          <span class="pill" id="pillConn">${state.connected?'Connected to Blockshell.app':'Not connected'}</span>
+        </div>
+        <div class="win-body" id="winBody"></div>
+      </div>
+    `;
+    if(!state.connected){
+      qs('#winBody').innerHTML = `
+        <p>Connect a work or school account to enroll this device into MDM.</p>
+        <div class="row"><button id="btnConnect">Connect</button></div>
+      `;
+      qs('#btnConnect').onclick = showEmail;
+    }else{
+      qs('#winBody').innerHTML = `
+        <div class="row"><strong>Status:</strong> <span class="chip mdm">Connected to Blockshell.app (MDM managed)</span></div>
+        <div class="row"><button id="btnInfo">Info (Sync)</button></div>
+        <div class="small">Click <em>Info</em> to sync, then close this window to continue.</div>
+      `;
+      qs('#btnInfo').onclick = ()=>{
+        state.modalSyncArmed = true;
+        toast('Sync requested from Windows… close this window to continue.');
+      };
+    }
+  }
+
+  function showEmail(){
+    const wb=qs('#winBody');
+    wb.innerHTML = `
+      <div class="row"><span class="pill">Sign in to Blockshell.app</span></div>
+      <div class="row"><input type="email" id="email" value="alex@blockshell.app" placeholder="Email address"></div>
+      <div class="row"><button id="next">Next</button></div>
+    `;
+    qs('#next').onclick = ()=>{
+      const v=qs('#email').value.trim().toLowerCase();
+      if(!v.endsWith('@blockshell.app')){ toast('Use your work email (blockshell.app)'); return; }
+      showPassword();
+    };
+  }
+
+  function showPassword(){
+    const wb=qs('#winBody');
+    wb.innerHTML = `
+      <div class="row"><span class="pill">Enter password for alex@blockshell.app</span></div>
+      <div class="row"><input type="password" id="pwd" value="Pa55w.rd!" placeholder="Password"></div>
+      <div class="row"><button id="signin">Sign in</button></div>
+    `;
+    qs('#signin').onclick = ()=>{
+      const p=qs('#pwd').value;
+      if(p!=='Pa55w.rd!'){ toast('Incorrect password (hint: Pa55w.rd!)'); return; }
+      state.tasks.signedIn = true;
+      enrollProgress();
+    };
+  }
+
+  function enrollProgress(){
+    const wb=qs('#winBody');
+    wb.innerHTML = `
+      <div class="row"><strong>Setting up your device…</strong></div>
+      <div class="row"><progress id="prog" max="100" value="10"></progress></div>
+    `;
+    let v=10; const prog=qs('#prog');
+    const t=setInterval(()=>{ v+=25; prog.value=Math.min(100,v); if(v>=100){ clearInterval(t); finishEnroll(); } }, 350);
+  }
+
+  function finishEnroll(){
+    state.connected=true;
+    const dev=learner();
+    dev.present=true; dev.mgmt='MDM enrolled'; dev.compliance='Pending';
+    state.tasks.deviceListed=true;
+    // Auto-select Alex's device
+    state.selectedName = dev.name;
+    toast('This device is now connected to Blockshell.app');
+    renderWinSettings();
+    rerender();
+  }
+
+  /* Sync behaviour */
+  function portalSyncSelected(nameOpt){
+    const name = nameOpt || state.selectedName;
+    if(!name){ toast('Select a device first.'); return; }
+    const d = visibleDevices().find(x=>x.name===name);
+    if(!d){ toast('Device not found.'); return; }
+
+    if(d.isLearner){
+      // First portal sync -> Pending; following portal syncs instruct to use Windows Info (Sync)
+      if(!state.tasks.syncedOnce){
+        if(!d.present){ toast('Enroll the device first.'); return; }
+        d.mgmt='MDM enrolled'; d.compliance='Pending'; state.tasks.syncedOnce=true;
+        toast('Sync requested. Device reported as MDM enrolled (Pending)');
+        rerender();
+      }else{
+        toast('Sync requested. Use "Add work account" → Info (Sync), then Close to complete.');
+      }
+      return;
+    }
+
+    // Non-learner devices: simulate real effect -> become Compliant shortly after
+    if(d.mgmt!=='MDM enrolled'){ toast('Device is not managed; sync has no effect.'); return; }
+    toast('Sync requested…');
+    setTimeout(()=>{
+      d.compliance='Compliant';
+      rerender();
+      toast('Device is now Compliant');
+    }, 900);
+  }
+
+  function wipeDevice(name){
+    const d = visibleDevices().find(x=>x.name===name); if(!d) return;
+    if(d.isLearner){ toast('Wipe is disabled for this exercise device.'); return; }
+    if(d.wipePending) return;
+    d.wipePending = true;
+    rerender();
+    toast('Wipe requested. Status: Pending');
+    setTimeout(()=>{
+      // Remove from list after wipe completes
+      state.devices = state.devices.filter(x=>x.name!==name);
+      if(state.selectedName===name) state.selectedName=null;
+      rerender();
+      toast('Device wiped and removed');
+    }, 1500);
+  }
+
+  /* Header actions */
+  qs('#resetBtn').onclick = ()=>{
+    Object.assign(state,{
+      page:'dashboard',
+      tasks:{openedDevices:false,startedEnroll:false,signedIn:false,deviceListed:false,syncedOnce:false,compliant:false},
+      selectedName:null,
+      devices:[
+        {name:'BlockShell-Laptop', user:'Alex', mgmt:'—', compliance:'—', os:'Windows 11', isLearner:true, present:false, wipePending:false},
+        {name:'FIN-WS-07', user:'Amara', mgmt:'MDM enrolled', compliance:'Not compliant', os:'Windows 11', wipePending:false},
+        {name:'HR-LT-12', user:'Lewis', mgmt:'MDM enrolled', compliance:'In grace period', os:'Windows 10', wipePending:false},
+        {name:'ENG-DESK-21', user:'Mina', mgmt:'MDM enrolled', compliance:'Not evaluated', os:'Windows 11', wipePending:false},
+        {name:'OPS-AND-09', user:'Carlos', mgmt:'MDM enrolled', compliance:'Compliant', os:'Android', wipePending:false},
+        {name:'MAC-Design-02', user:'Tara', mgmt:'MDM enrolled', compliance:'Compliant', os:'macOS', wipePending:false},
+        {name:'SALES-SUR-03', user:'Priya', mgmt:'—', compliance:'—', os:'iOS/iPadOS', wipePending:false}
+      ],
+      syncCount:0, connected:false, modalSyncArmed:false
+    });
+    rerender(); toast('Lab reset');
+  };
+  qs('#closeBtn').onclick = ()=>{ try{window.close();}catch(e){} toast('If the window didn’t close, please close this tab.'); };
+
+  /* Sidebar: only Dashboard & Devices navigate */
+  qs('#sidebar').addEventListener('click',(e)=>{
+    const item=e.target.closest('.nav-item[data-page]'); if(!item) return;
+    const page=item.getAttribute('data-page');
+    if(page!=='dashboard' && page!=='devices') return; // others inert
+    state.page=page; rerender();
+  });
+
+  function rerender(){ render(); updateTaskChecks(); }
+  render(); // init
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 25: Microsoft 365 Admin Center - License</title>
+  <!-- Tailwind CDN (kept for faster iteration; remove if you want pure CSS) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .drawer-enter { transform: translateX(100%); opacity: 0; }
+    .drawer-enter-active { transform: translateX(0); opacity: 1; transition: all .25s ease; }
+    .drawer-leave { transform: translateX(0); opacity: 1; }
+    .drawer-leave-active { transform: translateX(100%); opacity: 0; transition: all .2s ease; }
+    .tag { font-size: .70rem; padding:.1rem .4rem; border-radius:.35rem; }
+    .toast { animation: fade 2s ease; }
+    @keyframes fade { 0%{opacity:0;transform:translateY(-4px)}10%{opacity:1;transform:none}90%{opacity:1}100%{opacity:0;transform:translateY(-4px)}}
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <!-- Top Bar -->
+  <header class="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
+    <h1 class="font-semibold">BlockShell.app — Microsoft 365 admin center</h1>
+    <div class="flex items-center gap-2 text-sm">
+      <span class="hidden sm:inline">Signed in as</span>
+      <span class="font-medium">admin@blockshell.app</span>
+    </div>
+  </header>
+
+  <div class="flex h-[calc(100vh-56px)]">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r hidden md:flex flex-col">
+      <div class="p-4">
+        <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Users</p>
+        <nav class="space-y-1">
+          <a class="block rounded px-3 py-2 bg-blue-50 text-blue-700 font-medium">Active users</a>
+          <a class="block rounded px-3 py-2 hover:bg-gray-50">Contacts</a>
+          <a class="block rounded px-3 py-2 hover:bg-gray-50">Guest users</a>
+          <a class="block rounded px-3 py-2 hover:bg-gray-50">Deleted users</a>
+        </nav>
+      </div>
+      <div class="px-4 mt-auto mb-4">
+        <button id="resetBtn" class="w-full px-3 py-2 rounded bg-orange-500 text-white hover:bg-orange-600">Reset Lab</button>
+        <button id="closeBtn" class="w-full mt-2 px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700">Close Lab</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 overflow-auto p-4">
+      <!-- Instructions -->
+      <section class="bg-white rounded shadow p-4 mb-4">
+        <h2 class="text-lg font-semibold">Lab Goal — Assign Microsoft 365 Licenses</h2>
+        <p class="text-gray-600 mt-1">
+          Using the Active users view, assign applicable licenses to selected users. You can assign one user at a time by opening their profile, or perform a bulk license assignment.
+        </p>
+        <ul class="list-disc list-inside text-gray-700 mt-3 space-y-1">
+          <li>Task A: Assign <b>Exchange Online (Plan 1)</b> to <b>App Mailbox</b>.</li>
+          <li>Task B: Assign <b>Microsoft 365 Apps for enterprise</b> to <b>Katie Jordan</b> and <b>Owen Patel</b>.</li>
+          <li>Task C: Ensure <b>Teams Essentials</b> is enabled for <b>Customer Support</b>.</li>
+        </ul>
+      </section>
+
+      <!-- Toolbar -->
+      <section class="bg-white rounded shadow p-4 mb-4">
+        <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <div class="flex items-center gap-2">
+            <button id="addUserBtn" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200">Add a user</button>
+            <button id="mfaBtn" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200">Multi-factor authentication</button>
+            <button id="refreshBtn" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200">Refresh</button>
+            <button id="deleteBtn" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200">Delete a user</button>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="searchBox" type="search" placeholder="Search" class="border rounded px-3 py-2 w-64" />
+            <button id="bulkAssignBtn" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-40" disabled>Assign licenses</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Users Table -->
+      <section class="bg-white rounded shadow">
+        <div class="p-4 border-b">
+          <h3 class="font-semibold text-gray-800">Active users</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50 text-left">
+              <tr>
+                <th class="px-4 py-2 w-10"><input id="selectAll" type="checkbox"></th>
+                <th class="px-4 py-2">Display name</th>
+                <th class="px-4 py-2">Username</th>
+                <th class="px-4 py-2">Licenses</th>
+                <th class="px-4 py-2">Status</th>
+                <th class="px-4 py-2"></th>
+              </tr>
+            </thead>
+            <tbody id="userTbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Drawer (Profile) -->
+  <div id="drawerMask" class="hidden fixed inset-0 bg-black/40"></div>
+  <aside id="drawer"
+         class="drawer-enter hidden fixed right-0 top-0 h-full w-[480px] bg-white shadow-xl overflow-y-auto">
+    <div class="p-4 border-b flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div id="avatar" class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">AM</div>
+        <div>
+          <h4 id="drawerName" class="font-semibold">App Mailbox</h4>
+          <p id="drawerUPN" class="text-sm text-gray-500">app.mailbox@blockshell.app</p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200">Reset password</button>
+        <button class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200">Block sign-in</button>
+      </div>
+    </div>
+
+    <div class="px-4 pt-3">
+      <div class="flex gap-2 border-b">
+        <button data-tab="account" class="tab px-3 py-2 rounded-t bg-gray-100 text-gray-700 hover:bg-gray-200">Account</button>
+        <button data-tab="devices" class="tab px-3 py-2 rounded-t bg-gray-100 text-gray-700 hover:bg-gray-200">Devices</button>
+        <button data-tab="licenses" class="tab px-3 py-2 rounded-t bg-blue-600 text-white">Licenses and apps</button>
+        <button data-tab="mail" class="tab px-3 py-2 rounded-t bg-gray-100 text-gray-700 hover:bg-gray-200">Mail</button>
+        <button data-tab="onedrive" class="tab px-3 py-2 rounded-t bg-gray-100 text-gray-700 hover:bg-gray-200">OneDrive</button>
+      </div>
+
+      <!-- Licenses -->
+      <div id="tab-licenses" class="pt-4">
+        <div class="flex items-center gap-2 mb-3">
+          <label class="text-sm text-gray-600">Select location *</label>
+          <select id="locSelect" class="border rounded px-2 py-1">
+            <option>United Kingdom</option>
+            <option>United States</option>
+            <option selected>Denmark</option>
+            <option>France</option>
+          </select>
+        </div>
+
+        <div class="border rounded">
+          <div class="px-4 py-2 bg-gray-50 border-b text-sm text-gray-600">Licenses (pool availability)</div>
+          <div id="licenseList" class="p-4 space-y-2"></div>
+        </div>
+
+        <div class="mt-4 flex gap-2">
+          <button id="saveUser" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+          <button id="closeDrawer" class="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200">Close</button>
+        </div>
+
+        <div id="userToast" class="hidden mt-4 p-3 rounded text-green-800 bg-green-100 toast">✓ Changes saved.</div>
+        <div id="userError" class="hidden mt-4 p-3 rounded text-red-800 bg-red-100">Please select at least one license to save.</div>
+      </div>
+
+      <!-- (Other tabs are non-functional placeholders for realism) -->
+      <div id="tab-account" class="hidden py-6 text-sm text-gray-600">Account overview is not part of this lab.</div>
+      <div id="tab-devices" class="hidden py-6 text-sm text-gray-600">Devices management is not simulated.</div>
+      <div id="tab-mail" class="hidden py-6 text-sm text-gray-600">Mail settings are out of scope.</div>
+      <div id="tab-onedrive" class="hidden py-6 text-sm text-gray-600">OneDrive is not simulated.</div>
+    </div>
+  </aside>
+
+  <!-- Bulk Assignment Modal -->
+  <div id="bulkMask" class="hidden fixed inset-0 bg-black/40"></div>
+  <div id="bulkModal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white w-[520px] max-w-[95vw] rounded shadow-xl">
+    <div class="p-4 border-b flex items-center justify-between">
+      <h4 class="font-semibold">Assign licenses (bulk)</h4>
+      <button id="bulkClose" class="px-2 py-1 rounded hover:bg-gray-100">✕</button>
+    </div>
+    <div class="p-4">
+      <p class="text-sm text-gray-600 mb-3" id="bulkCount">Selected users: 0</p>
+      <div class="border rounded">
+        <div class="px-4 py-2 bg-gray-50 border-b text-sm text-gray-600">Licenses</div>
+        <div id="bulkLicenseList" class="p-4 space-y-2"></div>
+      </div>
+      <div class="mt-4 flex gap-2">
+        <button id="bulkSave" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+        <button id="bulkCancel" class="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200">Cancel</button>
+      </div>
+      <div id="bulkToast" class="hidden mt-4 p-3 rounded text-green-800 bg-green-100 toast">✓ Licenses applied to selected users.</div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="pageToast" class="pointer-events-none fixed top-4 right-4 space-y-2"></div>
+
+  <script>
+    // -------------------- Data --------------------
+    const LICENSE_POOL = {
+      "EXO_P1": { name: "Exchange Online (Plan 1)", available: 2, features: [] },
+      "M365_APPS": { name: "Microsoft 365 Apps for enterprise", available: 3, features: ["Outlook", "Word", "Excel", "PowerPoint"] },
+      "TEAMS_ESS": { name: "Teams Essentials", available: 4, features: [] },
+      "ONEDRIVE_P1": { name: "OneDrive for Business (Plan 1)", available: 4, features: [] },
+      "AAD_P1": { name: "Entra ID P1 (Azure AD P1)", available: 2, features: [] }
+    };
+
+    const USERS = [
+      { id:"u1", name:"App Mailbox", upn:"app.mailbox@blockshell.app", initials:"AM", licenses:{} },
+      { id:"u2", name:"Customer Support", upn:"support@blockshell.app", initials:"CS", licenses:{ TEAMS_ESS:true } },
+      { id:"u3", name:"Katie Jordan", upn:"katie.jordan@blockshell.app", initials:"KJ", licenses:{} },
+      { id:"u4", name:"Owen Patel", upn:"owen.patel@blockshell.app", initials:"OP", licenses:{} },
+      { id:"u5", name:"Hans Ussing", upn:"hans.ussing@blockshell.app", initials:"HU", licenses:{} },
+      { id:"u6", name:"Jonas Boolsen", upn:"jonas.boolsen@blockshell.app", initials:"JB", licenses:{} },
+      { id:"u7", name:"Morten Skrubbeltrang", upn:"morten.s@blockshell.app", initials:"MS", licenses:{} },
+      { id:"u8", name:"Customer Feedback", upn:"feedback@blockshell.app", initials:"CF", licenses:{} },
+      { id:"u9", name:"Hans Ørsted", upn:"hans.orsted@blockshell.app", initials:"HØ", licenses:{} },
+      { id:"u10", name:"Help Desk", upn:"helpdesk@blockshell.app", initials:"HD", licenses:{} },
+    ];
+
+    // -------------------- State --------------------
+    let filter = "";
+    let selectedIds = new Set();
+    let currentUserId = null;
+
+    // -------------------- DOM helpers --------------------
+    const el = sel => document.querySelector(sel);
+    const els = sel => [...document.querySelectorAll(sel)];
+
+    function toast(msg, type="success") {
+      const wrap = el("#pageToast");
+      const div = document.createElement("div");
+      div.className = `toast px-3 py-2 rounded shadow text-sm ${type==="success" ? "bg-green-600 text-white" : "bg-red-600 text-white"}`;
+      div.textContent = msg;
+      wrap.appendChild(div);
+      setTimeout(()=>{ div.remove(); }, 2200);
+    }
+
+    // -------------------- Rendering --------------------
+    function renderUsers() {
+      const tbody = el("#userTbody");
+      tbody.innerHTML = "";
+
+      const rows = USERS
+        .filter(u => u.name.toLowerCase().includes(filter) || u.upn.toLowerCase().includes(filter))
+        .map(u => {
+          const tr = document.createElement("tr");
+          tr.className = "border-b hover:bg-gray-50";
+          const assigned = Object.keys(u.licenses).filter(k => u.licenses[k]).map(k => LICENSE_POOL[k].name);
+          const tags = assigned.length
+            ? `<span class="tag bg-green-100 text-green-700">Licensed</span>`
+            : `<span class="tag bg-gray-100 text-gray-600">Unlicensed</span>`;
+
+          tr.innerHTML = `
+            <td class="px-4 py-2"><input type="checkbox" data-sel="${u.id}" ${selectedIds.has(u.id)?"checked":""}></td>
+            <td class="px-4 py-2">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs">${u.initials}</div>
+                <button class="text-blue-700 hover:underline text-left" data-open="${u.id}">${u.name}</button>
+              </div>
+            </td>
+            <td class="px-4 py-2">${u.upn}</td>
+            <td class="px-4 py-2">${assigned.length ? assigned.join(", ") : "-"}</td>
+            <td class="px-4 py-2">${tags}</td>
+            <td class="px-4 py-2"><button class="px-2 py-1 rounded bg-gray-100 hover:bg-gray-200" data-open="${u.id}">Manage</button></td>
+          `;
+          return tr;
+        });
+
+      rows.forEach(r => tbody.appendChild(r));
+
+      // checkbox wiring
+      els("input[type=checkbox][data-sel]").forEach(c => {
+        c.addEventListener("change", (e)=>{
+          const id = e.target.getAttribute("data-sel");
+          if (e.target.checked) selectedIds.add(id); else selectedIds.delete(id);
+          el("#bulkAssignBtn").disabled = selectedIds.size===0;
+          el("#selectAll").checked = selectedIds.size>0 && selectedIds.size===rows.length;
+        });
+      });
+
+      // open profile
+      els("[data-open]").forEach(btn => btn.addEventListener("click", ()=> openDrawer(btn.getAttribute("data-open"))));
+
+      // header select-all checkbox after list rendered
+      el("#selectAll").addEventListener("change", (e)=>{
+        const visibleIds = rows.map(r => r.querySelector("button[data-open]").getAttribute("data-open"));
+        if (e.target.checked) visibleIds.forEach(id => selectedIds.add(id));
+        else visibleIds.forEach(id => selectedIds.delete(id));
+        renderUsers();
+        el("#bulkAssignBtn").disabled = selectedIds.size===0;
+      });
+
+      el("#bulkAssignBtn").disabled = selectedIds.size===0;
+    }
+
+    function licenseCheckbox(id, label, available) {
+      return `
+        <label class="flex items-center gap-2">
+          <input type="checkbox" data-lic="${id}" class="h-4 w-4">
+          <span>${label}</span>
+          <span class="ml-auto text-xs text-gray-500">Available: <b data-avail="${id}">${available}</b></span>
+        </label>`;
+    }
+
+    function renderLicenseList(container, prechecked = {}) {
+      container.innerHTML = `
+        ${licenseCheckbox("EXO_P1", LICENSE_POOL.EXO_P1.name, LICENSE_POOL.EXO_P1.available)}
+        ${licenseCheckbox("M365_APPS", LICENSE_POOL.M365_APPS.name, LICENSE_POOL.M365_APPS.available)}
+        ${licenseCheckbox("TEAMS_ESS", LICENSE_POOL.TEAMS_ESS.name, LICENSE_POOL.TEAMS_ESS.available)}
+        ${licenseCheckbox("ONEDRIVE_P1", LICENSE_POOL.ONEDRIVE_P1.name, LICENSE_POOL.ONEDRIVE_P1.available)}
+        ${licenseCheckbox("AAD_P1", LICENSE_POOL.AAD_P1.name, LICENSE_POOL.AAD_P1.available)}
+      `;
+      // set prechecked
+      Object.keys(prechecked).forEach(k=>{
+        const c = container.querySelector(`input[data-lic="${k}"]`);
+        if (c) c.checked = !!prechecked[k];
+      });
+    }
+
+    // -------------------- Drawer (per-user) --------------------
+    function openDrawer(id) {
+      currentUserId = id;
+      const user = USERS.find(u => u.id===id);
+      el("#drawerName").textContent = user.name;
+      el("#drawerUPN").textContent = user.upn;
+      el("#avatar").textContent = user.initials;
+
+      renderLicenseList(el("#licenseList"), user.licenses);
+
+      // show drawer
+      const d = el("#drawer");
+      const m = el("#drawerMask");
+      d.classList.remove("hidden","drawer-leave","drawer-leave-active");
+      d.classList.add("drawer-enter-active");
+      m.classList.remove("hidden");
+      setTimeout(()=> d.classList.remove("drawer-enter-active"), 260);
+    }
+
+    function closeDrawer() {
+      const d = el("#drawer");
+      const m = el("#drawerMask");
+      d.classList.add("drawer-leave-active");
+      setTimeout(()=> {
+        d.classList.add("hidden");
+        d.classList.remove("drawer-leave-active");
+        m.classList.add("hidden");
+      }, 200);
+    }
+
+    // -------------------- Save operations --------------------
+    function applyUserSave() {
+      const user = USERS.find(u => u.id===currentUserId);
+      const selected = {};
+      el("#licenseList").querySelectorAll("input[data-lic]").forEach(c=>{
+        selected[c.getAttribute("data-lic")] = c.checked;
+      });
+
+      // validate at least one selected
+      if (!Object.values(selected).some(Boolean)) {
+        el("#userError").classList.remove("hidden");
+        setTimeout(()=>el("#userError").classList.add("hidden"), 1800);
+        return;
+      }
+
+      // compute pool impact vs previous
+      const before = user.licenses;
+      // Update pools
+      Object.keys(selected).forEach(k=>{
+        if (selected[k] && !before[k]) LICENSE_POOL[k].available = Math.max(0, LICENSE_POOL[k].available - 1);
+        if (!selected[k] && before[k]) LICENSE_POOL[k].available += 1;
+      });
+
+      user.licenses = selected;
+
+      // Update availability display in drawer
+      Object.keys(LICENSE_POOL).forEach(k=>{
+        const b = el(`#licenseList [data-avail="${k}"]`);
+        if (b) b.textContent = LICENSE_POOL[k].available;
+      });
+
+      renderUsers();
+      el("#userToast").classList.remove("hidden");
+      setTimeout(()=>el("#userToast").classList.add("hidden"), 1500);
+      toast(`Saved changes for ${user.name}`);
+    }
+
+    function openBulkModal() {
+      // Build license list fresh (no precheck)
+      renderLicenseList(el("#bulkLicenseList"), {});
+      el("#bulkCount").textContent = `Selected users: ${selectedIds.size}`;
+      el("#bulkMask").classList.remove("hidden");
+      el("#bulkModal").classList.remove("hidden");
+    }
+    function closeBulkModal() {
+      el("#bulkMask").classList.add("hidden");
+      el("#bulkModal").classList.add("hidden");
+    }
+    function applyBulkSave() {
+      // Build selection object
+      const toApply = {};
+      el("#bulkLicenseList").querySelectorAll("input[data-lic]").forEach(c=>{
+        toApply[c.getAttribute("data-lic")] = c.checked;
+      });
+
+      const targets = USERS.filter(u => selectedIds.has(u.id));
+      // For each target, apply only the checked licenses (leave others unchanged)
+      Object.keys(toApply).forEach(k=>{
+        if (toApply[k]) {
+          targets.forEach(u=>{
+            if (!u.licenses[k]) {
+              // consume pool if newly assigned
+              if (LICENSE_POOL[k].available>0) {
+                LICENSE_POOL[k].available -= 1;
+                u.licenses[k] = true;
+              }
+            }
+          });
+        }
+      });
+
+      // Update availability display if bulk modal is reopened later
+      Object.keys(LICENSE_POOL).forEach(k=>{
+        const b = el(`#bulkLicenseList [data-avail="${k}"]`);
+        if (b) b.textContent = LICENSE_POOL[k].available;
+      });
+
+      renderUsers();
+      closeBulkModal();
+      toast("Bulk assignment completed.");
+      // clear selection to mimic admin center behavior after bulk ops
+      selectedIds.clear();
+      renderUsers();
+    }
+
+    // -------------------- Reset / Close --------------------
+    function resetLab() {
+      // restore license pool
+      Object.keys(LICENSE_POOL).forEach(k=>{
+        // reset to initial numbers
+        if (k==="EXO_P1") LICENSE_POOL[k].available = 2;
+        if (k==="M365_APPS") LICENSE_POOL[k].available = 3;
+        if (k==="TEAMS_ESS") LICENSE_POOL[k].available = 4;
+        if (k==="ONEDRIVE_P1") LICENSE_POOL[k].available = 4;
+        if (k==="AAD_P1") LICENSE_POOL[k].available = 2;
+      });
+      // reset users
+      USERS.forEach(u=> u.licenses = {});
+      USERS.find(u=>u.name==="Customer Support").licenses = { TEAMS_ESS:true }; // default for Task C hint
+      selectedIds.clear();
+      filter = "";
+      el("#searchBox").value = "";
+      renderUsers();
+      toast("Lab has been reset.");
+      closeDrawer();
+      closeBulkModal();
+    }
+
+    function closeLab() {
+      // no external messages; attempt close
+      window.close();
+    }
+
+    // -------------------- Events --------------------
+    el("#searchBox").addEventListener("input", (e)=>{
+      filter = e.target.value.trim().toLowerCase();
+      renderUsers();
+    });
+
+    el("#saveUser").addEventListener("click", applyUserSave);
+    el("#closeDrawer").addEventListener("click", closeDrawer);
+    el("#drawerMask").addEventListener("click", closeDrawer);
+
+    el("#bulkAssignBtn").addEventListener("click", openBulkModal);
+    el("#bulkClose").addEventListener("click", closeBulkModal);
+    el("#bulkCancel").addEventListener("click", closeBulkModal);
+    el("#bulkMask").addEventListener("click", closeBulkModal);
+    el("#bulkSave").addEventListener("click", applyBulkSave);
+
+    el("#resetBtn").addEventListener("click", resetLab);
+    el("#closeBtn").addEventListener("click", closeLab);
+    el("#refreshBtn").addEventListener("click", ()=> { renderUsers(); toast("Refreshed."); });
+
+    // Placeholder toolbar buttons
+    el("#addUserBtn").addEventListener("click", ()=> toast("Add a user (not simulated).","error"));
+    el("#mfaBtn").addEventListener("click", ()=> toast("MFA settings (not simulated).","error"));
+    el("#deleteBtn").addEventListener("click", ()=> toast("Delete user (not simulated).","error"));
+
+    // initial render
+    renderUsers();
+  </script>
+</body>
+</html>
