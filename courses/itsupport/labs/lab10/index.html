@@ -105,6 +105,7 @@
       background: rgba(255,255,255,.08);
       border: 1px solid rgba(255,255,255,.2);
       cursor: pointer;
+      user-select: none;
     }
     .menu-item.active {
       background: #fff;
@@ -145,6 +146,7 @@
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
+      user-select: none;
     }
     .setting .name {
       font-weight: 600;
@@ -325,7 +327,7 @@
             <div class="key-button" id="upKey">↑</div>
             <div class="key-button" id="downKey">↓</div>
           </div>
-          <div class="instructions">↑↓ Navigate | Enter Select | Esc Back | F10 Save & Exit</div>
+          <div class="instructions">↑↓ Navigate | Enter Select | Esc Back | F10 Save & Exit | Click menus/items to select</div>
         </div>
       </div>
     </div>
@@ -354,7 +356,7 @@
         </div>
       </div>
       <div class="panel hint hidden" id="hintPanel">
-        Use arrow keys to navigate through BIOS menus.
+        Use arrow keys or click to navigate through BIOS menus.
       </div>
       <div class="panel hidden" id="donePanel">
         <b>🎉 Completed!</b> Virtualization enabled for VM support.
@@ -454,12 +456,12 @@ class VirtualizationLab {
   }
 
   initialize() {
-    this.bindEvents();
+    this.bindStaticEvents();
     this.renderScreen('main');
     this.updateProgress();
   }
 
-  bindEvents() {
+  bindStaticEvents() {
     // Control button events
     document.getElementById('upKey').addEventListener('click', () => this.moveUp());
     document.getElementById('downKey').addEventListener('click', () => this.moveDown());
@@ -471,12 +473,69 @@ class VirtualizationLab {
     document.getElementById('resetLab').addEventListener('click', () => this.reset());
     document.getElementById('closeLab').addEventListener('click', () => {
       if (confirm("Are you sure you want to close the lab?")) {
+        // In most browsers window.close() only works for windows opened via script.
+        // Provide graceful fallback.
+        this.showHint('You can close this tab/window to exit the lab.');
         window.close();
       }
     });
 
     // Keyboard events
     document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+
+    // Left menu click navigation (event delegation)
+    document.getElementById('mainMenu').addEventListener('click', (e) => {
+      const item = e.target.closest('.menu-item');
+      if (!item) return;
+      const targetScreen = item.dataset.screen;
+      if (!targetScreen || !this.screens[targetScreen]) return;
+      this.flashMenuItem(item);
+      // If moving between top-level tabs, clear stack so Esc returns to Main cleanly
+      if (['main','advanced','security','boot','exit'].includes(targetScreen)) {
+        this.menuStack = [];
+      }
+      this.currentSelection = 0;
+      this.renderScreen(targetScreen);
+      this.updateProgress();
+    });
+  }
+
+  // After each render we must bind dynamic events inside the biosContent
+  bindDynamicEvents() {
+    const screen = this.screens[this.currentScreen];
+    if (!screen || !screen.items) return;
+
+    // Bind click for each row to select it and perform action
+    const rows = document.querySelectorAll('#biosContent .setting');
+    rows.forEach((row, index) => {
+      row.addEventListener('click', () => {
+        this.currentSelection = index;
+        this.renderScreen(); // re-render to show highlight
+        // Perform default click action
+        if (screen.type === 'menu') {
+          const item = screen.items[index];
+          if (item.type === 'submenu') {
+            this.menuStack.push({screen: this.currentScreen, selection: index});
+            this.currentSelection = 0;
+            this.renderScreen(item.target);
+          } else if (item.type === 'action' && item.target === 'saveExit') {
+            this.pressF10();
+          }
+        } else if (screen.type === 'settings') {
+          const item = screen.items[index];
+          if (this.currentScreen === 'advancedCpu' && item.key === 'virtualization') {
+            this.toggleVirtualization();
+          } else {
+            this.showHint('This setting is read-only for the lab.');
+          }
+        }
+        this.updateProgress();
+      });
+      // Optional: double click mirrors click (already handled)
+      row.addEventListener('dblclick', () => {
+        rows[index].click();
+      });
+    });
   }
 
   handleKeyPress(e) {
@@ -495,6 +554,9 @@ class VirtualizationLab {
     if (screen.items && screen.items.length > 0) {
       this.currentSelection = this.currentSelection > 0 ? this.currentSelection - 1 : screen.items.length - 1;
       this.renderScreen();
+    } else {
+      // When on top-level "tabs" without items (like Main), move focus across left menu
+      this.moveLeftMenu(-1);
     }
   }
 
@@ -504,7 +566,19 @@ class VirtualizationLab {
     if (screen.items && screen.items.length > 0) {
       this.currentSelection = this.currentSelection < screen.items.length - 1 ? this.currentSelection + 1 : 0;
       this.renderScreen();
+    } else {
+      this.moveLeftMenu(1);
     }
+  }
+
+  moveLeftMenu(direction) {
+    const menuItems = [...document.querySelectorAll('#mainMenu .menu-item')];
+    let idx = menuItems.findIndex(mi => mi.classList.contains('active'));
+    if (idx === -1) idx = 0;
+    idx = (idx + direction + menuItems.length) % menuItems.length;
+    const targetScreen = menuItems[idx].dataset.screen;
+    this.renderScreen(targetScreen);
+    this.updateProgress();
   }
 
   pressEnter() {
@@ -535,6 +609,11 @@ class VirtualizationLab {
       this.currentScreen = previousState.screen;
       this.currentSelection = previousState.selection;
       this.renderScreen();
+    } else {
+      // If no stack, go back to Main from any top-level tab
+      if (this.currentScreen !== 'main') {
+        this.renderScreen('main');
+      }
     }
     this.updateProgress();
   }
@@ -597,7 +676,7 @@ class VirtualizationLab {
         const selectedClass = isSelected ? 'selected' : '';
         
         contentHTML += `
-          <div class="${itemClass} ${selectedClass}">
+          <div class="${itemClass} ${selectedClass}" data-index="${index}">
             <span class="name">${item.name}</span>
             <span class="value">${item.value || ''}</span>
           </div>
@@ -607,6 +686,9 @@ class VirtualizationLab {
     }
 
     contentEl.innerHTML = contentHTML;
+
+    // Re-bind dynamic events for the freshly rendered content
+    this.bindDynamicEvents();
   }
 
   updateProgress() {
@@ -640,6 +722,11 @@ class VirtualizationLab {
     const button = document.getElementById(buttonId);
     button.classList.add('pressed');
     setTimeout(() => button.classList.remove('pressed'), 150);
+  }
+
+  flashMenuItem(el) {
+    el.classList.add('pressed');
+    setTimeout(() => el.classList.remove('pressed'), 150);
   }
 
   showHint(message) {
