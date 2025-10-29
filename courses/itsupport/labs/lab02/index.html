@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lab 2: Ticket Editing & Status Updates</title>
+  <title>Lab 2: Ticket Editing & Status Updates - Enhanced</title>
   <style>
     :root {
       --primary-color:#2e51bb;
@@ -23,6 +23,8 @@
       --resolved-color:#6ed051;
       --closed-color:#6c757d;
       --hover-bg:rgba(113,168,252,.07);
+      --sn-blue:#2e51bb;
+      --sn-light-blue:#71a8fc;
     }
     *{box-sizing:border-box;font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;margin:0;padding:0}
     body{background:#f2f2f2;height:100vh;display:flex;flex-direction:column}
@@ -80,7 +82,7 @@
     .chart-title{font-size:14px;color:var(--dark-text);margin-bottom:8px;font-weight:600}
     canvas{width:100%;height:260px}
     .modal-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s ease}
-    .modal{background:#fff;border-radius:8px;width:700px;max-width:95%;max-height:95vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,.3);transform:translateY(30px) scale(.95);transition:transform .3s ease}
+    .modal{background:#fff;border-radius:8px;width:800px;max-width:95%;max-height:95vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,.3);transform:translateY(30px) scale(.95);transition:transform .3s ease}
     .modal-backdrop.show{opacity:1;visibility:visible}
     .modal-backdrop.show .modal{transform:translateY(0) scale(1)}
     .modal-header{padding:20px 24px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%)}
@@ -110,14 +112,34 @@
     .task-title{font-weight:600;color:var(--primary-color);margin-bottom:8px;font-size:16px}
     .task-description{color:var(--dark-text);line-height:1.4}
     .empty{padding:30px;text-align:center;color:var(--light-text)}
+    
+    /* NEW STYLES FOR ENHANCED FEATURES */
+    .sys-id{font-size:11px;color:var(--light-text);font-family:monospace}
+    .related-records{background:var(--bg-light);border:1px solid var(--border-color);border-radius:6px;padding:12px;margin-top:16px}
+    .related-title{font-size:13px;font-weight:600;margin-bottom:8px;color:var(--dark-text)}
+    .related-list{display:flex;flex-direction:column;gap:6px}
+    .related-item{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:#fff;border-radius:4px;border:1px solid var(--border-color);font-size:12px}
+    .workflow-notes{background:#fff8e1;border-left:4px solid #ffc107;padding:12px;margin:12px 0;font-size:13px}
+    .business-rule-message{background:#e8f5e8;border:1px solid #4caf50;border-radius:4px;padding:8px 12px;margin:8px 0;font-size:12px}
+    .field-mandatory .form-label::after{content:" *";color:#ec5050}
+    .reference-field{position:relative}
+    .reference-lookup{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--primary-color);cursor:pointer;font-size:16px}
+    .filter-bar{background:var(--bg-light);padding:12px 16px;border-bottom:1px solid var(--border-color);display:flex;gap:12px;align-items:center}
+    .filter-input{flex:1;max-width:300px}
+    .saved-search{background:#fff;border:1px solid var(--border-color);border-radius:4px;padding:6px 12px;font-size:13px;cursor:pointer}
+    .saved-search.active{background:var(--primary-color);color:#fff}
+    .breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--light-text);padding:12px 16px;background:#fff;border-bottom:1px solid var(--border-color)}
+    .breadcrumb-item{color:var(--primary-color);cursor:pointer}
+    .breadcrumb-item:last-child{color:var(--dark-text);cursor:default}
+    .breadcrumb-separator{color:var(--light-text)}
   </style>
 </head>
 <body>
   <div class="app-container">
     <div class="task-instructions">
-      <div class="task-title">Lab 2: Ticket Editing & Status Updates</div>
+      <div class="task-title">Lab 2: Enhanced Ticket Editing & Status Updates</div>
       <div class="task-description">
-        <strong>Task:</strong> Edit incident tickets and update their status. <em>Primary functions (selection & editing) are untouched.</em> You can also switch modules and view a lightweight dashboard.
+        <strong>Task:</strong> Edit incident tickets with ServiceNow-authentic features including workflow rules, reference fields, business rules, and related records.
       </div>
     </div>
 
@@ -131,7 +153,16 @@
       <div class="nav-item" data-tab="requests">Service Requests</div>
       <div class="nav-item" data-tab="knowledge">Knowledge Base</div>
       <div class="nav-item" data-tab="problems">Problems</div>
+      <div class="nav-item" data-tab="cmdb">CMDB</div>
     </nav>
+
+    <div class="breadcrumb">
+      <span class="breadcrumb-item">Home</span>
+      <span class="breadcrumb-separator">></span>
+      <span class="breadcrumb-item">Service Desk</span>
+      <span class="breadcrumb-separator">></span>
+      <span class="breadcrumb-item">Incidents</span>
+    </div>
 
     <div class="subnav">
       <div class="view-controls">
@@ -141,10 +172,35 @@
       <div class="tickets-count" id="ticketsCount">—</div>
     </div>
 
+    <!-- NEW: Filter Bar -->
+    <div class="filter-bar">
+      <input type="text" class="form-control filter-input" id="searchInput" placeholder="Search tickets...">
+      <select class="form-select" id="stateFilter" style="max-width: 150px;">
+        <option value="">All States</option>
+        <option value="Open">Open</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Pending">Pending</option>
+        <option value="Resolved">Resolved</option>
+        <option value="Closed">Closed</option>
+      </select>
+      <select class="form-select" id="priorityFilter" style="max-width: 150px;">
+        <option value="">All Priorities</option>
+        <option value="Low">Low</option>
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+        <option value="Critical">Critical</option>
+      </select>
+      <div class="saved-search active">My Open Incidents</div>
+      <div class="saved-search">All High Priority</div>
+      <div class="saved-search">Unassigned Tickets</div>
+    </div>
+
     <div class="content-wrapper">
       <div class="main-content">
         <div class="toolbar">
           <button class="btn btn-primary" id="editBtn" disabled>✏️ Edit</button>
+          <button class="btn btn-secondary" id="assignBtn" disabled>👤 Assign</button>
+          <button class="btn btn-secondary" id="resolveBtn" disabled>✅ Resolve</button>
           <div class="tickets-count" id="toolbarHint" style="margin-left:auto;color:var(--light-text)"></div>
           <div class="list-controls" id="labControls">
             <button class="btn btn-secondary" id="resetLab" type="button">Reset Lab</button>
@@ -176,7 +232,7 @@
     </div>
   </div>
 
-  <!-- Modal (unchanged primary function) -->
+  <!-- Enhanced Modal -->
   <div class="modal-backdrop" id="ticketModal">
     <div class="modal">
       <div class="modal-header">
@@ -184,6 +240,9 @@
         <button class="modal-close" id="modalClose">&times;</button>
       </div>
       <div class="modal-body">
+        <!-- NEW: Sys ID display -->
+        <div class="sys-id" id="sysIdDisplay" style="margin-bottom: 16px;"></div>
+
         <div class="form-row">
           <div class="form-col">
             <div class="form-group">
@@ -214,28 +273,50 @@
           <div class="form-col">
             <div class="form-group">
               <label class="form-label">Assigned to</label>
-              <select class="form-select" id="assignedSelect">
-                <option value="Unassigned">Unassigned</option>
-                <option value="John Smith">John Smith</option>
-                <option value="Lisa Brown">Lisa Brown</option>
-                <option value="Mike Wilson">Mike Wilson</option>
-                <option value="IT Support">IT Support</option>
-              </select>
+              <div class="reference-field">
+                <select class="form-select" id="assignedSelect">
+                  <option value="Unassigned">Unassigned</option>
+                  <option value="John Smith">John Smith</option>
+                  <option value="Lisa Brown">Lisa Brown</option>
+                  <option value="Mike Wilson">Mike Wilson</option>
+                  <option value="IT Support">IT Support</option>
+                </select>
+                <button class="reference-lookup" title="Lookup">🔍</button>
+              </div>
             </div>
           </div>
           <div class="form-col">
             <div class="form-group">
               <label class="form-label">Assignment group</label>
-              <select class="form-select" id="groupSelect">
-                <option value="IT Support">IT Support</option>
-                <option value="Network Team">Network Team</option>
-                <option value="Help Desk">Help Desk</option>
-              </select>
+              <div class="reference-field">
+                <select class="form-select" id="groupSelect">
+                  <option value="IT Support">IT Support</option>
+                  <option value="Network Team">Network Team</option>
+                  <option value="Help Desk">Help Desk</option>
+                  <option value="Infrastructure">Infrastructure</option>
+                </select>
+                <button class="reference-lookup" title="Lookup">🔍</button>
+              </div>
             </div>
           </div>
         </div>
 
+        <!-- NEW: Configuration Item field -->
         <div class="form-group">
+          <label class="form-label">Configuration Item</label>
+          <div class="reference-field">
+            <select class="form-select" id="ciSelect">
+              <option value="">-- None --</option>
+              <option value="PRT-MKT-001">PRT-MKT-001 - HP LaserJet Printer</option>
+              <option value="SRV-VPN-001">SRV-VPN-001 - VPN Gateway</option>
+              <option value="SRV-EMAIL-001">SRV-EMAIL-001 - Email Server</option>
+              <option value="WS-0234">WS-0234 - Workstation</option>
+            </select>
+            <button class="reference-lookup" title="Lookup">🔍</button>
+          </div>
+        </div>
+
+        <div class="form-group field-mandatory">
           <label class="form-label">Short description</label>
           <input type="text" class="form-control" id="shortDescInput">
         </div>
@@ -243,6 +324,24 @@
         <div class="form-group">
           <label class="form-label">Description</label>
           <textarea class="form-control" id="descInput"></textarea>
+        </div>
+
+        <!-- NEW: Workflow Notes -->
+        <div class="workflow-notes" id="workflowNotes">
+          <strong>Workflow:</strong> Status changed to <span id="workflowStatus">Open</span>. Next action: Assignment to support group.
+        </div>
+
+        <!-- NEW: Business Rule Messages -->
+        <div class="business-rule-message" id="businessRuleMessage" style="display: none;">
+          <!-- Business rule messages will appear here -->
+        </div>
+
+        <!-- NEW: Related Records -->
+        <div class="related-records">
+          <div class="related-title">Related Records</div>
+          <div class="related-list" id="relatedRecords">
+            <!-- Related records will be populated here -->
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -262,32 +361,121 @@
   </div>
 
   <script>
+    // Enhanced data with sys_ids and additional ServiceNow fields
     const tickets = [
-      {id:1,number:"INC0010023",shortDescription:"Printer not working in Marketing department",caller:"Sarah Johnson",assignmentGroup:"IT Support",assignedTo:"John Smith",updated:"Today, 10:45 AM",priority:"High",state:"In Progress",description:"Users in the Marketing department on the 3rd floor are unable to print to the shared HP LaserJet printer. The printer appears to be powered on but jobs are stuck in the queue. This issue started this morning and affects multiple users."},
-      {id:2,number:"INC0010022",shortDescription:"Email access issues on mobile device",caller:"Michael Chen",assignmentGroup:"IT Support",assignedTo:"Unassigned",updated:"Today, 9:30 AM",priority:"Medium",state:"Open",description:"Unable to access company email on iPhone. Authentication keeps failing despite correct credentials."},
-      {id:3,number:"INC0010021",shortDescription:"VPN connection drops frequently",caller:"Robert Williams",assignmentGroup:"Network Team",assignedTo:"Lisa Brown",updated:"Today, 8:30 AM",priority:"High",state:"In Progress",description:"VPN connection drops every 10-15 minutes requiring reconnection. Issue started yesterday."},
-      {id:4,number:"INC0010020",shortDescription:"New employee account setup",caller:"HR Department",assignmentGroup:"IT Support",assignedTo:"John Smith",updated:"Today, 9:00 AM",priority:"Low",state:"Resolved",description:"Set up new employee with company accounts and access permissions."},
-      {id:5,number:"INC0010019",shortDescription:"Monitor not displaying correctly",caller:"David Miller",assignmentGroup:"IT Support",assignedTo:"IT Support",updated:"Yesterday, 3:15 PM",priority:"Medium",state:"Pending",description:"External monitor shows distorted colors and flickering. Issue intermittent."}
+      {
+        id: 1, 
+        sys_id: "a1b2c3d4e5f6g7h8i9j0",
+        number: "INC0010023", 
+        shortDescription: "Printer not working in Marketing department", 
+        caller: "Sarah Johnson", 
+        assignmentGroup: "IT Support", 
+        assignedTo: "John Smith", 
+        updated: "Today, 10:45 AM", 
+        priority: "High", 
+        state: "In Progress",
+        configurationItem: "PRT-MKT-001",
+        description: "Users in the Marketing department on the 3rd floor are unable to print to the shared HP LaserJet printer. The printer appears to be powered on but jobs are stuck in the queue. This issue started this morning and affects multiple users.",
+        relatedRecords: [
+          { type: "Problem", number: "PRB0000760", title: "Print server spooler crashes" },
+          { type: "Change", number: "CHG0001234", title: "Printer driver update" }
+        ]
+      },
+      {
+        id: 2,
+        sys_id: "b2c3d4e5f6g7h8i9j0k1", 
+        number: "INC0010022", 
+        shortDescription: "Email access issues on mobile device", 
+        caller: "Michael Chen", 
+        assignmentGroup: "IT Support", 
+        assignedTo: "Unassigned", 
+        updated: "Today, 9:30 AM", 
+        priority: "Medium", 
+        state: "Open",
+        configurationItem: "SRV-EMAIL-001",
+        description: "Unable to access company email on iPhone. Authentication keeps failing despite correct credentials.",
+        relatedRecords: []
+      },
+      {
+        id: 3,
+        sys_id: "c3d4e5f6g7h8i9j0k1l2", 
+        number: "INC0010021", 
+        shortDescription: "VPN connection drops frequently", 
+        caller: "Robert Williams", 
+        assignmentGroup: "Network Team", 
+        assignedTo: "Lisa Brown", 
+        updated: "Today, 8:30 AM", 
+        priority: "High", 
+        state: "In Progress",
+        configurationItem: "SRV-VPN-001",
+        description: "VPN connection drops every 10-15 minutes requiring reconnection. Issue started yesterday.",
+        relatedRecords: [
+          { type: "Problem", number: "PRB0000761", title: "Intermittent VPN drops for remote staff" }
+        ]
+      },
+      {
+        id: 4,
+        sys_id: "d4e5f6g7h8i9j0k1l2m3", 
+        number: "INC0010020", 
+        shortDescription: "New employee account setup", 
+        caller: "HR Department", 
+        assignmentGroup: "IT Support", 
+        assignedTo: "John Smith", 
+        updated: "Today, 9:00 AM", 
+        priority: "Low", 
+        state: "Resolved",
+        configurationItem: "",
+        description: "Set up new employee with company accounts and access permissions.",
+        relatedRecords: [
+          { type: "Request", number: "REQ0010501", title: "Request access to Shared Drive - Finance" }
+        ]
+      },
+      {
+        id: 5,
+        sys_id: "e5f6g7h8i9j0k1l2m3n4", 
+        number: "INC0010019", 
+        shortDescription: "Monitor not displaying correctly", 
+        caller: "David Miller", 
+        assignmentGroup: "IT Support", 
+        assignedTo: "IT Support", 
+        updated: "Yesterday, 3:15 PM", 
+        priority: "Medium", 
+        state: "Pending",
+        configurationItem: "WS-0234",
+        description: "External monitor shows distorted colors and flickering. Issue intermittent.",
+        relatedRecords: []
+      }
     ];
+
     const requests = [
       {id:101, number:"REQ0010501", shortDescription:"Request access to Shared Drive - Finance", requester:"Anna Patel", assignmentGroup:"IT Support", assignedTo:"Unassigned", updated:"Today, 10:10 AM", priority:"Low", state:"Open"},
       {id:102, number:"REQ0010500", shortDescription:"Laptop Replacement", requester:"James Parker", assignmentGroup:"Hardware Team", assignedTo:"Tom Reed", updated:"Yesterday, 4:20 PM", priority:"Medium", state:"In Progress"},
       {id:103, number:"REQ0010499", shortDescription:"Software Installation - Visio", requester:"Maria Gomez", assignmentGroup:"Software Team", assignedTo:"Unassigned", updated:"Today, 8:05 AM", priority:"Low", state:"Pending"}
     ];
+
     const knowledge = [
       {id:201, number:"KB0001201", title:"Resetting your VPN credentials", category:"Network", updated:"2025-08-20", views:214, state:"Published"},
       {id:202, number:"KB0001200", title:"Fixing printer queue issues", category:"Hardware", updated:"2025-08-18", views:356, state:"Published"},
       {id:203, number:"KB0001199", title:"Configure email on iOS", category:"Email", updated:"2025-08-10", views:489, state:"Draft"}
     ];
+
     const problems = [
       {id:301, number:"PRB0000761", shortDescription:"Intermittent VPN drops for remote staff", openedBy:"Lisa Brown", assignmentGroup:"Network Team", assignedTo:"Network Queue", updated:"Today, 11:00 AM", priority:"High", state:"Open"},
       {id:302, number:"PRB0000760", shortDescription:"Print server spooler crashes", openedBy:"IT Ops", assignmentGroup:"Infrastructure", assignedTo:"Ian Cole", updated:"Yesterday, 1:40 PM", priority:"Critical", state:"In Progress"}
+    ];
+
+    const cmdbItems = [
+      {id: 401, name: "PRT-MKT-001", type: "Printer", status: "Operational", owner: "Marketing Department"},
+      {id: 402, name: "SRV-VPN-001", type: "Server", status: "Operational", owner: "Network Team"},
+      {id: 403, name: "SRV-EMAIL-001", type: "Server", status: "Operational", owner: "IT Operations"},
+      {id: 404, name: "WS-0234", type: "Workstation", status: "Operational", owner: "David Miller"}
     ];
 
     let currentTab = "incidents";
     let currentView = "list";
     let selectedTickets = new Set();
     let currentTicket = null;
+    let filteredTickets = [...tickets];
 
     const el = s => document.querySelector(s);
     const els = s => Array.from(document.querySelectorAll(s));
@@ -295,31 +483,95 @@
     const priorityClass = p => `priority-${String(p||'').toLowerCase()}`;
     const setGrid = cols => document.documentElement.style.setProperty('--grid-cols', cols);
 
-    function init(){ setupEvents(); render(); }
+    function init(){ 
+      setupEvents(); 
+      applyFilters();
+      render(); 
+    }
+
     function setupEvents(){
       els('.nav-item').forEach(i=>i.addEventListener('click', ()=>{
         currentTab = i.dataset.tab;
         currentView = 'list';
         selectedTickets.clear();
+        applyFilters();
         render();
       }));
-      els('.view-button').forEach(b=>b.addEventListener('click', ()=>{ currentView = b.dataset.view; render(); }));
+      
+      els('.view-button').forEach(b=>b.addEventListener('click', ()=>{ 
+        currentView = b.dataset.view; 
+        render(); 
+      }));
+      
       el('#editBtn').addEventListener('click', openEditModal);
+      el('#assignBtn').addEventListener('click', assignTicket);
+      el('#resolveBtn').addEventListener('click', resolveTicket);
       el('#modalClose').addEventListener('click', closeModal);
       el('#cancelBtn').addEventListener('click', closeModal);
       el('#saveBtn').addEventListener('click', saveTicket);
+      
+      // NEW: Filter events
+      el('#searchInput').addEventListener('input', applyFilters);
+      el('#stateFilter').addEventListener('change', applyFilters);
+      el('#priorityFilter').addEventListener('change', applyFilters);
+      
+      // NEW: Form field events for business rules
+      el('#statusSelect').addEventListener('change', handleStatusChange);
+      el('#prioritySelect').addEventListener('change', handlePriorityChange);
+      el('#assignedSelect').addEventListener('change', handleAssignmentChange);
+      
+      // NEW: Reference lookup events
+      els('.reference-lookup').forEach(btn => {
+        btn.addEventListener('click', handleReferenceLookup);
+      });
+      
       document.addEventListener('keydown', (e)=>{ if (e.key==='Escape') closeModal(); });
+    }
+
+    // NEW: Filter functionality
+    function applyFilters() {
+      const searchTerm = el('#searchInput').value.toLowerCase();
+      const stateFilter = el('#stateFilter').value;
+      const priorityFilter = el('#priorityFilter').value;
+      
+      filteredTickets = tickets.filter(ticket => {
+        const matchesSearch = !searchTerm || 
+          ticket.number.toLowerCase().includes(searchTerm) ||
+          ticket.shortDescription.toLowerCase().includes(searchTerm) ||
+          ticket.caller.toLowerCase().includes(searchTerm);
+        
+        const matchesState = !stateFilter || ticket.state === stateFilter;
+        const matchesPriority = !priorityFilter || ticket.priority === priorityFilter;
+        
+        return matchesSearch && matchesState && matchesPriority;
+      });
+      
+      renderList();
     }
 
     function render(){
       els('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.tab===currentTab));
       els('.view-button').forEach(b=>b.classList.toggle('active', b.dataset.view===currentView));
-      el('#toolbarHint').textContent = currentView==='list' ? (currentTab==='incidents' ? 'Select exactly one ticket to enable Edit.' : 'Viewing read‑only list.') : 'Interactive KPIs & charts for the current module.';
+      
+      let hintText = '';
+      if (currentView === 'list') {
+        if (currentTab === 'incidents') {
+          hintText = 'Select exactly one ticket to enable Edit, Assign, or Resolve.';
+        } else {
+          hintText = 'Viewing read‑only list.';
+        }
+      } else {
+        hintText = 'Interactive KPIs & charts for the current module.';
+      }
+      
+      el('#toolbarHint').textContent = hintText;
       const data = getCurrentData();
       el('#ticketsCount').textContent = `${data.length} ${labelFor(currentTab)}`;
       el('#listView').style.display = currentView==='list' ? 'block' : 'none';
       el('#dashboardView').classList.toggle('show', currentView==='dashboard');
-      if (currentView==='list') renderList(); else renderDashboard();
+      
+      if (currentView==='list') renderList(); 
+      else renderDashboard();
     }
 
     function labelFor(tab){
@@ -328,14 +580,17 @@
         case 'requests': return 'requests';
         case 'knowledge': return 'articles';
         case 'problems': return 'problems';
+        case 'cmdb': return 'configuration items';
         default: return 'items';
       }
     }
+
     function getCurrentData(){
-      if (currentTab==='incidents') return tickets;
+      if (currentTab==='incidents') return filteredTickets;
       if (currentTab==='requests') return requests;
       if (currentTab==='knowledge') return knowledge;
       if (currentTab==='problems') return problems;
+      if (currentTab==='cmdb') return cmdbItems;
       return [];
     }
 
@@ -349,12 +604,16 @@
         header.innerHTML = `
           <div><input type="checkbox" id="selectAll"></div>
           <div>Number</div><div>Short description</div><div>Caller</div><div>Assigned to</div><div>Status</div><div>Priority</div>`;
-        getCurrentData().forEach(t => body.appendChild(incidentRow(t)));
+        
+        filteredTickets.forEach(t => body.appendChild(incidentRow(t)));
+        
         const selectAll = el('#selectAll');
         if (selectAll){
           selectAll.addEventListener('change', (e)=>{
             selectedTickets.clear();
-            if (e.target.checked){ tickets.forEach(t=>selectedTickets.add(t.id)); }
+            if (e.target.checked){ 
+              filteredTickets.forEach(t=>selectedTickets.add(t.id)); 
+            }
             renderList();
             updateButtonStates();
           });
@@ -372,6 +631,10 @@
         setGrid('120px minmax(320px,1fr) 160px 160px 140px 120px');
         header.innerHTML = `<div>Number</div><div>Short description</div><div>Opened by</div><div>Assignment group</div><div>Status</div><div>Priority</div>`;
         problems.forEach(p => body.appendChild(readonlyRow([p.number, p.shortDescription, p.openedBy, p.assignmentGroup, p.state, badgePriority(p.priority)])));
+      } else if (currentTab==='cmdb'){
+        setGrid('120px minmax(200px,1fr) 160px 160px 140px');
+        header.innerHTML = `<div>Name</div><div>Type</div><div>Status</div><div>Owner</div>`;
+        cmdbItems.forEach(c => body.appendChild(readonlyRow([c.name, c.type, c.status, c.owner])));
       }
 
       if (!getCurrentData().length){
@@ -379,7 +642,9 @@
       }
     }
 
-    function badgePriority(p){ return `<div class="priority-badge"><div class="priority-dot ${priorityClass(p)}"></div>${p}</div>`; }
+    function badgePriority(p){ 
+      return `<div class="priority-badge"><div class="priority-dot ${priorityClass(p)}"></div>${p}</div>`; 
+    }
 
     function incidentRow(ticket){
       const row = document.createElement('div');
@@ -387,7 +652,9 @@
       row.dataset.ticketId = ticket.id;
       const st = statusClass(ticket.state);
       const pr = priorityClass(ticket.priority);
+      
       if (selectedTickets.has(ticket.id)) row.classList.add('selected');
+      
       row.innerHTML = `
         <div class="row-checkbox"><input type="checkbox" class="ticket-checkbox" data-ticket-id="${ticket.id}" ${selectedTickets.has(ticket.id) ? 'checked':''}></div>
         <div class="list-cell ticket-number">${ticket.number}</div>
@@ -396,11 +663,20 @@
         <div class="list-cell">${ticket.assignedTo}</div>
         <div class="list-cell"><span class="status-badge ${st}">${ticket.state}</span></div>
         <div class="list-cell"><div class="priority-badge"><div class="priority-dot ${pr}"></div>${ticket.priority}</div></div>`;
+      
       const cb = row.querySelector('.ticket-checkbox');
-      cb.addEventListener('change', (e)=>{ e.stopPropagation(); handleTicketSelection(ticket.id, e.target.checked); });
-      row.addEventListener('click', (e)=>{
-        if (!e.target.classList.contains('ticket-checkbox')){ cb.checked = !cb.checked; handleTicketSelection(ticket.id, cb.checked); }
+      cb.addEventListener('change', (e)=>{ 
+        e.stopPropagation(); 
+        handleTicketSelection(ticket.id, e.target.checked); 
       });
+      
+      row.addEventListener('click', (e)=>{
+        if (!e.target.classList.contains('ticket-checkbox')){ 
+          cb.checked = !cb.checked; 
+          handleTicketSelection(ticket.id, cb.checked); 
+        }
+      });
+      
       return row;
     }
 
@@ -412,19 +688,57 @@
     }
 
     function handleTicketSelection(id, isSelected){
-      if (isSelected) selectedTickets.add(id); else selectedTickets.delete(id);
+      if (isSelected) selectedTickets.add(id); 
+      else selectedTickets.delete(id);
+      
       updateRowSelection();
       updateButtonStates();
     }
+
     function updateRowSelection(){
       document.querySelectorAll('.list-item').forEach(row=>{
         const id = parseInt(row.dataset.ticketId);
         if (!isNaN(id)) row.classList.toggle('selected', selectedTickets.has(id));
       });
     }
+
     function updateButtonStates(){
       const canEdit = currentTab==='incidents' && selectedTickets.size===1;
       el('#editBtn').disabled = !canEdit;
+      el('#assignBtn').disabled = !canEdit;
+      el('#resolveBtn').disabled = !canEdit;
+    }
+
+    // NEW: Quick action functions
+    function assignTicket() {
+      if (currentTab!=='incidents' || selectedTickets.size!==1) return;
+      const id = Array.from(selectedTickets)[0];
+      const ticket = tickets.find(t=>t.id===id);
+      
+      if (ticket && ticket.assignedTo === 'Unassigned') {
+        ticket.assignedTo = 'John Smith';
+        ticket.state = 'In Progress';
+        ticket.updated = 'Just now';
+        
+        applyFilters();
+        renderList();
+        showNotification('Ticket Assigned', `${ticket.number} has been assigned to John Smith`);
+      }
+    }
+
+    function resolveTicket() {
+      if (currentTab!=='incidents' || selectedTickets.size!==1) return;
+      const id = Array.from(selectedTickets)[0];
+      const ticket = tickets.find(t=>t.id===id);
+      
+      if (ticket && ticket.state !== 'Resolved' && ticket.state !== 'Closed') {
+        ticket.state = 'Resolved';
+        ticket.updated = 'Just now';
+        
+        applyFilters();
+        renderList();
+        showNotification('Ticket Resolved', `${ticket.number} has been resolved`);
+      }
     }
 
     function openEditModal(){
@@ -432,34 +746,170 @@
       const id = Array.from(selectedTickets)[0];
       currentTicket = tickets.find(t=>t.id===id);
       if (!currentTicket) return;
+      
       el('#modalTitle').textContent = `Edit ${currentTicket.number}`;
+      el('#sysIdDisplay').textContent = `Sys ID: ${currentTicket.sys_id}`;
+      
+      // Set form values
       el('#statusSelect').value = currentTicket.state;
       el('#prioritySelect').value = currentTicket.priority;
       el('#assignedSelect').value = currentTicket.assignedTo;
       el('#groupSelect').value = currentTicket.assignmentGroup;
+      el('#ciSelect').value = currentTicket.configurationItem || '';
       el('#shortDescInput').value = currentTicket.shortDescription;
       el('#descInput').value = currentTicket.description;
+      
+      // NEW: Update workflow notes
+      updateWorkflowNotes(currentTicket.state);
+      
+      // NEW: Update related records
+      updateRelatedRecords(currentTicket.relatedRecords);
+      
+      // NEW: Clear any previous business rule messages
+      el('#businessRuleMessage').style.display = 'none';
+      
       el('#ticketModal').classList.add('show');
     }
-    function closeModal(){ el('#ticketModal').classList.remove('show'); currentTicket = null; }
+
+    function closeModal(){ 
+      el('#ticketModal').classList.remove('show'); 
+      currentTicket = null; 
+    }
+
+    // NEW: Business rule simulation
+    function handleStatusChange() {
+      const newStatus = el('#statusSelect').value;
+      updateWorkflowNotes(newStatus);
+      
+      // Business rule: When status changes to Resolved, set assigned to current user
+      if (newStatus === 'Resolved') {
+        el('#assignedSelect').value = 'John Smith';
+        showBusinessRuleMessage('Assignment automatically set to current user for resolved tickets.');
+      }
+      
+      // Business rule: When status changes to Closed, show warning if not resolved first
+      if (newStatus === 'Closed' && currentTicket.state !== 'Resolved') {
+        showBusinessRuleMessage('Warning: Consider resolving the ticket before closing it.');
+      }
+    }
+
+    function handlePriorityChange() {
+      const newPriority = el('#prioritySelect').value;
+      
+      // Business rule: High/Critical priority tickets cannot be unassigned
+      if ((newPriority === 'High' || newPriority === 'Critical') && el('#assignedSelect').value === 'Unassigned') {
+        el('#assignedSelect').value = 'IT Support';
+        showBusinessRuleMessage('High priority tickets require assignment. Automatically assigned to IT Support.');
+      }
+    }
+
+    function handleAssignmentChange() {
+      const newAssignee = el('#assignedSelect').value;
+      
+      // Business rule: When assigned, change status to In Progress if it was Open
+      if (newAssignee !== 'Unassigned' && el('#statusSelect').value === 'Open') {
+        el('#statusSelect').value = 'In Progress';
+        updateWorkflowNotes('In Progress');
+        showBusinessRuleMessage('Status automatically changed to In Progress when ticket is assigned.');
+      }
+    }
+
+    // NEW: Reference lookup handler
+    function handleReferenceLookup(e) {
+      e.preventDefault();
+      const field = e.target.closest('.reference-field').querySelector('select');
+      showNotification('Reference Lookup', `Opening lookup for ${field.id}`);
+      // In a real ServiceNow environment, this would open a popup with search results
+    }
+
+    // NEW: Update workflow notes based on status
+    function updateWorkflowNotes(status) {
+      const notesEl = el('#workflowNotes');
+      const statusSpan = el('#workflowStatus');
+      
+      statusSpan.textContent = status;
+      
+      let note = '';
+      switch(status) {
+        case 'Open':
+          note = 'Next action: Assignment to support group.';
+          break;
+        case 'In Progress':
+          note = 'Next action: Work on resolution and update notes.';
+          break;
+        case 'Pending':
+          note = 'Next action: Wait for user response or external dependency.';
+          break;
+        case 'Resolved':
+          note = 'Next action: User confirmation and ticket closure.';
+          break;
+        case 'Closed':
+          note = 'Workflow complete. Ticket can be archived.';
+          break;
+      }
+      
+      notesEl.innerHTML = `<strong>Workflow:</strong> Status changed to <span id="workflowStatus">${status}</span>. ${note}`;
+    }
+
+    // NEW: Show business rule messages
+    function showBusinessRuleMessage(message) {
+      const msgEl = el('#businessRuleMessage');
+      msgEl.textContent = message;
+      msgEl.style.display = 'block';
+    }
+
+    // NEW: Update related records display
+    function updateRelatedRecords(relatedRecords) {
+      const container = el('#relatedRecords');
+      container.innerHTML = '';
+      
+      if (relatedRecords && relatedRecords.length > 0) {
+        relatedRecords.forEach(record => {
+          const item = document.createElement('div');
+          item.className = 'related-item';
+          item.innerHTML = `
+            <span>${record.type}: ${record.number}</span>
+            <span>${record.title}</span>
+          `;
+          container.appendChild(item);
+        });
+      } else {
+        container.innerHTML = '<div class="empty">No related records</div>';
+      }
+    }
+
     function saveTicket(){
       if (!currentTicket) return;
+      
+      // NEW: Validation - short description is mandatory
+      if (!el('#shortDescInput').value.trim()) {
+        showNotification('Validation Error', 'Short description is required', 'error');
+        return;
+      }
+      
       const idx = tickets.findIndex(t=>t.id===currentTicket.id);
       if (idx===-1) return;
+      
       tickets[idx] = {
         ...currentTicket,
         state: el('#statusSelect').value,
         priority: el('#prioritySelect').value,
         assignedTo: el('#assignedSelect').value,
         assignmentGroup: el('#groupSelect').value,
+        configurationItem: el('#ciSelect').value,
         shortDescription: el('#shortDescInput').value,
         description: el('#descInput').value,
         updated: 'Just now'
       };
+      
       closeModal();
+      applyFilters();
       renderList();
       showNotification('Success', `${tickets[idx].number} updated successfully`);
-      renderDashboard();
+      
+      if (currentView==='dashboard') {
+        renderDashboard();
+      }
     }
 
     function renderDashboard(){
@@ -471,18 +921,27 @@
         pending: data.filter(r => (r.state||'')==='Pending').length,
         resolved: data.filter(r => (r.state||'')==='Resolved').length
       };
+      
       el('#kpiGrid').innerHTML = `
         <div class="kpi"><div class="label">Total ${labelFor(currentTab)}</div><div class="value">${kpi.total}</div></div>
         <div class="kpi"><div class="label">Open</div><div class="value">${kpi.open}</div></div>
         <div class="kpi"><div class="label">In Progress</div><div class="value">${kpi.inprog}</div></div>
         <div class="kpi"><div class="label">Pending</div><div class="value">${kpi.pending}</div></div>
         <div class="kpi"><div class="label">Resolved</div><div class="value">${kpi.resolved}</div></div>`;
+      
       drawBarChart('stateChart', countBy(data,'state'));
       drawBarChart('priorityChart', countBy(data,'priority'));
     }
+
     function countBy(list, key){
-      const m = {}; list.forEach(r=>{ const k = r[key] || 'Unknown'; m[k] = (m[k]||0)+1; }); return m;
+      const m = {}; 
+      list.forEach(r=>{ 
+        const k = r[key] || 'Unknown'; 
+        m[k] = (m[k]||0)+1; 
+      }); 
+      return m;
     }
+
     function drawBarChart(id, map){
       const c = document.getElementById(id);
       const ctx = c.getContext('2d');
@@ -490,31 +949,69 @@
       const values = Object.values(map);
       const w = c.width = c.clientWidth;
       const h = c.height = c.clientHeight;
+      
       ctx.clearRect(0,0,w,h);
       const pad = 30;
       const maxVal = Math.max(1, ...values, 1);
       const slot = (w - pad*2) / (labels.length || 1);
       const barW = slot * 0.6;
       const gap = slot * 0.4;
-      ctx.strokeStyle = '#d8dbe0'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(pad, h-pad); ctx.lineTo(w-pad, h-pad); ctx.moveTo(pad, pad); ctx.lineTo(pad, h-pad); ctx.stroke();
+      
+      ctx.strokeStyle = '#d8dbe0'; 
+      ctx.lineWidth = 1;
+      ctx.beginPath(); 
+      ctx.moveTo(pad, h-pad); 
+      ctx.lineTo(w-pad, h-pad); 
+      ctx.moveTo(pad, pad); 
+      ctx.lineTo(pad, h-pad); 
+      ctx.stroke();
+      
       labels.forEach((lab,i)=>{
         const x = pad + i*slot + gap/2;
         const barH = (h - pad*2) * (values[i] / maxVal);
         const y = h - pad - barH;
-        ctx.fillStyle = '#2e51bb'; ctx.fillRect(x, y, barW, barH);
-        ctx.fillStyle = '#2a3e4c'; ctx.font = '12px Segoe UI'; ctx.textAlign = 'center';
+        
+        ctx.fillStyle = '#2e51bb'; 
+        ctx.fillRect(x, y, barW, barH);
+        
+        ctx.fillStyle = '#2a3e4c'; 
+        ctx.font = '12px Segoe UI'; 
+        ctx.textAlign = 'center';
         ctx.fillText(values[i], x + barW/2, y - 6);
-        ctx.save(); ctx.translate(x + barW/2, h - pad + 14); ctx.rotate(-Math.PI/8);
-        ctx.fillStyle = '#6c757d'; ctx.fillText(lab, 0, 0); ctx.restore();
+        
+        ctx.save(); 
+        ctx.translate(x + barW/2, h - pad + 14); 
+        ctx.rotate(-Math.PI/8);
+        ctx.fillStyle = '#6c757d'; 
+        ctx.fillText(lab, 0, 0); 
+        ctx.restore();
       });
     }
-    function showNotification(title, message){
+
+    function showNotification(title, message, type = 'success'){
       el('#notificationTitle').textContent = title;
       el('#notificationMessage').textContent = message;
-      const n = el('#notification'); n.classList.add('show','success');
-      setTimeout(()=>n.classList.remove('show','success'), 3000);
+      const n = el('#notification'); 
+      n.classList.add('show');
+      
+      if (type === 'success') {
+        n.classList.add('success');
+      } else {
+        n.classList.remove('success');
+        n.style.borderLeftColor = '#ec5050';
+        n.querySelector('.notification-icon').style.background = '#ec5050';
+        n.querySelector('.notification-icon').textContent = '!';
+      }
+      
+      setTimeout(()=>{
+        n.classList.remove('show');
+        n.classList.remove('success');
+        n.style.borderLeftColor = '';
+        n.querySelector('.notification-icon').style.background = '';
+        n.querySelector('.notification-icon').textContent = '✓';
+      }, 3000);
     }
+
     window.addEventListener('resize', ()=>{ if (currentView==='dashboard') renderDashboard(); });
     init();
   </script>
