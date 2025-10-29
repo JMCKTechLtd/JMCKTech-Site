@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lab 8: Date/Time Correction</title>
+  <title>Lab 8: BIOS Date/Time Configuration</title>
   <style>
     :root {
       --primary-color: #2e51bb;
       --success-color: #10b981;
+      --warning-color: #f59e0b;
       --bios-blue: #0066cc;
+      --bios-dark-blue: #004499;
       --bios-text: #ffffff;
     }
     body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f0f0f0;min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:center}
@@ -26,17 +28,18 @@
     .bios-title{font-size:18px;color:#ff0;font-weight:bold}
     .bios-content{flex:1;display:flex;gap:16px}
     .bios-menu{width:200px}
-    .menu-item{padding:8px;border-radius:4px;margin-bottom:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2)}
+    .menu-item{padding:8px;border-radius:4px;margin-bottom:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);cursor:pointer}
     .menu-item.active{background:#fff;color:#003a99;border-color:#fff;font-weight:bold}
+    .menu-item:hover:not(.active){background:rgba(255,255,255,.15)}
     .bios-info{flex:1;background:rgba(255,255,255,.06);border-radius:6px;border:1px solid rgba(255,255,255,.25);padding:12px}
     .info-title{color:#ff0;font-weight:bold;margin-bottom:8px}
     .datetime-section{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:10px}
     .row{display:flex;align-items:center;gap:10px;margin:8px 0;padding:8px;border-radius:4px;background:rgba(255,255,255,.08)}
-    .row.selected{background:#fff;color:#003a99}
+    .row.selected{background:rgba(255,255,255,.9);color:#003a99}
     .label{min-width:120px;font-weight:600}
     .value{display:flex;gap:4px;align-items:center;font-weight:600}
     .box{min-width:32px;text-align:center;padding:4px;border-radius:4px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35)}
-    .box.active{outline:2px solid #ff0;background:#fff;color:#003a99}
+    .box.active{outline:1px solid #003a99;background:#ffffcc;color:#000}
     .sep{opacity:.9}
     
     .bios-controls{margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,.3)}
@@ -61,63 +64,89 @@
     .lab-button:hover{background:#1e40a0}
     .lab-button.secondary{background:#6c757d;color:#fff}
     .lab-button.secondary:hover{background:#5a6268}
+
+    .context-info{font-size:12px;color:#666;margin-top:12px;padding:8px;background:#f8f9fa;border-radius:4px;border-left:3px solid var(--primary-color)}
+    .cmos-warning{color:var(--warning-color);font-weight:bold}
+    .keyboard-hint{font-size:11px;color:#666;margin-top:4px;text-align:center}
   </style>
 </head>
 <body>
 <div class="lab-container">
   <div class="lab-header">
-    <div class="lab-title">Lab 8: Date/Time Correction</div>
+    <div class="lab-title">Lab 8: BIOS Date/Time Configuration</div>
   </div>
   <div class="task-panel">
-    <div class="task-title">🔧 Task</div>
-    Correct the <strong>System Date</strong> and <strong>System Time</strong> to <b>05/09/2025</b> and <b>09:30</b>, then press <strong>F10</strong> to save and exit.
-    <div style="font-size:13px;color:#666;margin-top:4px;">Use <b>Tab</b> to switch between <em>Time</em> and <em>Date</em>. Use ←/→ to move between fields. Use ↑/↓ to change values.</div>
+    <div class="task-title">🔧 Task: Correct System Date/Time After CMOS Battery Failure</div>
+    <p><strong>Scenario:</strong> The CMOS battery has failed, resetting BIOS settings to defaults. Correct the <strong>System Date</strong> to <b>05/09/2025</b> and <strong>System Time</strong> to <b>09:30:00</b>.</p>
+    <div class="context-info">
+      <strong>Why this matters:</strong> Incorrect system time can cause SSL certificate errors, file timestamp issues, and scheduling problems. The CMOS battery maintains these settings when the computer is off.
+    </div>
   </div>
   <div class="workspace">
     <div class="main-area">
       <div class="bios-screen">
         <div class="bios-header">
-          <div class="bios-title">ACME BIOS Setup Utility</div>
+          <div class="bios-title">AMI BIOS Setup Utility</div>
+          <div style="font-size:12px;margin-top:4px;">Copyright (C) 2023 American Megatrends, Inc.</div>
         </div>
         <div class="bios-content">
           <div class="bios-menu">
-            <div class="menu-item active">Main</div>
-            <div class="menu-item">Advanced</div>
-            <div class="menu-item">Security</div>
-            <div class="menu-item">Boot</div>
-            <div class="menu-item">Exit</div>
+            <div class="menu-item active" data-menu="main">Main</div>
+            <div class="menu-item" data-menu="advanced">Advanced</div>
+            <div class="menu-item" data-menu="security">Security</div>
+            <div class="menu-item" data-menu="boot">Boot</div>
+            <div class="menu-item" data-menu="exit">Exit</div>
           </div>
           <div class="bios-info">
-            <div class="info-title">System Date / Time</div>
+            <div class="info-title">System Information</div>
+            <div style="margin-bottom:12px;font-size:13px;">
+              <div>System Time: <span id="systemTimeDisplay">00:00:00</span></div>
+              <div>System Date: <span id="systemDateDisplay">01/01/2023</span></div>
+              <div>BIOS Version: 2.1.0</div>
+            </div>
+            
+            <div class="info-title">System Date / Time Configuration</div>
             <div class="datetime-section">
               <div class="row selected" data-row="time">
                 <div class="label">System Time</div>
                 <div class="value" id="timeValue">
                   <span class="box" data-field="hh">00</span><span class="sep">:</span>
-                  <span class="box" data-field="mm">00</span>
+                  <span class="box" data-field="mm">00</span><span class="sep">:</span>
+                  <span class="box" data-field="ss">00</span>
                 </div>
               </div>
               <div class="row" data-row="date">
                 <div class="label">System Date</div>
                 <div class="value" id="dateValue">
-                  <span class="box" data-field="dd">01</span><span class="sep">/</span>
                   <span class="box" data-field="mo">01</span><span class="sep">/</span>
+                  <span class="box" data-field="dd">01</span><span class="sep">/</span>
                   <span class="box" data-field="yy">2023</span>
                 </div>
               </div>
+            </div>
+            
+            <div style="margin-top:12px;font-size:11px;color:#ffa500;">
+              <span class="cmos-warning">⚠ CMOS settings wrong</span> - Date and time not set. Please configure.
             </div>
           </div>
         </div>
         <div class="bios-controls">
           <div class="controls-row">
+            <div class="key-button" id="escKey">Esc</div>
+            <div class="key-button" id="enterKey">Enter</div>
             <div class="key-button tab" id="tabKey">Tab</div>
+            <div class="key-button" id="plusKey">+</div>
+            <div class="key-button" id="minusKey">-</div>
             <div class="key-button special" id="f10Key">F10</div>
+          </div>
+          <div class="controls-row">
             <div class="key-button" id="upKey">↑</div>
             <div class="key-button" id="downKey">↓</div>
             <div class="key-button" id="leftKey">←</div>
             <div class="key-button" id="rightKey">→</div>
           </div>
-          <div class="instructions">Tab Switch Row | ←→ Move Field | ↑↓ Change Value | F10 Save & Exit</div>
+          <div class="instructions">↑↓ Select | ←→ Move | +/- Change Values | Enter Select | Tab Next | F10 Save | Esc Exit</div>
+          <div class="keyboard-hint">💡 You can also use your physical keyboard</div>
         </div>
       </div>
     </div>
@@ -126,26 +155,27 @@
         <div class="status-title">Lab Progress</div>
         <div class="status-item">
           <div class="status-indicator" id="navDot"></div>
-          Locate Date/Time
+          Navigate to Main → Date/Time
         </div>
         <div class="status-item">
           <div class="status-indicator" id="timeDot"></div>
-          Set Time to 09:30
+          Set Time to 09:30:00
         </div>
         <div class="status-item">
           <div class="status-indicator" id="dateDot"></div>
-          Set Date to 05/09/2025
+          Set Date to 05/09/2025 (MM/DD/YYYY)
         </div>
         <div class="status-item">
           <div class="status-indicator" id="saveDot"></div>
-          Save with F10
+          Save with F10 and Exit
         </div>
       </div>
       <div class="panel hint hidden" id="hintPanel">
-        Use <b>Tab</b> to switch rows; target is <b>05/09/2025</b> and <b>09:30</b>.
+        Use <b>Tab</b> to switch rows; target is <b>05/09/2025</b> and <b>09:30:00</b>.
       </div>
       <div class="panel hidden" id="donePanel">
-        <b>🎉 Completed!</b> Date and time corrected.
+        <b>🎉 Configuration Saved!</b><br>
+        Date and time corrected. CMOS settings updated successfully.
       </div>
       <div class="panel">
         <div class="lab-controls">
@@ -159,60 +189,97 @@
 <script>
 class DateTimeLab {
   constructor() {
-    this.targetTime = {hh: 9, mm: 30, dd: 5, mo: 9, yy: 2025};
-    this.time = {hh: 0, mm: 0};
+    this.targetTime = {hh: 9, mm: 30, ss: 0, dd: 9, mo: 5, yy: 2025}; // MM/DD/YYYY format
+    this.time = {hh: 0, mm: 0, ss: 0};
     this.date = {dd: 1, mo: 1, yy: 2023};
     this.selectedRow = 'time';
     this.fieldIndex = 0;
     this.saved = false;
+    this.currentMenu = 'main';
     this.init();
   }
 
   init() {
     this.bindEvents();
     this.setupLabControls();
+    this.setupKeyboard();
     this.render();
     this.updateProgress();
     this.showHint();
   }
 
   bindEvents() {
+    // On-screen buttons
     document.getElementById('upKey').addEventListener('click', () => {this.flash('upKey'); this.arrow('up');});
     document.getElementById('downKey').addEventListener('click', () => {this.flash('downKey'); this.arrow('down');});
     document.getElementById('leftKey').addEventListener('click', () => {this.flash('leftKey'); this.arrow('left');});
     document.getElementById('rightKey').addEventListener('click', () => {this.flash('rightKey'); this.arrow('right');});
     document.getElementById('tabKey').addEventListener('click', () => {this.flash('tabKey'); this.switchRow();});
     document.getElementById('f10Key').addEventListener('click', () => {this.flash('f10Key'); this.save();});
+    document.getElementById('escKey').addEventListener('click', () => {this.flash('escKey'); this.exitMenu();});
+    document.getElementById('enterKey').addEventListener('click', () => {this.flash('enterKey'); this.selectField();});
+    document.getElementById('plusKey').addEventListener('click', () => {this.flash('plusKey'); this.arrow('up');});
+    document.getElementById('minusKey').addEventListener('click', () => {this.flash('minusKey'); this.arrow('down');});
     
-    // Physical keyboard disabled for simulation - use on-screen buttons only
+    // Menu navigation
+    document.querySelectorAll('.menu-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        this.selectMenu(e.target.dataset.menu);
+      });
+    });
+  }
+
+  setupKeyboard() {
+    document.addEventListener('keydown', (e) => {
+      e.preventDefault();
+      switch(e.key) {
+        case 'Tab': this.flash('tabKey'); this.switchRow(); break;
+        case 'F10': case 'f10': this.flash('f10Key'); this.save(); break;
+        case 'Escape': this.flash('escKey'); this.exitMenu(); break;
+        case 'Enter': this.flash('enterKey'); this.selectField(); break;
+        case 'ArrowUp': this.flash('upKey'); this.arrow('up'); break;
+        case 'ArrowDown': this.flash('downKey'); this.arrow('down'); break;
+        case 'ArrowLeft': this.flash('leftKey'); this.arrow('left'); break;
+        case 'ArrowRight': this.flash('rightKey'); this.arrow('right'); break;
+        case '+': this.flash('plusKey'); this.arrow('up'); break;
+        case '-': this.flash('minusKey'); this.arrow('down'); break;
+      }
+    });
   }
 
   setupLabControls(){
-    // Reset Lab button
     document.getElementById('resetLab').addEventListener('click', () => {
       try { 
         window.location.reload(); 
       } catch (err) { 
-        console.error('Reset failed:', err);
-        this.reset(); // Fallback to internal reset
+        this.reset();
       }
     });
 
-    // Close Lab button
     document.getElementById('closeLab').addEventListener('click', () => {
       try { 
         window.close(); 
       } catch (err) { 
-        console.error('Close failed:', err); 
+        setTimeout(() => { 
+          try { 
+            window.location.href = 'about:blank'; 
+          } catch(e) {}
+        }, 300);
       }
-      setTimeout(() => { 
-        try { 
-          window.location.href = 'about:blank'; 
-        } catch(e) {
-          console.error('Navigation failed:', e);
-        } 
-      }, 300);
     });
+  }
+
+  selectMenu(menu) {
+    this.currentMenu = menu;
+    document.querySelectorAll('.menu-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.menu === menu);
+    });
+    
+    if (menu !== 'main') {
+      this.displayHint(`Navigate to <b>Main</b> menu to configure date/time settings`);
+    } else {
+      document.getElementById('hintPanel').classList.add('hidden');
+    }
   }
 
   flash(buttonId) {
@@ -227,8 +294,26 @@ class DateTimeLab {
     this.render();
   }
 
+  selectField() {
+    // In real BIOS, Enter would sometimes open submenus or select options
+    this.render();
+  }
+
+  exitMenu() {
+    if (this.currentMenu !== 'main') {
+      this.selectMenu('main');
+    } else {
+      this.displayHint('Use F10 to save changes or navigate to Exit menu');
+    }
+  }
+
   arrow(direction) {
-    const fields = this.selectedRow === 'time' ? ['hh', 'mm'] : ['dd', 'mo', 'yy'];
+    if (this.currentMenu !== 'main') {
+      this.displayHint('Navigate to <b>Main</b> menu to configure date/time');
+      return;
+    }
+
+    const fields = this.selectedRow === 'time' ? ['hh', 'mm', 'ss'] : ['mo', 'dd', 'yy'];
     
     if (direction === 'left') {
       this.fieldIndex = (this.fieldIndex - 1 + fields.length) % fields.length;
@@ -250,6 +335,8 @@ class DateTimeLab {
         this.time.hh = (this.time.hh + delta + 24) % 24;
       } else if (field === 'mm') {
         this.time.mm = (this.time.mm + delta + 60) % 60;
+      } else if (field === 'ss') {
+        this.time.ss = (this.time.ss + delta + 60) % 60;
       }
     } else {
       if (field === 'dd') {
@@ -273,9 +360,14 @@ class DateTimeLab {
   }
 
   render() {
+    // Update menu selection
+    document.querySelectorAll('.menu-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.menu === this.currentMenu);
+    });
+    
     // Update row selection
     document.querySelectorAll('.row').forEach(row => {
-      row.classList.toggle('selected', row.dataset.row === this.selectedRow);
+      row.classList.toggle('selected', row.dataset.row === this.selectedRow && this.currentMenu === 'main');
     });
     
     // Clear active boxes
@@ -284,34 +376,49 @@ class DateTimeLab {
     });
     
     // Set active field
-    const fields = this.selectedRow === 'time' ? ['hh', 'mm'] : ['dd', 'mo', 'yy'];
-    const activeField = fields[this.fieldIndex];
-    const selector = '.row[data-row="' + this.selectedRow + '"] .box[data-field="' + activeField + '"]';
-    const activeBox = document.querySelector(selector);
-    if (activeBox) {
-      activeBox.classList.add('active');
+    if (this.currentMenu === 'main') {
+      const fields = this.selectedRow === 'time' ? ['hh', 'mm', 'ss'] : ['mo', 'dd', 'yy'];
+      const activeField = fields[this.fieldIndex];
+      const selector = `.row[data-row="${this.selectedRow}"] .box[data-field="${activeField}"]`;
+      const activeBox = document.querySelector(selector);
+      if (activeBox) {
+        activeBox.classList.add('active');
+      }
     }
     
-    // Update displayed values
+    // Update displayed values (MM/DD/YYYY format)
     document.querySelector('#timeValue .box[data-field="hh"]').textContent = String(this.time.hh).padStart(2, '0');
     document.querySelector('#timeValue .box[data-field="mm"]').textContent = String(this.time.mm).padStart(2, '0');
+    document.querySelector('#timeValue .box[data-field="ss"]').textContent = String(this.time.ss).padStart(2, '0');
     document.querySelector('#dateValue .box[data-field="dd"]').textContent = String(this.date.dd).padStart(2, '0');
     document.querySelector('#dateValue .box[data-field="mo"]').textContent = String(this.date.mo).padStart(2, '0');
     document.querySelector('#dateValue .box[data-field="yy"]').textContent = String(this.date.yy);
+    
+    // Update system display
+    document.getElementById('systemTimeDisplay').textContent = 
+      `${String(this.time.hh).padStart(2, '0')}:${String(this.time.mm).padStart(2, '0')}:${String(this.time.ss).padStart(2, '0')}`;
+    document.getElementById('systemDateDisplay').textContent = 
+      `${String(this.date.mo).padStart(2, '0')}/${String(this.date.dd).padStart(2, '0')}/${this.date.yy}`;
   }
 
   save() {
+    if (this.currentMenu !== 'main') {
+      this.displayHint('Navigate to <b>Main</b> menu to save date/time changes');
+      return;
+    }
+
     const timeCorrect = this.time.hh === this.targetTime.hh && this.time.mm === this.targetTime.mm;
     const dateCorrect = this.date.dd === this.targetTime.dd && this.date.mo === this.targetTime.mo && this.date.yy === this.targetTime.yy;
     
     if (!timeCorrect || !dateCorrect) {
-      this.displayHint('Please set time to <b>09:30</b> and date to <b>05/09/2025</b> before saving.');
+      this.displayHint('Please set time to <b>09:30:00</b> and date to <b>05/09/2025</b> (MM/DD/YYYY) before saving.');
       return;
     }
     
     this.saved = true;
     document.getElementById('saveDot').classList.add('complete');
     document.getElementById('donePanel').classList.remove('hidden');
+    this.displayHint('Configuration saved successfully! CMOS settings updated.');
   }
 
   updateProgress() {
@@ -337,20 +444,21 @@ class DateTimeLab {
     }
     panel.classList.remove('hidden');
     clearTimeout(this.hintTimer);
-    this.hintTimer = setTimeout(() => panel.classList.add('hidden'), 3500);
+    this.hintTimer = setTimeout(() => panel.classList.add('hidden'), 4000);
   }
 
   showHint() {
     setTimeout(() => {
-      this.displayHint('Tip: press <b>Tab</b> to switch Time/Date, ←/→ to move fields, ↑/↓ to adjust.');
+      this.displayHint('💡 <b>CMOS Battery Failure Scenario:</b> The battery that maintains BIOS settings has failed, resetting date/time. Correct these settings to prevent system issues.');
     }, 1000);
   }
 
   reset() {
-    this.time = {hh: 0, mm: 0};
+    this.time = {hh: 0, mm: 0, ss: 0};
     this.date = {dd: 1, mo: 1, yy: 2023};
     this.selectedRow = 'time';
     this.fieldIndex = 0;
+    this.currentMenu = 'main';
     this.saved = false;
     
     document.querySelectorAll('.status-indicator').forEach(dot => {

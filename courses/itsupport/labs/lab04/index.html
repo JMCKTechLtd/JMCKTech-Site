@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lab 4: Assignment & Escalation</title>
+  <title>Lab 4: Assignment & Escalation - Enhanced</title>
   <style>
     :root {
       --primary-color:#2e51bb; --secondary-color:#71a8fc; --dark-text:#2a3e4c; --light-text:#6c757d;
@@ -44,11 +44,12 @@
     
     /* --- List --- */
     .list-container{flex:1;overflow:auto;background:#fff}
-    .list-header{display:grid;grid-template-columns:40px 100px minmax(260px,1fr) 120px 120px 120px 100px 80px;border-bottom:2px solid var(--border-color);font-size:12px;font-weight:600;color:var(--light-text);padding:12px 15px;position:sticky;top:0;background:var(--bg-light);z-index:1}
-    .list-item{display:grid;grid-template-columns:40px 100px minmax(260px,1fr) 120px 120px 120px 100px 80px;border-bottom:1px solid var(--border-color);padding:14px 15px;font-size:13px;color:var(--dark-text);cursor:pointer;transition:.2s}
+    .list-header{display:grid;grid-template-columns:40px 100px minmax(200px,1fr) 120px 120px 120px 100px 120px 80px;border-bottom:2px solid var(--border-color);font-size:12px;font-weight:600;color:var(--light-text);padding:12px 15px;position:sticky;top:0;background:var(--bg-light);z-index:1}
+    .list-item{display:grid;grid-template-columns:40px 100px minmax(200px,1fr) 120px 120px 120px 100px 120px 80px;border-bottom:1px solid var(--border-color);padding:14px 15px;font-size:13px;color:var(--dark-text);cursor:pointer;transition:.2s}
     .list-item:hover{background:var(--hover-bg);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.1)}
     .list-item.selected{background:rgba(113,168,252,.15);border-left:4px solid var(--primary-color)}
     .list-item.escalated{border-left:4px solid var(--escalated);background:rgba(255,107,53,.08)}
+    .list-item.sla-breach{border-left:4px solid var(--crit);background:rgba(236,80,80,.08)}
     .row-checkbox{display:flex;align-items:center;justify-content:center}
     .list-cell{display:flex;align-items:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .list-cell.ticket-number{color:var(--primary-color);font-weight:600}
@@ -62,10 +63,15 @@
     .priority-dot{width:10px;height:10px;border-radius:50%}
     .priority-low{background:var(--low)} .priority-medium{background:var(--med)} .priority-high{background:var(--high)} .priority-critical{background:var(--crit)}
     .escalation-indicator{font-size:16px;color:var(--escalated);margin-left:4px}
+    .sla-indicator{font-size:12px;padding:2px 6px;border-radius:4px;margin-left:6px}
+    .sla-ontrack{background:var(--low);color:white}
+    .sla-atrisk{background:var(--med);color:white}
+    .sla-breach{background:var(--crit);color:white}
+    
     /* --- Dashboard --- */
     .dashboard{display:none;padding:16px;background:#fff;overflow:auto}
     .dashboard.show{display:block}
-    .kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+    .kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(160px,1fr));gap:12px;margin-bottom:16px}
     .kpi{background:linear-gradient(135deg,#f8f9fa 0%,#eef3ff 100%);border:1px solid var(--border-color);border-radius:10px;padding:14px}
     .kpi .label{font-size:12px;color:var(--light-text)} .kpi .value{font-size:22px;font-weight:700;color:var(--dark-text)}
     .charts{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:16px}
@@ -94,16 +100,21 @@
     /* --- Notification --- */
     .notification{position:fixed;top:20px;right:20px;background:#fff;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:16px 20px;display:flex;align-items:center;gap:12px;width:350px;max-width:calc(100% - 40px);z-index:1010;transform:translateX(400px);transition:transform .3s;border-left:4px solid var(--primary-color)}
     .notification.show{transform:translateX(0)}
-    .notification.success{border-left-color:var(--low)} .notification.warning{border-left-color:var(--high)}
+    .notification.success{border-left-color:var(--low)} .notification.warning{border-left-color:var(--high)} .notification.error{border-left-color:var(--crit)}
+    
+    /* Business Rules Panel */
+    .rules-panel{background:#f8f9fa;border:1px solid var(--border-color);border-radius:8px;padding:16px;margin:16px;font-size:13px}
+    .rules-panel h4{margin-bottom:8px;color:var(--primary-color)}
+    .rule-item{padding:8px;background:white;border-radius:4px;margin-bottom:8px;border-left:3px solid var(--primary-color)}
   </style>
 </head>
 <body>
   <div class="app-container">
-    <!-- KEEPING USER'S ORIGINAL INSTRUCTIONS -->
+    <!-- ENHANCED INSTRUCTIONS -->
     <div class="task-instructions">
-      <div class="task-title">Lab 4: Assignment & Escalation</div>
+      <div class="task-title">Lab 4: Assignment & Escalation - Enhanced ServiceNow Simulation</div>
       <div class="task-description">
-        <strong>Task:</strong> Practice assigning tickets and escalating critical issues. Select tickets using checkboxes, then use the Assign button to reassign them. For high-priority unresolved tickets, practice escalation procedures to ensure timely resolution.
+        <strong>Task:</strong> Practice ServiceNow-specific assignment and escalation procedures. Includes SLA tracking, business rules, assignment validation, and escalation conditions.
       </div>
     </div>
 
@@ -124,13 +135,22 @@
       <div class="tickets-count" id="ticketsCount">—</div>
     </div>
 
+    <!-- BUSINESS RULES PANEL -->
+    <div class="rules-panel">
+      <h4>📋 Active Business Rules</h4>
+      <div class="rule-item"><strong>Assignment Validation:</strong> Users can only be assigned to tickets in their assignment group</div>
+      <div class="rule-item"><strong>Escalation Conditions:</strong> Only High/Critical tickets or tickets with SLA breaches can be escalated</div>
+      <div class="rule-item"><strong>SLA Tracking:</strong> Response SLA = 2h (Critical), 4h (High), 8h (Medium), 24h (Low)</div>
+      <div class="rule-item"><strong>State Flow:</strong> Open → In Progress → Pending → Resolved → Closed</div>
+    </div>
+
     <div class="content-wrapper">
       <div class="main-content">
         <div class="toolbar">
           <button class="btn btn-primary" id="assignBtn" disabled>👤 Assign</button>
           <button class="btn btn-warning" id="escalateBtn" disabled>⚠️ Escalate</button>
           <div style="margin-left:auto;color:var(--primary-color);font-weight:600">
-            <span id="selCount">0 selected</span> • <span id="escalatedCount">0 escalated</span>
+            <span id="selCount">0 selected</span> • <span id="escalatedCount">0 escalated</span> • <span id="slaBreachCount">0 SLA breaches</span>
           </div>
         
           <div class="list-controls" id="labControls" style="margin-left:10px">
@@ -143,7 +163,7 @@
         <div class="list-container" id="listView">
           <div class="list-header" id="listHeader">
             <div><input type="checkbox" id="selectAll"></div>
-            <div>Number</div><div>Short description</div><div>Caller</div><div>Assigned to</div><div>Status</div><div>Priority</div><div>Age</div>
+            <div>Number</div><div>Short description</div><div>Caller</div><div>Assignment Group</div><div>Assigned to</div><div>Status</div><div>Priority</div><div>SLA</div><div>Age</div>
           </div>
           <div id="ticketList"></div>
           <div id="roList" class="ro-list" style="display:none"></div>
@@ -167,34 +187,37 @@
     </div>
   </div>
 
-  <!-- Assign Modal (PRIMARY FLOW KEPT) -->
+  <!-- Enhanced Assign Modal -->
   <div class="modal-backdrop" id="assignModal">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">Assign Tickets</div>
+        <div class="modal-title">Assign Tickets (ServiceNow Rules)</div>
         <button class="modal-close" id="assignModalClose">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Assign to</label>
-          <select class="form-select" id="assigneeSelect">
-            <option value="">Select assignee...</option>
-            <option value="John Smith">John Smith</option>
-            <option value="Lisa Brown">Lisa Brown</option>
-            <option value="Mike Wilson">Mike Wilson</option>
-            <option value="Sarah Davis">Sarah Davis</option>
-            <option value="Tom Anderson">Tom Anderson</option>
-          </select>
+        <div id="assignmentRules" style="background:rgba(113,168,252,.1);border:1px solid var(--primary-color);border-radius:6px;padding:12px;margin-bottom:12px;font-size:13px">
+          <strong>Assignment Rules:</strong> Users must belong to selected assignment group
         </div>
         <div class="form-group">
-          <label class="form-label">Assignment group</label>
+          <label class="form-label">Assignment Group</label>
           <select class="form-select" id="groupSelect">
+            <option value="">Select group first...</option>
             <option value="IT Support">IT Support</option>
             <option value="Network Team">Network Team</option>
             <option value="Security Team">Security Team</option>
             <option value="Database Team">Database Team</option>
             <option value="Help Desk">Help Desk</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assign to</label>
+          <select class="form-select" id="assigneeSelect" disabled>
+            <option value="">Select group first...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Work notes</label>
+          <textarea class="form-select" id="workNotes" placeholder="Add work notes for this assignment..." style="height:80px;resize:vertical"></textarea>
         </div>
       </div>
       <div class="modal-footer">
@@ -204,23 +227,35 @@
     </div>
   </div>
 
-  <!-- Escalation Modal (PRIMARY FLOW KEPT) -->
+  <!-- Enhanced Escalation Modal -->
   <div class="modal-backdrop" id="escalateModal">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">Escalate Tickets</div>
+        <div class="modal-title">Escalate Tickets (ServiceNow Rules)</div>
         <button class="modal-close" id="escalateModalClose">&times;</button>
       </div>
       <div class="modal-body">
         <div style="background:rgba(255,107,53,.1);border:1px solid var(--escalated);border-radius:6px;padding:12px;margin-bottom:12px">
-          ⚠️ This will escalate selected tickets to management and set higher priority where applicable.
+          <strong>⚠️ Escalation Conditions:</strong> Only High/Critical priority tickets or tickets with SLA breaches can be escalated
+        </div>
+        <div id="escalationPreview" style="margin-bottom:16px">
+          <strong>Tickets eligible for escalation:</strong> <span id="eligibleCount">0</span> of <span id="selectedCount">0</span> selected
         </div>
         <div class="form-group">
-          <label class="form-label">Escalate to</label>
-          <select class="form-select" id="escalateToSelect">
-            <option value="IT Manager">IT Manager</option>
-            <option value="Service Manager">Service Manager</option>
-            <option value="Director of IT">Director of IT</option>
+          <label class="form-label">Escalate to Group</label>
+          <select class="form-select" id="escalateGroupSelect">
+            <option value="IT Management">IT Management</option>
+            <option value="Service Desk Manager">Service Desk Manager</option>
+            <option value="Infrastructure Manager">Infrastructure Manager</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Escalation Reason</label>
+          <select class="form-select" id="escalationReason">
+            <option value="SLA breach imminent">SLA breach imminent</option>
+            <option value="No response from assignee">No response from assignee</option>
+            <option value="Technical expertise required">Technical expertise required</option>
+            <option value="Management attention required">Management attention required</option>
           </select>
         </div>
       </div>
@@ -241,190 +276,597 @@
   </div>
 
   <script>
-    // ---------- DATA ----------
-    const tickets=[
-      {id:1,number:"INC0010023",shortDescription:"Critical server outage affecting production",caller:"Sarah Johnson",assignmentGroup:"IT Support",assignedTo:"Unassigned",priority:"Critical",state:"Open",age:"4 hours",escalated:false,created:new Date(Date.now()-4*3600e3)},
-      {id:2,number:"INC0010022",shortDescription:"Email server performance issues",caller:"Michael Chen",assignmentGroup:"IT Support",assignedTo:"John Smith",priority:"High",state:"In Progress",age:"2 days",escalated:false,created:new Date(Date.now()-2*86400e3)},
-      {id:3,number:"INC0010021",shortDescription:"Network connectivity issues in Building A",caller:"Robert Williams",assignmentGroup:"Network Team",assignedTo:"Unassigned",priority:"High",state:"Open",age:"6 hours",escalated:false,created:new Date(Date.now()-6*3600e3)},
-      {id:4,number:"INC0010020",shortDescription:"Database connection timeouts",caller:"HR Department",assignmentGroup:"Database Team",assignedTo:"Lisa Brown",priority:"High",state:"In Progress",age:"1 day",escalated:false,created:new Date(Date.now()-86400e3)},
-      {id:5,number:"INC0010019",shortDescription:"Password reset request",caller:"David Miller",assignmentGroup:"Help Desk",assignedTo:"Help Desk",priority:"Low",state:"Pending",age:"3 hours",escalated:false,created:new Date(Date.now()-3*3600e3)},
-      {id:6,number:"INC0010018",shortDescription:"Software license activation failure",caller:"Finance Team",assignmentGroup:"IT Support",assignedTo:"Unassigned",priority:"Medium",state:"Open",age:"1 hour",escalated:false,created:new Date(Date.now()-3600e3)}
+    // ---------- ENHANCED DATA MODEL ----------
+    const sysIds = {
+      users: {
+        'John Smith': { sys_id: 'user001', groups: ['IT Support', 'Help Desk'] },
+        'Lisa Brown': { sys_id: 'user002', groups: ['Database Team', 'IT Support'] },
+        'Mike Wilson': { sys_id: 'user003', groups: ['Network Team', 'Security Team'] },
+        'Sarah Davis': { sys_id: 'user004', groups: ['IT Support', 'Help Desk'] },
+        'Tom Anderson': { sys_id: 'user005', groups: ['Help Desk'] },
+        'IT Management': { sys_id: 'mgmt001', groups: ['IT Management'] },
+        'Service Desk Manager': { sys_id: 'mgmt002', groups: ['Service Desk Manager'] }
+      },
+      groups: {
+        'IT Support': { sys_id: 'grp001', manager: 'IT Management' },
+        'Network Team': { sys_id: 'grp002', manager: 'Infrastructure Manager' },
+        'Security Team': { sys_id: 'grp003', manager: 'Security Manager' },
+        'Database Team': { sys_id: 'grp004', manager: 'Infrastructure Manager' },
+        'Help Desk': { sys_id: 'grp005', manager: 'Service Desk Manager' },
+        'IT Management': { sys_id: 'grp006', manager: 'Director of IT' }
+      }
+    };
+
+    // SLA configurations in minutes
+    const slaConfig = {
+      'Critical': 120,   // 2 hours
+      'High': 240,       // 4 hours  
+      'Medium': 480,     // 8 hours
+      'Low': 1440        // 24 hours
+    };
+
+    const tickets = [
+      {id:1, sys_id: 'inc001', number:"INC0010023", shortDescription:"Critical server outage affecting production", 
+       caller:"Sarah Johnson", assignmentGroup:"IT Support", assignedTo:"Unassigned", 
+       priority:"Critical", state:"Open", age:"4 hours", escalated:false, 
+       created: new Date(Date.now()-4*3600e3), sla_state: "at_risk", urgency: 1, impact: 1,
+       category: "Infrastructure", subcategory: "Server", cmdb_ci: "PROD-SRV-001"},
+      
+      {id:2, sys_id: 'inc002', number:"INC0010022", shortDescription:"Email server performance issues", 
+       caller:"Michael Chen", assignmentGroup:"IT Support", assignedTo:"John Smith", 
+       priority:"High", state:"In Progress", age:"2 days", escalated:false,
+       created: new Date(Date.now()-2*86400e3), sla_state: "breach", urgency: 2, impact: 2,
+       category: "Software", subcategory: "Email", cmdb_ci: "EXCH-001"},
+      
+      {id:3, sys_id: 'inc003', number:"INC0010021", shortDescription:"Network connectivity issues in Building A", 
+       caller:"Robert Williams", assignmentGroup:"Network Team", assignedTo:"Unassigned", 
+       priority:"High", state:"Open", age:"6 hours", escalated:false,
+       created: new Date(Date.now()-6*3600e3), sla_state: "at_risk", urgency: 2, impact: 2,
+       category: "Network", subcategory: "Connectivity", cmdb_ci: "SW-BLDG-A-01"},
+      
+      {id:4, sys_id: 'inc004', number:"INC0010020", shortDescription:"Database connection timeouts", 
+       caller:"HR Department", assignmentGroup:"Database Team", assignedTo:"Lisa Brown", 
+       priority:"High", state:"In Progress", age:"1 day", escalated:false,
+       created: new Date(Date.now()-86400e3), sla_state: "breach", urgency: 2, impact: 1,
+       category: "Database", subcategory: "Performance", cmdb_ci: "DB-HR-001"},
+      
+      {id:5, sys_id: 'inc005', number:"INC0010019", shortDescription:"Password reset request", 
+       caller:"David Miller", assignmentGroup:"Help Desk", assignedTo:"Help Desk", 
+       priority:"Low", state:"Pending", age:"3 hours", escalated:false,
+       created: new Date(Date.now()-3*3600e3), sla_state: "on_track", urgency: 3, impact: 3,
+       category: "Access Management", subcategory: "Password Reset", cmdb_ci: ""},
+      
+      {id:6, sys_id: 'inc006', number:"INC0010018", shortDescription:"Software license activation failure", 
+       caller:"Finance Team", assignmentGroup:"IT Support", assignedTo:"Unassigned", 
+       priority:"Medium", state:"Open", age:"1 hour", escalated:false,
+       created: new Date(Date.now()-3600e3), sla_state: "on_track", urgency: 3, impact: 2,
+       category: "Software", subcategory: "Licensing", cmdb_ci: "FIN-LAP-045"}
     ];
-    const requests=[
-      {id:101,number:"REQ0010501",shortDescription:"Request access to Shared Drive - Finance",requester:"Anna Patel",assignmentGroup:"IT Support",assignedTo:"Unassigned",updated:"Today, 10:10 AM",priority:"Low",state:"Open"},
-      {id:102,number:"REQ0010500",shortDescription:"Laptop Replacement",requester:"James Parker",assignmentGroup:"Hardware Team",assignedTo:"Tom Reed",updated:"Yesterday, 4:20 PM",priority:"Medium",state:"In Progress"}
+
+    // Update SLA states based on creation time and priority
+    function updateSLAStates() {
+      tickets.forEach(ticket => {
+        const created = ticket.created;
+        const now = new Date();
+        const ageMinutes = (now - created) / (1000 * 60);
+        const slaLimit = slaConfig[ticket.priority];
+        
+        if (ageMinutes > slaLimit) {
+          ticket.sla_state = 'breach';
+        } else if (ageMinutes > slaLimit * 0.8) {
+          ticket.sla_state = 'at_risk';
+        } else {
+          ticket.sla_state = 'on_track';
+        }
+        
+        // Update age display
+        const ageHours = Math.floor(ageMinutes / 60);
+        const ageDays = Math.floor(ageHours / 24);
+        if (ageDays > 0) {
+          ticket.age = `${ageDays} day${ageDays > 1 ? 's' : ''}`;
+        } else if (ageHours > 0) {
+          ticket.age = `${ageHours} hour${ageHours > 1 ? 's' : ''}`;
+        } else {
+          ticket.age = `${Math.floor(ageMinutes)} min`;
+        }
+      });
+    }
+
+    const requests = [
+      {id:101, number:"REQ0010501", shortDescription:"Request access to Shared Drive - Finance", 
+       requester:"Anna Patel", assignmentGroup:"IT Support", assignedTo:"Unassigned", 
+       updated:"Today, 10:10 AM", priority:"Low", state:"Open"},
+      {id:102, number:"REQ0010500", shortDescription:"Laptop Replacement", 
+       requester:"James Parker", assignmentGroup:"Hardware Team", assignedTo:"Tom Reed", 
+       updated:"Yesterday, 4:20 PM", priority:"Medium", state:"In Progress"}
     ];
-    const problems=[
-      {id:201,number:"PRB0000761",shortDescription:"Intermittent VPN drops for remote staff",openedBy:"Lisa Brown",assignmentGroup:"Network Team",assignedTo:"Network Queue",updated:"Today, 11:00 AM",priority:"High",state:"Open"},
-      {id:202,number:"PRB0000760",shortDescription:"Print server spooler crashes",openedBy:"IT Ops",assignmentGroup:"Infrastructure",assignedTo:"Ian Cole",updated:"Yesterday, 1:40 PM",priority:"Critical",state:"In Progress"}
+
+    const problems = [
+      {id:201, number:"PRB0000761", shortDescription:"Intermittent VPN drops for remote staff", 
+       openedBy:"Lisa Brown", assignmentGroup:"Network Team", assignedTo:"Network Queue", 
+       updated:"Today, 11:00 AM", priority:"High", state:"Open"},
+      {id:202, number:"PRB0000760", shortDescription:"Print server spooler crashes", 
+       openedBy:"IT Ops", assignmentGroup:"Infrastructure", assignedTo:"Ian Cole", 
+       updated:"Yesterday, 1:40 PM", priority:"Critical", state:"In Progress"}
     ];
 
     // ---------- STATE ----------
-    let tab='incidents'; // incidents | requests | problems
-    let view='list';     // list | dashboard
-    let selected=new Set();
+    let tab = 'incidents';
+    let view = 'list';
+    let selected = new Set();
 
     // ---------- UTIL ----------
-    const $=s=>document.querySelector(s); const $$=s=>Array.from(document.querySelectorAll(s));
-    const sclass=s=>`status-${String(s||'').toLowerCase().replaceAll(' ','-')}`;
-    const pclass=p=>`priority-${String(p||'').toLowerCase()}`;
-    function data(){ if(tab==='incidents') return tickets; if(tab==='requests') return requests; if(tab==='problems') return problems; return []; }
-    function labelFor(t){ return t==='incidents'?'tickets':t; }
-    function toast(title,msg,type='success'){ $('#noteTitle').textContent=title; $('#noteMsg').textContent=msg; const n=$('#notification'); n.classList.remove('warning','success'); n.classList.add('show', type==='warning'?'warning':'success'); $('#noteIcon').textContent=type==='warning'?'⚠️':'✓'; setTimeout(()=>n.classList.remove('show','warning','success'),2800); }
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const sclass = s => `status-${String(s || '').toLowerCase().replaceAll(' ', '-')}`;
+    const pclass = p => `priority-${String(p || '').toLowerCase()}`;
+    
+    function data() {
+      if (tab === 'incidents') return tickets;
+      if (tab === 'requests') return requests;
+      if (tab === 'problems') return problems;
+      return [];
+    }
+    
+    function labelFor(t) {
+      return t === 'incidents' ? 'tickets' : t;
+    }
+    
+    function toast(title, msg, type = 'success') {
+      $('#noteTitle').textContent = title;
+      $('#noteMsg').textContent = msg;
+      const n = $('#notification');
+      n.classList.remove('warning', 'success', 'error');
+      n.classList.add('show', type === 'warning' ? 'warning' : type === 'error' ? 'error' : 'success');
+      $('#noteIcon').textContent = type === 'warning' ? '⚠️' : type === 'error' ? '❌' : '✓';
+      setTimeout(() => n.classList.remove('show', 'warning', 'success', 'error'), 2800);
+    }
+
+    // ---------- ENHANCED BUSINESS LOGIC ----------
+    function getUsersByGroup(group) {
+      return Object.keys(sysIds.users).filter(user => 
+        sysIds.users[user].groups.includes(group)
+      );
+    }
+
+    function canEscalateTicket(ticket) {
+      return (ticket.priority === 'High' || ticket.priority === 'Critical' || ticket.sla_state === 'breach') 
+             && ticket.state !== 'Resolved' && ticket.state !== 'Closed';
+    }
+
+    function getEligibleForEscalation() {
+      return Array.from(selected).filter(id => {
+        const ticket = tickets.find(t => t.id === id);
+        return ticket && canEscalateTicket(ticket);
+      });
+    }
+
+    function validateAssignment(group, user) {
+      if (!group || !user) return false;
+      const userGroups = sysIds.users[user]?.groups || [];
+      return userGroups.includes(group);
+    }
 
     // ---------- INIT ----------
-    function init(){ bind(); render(); }
-    function bind(){
-      // tabs
-      $$('.nav-item').forEach(i=>i.addEventListener('click',()=>{ tab=i.dataset.tab; view='list'; selected.clear(); render(); }));
-      // view toggle
-      $$('.view-button').forEach(b=>b.addEventListener('click',()=>{ view=b.dataset.view; render(); }));
-      // actions
-      $('#assignBtn').addEventListener('click',()=>$('#assignModal').classList.add('show'));
-      $('#escalateBtn').addEventListener('click',()=>$('#escalateModal').classList.add('show'));
-      $('#assignModalClose').onclick=$('#assignCancel').onclick=()=>$('#assignModal').classList.remove('show');
-      $('#escalateModalClose').onclick=$('#escalateCancel').onclick=()=>$('#escalateModal').classList.remove('show');
-      $('#assignConfirm').addEventListener('click',assignTickets);
-      $('#escalateConfirm').addEventListener('click',escalateTickets);
-      // select all
-      $('#selectAll').addEventListener('change',e=>{ selected.clear(); if(e.target.checked && tab==='incidents'){ tickets.forEach(t=>selected.add(t.id)); } renderList(); updateButtons(); updateSelCount(); });
-      // esc key
-      document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ $('#assignModal').classList.remove('show'); $('#escalateModal').classList.remove('show'); } });
-      // resize charts
-      window.addEventListener('resize',()=>{ if(view==='dashboard') drawDashboard(); });
+    function init() {
+      updateSLAStates();
+      bind();
+      render();
+      // Update SLA every minute
+      setInterval(updateSLAStates, 60000);
+    }
+
+    function bind() {
+      // Tabs
+      $$('.nav-item').forEach(i => i.addEventListener('click', () => {
+        tab = i.dataset.tab;
+        view = 'list';
+        selected.clear();
+        render();
+      }));
+
+      // View toggle
+      $$('.view-button').forEach(b => b.addEventListener('click', () => {
+        view = b.dataset.view;
+        render();
+      }));
+
+      // Actions
+      $('#assignBtn').addEventListener('click', () => {
+        $('#groupSelect').value = '';
+        $('#assigneeSelect').innerHTML = '<option value="">Select group first...</option>';
+        $('#assigneeSelect').disabled = true;
+        $('#assignModal').classList.add('show');
+      });
+
+      $('#escalateBtn').addEventListener('click', () => {
+        const eligible = getEligibleForEscalation();
+        $('#eligibleCount').textContent = eligible.length;
+        $('#selectedCount').textContent = selected.size;
+        $('#escalateModal').classList.add('show');
+      });
+
+      // Group selection change
+      $('#groupSelect').addEventListener('change', (e) => {
+        const group = e.target.value;
+        const assigneeSelect = $('#assigneeSelect');
+        
+        if (group) {
+          const users = getUsersByGroup(group);
+          assigneeSelect.innerHTML = '<option value="">Select assignee...</option>';
+          users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user;
+            option.textContent = user;
+            assigneeSelect.appendChild(option);
+          });
+          assigneeSelect.disabled = false;
+        } else {
+          assigneeSelect.innerHTML = '<option value="">Select group first...</option>';
+          assigneeSelect.disabled = true;
+        }
+      });
+
+      // Modal close handlers
+      $('#assignModalClose').onclick = $('#assignCancel').onclick = () => $('#assignModal').classList.remove('show');
+      $('#escalateModalClose').onclick = $('#escalateCancel').onclick = () => $('#escalateModal').classList.remove('show');
+
+      // Confirm actions
+      $('#assignConfirm').addEventListener('click', assignTickets);
+      $('#escalateConfirm').addEventListener('click', escalateTickets);
+
+      // Select all
+      $('#selectAll').addEventListener('change', e => {
+        selected.clear();
+        if (e.target.checked && tab === 'incidents') {
+          tickets.forEach(t => selected.add(t.id));
+        }
+        renderList();
+        updateButtons();
+        updateSelCount();
+      });
+
+      // Esc key
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          $('#assignModal').classList.remove('show');
+          $('#escalateModal').classList.remove('show');
+        }
+      });
+
+      // Resize charts
+      window.addEventListener('resize', () => {
+        if (view === 'dashboard') drawDashboard();
+      });
     }
 
     // ---------- RENDER ----------
-    function render(){
-      // toggles
-      $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.tab===tab));
-      $$('.view-button').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
-      // counts
+    function render() {
+      // Toggles
+      $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tab));
+      $$('.view-button').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+
+      // Counts
       $('#ticketsCount').textContent = `${data().length} ${labelFor(tab)}`;
-      // views
-      $('#listView').style.display = view==='list' ? 'block' : 'none';
-      $('#dashboardView').classList.toggle('show', view==='dashboard');
-      // list/dashboard
-      if(view==='list') renderList(); else drawDashboard();
-      updateButtons(); updateEscCount(); updateSelCount();
+
+      // Views
+      $('#listView').style.display = view === 'list' ? 'block' : 'none';
+      $('#dashboardView').classList.toggle('show', view === 'dashboard');
+
+      // List/dashboard
+      if (view === 'list') renderList();
+      else drawDashboard();
+      
+      updateButtons();
+      updateEscCount();
+      updateSelCount();
+      updateSLABreachCount();
     }
 
-    function renderList(){
-      const list=$('#ticketList'); const ro=$('#roList');
-      if(tab!=='incidents'){
-        // Read-only simple list for non-incidents
-        $('#listHeader').style.display='none'; list.innerHTML=''; ro.style.display='block'; ro.innerHTML='';
-        data().forEach(r=>{
-          const d=document.createElement('div'); d.className='ro-item';
-          if(tab==='requests'){
-            d.innerHTML=`<div style="display:flex;gap:8px;align-items:center"><strong style="color:var(--primary-color)">${r.number}</strong><span style="margin-left:auto" class="status-badge ${sclass(r.state)}">${r.state}</span></div>
-            <div style="font-weight:600;margin-top:6px">${r.shortDescription}</div>
-            <div style="color:var(--light-text);font-size:12px;margin-top:4px">Requester: ${r.requester} • Group: ${r.assignmentGroup} • Assigned: ${r.assignedTo} • Updated: ${r.updated} • Priority: ${r.priority}</div>`;
-          } else { // problems
-            d.innerHTML=`<div style="display:flex;gap:8px;align-items:center"><strong style="color:var(--primary-color)">${r.number}</strong><span style="margin-left:auto" class="status-badge ${sclass(r.state)}">${r.state}</span></div>
-            <div style="font-weight:600;margin-top:6px">${r.shortDescription}</div>
-            <div style="color:var(--light-text);font-size:12px;margin-top:4px">Opened by: ${r.openedBy} • Group: ${r.assignmentGroup} • Assigned: ${r.assignedTo} • Updated: ${r.updated} • Priority: ${r.priority}</div>`;
+    function renderList() {
+      const list = $('#ticketList');
+      const ro = $('#roList');
+      
+      if (tab !== 'incidents') {
+        $('#listHeader').style.display = 'none';
+        list.innerHTML = '';
+        ro.style.display = 'block';
+        ro.innerHTML = '';
+        
+        data().forEach(r => {
+          const d = document.createElement('div');
+          d.className = 'ro-item';
+          
+          if (tab === 'requests') {
+            d.innerHTML = `
+              <div style="display:flex;gap:8px;align-items:center">
+                <strong style="color:var(--primary-color)">${r.number}</strong>
+                <span style="margin-left:auto" class="status-badge ${sclass(r.state)}">${r.state}</span>
+              </div>
+              <div style="font-weight:600;margin-top:6px">${r.shortDescription}</div>
+              <div style="color:var(--light-text);font-size:12px;margin-top:4px">
+                Requester: ${r.requester} • Group: ${r.assignmentGroup} • Assigned: ${r.assignedTo} • Updated: ${r.updated} • Priority: ${r.priority}
+              </div>`;
+          } else {
+            d.innerHTML = `
+              <div style="display:flex;gap:8px;align-items:center">
+                <strong style="color:var(--primary-color)">${r.number}</strong>
+                <span style="margin-left:auto" class="status-badge ${sclass(r.state)}">${r.state}</span>
+              </div>
+              <div style="font-weight:600;margin-top:6px">${r.shortDescription}</div>
+              <div style="color:var(--light-text);font-size:12px;margin-top:4px">
+                Opened by: ${r.openedBy} • Group: ${r.assignmentGroup} • Assigned: ${r.assignedTo} • Updated: ${r.updated} • Priority: ${r.priority}
+              </div>`;
           }
           ro.appendChild(d);
         });
-        if(!data().length) ro.innerHTML='<div class="empty">No records found.</div>';
+        
+        if (!data().length) ro.innerHTML = '<div class="empty">No records found.</div>';
         return;
       }
+
       // Incidents full list with selection
-      $('#listHeader').style.display='grid'; ro.style.display='none'; list.innerHTML='';
-      tickets.forEach(t=>list.appendChild(row(t)));
+      $('#listHeader').style.display = 'grid';
+      ro.style.display = 'none';
+      list.innerHTML = '';
+      tickets.forEach(t => list.appendChild(row(t)));
     }
 
-    function row(t){
-      const div=document.createElement('div'); div.className='list-item'; div.dataset.ticketId=t.id;
-      if(selected.has(t.id)) div.classList.add('selected'); if(t.escalated) div.classList.add('escalated');
-      const st=sclass(t.escalated?'Escalated':t.state); const pc=pclass(t.priority);
-      div.innerHTML=`
-        <div class="row-checkbox"><input type="checkbox" class="ticket-checkbox" data-ticket-id="${t.id}" ${selected.has(t.id)?'checked':''}></div>
-        <div class="list-cell ticket-number">${t.number}${t.escalated?'<span class="escalation-indicator" title="Escalated">⚠️</span>':''}</div>
+    function row(t) {
+      const div = document.createElement('div');
+      div.className = 'list-item';
+      div.dataset.ticketId = t.id;
+      
+      if (selected.has(t.id)) div.classList.add('selected');
+      if (t.escalated) div.classList.add('escalated');
+      if (t.sla_state === 'breach') div.classList.add('sla-breach');
+      
+      const st = sclass(t.escalated ? 'Escalated' : t.state);
+      const pc = pclass(t.priority);
+      
+      // SLA indicator
+      let slaIndicator = '';
+      if (t.sla_state === 'breach') {
+        slaIndicator = '<span class="sla-indicator sla-breach">BREACH</span>';
+      } else if (t.sla_state === 'at_risk') {
+        slaIndicator = '<span class="sla-indicator sla-atrisk">AT RISK</span>';
+      } else {
+        slaIndicator = '<span class="sla-indicator sla-ontrack">ON TRACK</span>';
+      }
+
+      div.innerHTML = `
+        <div class="row-checkbox"><input type="checkbox" class="ticket-checkbox" data-ticket-id="${t.id}" ${selected.has(t.id) ? 'checked' : ''}></div>
+        <div class="list-cell ticket-number">${t.number}${t.escalated ? '<span class="escalation-indicator" title="Escalated">⚠️</span>' : ''}</div>
         <div class="list-cell" title="${t.shortDescription}">${t.shortDescription}</div>
         <div class="list-cell">${t.caller}</div>
+        <div class="list-cell">${t.assignmentGroup}</div>
         <div class="list-cell">${t.assignedTo}</div>
-        <div class="list-cell"><span class="status-badge ${st}">${t.escalated?'Escalated':t.state}</span></div>
+        <div class="list-cell"><span class="status-badge ${st}">${t.escalated ? 'Escalated' : t.state}</span></div>
         <div class="list-cell"><div class="priority-badge"><div class="priority-dot ${pc}"></div>${t.priority}</div></div>
+        <div class="list-cell">${slaIndicator}</div>
         <div class="list-cell">${t.age}</div>`;
-      const cb=div.querySelector('.ticket-checkbox');
-      cb.addEventListener('change',e=>{ e.stopPropagation(); selectTicket(t.id, e.target.checked); });
-      div.addEventListener('click',e=>{ if(e.target.classList.contains('ticket-checkbox')) return; cb.checked=!cb.checked; selectTicket(t.id, cb.checked); });
+      
+      const cb = div.querySelector('.ticket-checkbox');
+      cb.addEventListener('change', e => {
+        e.stopPropagation();
+        selectTicket(t.id, e.target.checked);
+      });
+      
+      div.addEventListener('click', e => {
+        if (e.target.classList.contains('ticket-checkbox')) return;
+        cb.checked = !cb.checked;
+        selectTicket(t.id, cb.checked);
+      });
+      
       return div;
     }
 
-    function selectTicket(id, on){
-      if(on) selected.add(id); else selected.delete(id);
-      updateButtons(); updateSelCount(); // keep UI in sync
-      // update row highlight without full re-render
-      document.querySelectorAll('.list-item').forEach(r=>{ const tid=parseInt(r.dataset.ticketId); if(!isNaN(tid)) r.classList.toggle('selected', selected.has(tid)); });
+    function selectTicket(id, on) {
+      if (on) selected.add(id);
+      else selected.delete(id);
+      updateButtons();
+      updateSelCount();
+      
+      document.querySelectorAll('.list-item').forEach(r => {
+        const tid = parseInt(r.dataset.ticketId);
+        if (!isNaN(tid)) r.classList.toggle('selected', selected.has(tid));
+      });
     }
 
-    function updateButtons(){
-      const hasSel = tab==='incidents' && selected.size>0;
-      $('#assignBtn').disabled=!hasSel; $('#escalateBtn').disabled=!hasSel;
+    function updateButtons() {
+      const hasSel = tab === 'incidents' && selected.size > 0;
+      $('#assignBtn').disabled = !hasSel;
+      
+      // Only enable escalate if eligible tickets are selected
+      const eligible = getEligibleForEscalation();
+      $('#escalateBtn').disabled = eligible.length === 0;
     }
-    function updateEscCount(){ const n=tickets.filter(t=>t.escalated).length; $('#escalatedCount').textContent=`${n} escalated`; }
-    function updateSelCount(){ $('#selCount').textContent = `${selected.size} selected`; }
 
-    // ---------- ACTIONS (PRIMARY FLOWS) ----------
-    function assignTickets(){
-      const who=$('#assigneeSelect').value; const grp=$('#groupSelect').value;
-      if(!who){ toast('Action needed','Pick an assignee','warning'); return; }
-      let count=0;
-      tickets.forEach(t=>{ if(selected.has(t.id)){ t.assignedTo=who; t.assignmentGroup=grp; if(t.state==='Open') t.state='In Progress'; count++; }});
-      selected.clear(); $('#assignModal').classList.remove('show'); renderList(); updateButtons(); updateSelCount(); toast('Success', `${count} ticket(s) assigned to ${who}`);
+    function updateEscCount() {
+      const n = tickets.filter(t => t.escalated).length;
+      $('#escalatedCount').textContent = `${n} escalated`;
     }
-    function escalateTickets(){
-      const to=$('#escalateToSelect').value; let count=0;
-      tickets.forEach(t=>{
-        if(selected.has(t.id)){
-          t.escalated=true;
-          t.assignedTo=to;
-          // bump priority one level up
-          t.priority = t.priority==='Low'?'Medium': t.priority==='Medium'?'High':'Critical';
-          if(t.state!=='Resolved' && t.state!=='Closed') t.state='In Progress';
+
+    function updateSelCount() {
+      $('#selCount').textContent = `${selected.size} selected`;
+    }
+
+    function updateSLABreachCount() {
+      const n = tickets.filter(t => t.sla_state === 'breach').length;
+      $('#slaBreachCount').textContent = `${n} SLA breaches`;
+    }
+
+    // ---------- ENHANCED ACTIONS ----------
+    function assignTickets() {
+      const group = $('#groupSelect').value;
+      const user = $('#assigneeSelect').value;
+      const notes = $('#workNotes').value;
+
+      if (!group || !user) {
+        toast('Action needed', 'Select both group and assignee', 'warning');
+        return;
+      }
+
+      if (!validateAssignment(group, user)) {
+        toast('Validation Error', `${user} does not belong to ${group} group`, 'error');
+        return;
+      }
+
+      let count = 0;
+      tickets.forEach(t => {
+        if (selected.has(t.id)) {
+          t.assignedTo = user;
+          t.assignmentGroup = group;
+          if (t.state === 'Open') t.state = 'In Progress';
+          
+          // Add work notes to ticket
+          if (notes) {
+            if (!t.work_notes) t.work_notes = [];
+            t.work_notes.push({
+              date: new Date(),
+              user: 'Current User',
+              note: `Assigned to ${user} in ${group}: ${notes}`
+            });
+          }
           count++;
         }
       });
-      selected.clear(); $('#escalateModal').classList.remove('show'); renderList(); updateButtons(); updateEscCount(); updateSelCount(); toast('Warning', `${count} ticket(s) escalated to ${to}`,'warning');
+
+      selected.clear();
+      $('#assignModal').classList.remove('show');
+      $('#workNotes').value = '';
+      renderList();
+      updateButtons();
+      updateSelCount();
+      toast('Success', `${count} ticket(s) assigned to ${user} in ${group}`);
+    }
+
+    function escalateTickets() {
+      const group = $('#escalateGroupSelect').value;
+      const reason = $('#escalationReason').value;
+      const eligible = getEligibleForEscalation();
+
+      if (eligible.length === 0) {
+        toast('No eligible tickets', 'Selected tickets cannot be escalated', 'warning');
+        return;
+      }
+
+      let count = 0;
+      tickets.forEach(t => {
+        if (eligible.includes(t.id)) {
+          t.escalated = true;
+          t.assignmentGroup = group;
+          t.assignedTo = sysIds.groups[group]?.manager || 'Management';
+          
+          // Bump priority for non-critical tickets
+          if (t.priority === 'Low') t.priority = 'Medium';
+          else if (t.priority === 'Medium') t.priority = 'High';
+          // High stays High, Critical stays Critical
+          
+          if (t.state !== 'Resolved' && t.state !== 'Closed') {
+            t.state = 'In Progress';
+          }
+          
+          // Add escalation note
+          if (!t.work_notes) t.work_notes = [];
+          t.work_notes.push({
+            date: new Date(),
+            user: 'System',
+            note: `ESCALATED to ${group}: ${reason}`
+          });
+          
+          count++;
+        }
+      });
+
+      selected.clear();
+      $('#escalateModal').classList.remove('show');
+      renderList();
+      updateButtons();
+      updateEscCount();
+      updateSelCount();
+      toast('Warning', `${count} ticket(s) escalated to ${group}`, 'warning');
     }
 
     // ---------- DASHBOARD ----------
-    function drawDashboard(){
-      const list=data();
-      const totals={
-        total:list.length,
-        open:list.filter(r=>r.state==='Open').length,
-        inprog:list.filter(r=>r.state==='In Progress').length,
-        pending:list.filter(r=>r.state==='Pending').length,
-        resolved:list.filter(r=>r.state==='Resolved').length
+    function drawDashboard() {
+      const list = data();
+      const totals = {
+        total: list.length,
+        open: list.filter(r => r.state === 'Open').length,
+        inprog: list.filter(r => r.state === 'In Progress').length,
+        pending: list.filter(r => r.state === 'Pending').length,
+        resolved: list.filter(r => r.state === 'Resolved').length,
+        escalated: list.filter(r => r.escalated).length
       };
+
       $('#kpiGrid').innerHTML = `
         <div class="kpi"><div class="label">Total ${labelFor(tab)}</div><div class="value">${totals.total}</div></div>
         <div class="kpi"><div class="label">Open</div><div class="value">${totals.open}</div></div>
         <div class="kpi"><div class="label">In Progress</div><div class="value">${totals.inprog}</div></div>
         <div class="kpi"><div class="label">Pending</div><div class="value">${totals.pending}</div></div>
-        <div class="kpi"><div class="label">Resolved</div><div class="value">${totals.resolved}</div></div>`;
-      drawBar('stateChart', countBy(list,'state'));
-      drawBar('priorityChart', countBy(list,'priority'));
+        <div class="kpi"><div class="label">Resolved</div><div class="value">${totals.resolved}</div></div>
+        <div class="kpi"><div class="label">Escalated</div><div class="value">${totals.escalated}</div></div>`;
+
+      drawBar('stateChart', countBy(list, 'state'));
+      drawBar('priorityChart', countBy(list, 'priority'));
     }
-    function countBy(list,key){ const m={}; (list||[]).forEach(r=>{const k=r[key]||'Unknown'; m[k]=(m[k]||0)+1;}); return m; }
-    function drawBar(id,map){
-      const c=document.getElementById(id),ctx=c.getContext('2d');
-      const labels=Object.keys(map), values=Object.values(map);
-      const w=c.width=c.clientWidth, h=c.height=c.clientHeight;
-      ctx.clearRect(0,0,w,h);
-      const pad=30, slot=(w-pad*2)/(labels.length||1), bw=slot*0.6, gap=slot*0.4;
-      // axes
-      ctx.strokeStyle='#d8dbe0'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.moveTo(pad,pad); ctx.lineTo(pad,h-pad); ctx.stroke();
-      const maxVal=Math.max(1,...values,1);
-      labels.forEach((lab,i)=>{
-        const x=pad+i*slot+gap/2; const bh=(h-pad*2)*(values[i]/maxVal); const y=h-pad-bh;
-        ctx.fillStyle='#2e51bb'; ctx.fillRect(x,y,bw,bh);
-        ctx.fillStyle='#2a3e4c'; ctx.font='12px Segoe UI'; ctx.textAlign='center'; ctx.fillText(values[i], x+bw/2, y-6);
-        ctx.save(); ctx.translate(x+bw/2, h-pad+14); ctx.rotate(-Math.PI/8); ctx.fillStyle='#6c757d'; ctx.fillText(lab,0,0); ctx.restore();
+
+    function countBy(list, key) {
+      const m = {};
+      (list || []).forEach(r => {
+        const k = r[key] || 'Unknown';
+        m[k] = (m[k] || 0) + 1;
+      });
+      return m;
+    }
+
+    function drawBar(id, map) {
+      const c = document.getElementById(id);
+      const ctx = c.getContext('2d');
+      const labels = Object.keys(map);
+      const values = Object.values(map);
+      const w = c.width = c.clientWidth;
+      const h = c.height = c.clientHeight;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const pad = 30;
+      const slot = (w - pad * 2) / (labels.length || 1);
+      const bw = slot * 0.6;
+      const gap = slot * 0.4;
+
+      // Axes
+      ctx.strokeStyle = '#d8dbe0';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pad, h - pad);
+      ctx.lineTo(w - pad, h - pad);
+      ctx.moveTo(pad, pad);
+      ctx.lineTo(pad, h - pad);
+      ctx.stroke();
+
+      const maxVal = Math.max(1, ...values, 1);
+
+      labels.forEach((lab, i) => {
+        const x = pad + i * slot + gap / 2;
+        const bh = (h - pad * 2) * (values[i] / maxVal);
+        const y = h - pad - bh;
+
+        ctx.fillStyle = '#2e51bb';
+        ctx.fillRect(x, y, bw, bh);
+
+        ctx.fillStyle = '#2a3e4c';
+        ctx.font = '12px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.fillText(values[i], x + bw / 2, y - 6);
+
+        ctx.save();
+        ctx.translate(x + bw / 2, h - pad + 14);
+        ctx.rotate(-Math.PI / 8);
+        ctx.fillStyle = '#6c757d';
+        ctx.fillText(lab, 0, 0);
+        ctx.restore();
       });
     }
 
@@ -432,40 +874,39 @@
     init();
   </script>
 
-<script>
-(function () {
-  function wireLabButtons() {
-    var resetBtn = document.querySelector('#resetLab');
-    var closeBtn = document.querySelector('#closeLab');
-    if (resetBtn && !resetBtn.dataset._wired) {
-      resetBtn.addEventListener('click', function(e){
-        e.preventDefault(); e.stopPropagation();
-        try { window.location.reload(); } catch (err) { console.error(err); }
-      });
-      resetBtn.dataset._wired = '1';
-    }
-    if (closeBtn && !closeBtn.dataset._wired) {
-      closeBtn.addEventListener('click', function(e){
-        e.preventDefault(); e.stopPropagation();
-        try { window.close(); } catch (err) { console.error(err); }
-        setTimeout(function(){ try { window.location.href = 'about:blank'; } catch(e){} }, 300);
-      });
-      closeBtn.dataset._wired = '1';
-    }
-  }
+  <script>
+    (function () {
+      function wireLabButtons() {
+        var resetBtn = document.querySelector('#resetLab');
+        var closeBtn = document.querySelector('#closeLab');
+        if (resetBtn && !resetBtn.dataset._wired) {
+          resetBtn.addEventListener('click', function(e){
+            e.preventDefault(); e.stopPropagation();
+            try { window.location.reload(); } catch (err) { console.error(err); }
+          });
+          resetBtn.dataset._wired = '1';
+        }
+        if (closeBtn && !closeBtn.dataset._wired) {
+          closeBtn.addEventListener('click', function(e){
+            e.preventDefault(); e.stopPropagation();
+            try { window.close(); } catch (err) { console.error(err); }
+            setTimeout(function(){ try { window.location.href = 'about:blank'; } catch(e){} }, 300);
+          });
+          closeBtn.dataset._wired = '1';
+        }
+      }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', wireLabButtons);
-  } else {
-    wireLabButtons();
-  }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', wireLabButtons);
+      } else {
+        wireLabButtons();
+      }
 
-  try {
-    var mo = new MutationObserver(function(){ wireLabButtons(); });
-    mo.observe(document.body || document.documentElement, { subtree: true, childList: true });
-  } catch (e) {}
-})();
-</script>
-
+      try {
+        var mo = new MutationObserver(function(){ wireLabButtons(); });
+        mo.observe(document.body || document.documentElement, { subtree: true, childList: true });
+      } catch (e) {}
+    })();
+  </script>
 </body>
 </html>
