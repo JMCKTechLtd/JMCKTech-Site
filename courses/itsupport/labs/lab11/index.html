@@ -156,6 +156,80 @@ button:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
 .end-task-btn:hover:not(:disabled){ background:#c73400; transform:translateY(-1px); }
 .end-task-btn:disabled{ background:#ccc; color:#555; }
 
+/* Loading animation for Task Manager */
+.task-manager-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #1976d2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Unresponsive app window simulation */
+.unresponsive-window {
+  position: absolute;
+  width: 400px;
+  height: 300px;
+  background: #fff;
+  border: 1px solid #c9c9c9;
+  border-radius: 10px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+  left: 500px;
+  top: 150px;
+  z-index: 50;
+}
+.unresponsive-window .window-header {
+  background: #ffebee;
+  cursor: move; /* Changed from not-allowed to move for draggable */
+}
+.unresponsive-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #d83b01;
+  font-weight: 600;
+  pointer-events: none; /* Allow clicking through to drag */
+}
+.unresponsive-overlay::before {
+  content: "⏳";
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+/* Process termination animation */
+.process-terminating {
+  animation: fadeOut 0.5s ease forwards;
+}
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}
 
 /* === Tray Popover + Calendar (ported from template) === */
 .tray-popover {
@@ -183,6 +257,25 @@ button:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
 </head>
 <body>
   <div id="desktop">
+    <!-- Unresponsive application window simulation -->
+    <div class="unresponsive-window" id="photoViewerWindow">
+      <div class="window-header">
+        <div class="window-title">Photo Viewer - beach_vacation.jpg</div>
+        <div class="window-controls">
+          <div class="window-control">−</div>
+          <div class="window-control">⬜</div>
+          <div class="window-control">✕</div>
+        </div>
+      </div>
+      <div class="window-body" style="display:flex;align-items:center;justify-content:center;background:#f5f5f5;">
+        <div style="text-align:center;color:#666;">
+          <div style="font-size:48px;margin-bottom:10px;">🖼️</div>
+          <div>Loading image...</div>
+        </div>
+      </div>
+      <div class="unresponsive-overlay">Not responding</div>
+    </div>
+
     <!-- Instructions window (template style) -->
     <div class="window" id="instructionsWindow" style="left:20px;top:20px;width:420px;height:340px;display:flex;">
       <div class="window-header">
@@ -199,9 +292,12 @@ button:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
           <strong>Goal:</strong> Use Task Manager to end <em>PhotoViewer.exe</em> (Not responding).
           <ol style="margin:12px 0 0 20px;">
             <li><strong>Right‑click</strong> the <strong>Start</strong> button and choose <strong>Task Manager</strong>.</li>
-            <li>Click the <strong>PhotoViewer.exe</strong> process (marked <em>Not responding</em>).</li>
-            <li>Click <strong>End task</strong>.</li>
+            <li>Wait for Task Manager to load and find the <strong>PhotoViewer.exe</strong> process (marked <em>Not responding</em>).</li>
+            <li>Click <strong>End task</strong> to terminate the unresponsive application.</li>
           </ol>
+          <div style="margin-top:15px;padding:10px;background:#fff3cd;border-radius:6px;border:1px solid #ffeaa7;">
+            <strong>Note:</strong> The Photo Viewer window above is currently frozen and unresponsive. You can drag it to move it out of the way if needed.
+          </div>
         </div>
         <div style="margin-top:10px;display:flex;gap:8px">
           <button id="resetLab">Reset Lab</button>
@@ -230,20 +326,16 @@ button:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
         <div class="task-manager-tab">Services</div>
       </div>
       <div class="window-body">
+        <div class="task-manager-loading" id="taskManagerLoading">
+          <div class="loading-spinner"></div>
+        </div>
         <div style="padding: 16px; overflow-y: auto; height: calc(100% - 50px);">
           <table class="process-list">
             <thead>
               <tr><th>Name</th><th>Status</th><th>CPU</th><th>Memory</th><th>Disk</th><th>Network</th></tr>
             </thead>
             <tbody id="processTbody">
-              <tr><td>Windows Explorer</td><td>Running</td><td>0.1%</td><td>45.2 MB</td><td>0 MB/s</td><td>0 Mbps</td></tr>
-              <tr><td>System</td><td>Running</td><td>0.2%</td><td>120.5 MB</td><td>0.1 MB/s</td><td>0 Mbps</td></tr>
-              <tr><td>Microsoft Edge</td><td>Running</td><td>1.5%</td><td>230.8 MB</td><td>0 MB/s</td><td>0.2 Mbps</td></tr>
-              <tr class="unresponsive" id="unresponsiveApp">
-                <td>PhotoViewer.exe</td><td>Not responding</td><td>95.2%</td><td>512.3 MB</td><td>15.2 MB/s</td><td>0 Mbps</td>
-              </tr>
-              <tr><td>Windows Security</td><td>Running</td><td>0.3%</td><td>89.1 MB</td><td>0 MB/s</td><td>0 Mbps</td></tr>
-              <tr><td>Cortana</td><td>Running</td><td>0.1%</td><td>67.4 MB</td><td>0 MB/s</td><td>0 Mbps</td></tr>
+              <!-- Processes will be populated dynamically -->
             </tbody>
           </table>
           <button class="end-task-btn" disabled id="endTaskBtn">Select a process first</button>
@@ -318,12 +410,28 @@ const startMenu = $('#startMenu');
 const startContext = $('#startContext');
 const instructionsWindow = $('#instructionsWindow');
 const taskManagerWindow = $('#taskManagerWindow');
+const taskManagerLoading = $('#taskManagerLoading');
 const resetLab = $('#resetLab');
 const closeBrowser = $('#closeBrowser');
-const unresponsiveApp = $('#unresponsiveApp');
 const endTaskBtn = $('#endTaskBtn');
 const trayTime = $('#trayTime');
 const trayDate = $('#trayDate');
+const photoViewerWindow = $('#photoViewerWindow');
+const processTbody = $('#processTbody');
+
+/* ==== Enhanced Process Data ==== */
+const processData = [
+  { name: 'Windows Explorer', status: 'Running', cpu: '0.1%', memory: '45.2 MB', disk: '0 MB/s', network: '0 Mbps', responsive: true },
+  { name: 'System', status: 'Running', cpu: '0.2%', memory: '120.5 MB', disk: '0.1 MB/s', network: '0 Mbps', responsive: true },
+  { name: 'Microsoft Edge', status: 'Running', cpu: '1.5%', memory: '230.8 MB', disk: '0 MB/s', network: '0.2 Mbps', responsive: true },
+  { name: 'Antimalware Service', status: 'Running', cpu: '0.8%', memory: '156.3 MB', disk: '0.3 MB/s', network: '0 Mbps', responsive: true },
+  { name: 'Runtime Broker', status: 'Running', cpu: '0.3%', memory: '42.1 MB', disk: '0 MB/s', network: '0 Mbps', responsive: true },
+  { name: 'PhotoViewer.exe', status: 'Not responding', cpu: '95.2%', memory: '512.3 MB', disk: '15.2 MB/s', network: '0 Mbps', responsive: false },
+  { name: 'Windows Security', status: 'Running', cpu: '0.3%', memory: '89.1 MB', disk: '0 MB/s', network: '0 Mbps', responsive: true },
+  { name: 'Cortana', status: 'Running', cpu: '0.1%', memory: '67.4 MB', disk: '0 MB/s', network: '0 Mbps', responsive: true },
+  { name: 'Service Host', status: 'Running', cpu: '0.4%', memory: '34.2 MB', disk: '0 MB/s', network: '0 Mbps', responsive: true },
+  { name: 'Font Driver Host', status: 'Running', cpu: '0.1%', memory: '12.8 MB', disk: '0 MB/s', network: '0 Mbps', responsive: true }
+];
 
 /* ==== Time chip ==== */
 function updateTime(){
@@ -366,11 +474,42 @@ $$('.app-item').forEach(el => {
   });
 });
 
-// Context menu -> Task Manager
+// Context menu -> Task Manager with realistic delay
 $('#startContext [data-app="taskmgr"]').addEventListener('click', ()=>{
   startContext.style.display='none';
+  
+  // Show loading state
+  taskManagerLoading.style.display = 'flex';
   taskManagerWindow.style.display='flex';
+  
+  // Simulate Task Manager loading time
+  setTimeout(() => {
+    taskManagerLoading.style.display = 'none';
+    populateProcessList();
+    flashToast('Task Manager is ready');
+  }, 1500);
 });
+
+/* ==== Process List Management ==== */
+function populateProcessList() {
+  processTbody.innerHTML = '';
+  processData.forEach((process, index) => {
+    const tr = document.createElement('tr');
+    if (!process.responsive) {
+      tr.id = 'unresponsiveApp';
+      tr.className = 'unresponsive';
+    }
+    tr.innerHTML = `
+      <td>${process.name}</td>
+      <td>${process.status}</td>
+      <td>${process.cpu}</td>
+      <td>${process.memory}</td>
+      <td>${process.disk}</td>
+      <td>${process.network}</td>
+    `;
+    processTbody.appendChild(tr);
+  });
+}
 
 /* ==== Window controls & dragging ==== */
 document.querySelectorAll('[data-close]').forEach(btn => {
@@ -389,62 +528,112 @@ document.querySelectorAll('[data-maximize]').forEach(btn => {
     } else { w.style.width='100%'; w.style.height='calc(100% - 48px)'; w.style.top='0'; w.style.left='0'; }
   });
 });
+
+// Enhanced dragging for ALL windows including unresponsive one
 let dragWin=null, sx=0, sy=0, ix=0, iy=0, dragging=false;
-document.querySelectorAll('.window-header').forEach(h => {
+
+// Apply dragging to ALL window headers (including unresponsive window)
+document.querySelectorAll('.window-header, .unresponsive-window .window-header').forEach(h => {
   h.addEventListener('mousedown', e => {
-    if (e.target.closest('.window-control')) return;
+    // Don't start drag if clicking on window controls (except for unresponsive window where controls don't work)
+    if (e.target.closest('.window-control') && !h.closest('.unresponsive-window')) return;
+    
     e.preventDefault();
-    dragWin = h.closest('.window'); dragging=true;
+    dragWin = h.closest('.window, .unresponsive-window'); 
+    dragging=true;
     sx=e.clientX; sy=e.clientY;
-    ix=parseInt(dragWin.style.left || getComputedStyle(dragWin).left);
-    iy=parseInt(dragWin.style.top  || getComputedStyle(dragWin).top);
+    
+    // Get current position
+    const currentLeft = parseInt(dragWin.style.left || getComputedStyle(dragWin).left);
+    const currentTop = parseInt(dragWin.style.top || getComputedStyle(dragWin).top);
+    
+    ix = isNaN(currentLeft) ? 0 : currentLeft;
+    iy = isNaN(currentTop) ? 0 : currentTop;
+    
     document.addEventListener('mousemove', onDrag);
     document.addEventListener('mouseup', stopDrag);
   });
 });
-function onDrag(e){ if(!dragging||!dragWin) return; dragWin.style.left=(ix + (e.clientX-sx))+'px'; dragWin.style.top=(iy + (e.clientY-sy))+'px'; }
-function stopDrag(){ dragging=false; dragWin=null; document.removeEventListener('mousemove', onDrag); document.removeEventListener('mouseup', stopDrag); }
 
-/* ==== Task Manager interactions ==== */
+function onDrag(e){ 
+  if(!dragging||!dragWin) return; 
+  dragWin.style.left=(ix + (e.clientX-sx))+'px'; 
+  dragWin.style.top=(iy + (e.clientY-sy))+'px'; 
+}
+
+function stopDrag(){ 
+  dragging=false; 
+  dragWin=null; 
+  document.removeEventListener('mousemove', onDrag); 
+  document.removeEventListener('mouseup', stopDrag); 
+}
+
+/* ==== Enhanced Task Manager interactions ==== */
 let selectedProcess = null;
-$('#processTbody').addEventListener('click', (e)=>{
-  const row = e.target.closest('tr'); if (!row) return;
+processTbody.addEventListener('click', (e)=>{
+  const row = e.target.closest('tr'); 
+  if (!row) return;
+  
   $$('#processTbody tr').forEach(r=>r.classList.remove('selected'));
   row.classList.add('selected');
   selectedProcess = row;
   endTaskBtn.disabled = false;
   endTaskBtn.textContent = 'End task';
 });
+
 function endTask(){
   if (!selectedProcess) return;
-  if (selectedProcess.id === 'unresponsiveApp'){
-    selectedProcess.remove();
-    flashToast('Task ended successfully!');
-  } else {
-    flashToast('Only the unresponsive app needs ending.');
-  }
-  endTaskBtn.disabled = true;
-  endTaskBtn.textContent = 'Select a process first';
-  selectedProcess = null;
+  
+  // Add termination animation
+  selectedProcess.classList.add('process-terminating');
+  
+  setTimeout(() => {
+    if (selectedProcess.id === 'unresponsiveApp'){
+      selectedProcess.remove();
+      photoViewerWindow.style.display = 'none';
+      flashToast('PhotoViewer.exe has been terminated');
+    } else {
+      flashToast('Process ended successfully');
+      selectedProcess.remove();
+    }
+    
+    endTaskBtn.disabled = true;
+    endTaskBtn.textContent = 'Select a process first';
+    selectedProcess = null;
+    
+    // Check if lab is complete
+    if (!$('#unresponsiveApp')) {
+      setTimeout(() => {
+        flashToast('✅ Lab completed successfully! The unresponsive app has been terminated.');
+      }, 500);
+    }
+  }, 500);
 }
 endTaskBtn.addEventListener('click', endTask);
 
 /* ==== Reset & Close Lab ==== */
 resetLab.addEventListener('click', ()=>{
-  // Reinsert unresponsive row if missing
-  if (!$('#unresponsiveApp')){
-    const tr = document.createElement('tr');
-    tr.className='unresponsive'; tr.id='unresponsiveApp';
-    tr.innerHTML = '<td>PhotoViewer.exe</td><td>Not responding</td><td>95.2%</td><td>512.3 MB</td><td>15.2 MB/s</td><td>0 Mbps</td>';
-    $('#processTbody').insertBefore(tr, $('#processTbody').children[3]);
-  }
+  // Reset process list
+  populateProcessList();
+  
+  // Show the unresponsive window again at original position
+  photoViewerWindow.style.display = 'block';
+  photoViewerWindow.style.left = '500px';
+  photoViewerWindow.style.top = '150px';
+  
   // Clear selection/button
   $$('#processTbody tr').forEach(r=>r.classList.remove('selected'));
-  endTaskBtn.disabled = true; endTaskBtn.textContent = 'Select a process first';
+  endTaskBtn.disabled = true; 
+  endTaskBtn.textContent = 'Select a process first';
   selectedProcess = null;
-  // Hide menus/windows except instructions
-  startMenu.style.display='none'; startContext.style.display='none';
-  document.querySelectorAll('.window').forEach(w=>{ if(w.id!=='instructionsWindow') w.style.display='none'; });
+  
+  // Hide menus/windows except instructions and unresponsive window
+  startMenu.style.display='none'; 
+  startContext.style.display='none';
+  document.querySelectorAll('.window').forEach(w=>{ 
+    if(w.id!=='instructionsWindow' && w.id!=='photoViewerWindow') w.style.display='none'; 
+  });
+  
   // Ensure instructions visible at default size/pos
   Object.assign(instructionsWindow.style,{display:'flex',width:'420px',height:'340px',left:'20px',top:'20px'});
   flashToast('Lab reset to initial state');

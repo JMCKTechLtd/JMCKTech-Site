@@ -290,6 +290,66 @@
     .lab-button.secondary:hover {
       background: #5a6268;
     }
+    
+    /* Save and Exit Dialog Styles */
+    .save-exit-dialog {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--bios-blue);
+      border: 2px solid #fff;
+      border-radius: 6px;
+      padding: 20px;
+      width: 400px;
+      z-index: 10;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    .save-exit-title {
+      color: #ff0;
+      font-weight: bold;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .save-exit-content {
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    .save-exit-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .save-exit-option {
+      padding: 8px;
+      border-radius: 4px;
+      background: rgba(255,255,255,.1);
+      cursor: pointer;
+      user-select: none;
+    }
+    .save-exit-option.selected {
+      background: #fff;
+      color: #003a99;
+      font-weight: bold;
+    }
+    .save-exit-controls {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 5;
+    }
   </style>
 </head>
 <body>
@@ -303,7 +363,7 @@
   </div>
   <div class="workspace">
     <div class="main-area">
-      <div class="bios-screen">
+      <div class="bios-screen" id="biosScreen">
         <div class="bios-header">
           <div class="bios-title">ACME BIOS Setup Utility</div>
         </div>
@@ -370,6 +430,26 @@
     </div>
   </div>
 </div>
+
+<!-- Save and Exit Dialog -->
+<div class="overlay hidden" id="saveExitOverlay"></div>
+<div class="save-exit-dialog hidden" id="saveExitDialog">
+  <div class="save-exit-title">Save configuration and exit setup?</div>
+  <div class="save-exit-content">
+    <p>Changes have been made to the BIOS settings.</p>
+    <p>Select an option below:</p>
+  </div>
+  <div class="save-exit-options" id="saveExitOptions">
+    <div class="save-exit-option" data-action="save">Save Changes and Exit</div>
+    <div class="save-exit-option" data-action="discard">Discard Changes and Exit</div>
+    <div class="save-exit-option" data-action="cancel">Cancel</div>
+  </div>
+  <div class="save-exit-controls">
+    <div class="key-button enter" id="dialogEnter">Enter</div>
+    <div class="key-button esc" id="dialogEsc">Esc</div>
+  </div>
+</div>
+
 <script>
 class VirtualizationLab {
   constructor() {
@@ -378,6 +458,8 @@ class VirtualizationLab {
     this.currentSelection = 0;
     this.virtualizationEnabled = false;
     this.saved = false;
+    this.saveExitSelection = 0;
+    this.showingSaveExitDialog = false;
     
     // BIOS screens configuration
     this.screens = {
@@ -480,6 +562,18 @@ class VirtualizationLab {
       }
     });
 
+    // Save/Exit dialog events
+    document.getElementById('dialogEnter').addEventListener('click', () => this.handleSaveExitSelection());
+    document.getElementById('dialogEsc').addEventListener('click', () => this.hideSaveExitDialog());
+    
+    // Save/Exit dialog option clicks
+    document.getElementById('saveExitOptions').addEventListener('click', (e) => {
+      const option = e.target.closest('.save-exit-option');
+      if (!option) return;
+      this.saveExitSelection = parseInt(option.dataset.index);
+      this.handleSaveExitSelection();
+    });
+
     // Keyboard events
     document.addEventListener('keydown', (e) => this.handleKeyPress(e));
 
@@ -519,7 +613,7 @@ class VirtualizationLab {
             this.currentSelection = 0;
             this.renderScreen(item.target);
           } else if (item.type === 'action' && item.target === 'saveExit') {
-            this.pressF10();
+            this.showSaveExitDialog();
           }
         } else if (screen.type === 'settings') {
           const item = screen.items[index];
@@ -539,12 +633,21 @@ class VirtualizationLab {
   }
 
   handleKeyPress(e) {
-    switch(e.key) {
-      case 'ArrowUp': e.preventDefault(); this.moveUp(); break;
-      case 'ArrowDown': e.preventDefault(); this.moveDown(); break;
-      case 'Enter': e.preventDefault(); this.pressEnter(); break;
-      case 'Escape': e.preventDefault(); this.pressEscape(); break;
-      case 'F10': e.preventDefault(); this.pressF10(); break;
+    if (this.showingSaveExitDialog) {
+      switch(e.key) {
+        case 'ArrowUp': e.preventDefault(); this.moveSaveExitSelection(-1); break;
+        case 'ArrowDown': e.preventDefault(); this.moveSaveExitSelection(1); break;
+        case 'Enter': e.preventDefault(); this.handleSaveExitSelection(); break;
+        case 'Escape': e.preventDefault(); this.hideSaveExitDialog(); break;
+      }
+    } else {
+      switch(e.key) {
+        case 'ArrowUp': e.preventDefault(); this.moveUp(); break;
+        case 'ArrowDown': e.preventDefault(); this.moveDown(); break;
+        case 'Enter': e.preventDefault(); this.pressEnter(); break;
+        case 'Escape': e.preventDefault(); this.pressEscape(); break;
+        case 'F10': e.preventDefault(); this.pressF10(); break;
+      }
     }
   }
 
@@ -596,7 +699,7 @@ class VirtualizationLab {
     } else if (this.currentScreen === 'advancedCpu' && item.key === 'virtualization') {
       this.toggleVirtualization();
     } else if (item.type === 'action' && item.target === 'saveExit') {
-      this.pressF10();
+      this.showSaveExitDialog();
     }
     
     this.updateProgress();
@@ -620,14 +723,72 @@ class VirtualizationLab {
 
   pressF10() {
     this.flashButton('f10Key');
-    if (!this.virtualizationEnabled) {
-      this.showHint('Enable Virtualization Technology before saving.');
-      return;
+    this.showSaveExitDialog();
+  }
+
+  showSaveExitDialog() {
+    this.showingSaveExitDialog = true;
+    this.saveExitSelection = 0; // Default to "Save Changes and Exit"
+    
+    document.getElementById('saveExitOverlay').classList.remove('hidden');
+    document.getElementById('saveExitDialog').classList.remove('hidden');
+    
+    // Update the dialog options
+    this.updateSaveExitDialog();
+  }
+
+  hideSaveExitDialog() {
+    this.showingSaveExitDialog = false;
+    document.getElementById('saveExitOverlay').classList.add('hidden');
+    document.getElementById('saveExitDialog').classList.add('hidden');
+  }
+
+  moveSaveExitSelection(direction) {
+    const options = document.querySelectorAll('.save-exit-option');
+    this.saveExitSelection = (this.saveExitSelection + direction + options.length) % options.length;
+    this.updateSaveExitDialog();
+  }
+
+  updateSaveExitDialog() {
+    const options = document.querySelectorAll('.save-exit-option');
+    options.forEach((option, index) => {
+      option.classList.toggle('selected', index === this.saveExitSelection);
+      option.dataset.index = index;
+    });
+  }
+
+  handleSaveExitSelection() {
+    const options = [
+      { action: 'save', text: 'Save Changes and Exit' },
+      { action: 'discard', text: 'Discard Changes and Exit' },
+      { action: 'cancel', text: 'Cancel' }
+    ];
+    
+    const selectedOption = options[this.saveExitSelection];
+    
+    switch(selectedOption.action) {
+      case 'save':
+        if (!this.virtualizationEnabled) {
+          this.showHint('Enable Virtualization Technology before saving.');
+          this.hideSaveExitDialog();
+          return;
+        }
+        this.saved = true;
+        document.getElementById('saveDot').classList.add('complete');
+        document.getElementById('donePanel').classList.remove('hidden');
+        this.showHint('Changes saved. System will restart.');
+        this.hideSaveExitDialog();
+        break;
+        
+      case 'discard':
+        this.showHint('Changes discarded. System will restart.');
+        this.hideSaveExitDialog();
+        break;
+        
+      case 'cancel':
+        this.hideSaveExitDialog();
+        break;
     }
-    this.saved = true;
-    document.getElementById('saveDot').classList.add('complete');
-    document.getElementById('donePanel').classList.remove('hidden');
-    this.showHint('Changes saved. System will restart.');
   }
 
   toggleVirtualization() {
@@ -745,6 +906,7 @@ class VirtualizationLab {
     this.currentSelection = 0;
     this.virtualizationEnabled = false;
     this.saved = false;
+    this.hideSaveExitDialog();
     
     // Reset virtualization setting
     this.screens.advancedCpu.items.find(item => item.key === 'virtualization').value = 'Disabled';
