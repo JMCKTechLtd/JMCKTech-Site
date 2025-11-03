@@ -42,6 +42,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .context-menu-item:last-child{border-bottom:none}
 .context-menu-item:hover{background:rgba(255,255,255,0.08)}
 
+/* ==== UAC Dialog ==== */
+#uacDialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border:1px solid #c9c9c9;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.5);width:400px;z-index:1000;display:none}
+.uac-header{background:#003399;color:white;padding:16px;font-weight:600;border-radius:8px 8px 0 0}
+.uac-body{padding:20px;color:#333}
+.uac-icon{float:left;margin-right:16px;font-size:32px}
+.uac-text{margin-bottom:20px}
+.uac-buttons{display:flex;justify-content:flex-end;gap:10px}
+.uac-button{padding:8px 16px;border:1px solid #ccc;background:#e6e6e6;border-radius:4px;cursor:pointer}
+.uac-button.primary{background:#003399;color:white;border-color:#002266}
+
 /* ==== Toast ==== */
 #toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#2e7d32;color:#fff;padding:10px 14px;border-radius:10px;display:none;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 
@@ -65,10 +75,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .app-item:hover{background:rgba(255,255,255,0.08)}
 .app-item .icon{width:32px;height:32px;border-radius:6px;background:#0078d4;display:flex;align-items:center;justify-content:center;font-size:16px}
 .instructions-icon{background:linear-gradient(45deg,#ff6b35,#f7931e)!important}
-.app-list{max-height:100%;overflow-y:auto}
 
 /* Utilities */
 .hidden{display:none!important}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;display:none}
 
 /* === Tray Popover + Calendar (ported from template) === */
 .tray-popover {
@@ -136,6 +146,24 @@ button:disabled{opacity:.5;cursor:not-allowed}
 (c) Microsoft Corporation. All rights reserved.
 
 </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UAC Dialog -->
+  <div class="overlay" id="uacOverlay"></div>
+  <div id="uacDialog">
+    <div class="uac-header">User Account Control</div>
+    <div class="uac-body">
+      <div class="uac-icon">🛡️</div>
+      <div class="uac-text">
+        <strong>Do you want to allow this app to make changes to your device?</strong><br><br>
+        <span style="font-size:12px">Verified publisher: Microsoft Windows<br>
+        File origin: Hard drive on this computer</span>
+      </div>
+      <div class="uac-buttons">
+        <button class="uac-button" id="uacNo">No</button>
+        <button class="uac-button primary" id="uacYes">Yes</button>
       </div>
     </div>
   </div>
@@ -208,6 +236,32 @@ window.addEventListener('DOMContentLoaded', () => {
   const resetLab = $('#resetLab');
   const closeBrowser = $('#closeBrowser');
   const toast = $('#toast');
+  const uacDialog = $('#uacDialog');
+  const uacOverlay = $('#uacOverlay');
+  const uacYes = $('#uacYes');
+  const uacNo = $('#uacNo');
+
+  /* ===== UAC Dialog ===== */
+  let uacCallback = null;
+  function showUAC(callback) {
+    uacCallback = callback;
+    uacDialog.style.display = 'block';
+    uacOverlay.style.display = 'block';
+  }
+  function hideUAC() {
+    uacDialog.style.display = 'none';
+    uacOverlay.style.display = 'none';
+    uacCallback = null;
+  }
+  uacYes.addEventListener('click', () => {
+    if (uacCallback) uacCallback(true);
+    hideUAC();
+  });
+  uacNo.addEventListener('click', () => {
+    if (uacCallback) uacCallback(false);
+    hideUAC();
+  });
+  uacOverlay.addEventListener('click', hideUAC);
 
   /* ===== Start Menu toggle ===== */
   function toggleStart(){ startMenu.style.display = (startMenu.style.display==='block') ? 'none' : 'block'; hideContext(); }
@@ -222,9 +276,19 @@ window.addEventListener('DOMContentLoaded', () => {
     w.style.display='flex';
   }
   function openCmd(elevated=false){
-    showWin(cmdWindow);
-    cmdTitle.textContent = elevated ? 'Administrator: Command Prompt' : 'Command Prompt';
-    setTimeout(()=>renderLive(), 50);
+    if (elevated) {
+      showUAC((allowed) => {
+        if (allowed) {
+          showWin(cmdWindow);
+          cmdTitle.textContent = 'Administrator: Command Prompt';
+          setTimeout(()=>renderLive(), 50);
+        }
+      });
+    } else {
+      showWin(cmdWindow);
+      cmdTitle.textContent = 'Command Prompt';
+      setTimeout(()=>renderLive(), 50);
+    }
   }
   $$('.app-item').forEach(el => {
     el.addEventListener('click', () => {
@@ -308,26 +372,106 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   function ready(){ buffer=''; renderLive(); }
 
+  /* ===== Enhanced GPUpdate simulation ===== */
   function runGpupdate(force){
     document.getElementById('liveLine')?.remove();
-    /* echo already printed in Enter handler — do not duplicate */
+    
+    const isAdmin = cmdTitle.textContent.includes('Administrator');
     const seq = [
-      'Updating policy...\n',
-      'Computer Policy update has completed successfully.\n',
-      'User Policy update has completed successfully.\n',
-    ];
-    let i=0; const step=()=>{ write(seq[i]); i++; if(i<seq.length){ setTimeout(step, 550);} else { flash('Policy update completed successfully'); ready(); } };
+      'Updating policy...',
+      '',
+      'Processing policy (Computer Configuration)...',
+      'Processing policy (User Configuration)...',
+      'Updating policy (Computer Configuration)...',
+      'The computer policy update has completed successfully.',
+      '',
+      'Updating policy (User Configuration)...',
+      'The user policy update has completed successfully.',
+      '',
+      force ? 'Forcing policy update...' : '',
+      force ? 'All settings were updated successfully.' : 'Some settings may require a logoff or restart to take effect.',
+      ''
+    ].filter(line => line !== '');
+
+    let i = 0;
+    const step = () => {
+      if (i < seq.length) {
+        // Add realistic delays and progress indicators
+        if (seq[i].includes('Processing') || seq[i].includes('Updating')) {
+          write(seq[i]);
+          // Add progress dots
+          setTimeout(() => {
+            write('  [OK]');
+            i++;
+            setTimeout(step, force ? 800 : 600);
+          }, 1200);
+        } else {
+          write(seq[i]);
+          i++;
+          setTimeout(step, force ? 400 : 300);
+        }
+      } else {
+        if (!isAdmin) {
+          write('NOTE: Some policies require administrator privileges to update completely.');
+        }
+        flash('Policy update completed successfully');
+        ready();
+      }
+    };
+    
     step();
   }
 
+  /* ===== Enhanced command handling ===== */
   function handle(cmd){
     const c = cmd.trim();
     if (!c) { write(''); return ready(); }
     const lc = c.toLowerCase();
+    
     if (lc === 'cls') { cmdOut.textContent=''; return ready(); }
-    if (lc === 'help') { write('Commands: gpupdate, gpupdate /force, cls, help'); return ready(); }
-    if (lc === 'gpupdate' || lc === 'gpupdate /force') { return runGpupdate(lc.includes('/force')); }
-    write(`'${cmd}' is not recognized as an internal or external command,\noperable program or batch file.`);
+    if (lc === 'help') { 
+      write('For more information on a specific command, type HELP command-name');
+      write('ASSOC          Displays or modifies file extension associations.');
+      write('ATTRIB         Displays or changes file attributes.');
+      write('CD             Displays the name of or changes the current directory.');
+      write('CLS            Clears the screen.');
+      write('COPY           Copies one or more files to another location.');
+      write('DIR            Displays a list of files and subdirectories in a directory.');
+      write('GPUPDATE       Updates Group Policy settings.');
+      write('HELP           Provides Help information for Windows commands.');
+      write('IPCONFIG       Displays IP configuration.');
+      write('MKDIR          Creates a directory.');
+      write('PING           Sends ICMP echo requests to a network host.');
+      write('TASKLIST       Displays all currently running tasks.');
+      return ready(); 
+    }
+    if (lc === 'ipconfig') { 
+      write('Windows IP Configuration');
+      write('');
+      write('Ethernet adapter Ethernet0:');
+      write('   Connection-specific DNS Suffix  . : corp.local');
+      write('   IPv4 Address. . . . . . . . . . . : 192.168.1.105');
+      write('   Subnet Mask . . . . . . . . . . . : 255.255.255.0');
+      write('   Default Gateway . . . . . . . . . : 192.168.1.1');
+      return ready(); 
+    }
+    if (lc === 'dir') { 
+      write(' Directory of C\\Users\\Administrator');
+      write('');
+      write('05/15/2024  02:23 PM    <DIR>          .');
+      write('05/15/2024  02:23 PM    <DIR>          ..');
+      write('05/12/2024  10:15 AM    <DIR>          Documents');
+      write('05/14/2024  03:45 PM    <DIR>          Downloads');
+      write('05/10/2024  09:22 AM    <DIR>          Desktop');
+      write('               0 File(s)              0 bytes');
+      write('               5 Dir(s)  475,832,123,392 bytes free');
+      return ready(); 
+    }
+    if (lc === 'gpupdate' || lc === 'gpupdate /force') { 
+      return runGpupdate(lc.includes('/force')); 
+    }
+    write(`'${cmd}' is not recognized as an internal or external command,`);
+    write('operable program or batch file.');
     return ready();
   }
 

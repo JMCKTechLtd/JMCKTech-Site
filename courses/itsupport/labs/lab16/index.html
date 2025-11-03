@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lab 16: Flush DNS Cache</title>
+<title>Lab 16: Flush DNS Cache - Enhanced</title>
 <style>
 /* ==== Desktop background (matches template) ==== */
 html,body{height:100%;margin:0;font-family:Segoe UI, Roboto, Arial, Helvetica, sans-serif}
@@ -88,6 +88,95 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .calendar .day{text-align:center;padding:6px 0;border-radius:6px}
 .calendar .day.today{background:#1976d2;color:#fff}
 .calendar .day.other{opacity:.35}
+
+/* ==== NEW: Enhanced DNS Status Window ==== */
+#dnsStatusWindow {
+    left: 460px;
+    top: 20px;
+    width: 380px;
+    height: 200px;
+    display: none;
+}
+
+.dns-status-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.dns-status-item:last-child {
+    border-bottom: none;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-active {
+    background: #4caf50;
+}
+
+.status-inactive {
+    background: #f44336;
+}
+
+.status-warning {
+    background: #ff9800;
+}
+
+.cache-entry {
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    background: #f5f5f5;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+/* ==== NEW: Network Troubleshooting Window ==== */
+#networkWindow {
+    left: 460px;
+    top: 240px;
+    width: 380px;
+    height: 200px;
+    display: none;
+}
+
+.network-test {
+    margin: 8px 0;
+    padding: 8px;
+    background: #f8f8f8;
+    border-radius: 4px;
+}
+
+.test-result {
+    font-family: Consolas, monospace;
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+/* ==== NEW: Enhanced Command Output Styles ==== */
+.cmd-output .dns-record {
+    color: #87ceeb;
+}
+
+.cmd-output .dns-error {
+    color: #ff6b6b;
+}
+
+.cmd-output .dns-success {
+    color: #90ee90;
+}
+
+.cmd-output .timestamp {
+    color: #888;
+    font-size: 0.8em;
+}
 </style>
 </head>
 <body>
@@ -95,7 +184,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <!-- Instructions window (open by default) -->
     <div class="window" id="instructionsWindow" style="display:flex">
       <div class="window-header">
-        <div class="window-title">Lab 16: Flush DNS Cache – Instructions</div>
+        <div class="window-title">Lab 16: Flush DNS Cache – Enhanced Instructions</div>
         <div class="window-controls">
           <div class="window-control" data-minimize title="Minimize">−</div>
           <div class="window-control" data-maximize title="Maximize">□</div>
@@ -104,16 +193,79 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </div>
       <div class="window-body">
         <ol>
-          <li>Open <strong>Start</strong> and choose <strong>Command Prompt</strong>.</li>
-          <li>Type <code>nslookup google.com</code> and press <strong>Enter</strong> to test DNS resolution. You should see that the request fails before flushing the cache.</li>
-          <li>Type <code>ipconfig /flushdns</code> and press <strong>Enter</strong> to clear the DNS cache.</li>
-          <li>Type <code>nslookup google.com</code> again and press <strong>Enter</strong> to test DNS resolution.</li>
-          <li>Verify that the command now returns valid DNS information for google.com.</li>
-          <li>Close Command Prompt when finished.</li>
+          <li>Open <strong>DNS Status Monitor</strong> to view current cache state</li>
+          <li>Open <strong>Command Prompt</strong> and type <code>nslookup google.com</code> - note the response time</li>
+          <li>Type <code>ipconfig /displaydns</code> to see cached entries</li>
+          <li>Type <code>ipconfig /flushdns</code> to clear the DNS cache</li>
+          <li>Check DNS Status Monitor again - cache should be empty</li>
+          <li>Run <code>nslookup google.com</code> again - note slower response (uncached)</li>
+          <li>Run it once more - response should be faster (re-cached)</li>
+          <li>Use <strong>Network Troubleshooting</strong> window to test connectivity</li>
         </ol>
         <div class="btnrow">
           <button id="resetLab">Reset Lab</button>
+          <button id="showAllWindows">Show All Tools</button>
           <button id="closeBrowser">Close Lab</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW: DNS Status Monitor Window -->
+    <div class="window" id="dnsStatusWindow">
+      <div class="window-header">
+        <div class="window-title">DNS Status Monitor</div>
+        <div class="window-controls">
+          <div class="window-control" data-minimize title="Minimize">−</div>
+          <div class="window-control" data-maximize title="Maximize">□</div>
+          <div class="window-control" data-close title="Close">✕</div>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="dns-status-item">
+          <span><span class="status-indicator" id="dnsServiceStatus"></span>DNS Client Service</span>
+          <span id="dnsServiceText">Running</span>
+        </div>
+        <div class="dns-status-item">
+          <span><span class="status-indicator" id="cacheStatus"></span>DNS Cache</span>
+          <span id="cacheStatusText">Active</span>
+        </div>
+        <div class="dns-status-item">
+          <span>Cache Entries:</span>
+          <span id="cacheEntryCount">0</span>
+        </div>
+        <div class="dns-status-item">
+          <span>Last Flush:</span>
+          <span id="lastFlushTime">Never</span>
+        </div>
+        <div id="cacheEntries">
+          <div style="margin-top: 10px; font-weight: bold;">Cached Domains:</div>
+          <div id="cacheEntriesList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW: Network Troubleshooting Window -->
+    <div class="window" id="networkWindow">
+      <div class="window-header">
+        <div class="window-title">Network Troubleshooting</div>
+        <div class="window-controls">
+          <div class="window-control" data-minimize title="Minimize">−</div>
+          <div class="window-control" data-maximize title="Maximize">□</div>
+          <div class="window-control" data-close title="Close">✕</div>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="network-test">
+          <button id="testPing">Test Ping to Google</button>
+          <div class="test-result" id="pingResult"></div>
+        </div>
+        <div class="network-test">
+          <button id="testDNS">Test Multiple DNS Servers</button>
+          <div class="test-result" id="dnsTestResult"></div>
+        </div>
+        <div class="network-test">
+          <button id="testBrowser">Simulate Browser Request</button>
+          <div class="test-result" id="browserResult"></div>
         </div>
       </div>
     </div>
@@ -174,6 +326,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
             <div class="icon">&gt;_</div>
             <span>Command Prompt</span>
           </div>
+          <!-- NEW: DNS Status Monitor App -->
+          <div class="app-item" data-app="dnsStatus">
+            <div class="icon" style="background: #4caf50;">📊</div>
+            <span>DNS Status Monitor</span>
+          </div>
+          <!-- NEW: Network Troubleshooting App -->
+          <div class="app-item" data-app="network">
+            <div class="icon" style="background: #2196f3;">🌐</div>
+            <span>Network Troubleshooting</span>
+          </div>
         </div>
       </div>
     </div>
@@ -205,11 +367,179 @@ window.addEventListener('DOMContentLoaded', () => {
   const resetLab = $('#resetLab');
   const closeBrowser = $('#closeBrowser');
   const toast = $('#toast');
+  const showAllWindows = $('#showAllWindows');
+  const dnsStatusWindow = $('#dnsStatusWindow');
+  const networkWindow = $('#networkWindow');
 
-  /* ===== DNS Lab State ===== */
+  /* ===== Enhanced DNS Lab State ===== */
   let taskCompleted = false;
   let dnsFlushed = false;
   let dnsResolved = false;
+  
+  let dnsCache = {
+    entries: new Map(),
+    lastFlush: null,
+    enabled: true
+  };
+
+  let dnsStatistics = {
+    queries: 0,
+    cacheHits: 0,
+    cacheMisses: 0,
+    responseTimes: []
+  };
+
+  // Simulated DNS records for various domains
+  const simulatedDNS = {
+    'google.com': {
+      ipv4: '172.217.9.142',
+      ipv6: '2607:f8b0:4004:c1b::8a',
+      ttl: 300,
+      authoritative: false
+    },
+    'microsoft.com': {
+      ipv4: '20.112.52.29',
+      ipv6: '2603:1020:400:1::',
+      ttl: 600,
+      authoritative: false
+    },
+    'github.com': {
+      ipv4: '140.82.121.4',
+      ipv6: '2606:50c0:8002::154',
+      ttl: 1800,
+      authoritative: false
+    },
+    'stackoverflow.com': {
+      ipv4: '151.101.193.69',
+      ipv6: '2606:4700:3034::ac43:9845',
+      ttl: 900,
+      authoritative: false
+    }
+  };
+
+  /* ===== Enhanced DNS Cache Management ===== */
+  function addToCache(domain, record) {
+    if (!dnsCache.enabled) return;
+    
+    const expiry = Date.now() + (record.ttl * 1000);
+    dnsCache.entries.set(domain, {
+      ...record,
+      expiry: expiry,
+      created: Date.now()
+    });
+    updateDNSStatus();
+  }
+
+  function getFromCache(domain) {
+    if (!dnsCache.enabled) return null;
+    
+    const entry = dnsCache.entries.get(domain);
+    if (entry && entry.expiry > Date.now()) {
+      dnsStatistics.cacheHits++;
+      return entry;
+    }
+    
+    if (entry) {
+      // Expired entry
+      dnsCache.entries.delete(domain);
+    }
+    
+    dnsStatistics.cacheMisses++;
+    return null;
+  }
+
+  function flushDNSCache() {
+    const previousSize = dnsCache.entries.size;
+    dnsCache.entries.clear();
+    dnsCache.lastFlush = new Date();
+    dnsStatistics.queries = 0;
+    dnsStatistics.cacheHits = 0;
+    dnsStatistics.cacheMisses = 0;
+    updateDNSStatus();
+    return previousSize;
+  }
+
+  function simulateDNSQuery(domain) {
+    dnsStatistics.queries++;
+    
+    // Check cache first
+    const cached = getFromCache(domain);
+    if (cached) {
+      // Simulate faster response from cache
+      return {
+        ...cached,
+        responseTime: 15 + Math.random() * 10,
+        source: 'cache'
+      };
+    }
+    
+    // Simulate actual DNS lookup
+    const record = simulatedDNS[domain];
+    if (record) {
+      // Add to cache for future requests
+      addToCache(domain, record);
+      
+      // Simulate network latency for uncached requests
+      return {
+        ...record,
+        responseTime: 80 + Math.random() * 50,
+        source: 'network'
+      };
+    }
+    
+    // Domain not found
+    return {
+      error: 'DNS request timed out',
+      responseTime: 2000,
+      source: 'timeout'
+    };
+  }
+
+  /* ===== Enhanced UI Updates ===== */
+  function updateDNSStatus() {
+    const serviceStatus = $('#dnsServiceStatus');
+    const serviceText = $('#dnsServiceText');
+    const cacheStatus = $('#cacheStatus');
+    const cacheText = $('#cacheStatusText');
+    const entryCount = $('#cacheEntryCount');
+    const lastFlush = $('#lastFlushTime');
+    const entriesList = $('#cacheEntriesList');
+    
+    // Update service status
+    serviceStatus.className = 'status-indicator status-active';
+    serviceText.textContent = 'Running';
+    
+    // Update cache status
+    if (dnsCache.enabled) {
+      cacheStatus.className = 'status-indicator status-active';
+      cacheText.textContent = 'Active';
+    } else {
+      cacheStatus.className = 'status-indicator status-inactive';
+      cacheText.textContent = 'Disabled';
+    }
+    
+    // Update cache info
+    const validEntries = Array.from(dnsCache.entries.entries())
+      .filter(([_, entry]) => entry.expiry > Date.now());
+    
+    entryCount.textContent = validEntries.length;
+    
+    // Update last flush time
+    if (dnsCache.lastFlush) {
+      lastFlush.textContent = dnsCache.lastFlush.toLocaleTimeString();
+    } else {
+      lastFlush.textContent = 'Never';
+    }
+    
+    // Update cache entries list
+    entriesList.innerHTML = '';
+    validEntries.forEach(([domain, entry]) => {
+      const div = document.createElement('div');
+      div.className = 'cache-entry';
+      div.textContent = `${domain} → ${entry.ipv4} (TTL: ${Math.round((entry.expiry - Date.now()) / 1000)}s)`;
+      entriesList.appendChild(div);
+    });
+  }
 
   /* ===== Start Menu toggle ===== */
   function toggleStart(){ startMenu.style.display = (startMenu.style.display==='block') ? 'none' : 'block'; hideContext(); }
@@ -233,6 +563,8 @@ window.addEventListener('DOMContentLoaded', () => {
       const app = el.dataset.app; hideStart();
       if (app==='instructions') instructionsWindow.style.display='flex';
       if (app==='cmd') openCmd(false);
+      if (app==='dnsStatus') dnsStatusWindow.style.display='flex';
+      if (app==='network') networkWindow.style.display='flex';
     });
   });
 
@@ -269,6 +601,8 @@ window.addEventListener('DOMContentLoaded', () => {
       if (maximized){
         if (w.id==='instructionsWindow') { w.style.width='420px'; w.style.height='340px'; w.style.top='20px'; w.style.left='20px'; }
         if (w.id==='cmdWindow') { w.style.width='760px'; w.style.height='480px'; w.style.top='90px'; w.style.left='260px'; }
+        if (w.id==='dnsStatusWindow') { w.style.width='380px'; w.style.height='200px'; w.style.top='20px'; w.style.left='460px'; }
+        if (w.id==='networkWindow') { w.style.width='380px'; w.style.height='200px'; w.style.top='240px'; w.style.left='460px'; }
         w.dataset.max = '0';
       } else {
         w.style.width='100%'; w.style.height='calc(100% - 48px)'; w.style.top='0'; w.style.left='0';
@@ -310,74 +644,216 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   function ready(){ buffer=''; renderLive(); }
 
-  /* ===== DNS Commands Processing ===== */
-  function runNslookup(domain){
+  /* ===== Enhanced DNS Commands Processing ===== */
+  function runEnhancedNslookup(domain) {
     document.getElementById('liveLine')?.remove();
-    let output;
-    if (!dnsFlushed) {
-      output = 'DNS request timed out.\ntimeout was 2 seconds.\n*** Request to dns.google timed-out\n';
+    
+    const startTime = Date.now();
+    const result = simulateDNSQuery(domain);
+    const totalTime = Date.now() - startTime;
+    
+    let output = '';
+    
+    if (result.error) {
+      output = `DNS request timed out.
+timeout was 2 seconds.
+Server:  UnKnown
+Address:  192.168.1.1
+
+*** Request to UnKnown timed-out
+`;
+      write(output);
     } else {
-      output = 'Server:  dns.google\nAddress:  8.8.8.8\n\nNon-authoritative answer:\nName:    ' + domain + '\nAddress:  172.217.9.142\nAddress:  2607:f8b0:4004:c1b::8a\n';
-      if (!dnsResolved) {
-        dnsResolved = true;
-        if (!taskCompleted) {
-          taskCompleted = true;
-          flash('Task completed successfully! DNS resolution working after flush.', 3000);
-        }
-      }
+      output = `Server:  dns.google
+Address:  8.8.8.8
+
+${result.authoritative ? 'Authoritative' : 'Non-authoritative'} answer:
+Name:    ${domain}
+Address:  ${result.ipv4}
+Address:  ${result.ipv6}
+
+Query time: ${Math.round(result.responseTime)} msec
+When:       ${new Date().toLocaleTimeString()}
+`;
+      write(output);
+      
+      // Add visual indication of cache hit/miss
+      const indicator = document.createElement('div');
+      indicator.className = result.source === 'cache' ? 'dns-success' : 'dns-record';
+      indicator.textContent = `[${result.source === 'cache' ? 'CACHED' : 'NETWORK'}] Response time: ${Math.round(result.responseTime)}ms`;
+      cmdOut.appendChild(indicator);
+      cmdOut.appendChild(document.createElement('br'));
     }
-    write(output);
+    
     ready();
   }
 
-  function runFlushDns(){
+  function runEnhancedFlushDns() {
     document.getElementById('liveLine')?.remove();
-    const output = 'Windows IP Configuration\n\nSuccessfully flushed the DNS Resolver Cache.\n';
+    
+    const flushedCount = flushDNSCache();
+    const output = `Windows IP Configuration
+
+Successfully flushed the DNS Resolver Cache.
+Flushed ${flushedCount} entr${flushedCount === 1 ? 'y' : 'ies'}.
+
+`;
     write(output);
-    if (!dnsFlushed) {
-      dnsFlushed = true;
-      flash('DNS cache flushed successfully.');
-    }
+    flash(`DNS cache flushed successfully. ${flushedCount} entries removed.`);
     ready();
   }
 
-  function handle(cmd){
+  function displayDNSCache() {
+    document.getElementById('liveLine')?.remove();
+    
+    const validEntries = Array.from(dnsCache.entries.entries())
+      .filter(([_, entry]) => entry.expiry > Date.now());
+    
+    if (validEntries.length === 0) {
+      write(`Windows IP Configuration
+
+    Could not display the DNS Resolver Cache.
+    
+`);
+    } else {
+      let output = `Windows IP Configuration
+
+`;
+      
+      validEntries.forEach(([domain, entry]) => {
+        output += `    ${domain}
+    ----------------------------------------
+    Record Name . . . . . : ${domain}
+    Record Type . . . . . : 1
+    Time To Live  . . . . : ${Math.round((entry.expiry - Date.now()) / 1000)}
+    Data Length . . . . . : 4
+    Section . . . . . . . : Answer
+    A (Host) Record . . . : ${entry.ipv4}
+
+`;
+      });
+      
+      write(output);
+    }
+    
+    ready();
+  }
+
+  /* ===== Network Testing Functions ===== */
+  function simulatePingTest() {
+    const result = $('#pingResult');
+    result.innerHTML = '<span class="timestamp">Pinging 172.217.9.142 with 32 bytes of data:</span><br>';
+    
+    // Simulate ping packets with realistic timing
+    for (let i = 1; i <= 4; i++) {
+      setTimeout(() => {
+        const time = 15 + Math.random() * 10;
+        result.innerHTML += `<span class="dns-success">Reply from 172.217.9.142: bytes=32 time=${Math.round(time)}ms TTL=116</span><br>`;
+        
+        if (i === 4) {
+          result.innerHTML += `<br><span class="timestamp">Ping statistics for 172.217.9.142:</span><br>`;
+          result.innerHTML += `<span class="timestamp">    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)</span><br>`;
+        }
+      }, i * 300);
+    }
+  }
+
+  function simulateDNSServerTest() {
+    const result = $('#dnsTestResult');
+    const servers = [
+      { name: 'Google DNS', ip: '8.8.8.8', working: true },
+      { name: 'Cloudflare', ip: '1.1.1.1', working: true },
+      { name: 'ISP DNS', ip: '192.168.1.1', working: false },
+      { name: 'OpenDNS', ip: '208.67.222.222', working: true }
+    ];
+    
+    result.innerHTML = '';
+    
+    servers.forEach((server, index) => {
+      setTimeout(() => {
+        if (server.working) {
+          result.innerHTML += `<span class="dns-success">✓ ${server.name} (${server.ip}): Responding</span><br>`;
+        } else {
+          result.innerHTML += `<span class="dns-error">✗ ${server.name} (${server.ip}): Timeout</span><br>`;
+        }
+      }, index * 500);
+    });
+  }
+
+  function simulateBrowserRequest() {
+    const result = $('#browserResult');
+    result.innerHTML = '<span class="timestamp">Requesting https://google.com...</span><br>';
+    
+    setTimeout(() => {
+      result.innerHTML += '<span class="timestamp">DNS Lookup: 45ms</span><br>';
+    }, 300);
+    
+    setTimeout(() => {
+      result.innerHTML += '<span class="timestamp">TCP Handshake: 23ms</span><br>';
+    }, 600);
+    
+    setTimeout(() => {
+      result.innerHTML += '<span class="timestamp">TLS Negotiation: 120ms</span><br>';
+    }, 900);
+    
+    setTimeout(() => {
+      result.innerHTML += '<span class="dns-success">Page loaded: 1.2s total</span><br>';
+    }, 1200);
+  }
+
+  /* ===== Enhanced Command Handler ===== */
+  function handleEnhancedCommand(cmd) {
     const c = cmd.trim();
     if (!c) { write(''); return ready(); }
+    
     const lc = c.toLowerCase();
-    if (lc === 'cls') { cmdOut.textContent=''; return ready(); }
+    
+    if (lc === 'cls') { 
+      cmdOut.textContent=''; 
+      return ready(); 
+    }
+    
     if (lc === 'help') {
       write('Commands: ipconfig /flushdns, nslookup <domain>, ipconfig /displaydns, cls, help, exit');
       return ready();
     }
-    if (lc === 'ipconfig /flushdns') { return runFlushDns(); }
+    
+    if (lc === 'ipconfig /flushdns') { 
+      return runEnhancedFlushDns(); 
+    }
+    
     if (lc.startsWith('nslookup')) {
       const parts = c.split(' ');
       const domain = parts[1] || 'google.com';
-      return runNslookup(domain);
+      return runEnhancedNslookup(domain);
     }
+    
     if (lc === 'ipconfig /displaydns') {
-      if (dnsFlushed) {
-        write('Windows IP Configuration\n\nDNS Resolver Cache is empty.\n');
-      } else {
-        write('Windows IP Configuration\n\n    google.com\n    ----------------------------------------\n    Record Name . . . . . : google.com\n    Record Type . . . . . : 1\n    Time To Live  . . . . : 86400\n    Data Length . . . . . : 4\n    Section . . . . . . . : Answer\n    A (Host) Record . . . : 172.217.9.142\n\n');
-      }
-      return ready();
+      return displayDNSCache();
     }
-    if (lc === 'exit') { cmdWindow.style.display='none'; return; }
+    
+    if (lc === 'exit') { 
+      cmdWindow.style.display='none'; 
+      return; 
+    }
+    
     write(`'${cmd}' is not recognized as an internal or external command,
 operable program or batch file.`);
     return ready();
   }
 
-  // Global key handler (only when CMD window is visible)
+  /* ===== Updated Event Listeners ===== */
+  
+  // Replace the existing command handler with enhanced version
   document.addEventListener('keydown', (e)=>{
     if (cmdWindow.style.display !== 'flex') return;
     if (e.key === 'Enter'){
-      e.preventDefault(); document.getElementById('liveLine')?.remove();
+      e.preventDefault(); 
+      document.getElementById('liveLine')?.remove();
       write(promptText + buffer);
-      const line = buffer; buffer='';
-      handle(line);
+      const line = buffer; 
+      buffer='';
+      handleEnhancedCommand(line);  // Use enhanced handler
       return;
     }
     if (e.key === 'Backspace'){
@@ -391,17 +867,42 @@ operable program or batch file.`);
   // Clicking inside the output focuses the live line
   cmdOut.addEventListener('mousedown', ()=>{ renderLive(); });
 
-  // Reset & Close
-  resetLab.addEventListener('click', ()=>{
+  // Add event listeners for new buttons
+  showAllWindows.addEventListener('click', () => {
+    instructionsWindow.style.display = 'flex';
+    dnsStatusWindow.style.display = 'flex';
+    networkWindow.style.display = 'flex';
+    cmdWindow.style.display = 'flex';
+  });
+
+  $('#testPing').addEventListener('click', simulatePingTest);
+  $('#testDNS').addEventListener('click', simulateDNSServerTest);
+  $('#testBrowser').addEventListener('click', simulateBrowserRequest);
+
+  // Enhanced reset function
+  resetLab.addEventListener('click', () => {
     cmdOut.textContent = 'Microsoft Windows [Version 10.0.19045.4529]\n(c) Microsoft Corporation. All rights reserved.\n\n';
-    buffer='';
-    taskCompleted = false;
-    dnsFlushed = false;
-    dnsResolved = false;
-    cmdWindow.style.display='none';
-    instructionsWindow.style.display='flex';
+    buffer = '';
+    
+    // Reset DNS cache state
+    dnsCache.entries.clear();
+    dnsCache.lastFlush = null;
+    dnsCache.enabled = true;
+    
+    dnsStatistics.queries = 0;
+    dnsStatistics.cacheHits = 0;
+    dnsStatistics.cacheMisses = 0;
+    dnsStatistics.responseTimes = [];
+    
+    cmdWindow.style.display = 'none';
+    instructionsWindow.style.display = 'flex';
+    dnsStatusWindow.style.display = 'none';
+    networkWindow.style.display = 'none';
+    
+    updateDNSStatus();
     flash('Lab reset to initial state');
   });
+
   closeBrowser.addEventListener('click', ()=>{ flash('Closing lab...'); window.close(); setTimeout(()=>{ window.location.href='about:blank'; }, 300); });
 
   /* ===== Time only (no calendar popover) ===== */
@@ -409,6 +910,9 @@ operable program or batch file.`);
   function two(n){ return n.toString().padStart(2,'0'); }
   function updateTime(){ const d=new Date(); trayTime.textContent = two(d.getHours()) + ':' + two(d.getMinutes()); }
   setInterval(updateTime, 60000); updateTime();
+
+  // Initialize DNS status
+  updateDNSStatus();
 
   // Init: show instructions
   instructionsWindow.style.display='flex';
