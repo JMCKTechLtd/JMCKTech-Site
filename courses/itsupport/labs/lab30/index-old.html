@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lab 30: Entra ID - Reset User Password</title>
+<style>
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { background-color: #1e1e1e; padding: 20px; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #111; }
+.task-instructions {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f1f8e9 100%);
+  border: 1px solid #90caf9; border-radius: 8px; padding: 14px 16px; margin: 0 0 14px 0;
+  position: sticky; top: 0; z-index: 1000;
+}
+.task-instructions .task-title {
+  font-weight: 600; color: #ffffff; background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  padding: 8px 12px; border-radius: 6px; display: inline-block; margin-bottom: 8px;
+}
+.task-instructions .task-description { color: #1e1e1e; line-height: 1.45; }
+.task-instructions ol { margin: 8px 0 0 20px; }
+.lab-container {
+  width: 1200px; height: 700px; margin: 0 auto;
+  background: #ffffff; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  overflow: hidden; position: relative;
+}
+.azure-header {
+  height: 50px; background: #0078d4; color: white; display: flex; align-items: center;
+  padding: 0 20px; font-weight: 500; border-bottom: 1px solid #005a9e;
+}
+.azure-header .logo { margin-right: 16px; font-size: 18px; }
+.azure-header .search { margin-left: auto; background: rgba(255,255,255,0.2); border: none; 
+  padding: 6px 12px; border-radius: 4px; color: white; width: 200px; }
+.azure-header .search::placeholder { color: rgba(255,255,255,0.7); }
+.azure-nav {
+  width: 250px; height: calc(100% - 50px); background: #f8f9fa; border-right: 1px solid #dee2e6;
+  overflow-y: auto; padding: 16px 0;
+}
+.nav-item {
+  padding: 10px 20px; cursor: pointer; font-size: 14px; color: #495057;
+  border-left: 3px solid transparent; transition: all 0.2s ease;
+}
+.nav-item:hover { background: #e9ecef; }
+.nav-item.active { background: #e3f2fd; color: #0078d4; border-left-color: #0078d4; font-weight: 500; }
+.nav-item .icon { margin-right: 12px; width: 16px; display: inline-block; }
+.main-content {
+  position: absolute; left: 250px; top: 50px; right: 0; bottom: 0;
+  background: white; overflow: auto;
+}
+.content-header {
+  padding: 20px 24px; border-bottom: 1px solid #dee2e6; background: #fafbfc;
+}
+.content-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.content-subtitle { color: #6c757d; font-size: 14px; }
+.user-list { padding: 24px; }
+.user-table {
+  width: 100%; border-collapse: collapse; background: white; border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;
+}
+.user-table th {
+  background: #f8f9fa; padding: 12px 16px; text-align: left; font-weight: 600;
+  border-bottom: 2px solid #dee2e6; color: #495057; font-size: 13px;
+}
+.user-table td {
+  padding: 12px 16px; border-bottom: 1px solid #f1f3f4; font-size: 14px;
+}
+.user-table tbody tr:hover { background: #f8f9fa; }
+.user-table tbody tr { cursor: pointer; transition: background 0.2s ease; }
+.status-badge {
+  display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 11px;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.status-active { background: #d4edda; color: #155724; }
+.status-unlicensed { background: #fff3cd; color: #856404; }
+.status-blocked { background: #f8d7da; color: #721c24; }
+.search-box { margin-bottom: 16px; position: relative; }
+.search-box input {
+  width: 300px; padding: 8px 12px 8px 40px; border: 1px solid #ced4da;
+  border-radius: 4px; font-size: 14px;
+}
+.search-box::before {
+  content: "🔍"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: #6c757d;
+}
+.user-detail {
+  position: absolute; left: 250px; top: 50px; right: 0; bottom: 0;
+  background: white; display: none; z-index: 100;
+}
+.detail-header {
+  padding: 20px 24px; border-bottom: 1px solid #dee2e6; background: #fafbfc;
+  display: flex; align-items: center; gap: 16px;
+}
+.detail-title { font-size: 20px; font-weight: 600; }
+.back-btn {
+  padding: 6px 12px; border: 1px solid #ced4da; border-radius: 4px;
+  background: white; cursor: pointer; font-size: 14px; color: #495057;
+}
+.back-btn:hover { background: #f8f9fa; }
+.detail-tabs { display: flex; border-bottom: 1px solid #dee2e6; background: #fafbfc; }
+.tab {
+  padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent;
+  font-weight: 500; color: #6c757d; transition: all 0.2s ease;
+}
+.tab.active { color: #0078d4; border-bottom-color: #0078d4; }
+.tab:hover:not(.active) { color: #495057; }
+.tab-content { padding: 24px; }
+.section {
+  background: white; border: 1px solid #dee2e6; border-radius: 8px;
+  padding: 20px; margin-bottom: 16px;
+}
+.btn { padding: 8px 16px; border: 1px solid #ced4da; border-radius: 4px;
+  background: white; cursor: pointer; font-size: 14px; }
+.btn-primary { background: #0078d4; color: white; border-color: #0078d4; }
+.btn-primary:hover { background: #106ebe; }
+.toggle { display: inline-flex; align-items: center; gap: 8px; }
+.success-toast {
+  position: fixed; bottom: 20px; right: 20px; background: #d4edda;
+  color: #155724; padding: 16px 20px; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2); display: none;
+  border-left: 4px solid #28a745;
+}
+.loading {
+  display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3;
+  border-top: 2px solid #0078d4; border-radius: 50%; animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.badge { display:inline-block; padding:4px 8px; border-radius:12px; font-size:11px; background:#eef2ff; color:#1f3a93; }
+.modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: none; align-items: center; justify-content: center; z-index: 1000;
+}
+.modal-card {
+  background: white; border-radius: 8px; box-shadow: 0 16px 64px rgba(0,0,0,0.3);
+  width: 560px; max-height: 80vh; overflow: auto;
+}
+.modal-header { padding: 20px 24px; border-bottom: 1px solid #dee2e6; font-weight: 600; }
+.modal-body { padding: 20px 24px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid #dee2e6; display: flex; gap: 8px; justify-content: flex-end; }
+.input, .select { width: 100%; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; }
+.label { display:block; margin: 0 0 6px 0; font-weight: 500; color: #495057; }
+.list { border:1px solid #e5e7eb; border-radius:6px; }
+.list-item { display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid #f1f5f9; }
+.list-item:last-child { border-bottom:none; }
+
+</style>
+</head>
+<body>
+<div class="task-instructions">
+  <div class="task-title">Lab: Entra ID - Reset User Password</div>
+  <div class="task-description">
+  <strong>Goal:</strong> Reset <strong>Jane Smith</strong>'s password and require a password change at next sign-in.
+  <ol>
+    <li>Click <strong>Azure Active Directory</strong> in the left navigation.</li>
+    <li>Open <strong>Jane Smith</strong>'s user profile.</li>
+    <li>Click the <strong>Reset password</strong> tab.</li>
+    <li>Enter and confirm a strong password.</li>
+    <li>Tick <strong>Require password change at next sign-in</strong>.</li>
+    <li>Click <strong>Reset password</strong> and confirm the success toast.</li>
+  </ol>
+  </div>
+</div>
+<div class="lab-container">
+  
+  <div class="azure-header">
+    <div class="logo">🌐 Microsoft Azure</div>
+    <input class="search" placeholder="Search resources, services, and docs">
+  </div>
+
+  <div class="azure-nav">
+    <div class="nav-item"><span class="icon">🏠</span>Home</div>
+    <div class="nav-item"><span class="icon">📊</span>Dashboard</div>
+    <div class="nav-item"><span class="icon">💰</span>Cost Management</div>
+    <div class="nav-item active" id="aadNav"><span class="icon">👥</span>Azure Active Directory</div>
+    <div class="nav-item"><span class="icon">🔐</span>Security Center</div>
+    <div class="nav-item"><span class="icon">💾</span>Storage accounts</div>
+    <div class="nav-item"><span class="icon">🖥️</span>Virtual machines</div>
+  </div>
+
+  <div class="main-content" id="mainContent">
+    <div class="content-header">
+      <div class="content-title">Azure Active Directory</div>
+      <div class="content-subtitle">Contoso | Default Directory</div>
+    </div>
+
+    <div class="user-list">
+      <div class="search-box"><input type="text" placeholder="Search users" id="userSearch"></div>
+      <table class="user-table">
+        <thead>
+          <tr><th>Display Name</th><th>User Principal Name</th><th>Status</th><th>Department</th></tr>
+        </thead>
+        <tbody id="userTableBody">
+          <tr data-user="jane.smith"><td>Jane Smith</td><td>jane.smith@contoso.com</td><td><span class="status-badge status-active" id="statusCell">Active</span></td><td>Marketing</td></tr>
+          <tr data-user="mike.sales"><td>Mike Sales</td><td>mike.sales@contoso.com</td><td><span class="status-badge status-active">Active</span></td><td>Sales</td></tr>
+          <tr data-user="sarah.hr"><td>Sarah HR</td><td>sarah.hr@contoso.com</td><td><span class="status-badge status-active">Active</span></td><td>Human Resources</td></tr>
+          <tr data-user="bob.dev"><td>Bob Developer</td><td>bob.dev@contoso.com</td><td><span class="status-badge status-active">Active</span></td><td>Development</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  
+  <div class="user-detail" id="userDetail">
+    <div class="detail-header">
+      <button class="back-btn" id="backBtn">← Back to users</button>
+      <div class="detail-title">Jane Smith</div>
+    </div>
+    <div class="detail-tabs">
+      <div class="tab active" data-tab="profile">Profile</div>
+      <div class="tab" data-tab="password">Reset password</div>
+      <div class="tab" data-tab="groups">Groups</div>
+      <div class="tab" data-tab="roles">Roles</div>
+    </div>
+    <div class="tab-content">
+      <div id="profileTab" class="tab-panel">
+        <div class="section">
+          <h3 style="margin-bottom:12px;">Account</h3>
+          <p><strong>Display Name:</strong> Jane Smith</p>
+          <p><strong>User Principal Name:</strong> jane.smith@contoso.com</p>
+          <p><strong>Status:</strong> <span class="status-badge status-active" id="profileStatus">Active</span></p>
+        </div>
+      </div>
+      <div id="passwordTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div>
+              <label class="label" for="newPass">New password</label>
+              <input id="newPass" class="input" type="password" placeholder="Enter strong password">
+            </div>
+            <div>
+              <label class="label" for="confirmPass">Confirm password</label>
+              <input id="confirmPass" class="input" type="password" placeholder="Re-enter password">
+            </div>
+          </div>
+          <div style="margin-top:12px; display:flex; gap:16px; align-items:center;">
+            <label class="toggle"><input type="checkbox" id="forceChange"> Require password change at next sign-in</label>
+            <label class="toggle"><input type="checkbox" id="unlock"> Unlock account (if locked)</label>
+          </div>
+          <div style="margin-top:16px; display:flex; gap:8px;">
+            <button class="btn" id="cancelPwd">Cancel</button>
+            <button class="btn btn-primary" id="savePwd">Reset password</button>
+          </div>
+          <p id="pwdHint" style="margin-top:10px; color:#6c757d; font-size:13px;">
+            Password must be at least 12 characters, with upper, lower, number, and symbol.
+          </p>
+          <p id="pwdError" style="margin-top:8px; color:#c53030; display:none;">Passwords do not match or fail complexity.</p>
+        </div>
+      </div>
+      <div id="groupsTab" class="tab-panel" style="display:none;"><div class="section"><p>No groups assigned.</p></div></div>
+      <div id="rolesTab" class="tab-panel" style="display:none;"><div class="section"><p>No roles assigned.</p></div></div>
+    </div>
+  </div>
+
+  <div class="success-toast" id="successToast">✅ Done</div>
+</div>
+<script>
+// Shared nav
+document.getElementById('aadNav').addEventListener('click', () => {
+  document.getElementById('userDetail').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+});
+
+// Search
+document.getElementById('userSearch').addEventListener('input', (e) => {
+  const term = e.target.value.toLowerCase();
+  document.querySelectorAll('#userTableBody tr').forEach(row => {
+    const name = row.children[0].textContent.toLowerCase();
+    const upn = row.children[1].textContent.toLowerCase();
+    row.style.display = (name.includes(term) || upn.includes(term)) ? '' : 'none';
+  });
+});
+
+// Open Jane
+document.getElementById('userTableBody').addEventListener('click', (e) => {
+  const row = e.target.closest('tr');
+  if (!row) return;
+  if (row.getAttribute('data-user') === 'jane.smith') {
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('userDetail').style.display = 'block';
+  }
+});
+
+// Tabs
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('tab')) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    const tabId = e.target.getAttribute('data-tab');
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display='none');
+    document.getElementById(tabId + 'Tab').style.display = 'block';
+  }
+});
+
+function toast(msg) {
+  const t = document.getElementById('successToast');
+  t.textContent = '✅ ' + msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3500);
+}
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  document.getElementById('userDetail').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+});
+
+
+// Password complexity check: min 12, upper, lower, digit, symbol
+function validPwd(p) {
+  return p.length >= 12 && /[A-Z]/.test(p) && /[a-z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p);
+}
+document.getElementById('savePwd').addEventListener('click', () => {
+  const p1 = document.getElementById('newPass').value;
+  const p2 = document.getElementById('confirmPass').value;
+  const err = document.getElementById('pwdError');
+  if (p1 !== p2 || !validPwd(p1)) {
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  const btn = document.getElementById('savePwd');
+  btn.innerHTML = '<span class="loading"></span> Resetting...';
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.textContent = 'Reset password';
+    btn.disabled = false;
+    toast('Password reset for Jane Smith' + (document.getElementById('forceChange').checked ? ' (change required at next sign-in)' : ''));
+  }, 1500);
+});
+document.getElementById('cancelPwd').addEventListener('click', () => {
+  document.getElementById('newPass').value = '';
+  document.getElementById('confirmPass').value = '';
+  document.getElementById('pwdError').style.display = 'none';
+  toast('Password reset canceled');
+});
+
+</script>
+</body>
+</html>

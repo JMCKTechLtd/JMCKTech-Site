@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lab 28: Microsoft Intune Admin Center — Deploy Microsoft Teams</title>
+<style>
+:root{
+  --bg:#ffffff; --text:#242424; --muted:#6b7280; --border:#e5e5e5; --panel-2:#fafafa;
+  --blue:#2563eb; --ok:#16a34a; --warn:#f59e0b; --err:#dc2626;
+  --shadow:0 1px 2px rgba(0,0,0,.06),0 6px 16px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--panel-2);color:var(--text);font-family:"Segoe UI", SegoeUI, system-ui, -apple-system, Roboto, Arial, sans-serif}
+
+/* Shell */
+.shell{display:grid;grid-template-columns:240px 1fr;grid-template-rows:48px 1fr;min-height:100vh}
+
+/* Top bar */
+.topbar{grid-column:1/-1;background:#1f2937;color:#fff;display:flex;align-items:center;gap:12px;padding:0 14px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600}
+.brand .dot{width:26px;height:26px;border-radius:6px;background:#60a5fa;position:relative}
+.brand .dot:after{content:"";position:absolute;right:-6px;bottom:-6px;width:12px;height:12px;border-radius:50%;background:#34d399;box-shadow:0 0 0 2px rgba(0,0,0,.25)}
+.top-actions{margin-left:auto;display:flex;gap:8px}
+button{border:1px solid #dcdcdc;background:#fff;color:var(--text);padding:6px 10px;border-radius:6px;cursor:pointer}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+button:hover{filter:brightness(.98)}
+button:disabled{opacity:.6;cursor:not-allowed}
+
+/* Sidebar */
+.sidebar{background:#f3f4f6;border-right:1px solid var(--border);padding:10px 8px}
+.nav-section{color:#6b7280;font-size:12px;margin:8px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:#1f2937;cursor:pointer}
+.nav-item:hover{background:#e9eefc}
+.nav-item.active{background:#e0ebff;border:1px solid #c9ddff}
+
+/* Main */
+.main{padding:16px}
+
+/* Page head */
+.page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.page-title{font-size:18px;font-weight:600}
+.page-title .small{margin-left:8px;font-size:12px;color:#6b7280}
+
+/* Cards/grid */
+.grid{display:grid;gap:12px;margin-top:12px}
+.grid.cols-2{grid-template-columns:2fr 3fr}
+@media (max-width:1200px){.grid.cols-2{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow)}
+.card .card-h{padding:10px 12px;border-bottom:1px solid var(--border);font-weight:600;color:#111827}
+.card .card-b{padding:12px}
+.small{font-size:12px;color:var(--muted)}
+
+/* Table */
+.table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--border);border-radius:6px;background:#fff;overflow:hidden}
+.table th,.table td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:14px}
+.table tr:hover td{background:#f9fbff}
+.table tr.selected td{background:#e0ebff !important}
+.badge{font-size:12px;border-radius:999px;padding:2px 8px;border:1px solid var(--border);background:#f9fafb;color:#374151}
+.chip{display:inline-block;padding:2px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px}
+.chip.ok{background:#eaf7ef;color:#14532d;border-color:#cdebd7}
+.chip.err{background:#fdecec;color:#7f1d1d;border-color:#f5c2c2}
+.chip.warn{background:#fff6e5;color:#7a5200;border-color:#f6d9a8}
+.chip.mdm{background:#eaf2ff;color:#1e40af;border-color:#cfe0ff}
+.chip.installing{background:#eef6ff;color:#1e3a8a;border-color:#cfe0ff}
+
+/* Toast */
+.toast{position:fixed;right:16px;bottom:16px;background:#111827;color:#fff;border-radius:8px;padding:10px 12px;display:none;box-shadow:var(--shadow)}
+.toast.show{display:block}
+
+/* Modal (Add app wizard) */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;align-items:center;justify-content:center;padding:20px;z-index:20}
+.modal{background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);max-width:860px;width:100%;max-height:90vh;display:flex;flex-direction:column}
+.modal .m-h{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.modal .m-b{padding:14px;overflow:auto}
+.modal .m-f{padding:12px 14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px}
+.step{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#f3f4f6;margin-right:6px}
+.step.active{background:#e0ebff;border-color:#c9ddff}
+.radio-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.sel{border:1px solid var(--border);background:#fafafa;border-radius:10px;padding:12px}
+.sel.active{outline:2px solid #2563eb;background:#f3f8ff}
+.sel h4{margin:0 0 6px 0}
+
+/* Task checklist */
+.tasklist label{display:flex;align-items:center;gap:10px;margin:6px 0}
+.tasklist input[type="checkbox"]{accent-color:var(--blue)}
+
+/* Flash for newly added managed app */
+@keyframes hi {0%{background:#fff8c5}100%{background:transparent}}
+.flash td{animation:hi 1.6s ease-out 1}
+</style>
+</head>
+<body>
+  <div class="shell">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="brand"><div class="dot" aria-hidden="true"></div><div>Microsoft Intune admin center</div></div>
+      <div class="top-actions">
+        <button id="resetBtn">Reset Lab</button>
+        <button id="closeBtn">Close Lab</button>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="nav-section">Navigation</div>
+      <div class="nav-item" data-page="dashboard">📊 Dashboard</div>
+      <div class="nav-item active" data-page="devices">💻 Devices</div>
+      <div class="nav-item" data-page="apps">📦 Apps</div>
+
+      <!-- Appearance only -->
+      <div class="nav-section">Manage</div>
+      <div class="nav-item">🛡️ Endpoint security</div>
+      <div class="nav-item">📈 Reports</div>
+      <div class="nav-item">👤 Users</div>
+      <div class="nav-item">👥 Groups</div>
+      <div class="nav-item">🏢 Tenant administration</div>
+      <div class="nav-item">🛠️ Troubleshooting + support</div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div id="page"></div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Add App Wizard -->
+  <div class="modal-backdrop" id="wizard">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wizTitle">
+      <div class="m-h">
+        <div id="wizTitle"><span class="step" id="st1">App type</span><span class="step" id="st2">Select app</span><span class="step" id="st3">Assignments</span><span class="step" id="st4">Review + create</span></div>
+        <button id="wizClose">Close</button>
+      </div>
+      <div class="m-b" id="wizBody"></div>
+      <div class="m-f">
+        <div class="small" id="wizHint">Choose the correct app type to proceed.</div>
+        <div>
+          <button id="wizBack" disabled>Back</button>
+          <button id="wizNext">Next</button>
+          <button id="wizCreate" style="display:none">Create</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const qs = s=>document.querySelector(s);
+  const qsa = s=>Array.from(document.querySelectorAll(s));
+
+  /* ---------------- State ---------------- */
+  const state = {
+    page:'devices',                            // start on Devices so learner clicks Apps
+    // Task checklist
+    tasks:{ openApps:false, addType:false, pickTeams:false, assignGroup:false, created:false, verifiedApps:false, verifiedDevice:false },
+    // Apps
+    apps:[{name:'Company Portal',type:'Microsoft Store app',assignments:'All Intune Users',status:'Installed'}],
+    teams:{created:false,status:'Pending'},     // Pending -> Installing -> Installed
+    // Devices
+    devices:[
+      {name:'BlockShell-Laptop', user:'Alex', mgmt:'MDM enrolled', compliance:'Compliant', os:'Windows 11', isLearner:true, wipePending:false, managed:{companyPortal:true, teams:false}},
+      {name:'FIN-WS-07', user:'Amara', mgmt:'MDM enrolled', compliance:'Compliant', os:'Windows 11', wipePending:false, managed:{companyPortal:true, teams:false}},
+      {name:'HR-LT-12', user:'Lewis', mgmt:'MDM enrolled', compliance:'In grace period', os:'Windows 10', wipePending:false, managed:{companyPortal:true, teams:false}},
+      {name:'ENG-DESK-21', user:'Mina', mgmt:'MDM enrolled', compliance:'Not evaluated', os:'Windows 11', wipePending:false, managed:{companyPortal:true, teams:false}}
+    ],
+    selectedDevice:null,
+    // Wizard
+    wizStep:1, selectedAppType:null, storePick:null, selectedRequired:true,
+    // UX
+    justInstalledFlash:false
+  };
+
+  /* ---------------- Helpers ---------------- */
+  function toast(m){const t=qs('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1400);}
+  function setActiveNav(){
+    qsa('.nav-item[data-page]').forEach(el=>el.classList.toggle('active', el.getAttribute('data-page')===state.page));
+  }
+  function updateTasks(){
+    const map = [
+      ['openApps','#t1'],
+      ['addType','#t2'],
+      ['pickTeams','#t3'],
+      ['assignGroup','#t4'],
+      ['created','#t5'],
+      ['verifiedApps','#t6'],
+      ['verifiedDevice','#t7']
+    ];
+    map.forEach(([k,id])=>{ const el=qs(id); if(el) el.checked=!!state.tasks[k]; });
+  }
+  function chip(cls,txt){return `<span class="chip ${cls}">${txt}</span>`;}
+
+  /* ---------------- Page renderers ---------------- */
+  function render(){ setActiveNav(); if(state.page==='apps') renderApps(); else if(state.page==='devices') renderDevices(); else renderDashboard(); }
+
+  function instructionsCard(){
+    return `
+    <div class="card">
+      <div class="card-h">Lab 2 — Deploy Microsoft Teams (Store app) to a user</div>
+      <div class="card-b">
+        <div class="tasklist">
+          <label><input type="checkbox" id="t1" disabled> 1) Open <strong>Apps</strong>.</label>
+          <label><input type="checkbox" id="t2" disabled> 2) Select <strong>Add</strong> → <em>Microsoft Store app (new)</em>.</label>
+          <label><input type="checkbox" id="t3" disabled> 3) Pick <strong>Microsoft Teams (work or school)</strong>.</label>
+          <label><input type="checkbox" id="t4" disabled> 4) Assign to <strong>All Intune Users</strong> as <em>Required</em>.</label>
+          <label><input type="checkbox" id="t5" disabled> 5) <strong>Create</strong> the app.</label>
+          <label><input type="checkbox" id="t6" disabled> 6) In <strong>Apps</strong>, use <strong>Sync</strong> until Teams shows <em>Installed</em>.</label>
+          <label><input type="checkbox" id="t7" disabled> 7) Confirm on <strong>Devices ▸ BlockShell-Laptop ▸ Managed apps</strong> (Teams appears and is highlighted).</label>
+        </div>
+        <div class="small" style="margin-top:6px">Tip: Sync on Apps moves Pending → Installing → Installed. Then check Managed apps on the device.</div>
+      </div>
+    </div>`;
+  }
+
+  /* ---------- Apps ---------- */
+  function renderApps(){
+    qs('#page').innerHTML = `
+      <div class="page-head">
+        <div class="page-title">Apps</div>
+        <div class="page-actions">
+          <button id="btnAdd" class="primary">Add</button>
+          <button id="btnSync">Sync</button>
+        </div>
+      </div>
+      ${instructionsCard()}
+      <div class="card" style="margin-top:12px">
+        <div class="card-h">Apps</div>
+        <div class="card-b">
+          <table class="table" aria-label="Apps table">
+            <thead><tr><th>Name</th><th>Type</th><th>Assignments</th><th>Status</th></tr></thead>
+            <tbody id="appsBody">${appsRows()}</tbody>
+          </table>
+          <div class="small">Use <strong>Add</strong> to create a deployment, then <strong>Sync</strong> to progress installation.</div>
+        </div>
+      </div>
+    `;
+    updateTasks();
+    // Bind
+    qs('#btnAdd').onclick=openWizard;
+    qs('#btnSync').onclick=appsSync;
+    state.tasks.openApps=true; updateTasks();
+  }
+  function appsRows(){
+    const rows=[];
+    state.apps.forEach(a=>{
+      rows.push(`<tr><td>${a.name}</td><td>${a.type}</td><td>${a.assignments}</td><td>${chip('ok','Installed')}</td></tr>`);
+    });
+    if(state.teams.created){
+      const st=state.teams.status;
+      const cls = st==='Installed' ? 'ok' : (st==='Installing' ? 'installing' : 'warn');
+      rows.push(`<tr><td>Microsoft Teams</td><td>Microsoft Store app</td><td>All Intune Users</td><td>${chip(cls,st)}</td></tr>`);
+    }
+    return rows.join('');
+  }
+  function appsSync(){
+    if(!state.teams.created){ toast('Nothing to sync. Create the app first.'); return; }
+    toast('Sync requested…');
+    setTimeout(()=>{
+      if(state.teams.status==='Pending'){ state.teams.status='Installing'; }
+      else if(state.teams.status==='Installing'){ 
+        state.teams.status='Installed';
+        // push to Alex's device shortly after
+        setTimeout(()=>{
+          const dev = state.devices.find(d=>d.isLearner);
+          dev.managed.teams = true;
+          state.tasks.verifiedApps = true;
+          state.justInstalledFlash = true; // make the row flash when viewed
+          updateTasks();
+          // If learner is already on Devices + BlockShell-Laptop, refresh that pane automatically
+          if(state.page==='devices' && state.selectedDevice && state.selectedDevice.name==='BlockShell-Laptop'){ renderDevices(true); }
+        },700);
+      }
+      renderApps();
+      if(state.teams.status==='Installed'){ toast('Teams installed.'); }
+      else if(state.teams.status==='Installing'){ toast('Teams is installing…'); }
+    },800);
+  }
+
+  /* ---------- Devices ---------- */
+  function renderDevices(keepSelection){
+    const list = state.devices;
+    if(!keepSelection){ state.selectedDevice = state.selectedDevice || list[0]; }
+    qs('#page').innerHTML = `
+      <div class="page-head">
+        <div class="page-title">Devices</div>
+      </div>
+      ${instructionsCard()}
+      <div class="grid cols-2" style="margin-top:12px">
+        <div>
+          <table class="table">
+            <thead><tr><th>Name</th><th>Primary user</th><th>Management</th><th>Compliance</th><th>OS</th></tr></thead>
+            <tbody id="devBody">
+              ${list.map(d=>deviceRow(d, state.selectedDevice && d.name===state.selectedDevice.name)).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-h">Device details</div>
+            <div class="card-b" id="detailPane">${deviceDetails(state.selectedDevice)}</div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <div class="card-h" style="display:flex;justify-content:space-between;align-items:center">
+              <span>Managed apps</span>
+              <button id="btnRefreshApps">Refresh</button>
+            </div>
+            <div class="card-b" id="appsPane">${managedApps(state.selectedDevice)}</div>
+          </div>
+        </div>
+      </div>
+    `;
+    updateTasks();
+    // Bind row clicks
+    qs('#devBody').addEventListener('click',e=>{
+      const tr=e.target.closest('tr[data-name]'); if(!tr) return;
+      state.selectedDevice = state.devices.find(x=>x.name===tr.getAttribute('data-name'));
+      renderDevices(true);
+    });
+    // Bind actions
+    const sBtn=qs('#detailSync'); if(sBtn) sBtn.onclick = ()=>{ toast('Sync request sent to device.'); setTimeout(()=>{ renderDevices(true); },700); };
+    const wBtn=qs('#detailWipe'); if(wBtn) wBtn.onclick = ()=>wipeDevice(state.selectedDevice.name);
+    const rBtn=qs('#btnRefreshApps'); if(rBtn) rBtn.onclick = ()=>{ renderDevices(true); };
+  }
+  function deviceRow(d, selected){
+    const mgmt = d.mgmt==='MDM enrolled' ? chip('mdm','MDM enrolled') : chip('err',d.mgmt);
+    const comp = d.compliance==='Compliant' ? chip('ok','Compliant') :
+                 d.compliance==='In grace period' ? chip('warn','In grace period') :
+                 chip('err',d.compliance);
+    const badges = [ d.isLearner ? '<span class="badge">Your device</span>' : '', d.wipePending?chip('warn','Wipe pending'):'' ].filter(Boolean).join(' ');
+    return `<tr data-name="${d.name}" class="${selected?'selected':''}"><td>${d.name} ${badges}</td><td>${d.user}</td><td>${mgmt}</td><td>${comp}</td><td>${d.os}</td></tr>`;
+  }
+  function deviceDetails(d){
+    if(!d) return '<div class="small">No device selected.</div>';
+    return `
+      <div style="display:flex;gap:8px;margin-bottom:8px"><button id="detailSync">Sync</button><button id="detailWipe" ${d.isLearner?'disabled':''}>Wipe</button></div>
+      <div class="small">Name</div><div>${d.name}</div>
+      <div class="small" style="margin-top:6px">Primary user</div><div>${d.user}</div>
+      <div class="small" style="margin-top:6px">OS</div><div>${d.os}</div>
+      <div class="small" style="margin-top:6px">Management</div><div>${d.mgmt}</div>
+      <div class="small" style="margin-top:6px">Compliance</div><div>${d.compliance}</div>
+    `;
+  }
+  function managedApps(d){
+    if(!d) return '';
+    const rows = [];
+    if(d.managed.companyPortal) rows.push(rowApp('Company Portal','Store app',true,false));
+    if(d.managed.teams) rows.push(rowApp('Microsoft Teams','Store app',true,state.justInstalledFlash && d.isLearner));
+    const body = rows.join('') || `<tr><td colspan="3"><span class="small">No apps yet.</span></td></tr>`;
+    // If Alex shows Teams here, mark final task
+    if(d.isLearner && d.managed.teams){ state.tasks.verifiedDevice = true; updateTasks(); state.justInstalledFlash=false; }
+    return `
+      <table class="table"><thead><tr><th>Name</th><th>Type</th><th>Status</th></tr></thead><tbody>${body}</tbody></table>
+      <div class="small">This reflects apps installed via Intune for this device.</div>
+    `;
+  }
+  function rowApp(name,type,installed,flash){
+    const cls = flash ? ' class="flash"' : '';
+    return `<tr${cls}><td>${name}</td><td>${type}</td><td>${chip('ok','Installed')}</td></tr>`;
+  }
+
+  function wipeDevice(name){
+    const d=state.devices.find(x=>x.name===name); if(!d) return;
+    if(d.isLearner){ toast('Wipe is disabled for this exercise device.'); return; }
+    if(d.wipePending) return;
+    d.wipePending=true; renderDevices(true); toast('Wipe requested. Status: Pending');
+    setTimeout(()=>{ state.devices = state.devices.filter(x=>x.name!==name); state.selectedDevice = state.devices[0] || null; renderDevices(true); toast('Device wiped and removed'); },1300);
+  }
+
+  /* ---------- Dashboard (minimal) ---------- */
+  function renderDashboard(){
+    qs('#page').innerHTML = `
+      <div class="page-head"><div class="page-title">My Dashboard <span class="small">Private dashboard</span></div></div>
+      ${instructionsCard()}
+      <div class="card" style="margin-top:12px"><div class="card-b">
+        Use the left navigation to open <strong>Apps</strong> and deploy <em>Microsoft Teams</em> to users in the Blockshell.app tenant.
+      </div></div>
+    `;
+    updateTasks();
+  }
+
+  /* ---------------- Wizard ---------------- */
+  function openWizard(){ qs('#wizard').style.display='flex'; state.wizStep=1; state.selectedAppType=null; state.storePick=null; renderWizard(); }
+  function closeWizard(){ qs('#wizard').style.display='none'; }
+  qs('#wizClose').onclick=closeWizard;
+  qs('#wizBack').onclick=()=>{ if(state.wizStep>1){ state.wizStep--; renderWizard(); } };
+  qs('#wizNext').onclick=()=>{ 
+    if(state.wizStep===1 && state.selectedAppType!=='store'){ toast('Choose Microsoft Store app (new)'); return; }
+    if(state.wizStep===2 && state.storePick!=='Microsoft Teams'){ toast('Select Microsoft Teams'); return; }
+    if(state.wizStep===3 && !state.selectedRequired){ toast('Use Required assignment'); return; }
+    state.wizStep++; renderWizard(); 
+  };
+  qs('#wizCreate').onclick=()=>{
+    state.teams.created=true; state.teams.status='Pending';
+    state.tasks.created=true; updateTasks();
+    closeWizard(); renderApps(); toast('App created: Microsoft Teams');
+  };
+
+  function renderWizard(){
+    [1,2,3,4].forEach(i=>qs('#st'+i).classList.toggle('active', i===state.wizStep));
+    qs('#wizBack').disabled = state.wizStep===1;
+    qs('#wizNext').style.display = state.wizStep<4 ? 'inline-block':'none';
+    qs('#wizCreate').style.display = state.wizStep===4 ? 'inline-block':'none';
+    const body=qs('#wizBody'), hint=qs('#wizHint');
+
+    if(state.wizStep===1){
+      body.innerHTML = `
+        <h3>Select app type</h3>
+        <div class="radio-grid">
+          <div class="sel ${state.selectedAppType==='store'?'active':''}" id="optStore"><h4>Microsoft Store app (new)</h4><div class="small">Recommended for Store apps like Microsoft Teams.</div></div>
+          <div class="sel" id="optWin32"><h4>Windows app (Win32)</h4><div class="small">Use for .intunewin packages.</div></div>
+          <div class="sel" id="optLob"><h4>Line-of-business app</h4><div class="small">Legacy MSI path.</div></div>
+        </div>`;
+      qs('#optStore').onclick=()=>{ state.selectedAppType='store'; state.tasks.addType=true; renderWizard(); updateTasks(); };
+      qs('#optWin32').onclick=()=>{ state.selectedAppType='win32'; renderWizard(); };
+      qs('#optLob').onclick=()=>{ state.selectedAppType='lob'; renderWizard(); };
+      hint.textContent='Choose Microsoft Store app (new).';
+    }
+    if(state.wizStep===2){
+      body.innerHTML = `
+        <h3>Search Microsoft Store</h3>
+        <div class="sel ${state.storePick==='Microsoft Teams'?'active':''}" id="pickTeams"><h4>Microsoft Teams (work or school)</h4><div class="small">Microsoft Corporation</div></div>
+        <div class="sel"><h4>Microsoft Whiteboard</h4><div class="small">Microsoft Corporation</div></div>`;
+      qs('#pickTeams').onclick=()=>{ state.storePick='Microsoft Teams'; state.tasks.pickTeams=true; renderWizard(); updateTasks(); };
+      hint.textContent='Select Microsoft Teams.';
+    }
+    if(state.wizStep===3){
+      body.innerHTML = `
+        <h3>Assignments</h3>
+        <div class="sel active"><h4>All Intune Users</h4>
+          <div class="small">Type: User</div>
+          <div style="margin-top:8px">Intent:
+            <select id="intent"><option value="required" selected>Required</option><option value="available">Available</option></select>
+          </div>
+        </div>`;
+      qs('#intent').onchange=(e)=>{ state.selectedRequired = (e.target.value==='required'); };
+      state.tasks.assignGroup=true; updateTasks();
+      hint.textContent='Assign to All Intune Users as Required.';
+    }
+    if(state.wizStep===4){
+      body.innerHTML = `
+        <h3>Review + create</h3>
+        <div class="sel active">
+          <p><strong>App:</strong> Microsoft Teams (Store app)</p>
+          <p><strong>Assignments:</strong> All Intune Users — Required</p>
+          <p><strong>Publisher:</strong> Microsoft Corporation</p>
+        </div>`;
+      hint.textContent='Click Create to add the app.';
+    }
+  }
+
+  /* ---------------- Header + Nav ---------------- */
+  qs('#resetBtn').onclick=()=>{
+    Object.assign(state,{
+      page:'devices',
+      tasks:{openApps:false,addType:false,pickTeams:false,assignGroup:false,created:false,verifiedApps:false,verifiedDevice:false},
+      apps:[{name:'Company Portal',type:'Microsoft Store app',assignments:'All Intune Users',status:'Installed'}],
+      teams:{created:false,status:'Pending'},
+      devices:[
+        {name:'BlockShell-Laptop', user:'Alex', mgmt:'MDM enrolled', compliance:'Compliant', os:'Windows 11', isLearner:true, wipePending:false, managed:{companyPortal:true, teams:false}},
+        {name:'FIN-WS-07', user:'Amara', mgmt:'MDM enrolled', compliance:'Compliant', os:'Windows 11', wipePending:false, managed:{companyPortal:true, teams:false}},
+        {name:'HR-LT-12', user:'Lewis', mgmt:'MDM enrolled', compliance:'In grace period', os:'Windows 10', wipePending:false, managed:{companyPortal:true, teams:false}},
+        {name:'ENG-DESK-21', user:'Mina', mgmt:'MDM enrolled', compliance:'Not evaluated', os:'Windows 11', wipePending:false, managed:{companyPortal:true, teams:false}}
+      ],
+      selectedDevice:null,
+      wizStep:1, selectedAppType:null, storePick:null, selectedRequired:true,
+      justInstalledFlash:false
+    });
+    render(); toast('Lab reset');
+  };
+  qs('#closeBtn').onclick=()=>{ try{window.close();}catch(e){} toast('If the window didn’t close, please close this tab.'); };
+
+  // Sidebar routing (Apps & Devices are functional)
+  qs('#sidebar').addEventListener('click',e=>{
+    const n=e.target.closest('.nav-item[data-page]'); if(!n) return;
+    const page=n.getAttribute('data-page');
+    if(!['apps','devices','dashboard'].includes(page)) return;
+    state.page=page; render();
+  });
+
+  // Init
+  render();
+
+})();
+</script>
+</body>
+</html>

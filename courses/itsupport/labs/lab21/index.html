@@ -25,7 +25,9 @@
               successBg: '#dff6dd',
               successText: '#107c10',
               errorBg: '#fde7e9',
-              errorText: '#a80000'
+              errorText: '#a80000',
+              warningBg: '#fff4ce',
+              warningText: '#8a5500'
             }
           },
           boxShadow: {
@@ -42,6 +44,8 @@
     html, body { height: 100%; }
     body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color:#323130; background:#f3f2f1; }
     .focus-ring:focus { outline: 3px solid #aad7ff; outline-offset: 2px; }
+    .loading { opacity: 0.6; pointer-events: none; }
+    .powershell { font-family: "Cascadia Code", "Consolas", monospace; background: #012456; color: #ffffff; }
   </style>
 </head>
 <body class="bg-ms-canvas">
@@ -107,6 +111,7 @@
             <li>Sign in to the Exchange Admin Center (simulated).</li>
             <li>Open <strong>Recipients → Mailboxes</strong> and select a shared mailbox.</li>
             <li>Grant <strong>Send As</strong> permission and verify the update.</li>
+            <li>Learn PowerShell equivalents for real-world administration.</li>
           </ul>
         </div>
       </div>
@@ -125,6 +130,7 @@
         <span class="text-white/90 hidden sm:inline text-sm">blockshell.app</span>
       </div>
       <div class="flex items-center space-x-2">
+        <button id="showPowerShellBtn" class="text-sm px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 focus-ring">PowerShell</button>
         <button id="resetBtnHeader" class="text-sm px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 focus-ring">Reset lab</button>
         <button id="closeBtnHeader" class="text-sm px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 focus-ring">Close lab</button>
         <span class="text-sm hidden sm:block ml-2">Admin User</span>
@@ -161,6 +167,22 @@
       <main class="p-5">
         <div class="text-sm text-ms-sub mb-3">Home &gt; Recipients &gt; Mailboxes</div>
 
+        <!-- Search and filters -->
+        <div class="bg-white shadow-ms rounded p-4 mb-4">
+          <div class="flex flex-wrap gap-4 items-center">
+            <div class="flex-1 min-w-[300px]">
+              <input type="text" id="searchMailboxes" placeholder="Search mailboxes..." class="w-full border border-ms-line rounded px-3 py-2 focus-ring">
+            </div>
+            <select id="mailboxTypeFilter" class="border border-ms-line rounded px-3 py-2 focus-ring">
+              <option value="all">All mailbox types</option>
+              <option value="shared">Shared mailboxes</option>
+              <option value="user">User mailboxes</option>
+              <option value="room">Room mailboxes</option>
+            </select>
+            <button id="refreshBtn" class="px-4 py-2 rounded border border-ms-line hover:bg-ms-canvas focus-ring">Refresh</button>
+          </div>
+        </div>
+
         <!-- Toasts -->
         <div id="toast" class="hidden mb-4 rounded border border-green-200 bg-ms-successBg text-ms-successText px-4 py-3" aria-live="polite">
           <span id="toastText" class="font-semibold"></span>
@@ -168,21 +190,28 @@
         <div id="toastError" class="hidden mb-4 rounded border border-red-200 bg-ms-errorBg text-ms-errorText px-4 py-3" aria-live="polite">
           <span id="toastErrorText" class="font-semibold"></span>
         </div>
+        <div id="toastWarning" class="hidden mb-4 rounded border border-yellow-200 bg-ms-warningBg text-ms-warningText px-4 py-3" aria-live="polite">
+          <span id="toastWarningText" class="font-semibold"></span>
+        </div>
 
         <!-- Instructions panel -->
         <div class="bg-white shadow-ms rounded p-4 mb-4">
-          <div class="font-semibold text-lg mb-1">Lab Instructions — Grant “Send As” Permission</div>
+          <div class="font-semibold text-lg mb-1">Lab Instructions — Grant "Send As" Permission</div>
           <ol class="list-decimal ml-5 text-sm leading-7">
             <li>Select a shared mailbox (e.g., <strong>Support Team</strong>).</li>
             <li>Click <strong>Manage permissions</strong>.</li>
             <li>Choose a user and tick <strong>Send As</strong> (optionally Full Access / Send on Behalf).</li>
             <li>Click <strong>Add</strong>. Confirm the success banner and see counts update in the table.</li>
+            <li>Use the <strong>PowerShell</strong> button to see equivalent Exchange Online commands.</li>
           </ol>
         </div>
 
         <!-- Mailbox table -->
         <div class="bg-white shadow-ms rounded overflow-hidden">
-          <div class="px-4 py-3 border-b border-ms-line font-semibold">Shared mailboxes</div>
+          <div class="px-4 py-3 border-b border-ms-line font-semibold flex justify-between items-center">
+            <span>Mailboxes</span>
+            <span id="mailboxCount" class="text-sm font-normal text-ms-sub">3 mailboxes</span>
+          </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead class="bg-ms-canvas text-sm">
@@ -195,52 +224,52 @@
                 </tr>
               </thead>
               <tbody id="mailboxTable" class="text-sm">
-                <tr class="border-t border-ms-line hover:bg-ms-tableHover">
-                  <td class="px-4 py-2">Support Team</td>
-                  <td class="px-4 py-2">support@blockshell.app</td>
-                  <td class="px-4 py-2">Shared</td>
-                  <td class="px-4 py-2">
-                    <span class="inline-block text-xs px-2 py-1 rounded bg-ms-badgeBg text-ms-badgeText mr-2">Full Access (3)</span>
-                    <span class="inline-block text-xs px-2 py-1 rounded bg-ms-badgeBg text-ms-badgeText">Send As (2)</span>
-                  </td>
-                  <td class="px-4 py-2">
-                    <button class="text-sm px-3 py-1.5 rounded border border-ms-line hover:bg-ms-canvas"
-                            onclick="managePermissions('support@blockshell.app','Support Team')">Manage permissions</button>
-                  </td>
-                </tr>
-                <tr class="border-t border-ms-line hover:bg-ms-tableHover">
-                  <td class="px-4 py-2">Sales Department</td>
-                  <td class="px-4 py-2">sales@blockshell.app</td>
-                  <td class="px-4 py-2">Shared</td>
-                  <td class="px-4 py-2">
-                    <span class="inline-block text-xs px-2 py-1 rounded bg-ms-badgeBg text-ms-badgeText mr-2">Full Access (5)</span>
-                    <span class="inline-block text-xs px-2 py-1 rounded bg-ms-badgeBg text-ms-badgeText">Send As (3)</span>
-                  </td>
-                  <td class="px-4 py-2">
-                    <button class="text-sm px-3 py-1.5 rounded border border-ms-line hover:bg-ms-canvas"
-                            onclick="managePermissions('sales@blockshell.app','Sales Department')">Manage permissions</button>
-                  </td>
-                </tr>
-                <tr class="border-t border-ms-line hover:bg-ms-tableHover">
-                  <td class="px-4 py-2">HR Team</td>
-                  <td class="px-4 py-2">hr@blockshell.app</td>
-                  <td class="px-4 py-2">Shared</td>
-                  <td class="px-4 py-2">
-                    <span class="inline-block text-xs px-2 py-1 rounded bg-ms-badgeBg text-ms-badgeText mr-2">Full Access (2)</span>
-                  </td>
-                  <td class="px-4 py-2">
-                    <button class="text-sm px-3 py-1.5 rounded border border-ms-line hover:bg-ms-canvas"
-                            onclick="managePermissions('hr@blockshell.app','HR Team')">Manage permissions</button>
-                  </td>
-                </tr>
+                <!-- Mailboxes will be populated dynamically -->
               </tbody>
             </table>
           </div>
         </div>
 
+        <!-- PowerShell Modal -->
+        <div id="powershellModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/30" onclick="closePowerShellModal()"></div>
+          <div class="relative z-10 w-full max-w-4xl bg-black rounded shadow-ms max-h-[85vh] overflow-hidden powershell">
+            <div class="px-5 py-4 border-b border-gray-700 flex items-center justify-between">
+              <div class="font-semibold text-white">Exchange Online PowerShell</div>
+              <button class="text-sm px-3 py-1.5 rounded border border-gray-600 hover:bg-gray-800 text-white" onclick="closePowerShellModal()">Close</button>
+            </div>
+            <div class="p-5 overflow-auto">
+              <div class="mb-4">
+                <div class="text-green-400 mb-2"># Connect to Exchange Online</div>
+                <div class="text-gray-300 ml-4">Connect-ExchangeOnline -UserPrincipalName admin@blockshell.app</div>
+              </div>
+              <div class="mb-4">
+                <div class="text-green-400 mb-2"># Get current Send As permissions for a mailbox</div>
+                <div class="text-gray-300 ml-4" id="psGetPermissions">Get-RecipientPermission "support@blockshell.app" | Where-Object {$_.AccessRights -contains "SendAs"}</div>
+              </div>
+              <div class="mb-4">
+                <div class="text-green-400 mb-2"># Add Send As permission</div>
+                <div class="text-gray-300 ml-4" id="psAddPermission">Add-RecipientPermission "support@blockshell.app" -AccessRights "SendAs" -Trustee "user@blockshell.app"</div>
+              </div>
+              <div class="mb-4">
+                <div class="text-green-400 mb-2"># Remove Send As permission</div>
+                <div class="text-gray-300 ml-4" id="psRemovePermission">Remove-RecipientPermission "support@blockshell.app" -AccessRights "SendAs" -Trustee "user@blockshell.app" -Confirm:$false</div>
+              </div>
+              <div class="mt-6 p-4 bg-gray-800 rounded">
+                <div class="text-yellow-400 mb-2">💡 Real-world considerations:</div>
+                <ul class="text-gray-300 text-sm list-disc ml-5 space-y-1">
+                  <li>Permissions may take 15-60 minutes to propagate in production</li>
+                  <li>Use <code class="text-blue-300">Get-Mailbox</code> to verify mailbox existence first</li>
+                  <li>Consider using security groups for permission management at scale</li>
+                  <li>Always test permissions with <code class="text-blue-300">Send-As</code> verification tools</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Permissions Modal -->
-        <div id="permissionModal"
-             class="hidden fixed inset-0 z-40 flex items-center justify-center p-4">
+        <div id="permissionModal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/30" onclick="closeModal()"></div>
           <div class="relative z-10 w-full max-w-5xl bg-white rounded shadow-ms max-h-[85vh] overflow-auto">
             <div class="px-5 py-4 border-b border-ms-line flex items-center justify-between">
@@ -256,10 +285,12 @@
                   <span class="block text-sm font-semibold mb-1">Add permissions</span>
                   <select id="userSelect" class="w-full border border-ms-line rounded px-3 py-2">
                     <option value="">Select a user…</option>
-                    <option value="jdoe@blockshell.app">John Doe (jdoe@blockshell.app)</option>
-                    <option value="asmith@blockshell.app">Alice Smith (asmith@blockshell.app)</option>
-                    <option value="bjohnson@blockshell.app">Bob Johnson (bjohnson@blockshell.app)</option>
-                    <option value="mwilson@blockshell.app">Mary Wilson (mwilson@blockshell.app)</option>
+                    <option value="jdoe@blockshell.app">John Doe (jdoe@blockshell.app) - Sales</option>
+                    <option value="asmith@blockshell.app">Alice Smith (asmith@blockshell.app) - IT</option>
+                    <option value="bjohnson@blockshell.app">Bob Johnson (bjohnson@blockshell.app) - HR</option>
+                    <option value="mwilson@blockshell.app">Mary Wilson (mwilson@blockshell.app) - Support</option>
+                    <option value="kwong@blockshell.app">Kevin Wong (kwong@blockshell.app) - Engineering</option>
+                    <option value="lchen@blockshell.app">Lisa Chen (lchen@blockshell.app) - Marketing</option>
                   </select>
                 </label>
 
@@ -279,8 +310,13 @@
                   </label>
                 </div>
 
+                <div class="bg-ms-warningBg border border-ms-warningText/30 rounded p-3">
+                  <div class="text-sm font-semibold text-ms-warningText mb-1">⚠️ Permission Propagation</div>
+                  <p class="text-xs text-ms-warningText">In real Exchange Online, permissions may take 15-60 minutes to fully propagate across all servers.</p>
+                </div>
+
                 <div class="flex items-center space-x-2">
-                  <button class="px-4 py-2 rounded bg-ms-brand text-white hover:bg-ms-brandDark" onclick="addPermission()">Add</button>
+                  <button id="addPermissionBtn" class="px-4 py-2 rounded bg-ms-brand text-white hover:bg-ms-brandDark focus-ring">Add</button>
                   <button class="px-4 py-2 rounded border border-ms-line hover:bg-ms-canvas" onclick="closeModal()">Cancel</button>
                 </div>
               </div>
@@ -299,9 +335,17 @@
                     <tbody id="currentPermissions"></tbody>
                   </table>
                 </div>
+                
+                <div class="mt-4 p-3 bg-ms-canvas rounded border border-ms-line">
+                  <div class="text-sm font-semibold mb-2">Permission Summary</div>
+                  <div class="text-xs space-y-1">
+                    <div>Full Access: <span id="fullAccessCount">0</span> users</div>
+                    <div>Send As: <span id="sendAsCount">0</span> users</div>
+                    <div>Send on Behalf: <span id="sendOnBehalfCount">0</span> users</div>
+                  </div>
+                </div>
               </div>
             </div>
-
           </div>
         </div>
 
@@ -348,50 +392,149 @@
         ]
       };
 
-      let permissionsData = JSON.parse(JSON.stringify(initialPermissions));
+      const mailboxes = [
+        { displayName: 'Support Team', email: 'support@blockshell.app', type: 'Shared', aliases: ['help@blockshell.app'] },
+        { displayName: 'Sales Department', email: 'sales@blockshell.app', type: 'Shared', aliases: [] },
+        { displayName: 'HR Team', email: 'hr@blockshell.app', type: 'Shared', aliases: ['humanresources@blockshell.app'] },
+        { displayName: 'John Doe', email: 'jdoe@blockshell.app', type: 'User', aliases: [] },
+        { displayName: 'Alice Smith', email: 'asmith@blockshell.app', type: 'User', aliases: [] },
+        { displayName: 'Conference Room A', email: 'conferenceroom-a@blockshell.app', type: 'Room', aliases: [] }
+      ];
 
-      function showToast(text) {
+      let permissionsData = JSON.parse(JSON.stringify(initialPermissions));
+      let filteredMailboxes = [...mailboxes];
+
+      function showToast(text, type = 'success') {
         const toast = document.getElementById('toast');
-        const tt = document.getElementById('toastText');
-        tt.textContent = text;
-        document.getElementById('toastError').classList.add('hidden');
-        toast.classList.remove('hidden');
-        setTimeout(() => toast.classList.add('hidden'), 2500);
+        const toastError = document.getElementById('toastError');
+        const toastWarning = document.getElementById('toastWarning');
+        
+        // Hide all toasts first
+        toast.classList.add('hidden');
+        toastError.classList.add('hidden');
+        toastWarning.classList.add('hidden');
+        
+        // Show appropriate toast
+        if (type === 'success') {
+          document.getElementById('toastText').textContent = text;
+          toast.classList.remove('hidden');
+        } else if (type === 'error') {
+          document.getElementById('toastErrorText').textContent = text;
+          toastError.classList.remove('hidden');
+        } else if (type === 'warning') {
+          document.getElementById('toastWarningText').textContent = text;
+          toastWarning.classList.remove('hidden');
+        }
+        
+        setTimeout(() => {
+          toast.classList.add('hidden');
+          toastError.classList.add('hidden');
+          toastWarning.classList.add('hidden');
+        }, 4000);
       }
 
-      function updateMailboxTable() {
-        const rows = document.querySelectorAll('#mailboxTable tr');
-        rows.forEach(row => {
-          const email = row.cells[1].textContent;
-          if (permissionsData[email]) {
-            const fullAccessCount = permissionsData[email].filter(p => p.permissions.includes('Full Access')).length;
-            const sendAsCount = permissionsData[email].filter(p => p.permissions.includes('Send As')).length;
-            const cell = row.cells[3];
-            cell.innerHTML = '';
-            if (fullAccessCount > 0) {
-              const badge1 = document.createElement('span');
-              badge1.className = 'inline-block text-xs px-2 py-1 rounded bg-ms-badgeBg text-ms-badgeText mr-2';
-              badge1.textContent = `Full Access (${fullAccessCount})`;
-              cell.appendChild(badge1);
-            }
-            if (sendAsCount > 0) {
-              const badge2 = document.createElement('span');
-              badge2.className = 'inline-block text-xs px-2 py-1 rounded bg-ms-badgeBg text-ms-badgeText';
-              badge2.textContent = `Send As (${sendAsCount})`;
-              cell.appendChild(badge2);
-            }
-          }
+      function renderMailboxTable() {
+        const tbody = document.getElementById('mailboxTable');
+        tbody.innerHTML = '';
+        
+        filteredMailboxes.forEach(mailbox => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-t border-ms-line hover:bg-ms-tableHover';
+          tr.setAttribute('data-email', mailbox.email);
+          tr.setAttribute('data-type', mailbox.type.toLowerCase());
+
+          const permissions = permissionsData[mailbox.email] || [];
+          const fullAccessCount = permissions.filter(p => p.permissions.includes('Full Access')).length;
+          const sendAsCount = permissions.filter(p => p.permissions.includes('Send As')).length;
+
+          tr.innerHTML = `
+            <td class="px-4 py-2">
+              <div class="font-medium">${mailbox.displayName}</div>
+              ${mailbox.aliases.length > 0 ? `<div class="text-xs text-ms-sub">${mailbox.aliases.join(', ')}</div>` : ''}
+            </td>
+            <td class="px-4 py-2">${mailbox.email}</td>
+            <td class="px-4 py-2">
+              <span class="inline-block text-xs px-2 py-1 rounded ${
+                mailbox.type === 'Shared' ? 'bg-blue-100 text-blue-800' :
+                mailbox.type === 'User' ? 'bg-green-100 text-green-800' :
+                'bg-purple-100 text-purple-800'
+              }">${mailbox.type}</span>
+            </td>
+            <td class="px-4 py-2">
+              ${fullAccessCount > 0 ? `<span class="inline-block text-xs px-2 py-1 rounded bg-ms-badgeBg text-ms-badgeText mr-2">Full Access (${fullAccessCount})</span>` : ''}
+              ${sendAsCount > 0 ? `<span class="inline-block text-xs px-2 py-1 rounded bg-ms-badgeBg text-ms-badgeText">Send As (${sendAsCount})</span>` : ''}
+              ${fullAccessCount === 0 && sendAsCount === 0 ? '<span class="text-xs text-ms-sub">No permissions</span>' : ''}
+            </td>
+            <td class="px-4 py-2">
+              <button class="text-sm px-3 py-1.5 rounded border border-ms-line hover:bg-ms-canvas focus-ring manage-perms-btn"
+                      data-email="${mailbox.email}" data-displayname="${mailbox.displayName}">
+                Manage permissions
+              </button>
+            </td>
+          `;
+          
+          tbody.appendChild(tr);
+        });
+
+        // Update mailbox count
+        document.getElementById('mailboxCount').textContent = `${filteredMailboxes.length} mailboxes`;
+        
+        // Add event listeners to manage permission buttons
+        document.querySelectorAll('.manage-perms-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const email = e.target.getAttribute('data-email');
+            const displayName = e.target.getAttribute('data-displayname');
+            managePermissions(email, displayName);
+          });
         });
       }
 
-      function setModalMessage(msg) {
+      function filterMailboxes() {
+        const searchTerm = document.getElementById('searchMailboxes').value.toLowerCase();
+        const typeFilter = document.getElementById('mailboxTypeFilter').value;
+        
+        filteredMailboxes = mailboxes.filter(mailbox => {
+          const matchesSearch = mailbox.displayName.toLowerCase().includes(searchTerm) || 
+                               mailbox.email.toLowerCase().includes(searchTerm) ||
+                               mailbox.aliases.some(alias => alias.toLowerCase().includes(searchTerm));
+          const matchesType = typeFilter === 'all' || 
+                             (typeFilter === 'shared' && mailbox.type === 'Shared') ||
+                             (typeFilter === 'user' && mailbox.type === 'User') ||
+                             (typeFilter === 'room' && mailbox.type === 'Room');
+          
+          return matchesSearch && matchesType;
+        });
+        
+        renderMailboxTable();
+      }
+
+      function setModalMessage(msg, type = 'error') {
         const box = document.getElementById('modalMsg');
         box.textContent = msg;
+        box.className = `px-3 py-2 rounded border text-sm ${
+          type === 'error' ? 'border-red-200 bg-ms-errorBg text-ms-errorText' :
+          'border-yellow-200 bg-ms-warningBg text-ms-warningText'
+        }`;
         box.classList.remove('hidden');
       }
+
       function clearModalMessage() {
         const box = document.getElementById('modalMsg');
         box.classList.add('hidden');
+      }
+
+      function updatePermissionSummary() {
+        if (!currentMailbox || !permissionsData[currentMailbox]) {
+          document.getElementById('fullAccessCount').textContent = '0';
+          document.getElementById('sendAsCount').textContent = '0';
+          document.getElementById('sendOnBehalfCount').textContent = '0';
+          return;
+        }
+
+        const perms = permissionsData[currentMailbox];
+        document.getElementById('fullAccessCount').textContent = perms.filter(p => p.permissions.includes('Full Access')).length;
+        document.getElementById('sendAsCount').textContent = perms.filter(p => p.permissions.includes('Send As')).length;
+        document.getElementById('sendOnBehalfCount').textContent = perms.filter(p => p.permissions.includes('Send on Behalf')).length;
       }
 
       window.managePermissions = (mailbox, displayName) => {
@@ -401,6 +544,10 @@
         document.getElementById('permissionModal').classList.remove('hidden');
         clearModalMessage();
         updateCurrentPermissions();
+        updatePermissionSummary();
+        
+        // Update PowerShell commands
+        document.getElementById('psGetPermissions').textContent = `Get-RecipientPermission "${mailbox}" | Where-Object {$_.AccessRights -contains "SendAs"}`;
       };
 
       window.closeModal = () => {
@@ -439,7 +586,7 @@
           const tdAct = document.createElement('td');
           tdAct.className = 'px-3 py-2';
           const rm = document.createElement('button');
-          rm.className = 'text-sm px-3 py-1.5 rounded border border-ms-line hover:bg-ms-canvas';
+          rm.className = 'text-sm px-3 py-1.5 rounded border border-ms-line hover:bg-ms-canvas focus-ring';
           rm.textContent = 'Remove';
           rm.onclick = () => removePermission(perm.user);
           tdAct.appendChild(rm);
@@ -457,10 +604,31 @@
         const sendAs = document.getElementById('sendAs').checked;
         const sendOnBehalf = document.getElementById('sendOnBehalf').checked;
 
-        if (!user) { setModalMessage('Please select a user.'); return; }
-        if (!fullAccess && !sendAs && !sendOnBehalf) {
-          setModalMessage('Select at least one permission type.'); return;
+        if (!user) { 
+          setModalMessage('Please select a user.'); 
+          return; 
         }
+        if (!fullAccess && !sendAs && !sendOnBehalf) {
+          setModalMessage('Select at least one permission type.'); 
+          return;
+        }
+
+        // Check if user already has these permissions
+        if (permissionsData[currentMailbox]) {
+          const existingUser = permissionsData[currentMailbox].find(p => p.user === user);
+          if (existingUser) {
+            const newPerms = [];
+            if (fullAccess && !existingUser.permissions.includes('Full Access')) newPerms.push('Full Access');
+            if (sendAs && !existingUser.permissions.includes('Send As')) newPerms.push('Send As');
+            if (sendOnBehalf && !existingUser.permissions.includes('Send on Behalf')) newPerms.push('Send on Behalf');
+            
+            if (newPerms.length === 0) {
+              setModalMessage('User already has all selected permissions.', 'warning');
+              return;
+            }
+          }
+        }
+
         clearModalMessage();
 
         const userOption = document.querySelector(`#userSelect option[value="${user}"]`);
@@ -482,7 +650,9 @@
         }
 
         if (sendAs) {
-          showToast('Successfully granted "Send As" to "' + user + '" on "' + currentMailbox + '".');
+          showToast(`Successfully granted "Send As" to "${userName}" on "${currentMailbox}". Permissions may take time to propagate in production.`, 'success');
+        } else {
+          showToast(`Permissions updated for "${userName}" on "${currentMailbox}".`, 'success');
         }
 
         document.getElementById('userSelect').value = '';
@@ -491,7 +661,8 @@
         document.getElementById('sendOnBehalf').checked = false;
 
         updateCurrentPermissions();
-        updateMailboxTable();
+        updatePermissionSummary();
+        renderMailboxTable();
       };
 
       function removePermission(user) {
@@ -499,8 +670,18 @@
         permissionsData[currentMailbox] =
           permissionsData[currentMailbox].filter(p => p.user !== user);
         updateCurrentPermissions();
-        updateMailboxTable();
+        updatePermissionSummary();
+        renderMailboxTable();
+        showToast(`Permissions removed for user.`, 'warning');
       }
+
+      window.closePowerShellModal = () => {
+        document.getElementById('powershellModal').classList.add('hidden');
+      };
+
+      window.openPowerShellModal = () => {
+        document.getElementById('powershellModal').classList.remove('hidden');
+      };
 
       // Login + header controls
       document.getElementById('loginBtn').addEventListener('click', (e) => {
@@ -510,8 +691,9 @@
         if (u !== '' && p !== '') {
           document.getElementById('loginScreen').classList.add('hidden');
           document.getElementById('app').classList.remove('hidden');
-          showToast('Signed in as ' + u + '.');
+          showToast('Signed in as ' + u + '. Welcome to Exchange Admin Center.', 'success');
           window.scrollTo({ top: 0, behavior: 'smooth' });
+          renderMailboxTable();
         } else {
           document.getElementById('loginError').classList.remove('hidden');
           setTimeout(()=>document.getElementById('loginError').classList.add('hidden'), 2000);
@@ -525,13 +707,17 @@
 
       function hardReset() {
         window.closeModal();
+        window.closePowerShellModal();
         permissionsData = JSON.parse(JSON.stringify(initialPermissions));
-        updateMailboxTable();
+        document.getElementById('searchMailboxes').value = '';
+        document.getElementById('mailboxTypeFilter').value = 'all';
+        filteredMailboxes = [...mailboxes];
+        renderMailboxTable();
         document.getElementById('app').classList.add('hidden');
         document.getElementById('loginScreen').classList.remove('hidden');
         document.getElementById('loginUser').value = 'blockshell\\administrator';
         document.getElementById('loginPass').value = 'P@ssw0rd!';
-        showToast('Lab reset.');
+        showToast('Lab has been reset.', 'success');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
@@ -547,6 +733,15 @@
         }, 300);
       }
 
+      // Event listeners for new features
+      document.getElementById('searchMailboxes').addEventListener('input', filterMailboxes);
+      document.getElementById('mailboxTypeFilter').addEventListener('change', filterMailboxes);
+      document.getElementById('refreshBtn').addEventListener('click', () => {
+        showToast('Mailbox list refreshed.', 'success');
+        filterMailboxes();
+      });
+      document.getElementById('showPowerShellBtn').addEventListener('click', openPowerShellModal);
+      document.getElementById('addPermissionBtn').addEventListener('click', addPermission);
       document.getElementById('resetBtnHeader').addEventListener('click', hardReset);
       document.getElementById('closeBtnHeader').addEventListener('click', tryCloseWindow);
       document.getElementById('closeBlockedOk').addEventListener('click', () => {
@@ -555,7 +750,8 @@
         d.classList.remove('flex');
       });
 
-      updateMailboxTable();
+      // Initialize
+      renderMailboxTable();
     });
   </script>
 </body>

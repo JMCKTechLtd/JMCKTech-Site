@@ -17,9 +17,6 @@
     .license-component { border-left: 3px solid #e5e7eb; }
     .license-component.enabled { border-left-color: #10b981; }
     .service-plan-toggle { transform: scale(0.8); }
-    .service-plan-mandatory { background-color: #f3f4f6; }
-    .conflict-warning { border-left: 3px solid #ef4444; }
-    .geo-restricted { opacity: 0.6; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -197,18 +194,6 @@
           </select>
         </div>
 
-        <div id="licenseConflictWarning" class="hidden mb-4 p-3 rounded bg-yellow-50 border border-yellow-200">
-          <div class="flex items-start gap-2">
-            <svg class="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-            </svg>
-            <div class="text-sm text-yellow-700">
-              <p class="font-medium">License conflict detected</p>
-              <p class="mt-1" id="conflictMessage">Some licenses cannot be assigned together due to service conflicts.</p>
-            </div>
-          </div>
-        </div>
-
         <div class="border rounded mb-4">
           <div class="px-4 py-3 bg-gray-50 border-b">
             <div class="flex items-center justify-between">
@@ -267,18 +252,6 @@
         </select>
       </div>
 
-      <div id="bulkConflictWarning" class="hidden mb-4 p-3 rounded bg-yellow-50 border border-yellow-200">
-        <div class="flex items-start gap-2">
-          <svg class="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-          </svg>
-          <div class="text-sm text-yellow-700">
-            <p class="font-medium">License conflict detected</p>
-            <p class="mt-1">Some selected licenses cannot be assigned together.</p>
-          </div>
-        </div>
-      </div>
-
       <div class="border rounded">
         <div class="px-4 py-3 bg-gray-50 border-b">
           <div class="flex items-center justify-between">
@@ -306,73 +279,57 @@
       "EXO_P1": { 
         name: "Exchange Online (Plan 1)", 
         available: 2, 
-        total: 2,
         servicePlans: [
-          { id: "EXCHANGE_S_FOUNDATION", name: "Exchange Foundation", enabled: true, mandatory: true },
-          { id: "EXCHANGESTANDARD", name: "Exchange Online", enabled: true, mandatory: true }
-        ],
-        geoRestrictions: [] // Available everywhere
+          { id: "EXCHANGE_S_FOUNDATION", name: "Exchange Foundation", enabled: true },
+          { id: "EXCHANGESTANDARD", name: "Exchange Online", enabled: true }
+        ]
       },
       "M365_APPS": { 
         name: "Microsoft 365 Apps for enterprise", 
         available: 3, 
-        total: 3,
         servicePlans: [
-          { id: "OFFICESUBSCRIPTION", name: "Microsoft 365 Apps", enabled: true, mandatory: true },
-          { id: "SHAREPOINTWAC", name: "Office for the web", enabled: true, mandatory: false },
-          { id: "ONEDRIVESTANDARD", name: "OneDrive for Business", enabled: true, mandatory: false }
-        ],
-        geoRestrictions: ["United States", "United Kingdom", "Germany"] // Not available in Denmark
+          { id: "OFFICESUBSCRIPTION", name: "Microsoft 365 Apps", enabled: true },
+          { id: "SHAREPOINTWAC", name: "Office for the web", enabled: true },
+          { id: "ONEDRIVESTANDARD", name: "OneDrive for Business", enabled: true }
+        ]
       },
       "TEAMS_ESS": { 
         name: "Teams Essentials", 
         available: 4, 
-        total: 4,
         servicePlans: [
-          { id: "TEAMS1", name: "Microsoft Teams", enabled: true, mandatory: true },
-          { id: "MCOEV", name: "Microsoft 365 Phone System", enabled: false, mandatory: false }
-        ],
-        geoRestrictions: []
+          { id: "TEAMS1", name: "Microsoft Teams", enabled: true },
+          { id: "MCOEV", name: "Microsoft 365 Phone System", enabled: false }
+        ]
       },
       "ONEDRIVE_P1": { 
         name: "OneDrive for Business (Plan 1)", 
         available: 4, 
-        total: 4,
         servicePlans: [
-          { id: "SHAREPOINTSTANDARD", name: "SharePoint Online", enabled: true, mandatory: true },
-          { id: "ONEDRIVESTANDARD", name: "OneDrive for Business", enabled: true, mandatory: true }
-        ],
-        geoRestrictions: []
+          { id: "SHAREPOINTSTANDARD", name: "SharePoint Online", enabled: true },
+          { id: "ONEDRIVESTANDARD", name: "OneDrive for Business", enabled: true }
+        ]
       },
       "AAD_P1": { 
         name: "Azure Active Directory P1", 
         available: 2, 
-        total: 2,
         servicePlans: [
-          { id: "AAD_PREMIUM", name: "Azure Active Directory Premium P1", enabled: true, mandatory: true },
-          { id: "MFA_PREMIUM", name: "Azure Multi-Factor Authentication", enabled: true, mandatory: false }
-        ],
-        geoRestrictions: ["France", "Germany"] // Not available in Denmark
+          { id: "AAD_PREMIUM", name: "Azure Active Directory Premium P1", enabled: true },
+          { id: "MFA_PREMIUM", name: "Azure Multi-Factor Authentication", enabled: true }
+        ]
       }
     };
 
-    // License conflicts - licenses that cannot be assigned together
-    const LICENSE_CONFLICTS = {
-      "ONEDRIVE_P1": ["M365_APPS"], // OneDrive P1 conflicts with M365 Apps (which includes OneDrive)
-      "M365_APPS": ["ONEDRIVE_P1"]
-    };
-
     const USERS = [
-      { id:"u1", name:"App Mailbox", upn:"app.mailbox@blockshell.app", initials:"AM", licenses:{}, roles: "User", location: "Denmark" },
-      { id:"u2", name:"Customer Support", upn:"support@blockshell.app", initials:"CS", licenses:{ TEAMS_ESS: { assigned: true, services: { TEAMS1: true, MCOEV: false } } }, roles: "User", location: "Denmark" },
-      { id:"u3", name:"Katie Jordan", upn:"katie.jordan@blockshell.app", initials:"KJ", licenses:{}, roles: "User", location: "Denmark" },
-      { id:"u4", name:"Owen Patel", upn:"owen.patel@blockshell.app", initials:"OP", licenses:{}, roles: "User", location: "Denmark" },
-      { id:"u5", name:"Hans Ussing", upn:"hans.ussing@blockshell.app", initials:"HU", licenses:{}, roles: "User", location: "Denmark" },
-      { id:"u6", name:"Jonas Boolsen", upn:"jonas.boolsen@blockshell.app", initials:"JB", licenses:{}, roles: "User", location: "Denmark" },
-      { id:"u7", name:"Morten Skrubbeltrang", upn:"morten.s@blockshell.app", initials:"MS", licenses:{}, roles: "User", location: "Denmark" },
-      { id:"u8", name:"Customer Feedback", upn:"feedback@blockshell.app", initials:"CF", licenses:{}, roles: "User", location: "Denmark" },
-      { id:"u9", name:"Hans Ørsted", upn:"hans.orsted@blockshell.app", initials:"HØ", licenses:{}, roles: "User", location: "Denmark" },
-      { id:"u10", name:"Help Desk", upn:"helpdesk@blockshell.app", initials:"HD", licenses:{}, roles: "Global Admin", location: "Denmark" },
+      { id:"u1", name:"App Mailbox", upn:"app.mailbox@blockshell.app", initials:"AM", licenses:{}, roles: "User" },
+      { id:"u2", name:"Customer Support", upn:"support@blockshell.app", initials:"CS", licenses:{ TEAMS_ESS: { assigned: true, services: { TEAMS1: true, MCOEV: false } } }, roles: "User" },
+      { id:"u3", name:"Katie Jordan", upn:"katie.jordan@blockshell.app", initials:"KJ", licenses:{}, roles: "User" },
+      { id:"u4", name:"Owen Patel", upn:"owen.patel@blockshell.app", initials:"OP", licenses:{}, roles: "User" },
+      { id:"u5", name:"Hans Ussing", upn:"hans.ussing@blockshell.app", initials:"HU", licenses:{}, roles: "User" },
+      { id:"u6", name:"Jonas Boolsen", upn:"jonas.boolsen@blockshell.app", initials:"JB", licenses:{}, roles: "User" },
+      { id:"u7", name:"Morten Skrubbeltrang", upn:"morten.s@blockshell.app", initials:"MS", licenses:{}, roles: "User" },
+      { id:"u8", name:"Customer Feedback", upn:"feedback@blockshell.app", initials:"CF", licenses:{}, roles: "User" },
+      { id:"u9", name:"Hans Ørsted", upn:"hans.orsted@blockshell.app", initials:"HØ", licenses:{}, roles: "User" },
+      { id:"u10", name:"Help Desk", upn:"helpdesk@blockshell.app", initials:"HD", licenses:{}, roles: "Admin" },
     ];
 
     // -------------------- State --------------------
@@ -380,7 +337,6 @@
     let selectedIds = new Set();
     let currentUserId = null;
     let drawerAnimationTimeout = null;
-    let currentUserLocation = "Denmark";
 
     // -------------------- DOM helpers --------------------
     const el = sel => document.querySelector(sel);
@@ -398,26 +354,6 @@
     function updateSelectedCount() {
       el("#selectedCount").textContent = selectedIds.size;
       el("#totalCount").textContent = USERS.length;
-    }
-
-    // -------------------- Enhanced License Management --------------------
-    function checkLicenseConflicts(selectedLicenses) {
-      const conflicts = [];
-      selectedLicenses.forEach(licenseId => {
-        if (LICENSE_CONFLICTS[licenseId]) {
-          LICENSE_CONFLICTS[licenseId].forEach(conflictingId => {
-            if (selectedLicenses.includes(conflictingId)) {
-              conflicts.push({ license1: licenseId, license2: conflictingId });
-            }
-          });
-        }
-      });
-      return conflicts;
-    }
-
-    function isLicenseAvailableInLocation(licenseId, location) {
-      const license = LICENSE_POOL[licenseId];
-      return !license.geoRestrictions.length || license.geoRestrictions.includes(location);
     }
 
     // -------------------- Enhanced Rendering --------------------
@@ -445,7 +381,7 @@
             </td>
             <td class="px-4 py-2">${u.upn}</td>
             <td class="px-4 py-2">${assignedLicenses.length ? assignedLicenses.join(", ") : "-"}</td>
-            <td class="px-4 py-2"><span class="text-xs ${u.roles === 'Global Admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'} px-2 py-1 rounded">${u.roles}</span></td>
+            <td class="px-4 py-2"><span class="text-xs bg-gray-100 px-2 py-1 rounded">${u.roles}</span></td>
             <td class="px-4 py-2">${tags}</td>
             <td class="px-4 py-2"><button class="px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-xs" data-open="${u.id}">Manage</button></td>
           `;
@@ -482,105 +418,57 @@
       updateSelectedCount();
     }
 
-    function licenseCheckbox(id, label, available, total, servicePlans = [], isAssigned = false, location = "Denmark", hasConflict = false) {
-      const isGeoRestricted = !isLicenseAvailableInLocation(id, location);
-      const geoRestrictedClass = isGeoRestricted ? "geo-restricted" : "";
-      const conflictClass = hasConflict ? "conflict-warning" : "";
-      
+    function licenseCheckbox(id, label, available, servicePlans = [], isAssigned = false) {
       const servicePlansHtml = servicePlans.map(plan => `
-        <div class="license-component ${plan.enabled ? 'enabled' : ''} ${plan.mandatory ? 'service-plan-mandatory' : ''} pl-3 py-2 border-b last:border-b-0">
+        <div class="license-component ${plan.enabled ? 'enabled' : ''} pl-3 py-2 border-b last:border-b-0">
           <div class="flex items-center justify-between">
-            <span class="text-sm ${plan.enabled ? 'text-gray-800' : 'text-gray-500'} ${plan.mandatory ? 'font-medium' : ''}">
-              ${plan.name}
-              ${plan.mandatory ? '<span class="text-xs text-gray-500 ml-1">(required)</span>' : ''}
-            </span>
+            <span class="text-sm ${plan.enabled ? 'text-gray-800' : 'text-gray-500'}">${plan.name}</span>
             <label class="inline-flex items-center">
               <input type="checkbox" data-service="${plan.id}" ${plan.enabled ? 'checked' : ''} 
                      class="service-plan-toggle h-4 w-4 text-blue-600 rounded" 
-                     ${!isAssigned || plan.mandatory ? 'disabled' : ''}>
+                     ${!isAssigned ? 'disabled' : ''}>
             </label>
           </div>
         </div>
       `).join('');
 
-      const geoWarning = isGeoRestricted ? `
-        <div class="px-3 py-1 bg-red-50 border-t border-red-200 text-xs text-red-700">
-          ⚠️ Not available in ${location}
-        </div>
-      ` : '';
-
       return `
-        <div class="license-item border rounded overflow-hidden ${geoRestrictedClass} ${conflictClass}">
+        <div class="license-item border rounded overflow-hidden">
           <div class="bg-gray-50 px-3 py-2 border-b">
             <label class="flex items-center gap-2">
-              <input type="checkbox" data-lic="${id}" class="h-4 w-4 text-blue-600 rounded" 
-                     ${isGeoRestricted ? 'disabled' : ''}>
+              <input type="checkbox" data-lic="${id}" class="h-4 w-4 text-blue-600 rounded">
               <span class="font-medium">${label}</span>
-              <span class="ml-auto text-xs text-gray-500">${available}/${total} available</span>
+              <span class="ml-auto text-xs text-gray-500">Available: <b data-avail="${id}">${available}</b></span>
             </label>
           </div>
           <div class="service-plans">
             ${servicePlansHtml}
           </div>
-          ${geoWarning}
         </div>`;
     }
 
-    function renderLicenseList(container, userLicenses = {}, location = "Denmark", isBulk = false) {
+    function renderLicenseList(container, userLicenses = {}) {
       const totalAvailable = Object.values(LICENSE_POOL).reduce((sum, lic) => sum + lic.available, 0);
-      
-      if (!isBulk) {
-        el("#totalAvailable").textContent = totalAvailable;
-      }
-
-      // Get currently selected licenses to check for conflicts
-      const selectedLicenses = Object.keys(userLicenses).filter(k => userLicenses[k]?.assigned);
-      const conflicts = checkLicenseConflicts(selectedLicenses);
-      const hasConflicts = conflicts.length > 0;
-
-      if (!isBulk) {
-        const conflictWarning = el("#licenseConflictWarning");
-        if (hasConflicts) {
-          conflictWarning.classList.remove("hidden");
-          const conflictNames = conflicts.map(c => 
-            `${LICENSE_POOL[c.license1].name} and ${LICENSE_POOL[c.license2].name}`
-          ).join(", ");
-          el("#conflictMessage").textContent = `Conflicting licenses: ${conflictNames}. These cannot be used together.`;
-        } else {
-          conflictWarning.classList.add("hidden");
-        }
-      } else {
-        const bulkConflictWarning = el("#bulkConflictWarning");
-        if (hasConflicts) {
-          bulkConflictWarning.classList.remove("hidden");
-        } else {
-          bulkConflictWarning.classList.add("hidden");
-        }
-      }
+      el("#totalAvailable").textContent = totalAvailable;
 
       container.innerHTML = `
-        ${licenseCheckbox("EXO_P1", LICENSE_POOL.EXO_P1.name, LICENSE_POOL.EXO_P1.available, LICENSE_POOL.EXO_P1.total, LICENSE_POOL.EXO_P1.servicePlans, userLicenses.EXO_P1?.assigned, location, conflicts.some(c => c.license1 === "EXO_P1" || c.license2 === "EXO_P1"))}
-        ${licenseCheckbox("M365_APPS", LICENSE_POOL.M365_APPS.name, LICENSE_POOL.M365_APPS.available, LICENSE_POOL.M365_APPS.total, LICENSE_POOL.M365_APPS.servicePlans, userLicenses.M365_APPS?.assigned, location, conflicts.some(c => c.license1 === "M365_APPS" || c.license2 === "M365_APPS"))}
-        ${licenseCheckbox("TEAMS_ESS", LICENSE_POOL.TEAMS_ESS.name, LICENSE_POOL.TEAMS_ESS.available, LICENSE_POOL.TEAMS_ESS.total, LICENSE_POOL.TEAMS_ESS.servicePlans, userLicenses.TEAMS_ESS?.assigned, location, conflicts.some(c => c.license1 === "TEAMS_ESS" || c.license2 === "TEAMS_ESS"))}
-        ${licenseCheckbox("ONEDRIVE_P1", LICENSE_POOL.ONEDRIVE_P1.name, LICENSE_POOL.ONEDRIVE_P1.available, LICENSE_POOL.ONEDRIVE_P1.total, LICENSE_POOL.ONEDRIVE_P1.servicePlans, userLicenses.ONEDRIVE_P1?.assigned, location, conflicts.some(c => c.license1 === "ONEDRIVE_P1" || c.license2 === "ONEDRIVE_P1"))}
-        ${licenseCheckbox("AAD_P1", LICENSE_POOL.AAD_P1.name, LICENSE_POOL.AAD_P1.available, LICENSE_POOL.AAD_P1.total, LICENSE_POOL.AAD_P1.servicePlans, userLicenses.AAD_P1?.assigned, location, conflicts.some(c => c.license1 === "AAD_P1" || c.license2 === "AAD_P1"))}
+        ${licenseCheckbox("EXO_P1", LICENSE_POOL.EXO_P1.name, LICENSE_POOL.EXO_P1.available, LICENSE_POOL.EXO_P1.servicePlans, userLicenses.EXO_P1?.assigned)}
+        ${licenseCheckbox("M365_APPS", LICENSE_POOL.M365_APPS.name, LICENSE_POOL.M365_APPS.available, LICENSE_POOL.M365_APPS.servicePlans, userLicenses.M365_APPS?.assigned)}
+        ${licenseCheckbox("TEAMS_ESS", LICENSE_POOL.TEAMS_ESS.name, LICENSE_POOL.TEAMS_ESS.available, LICENSE_POOL.TEAMS_ESS.servicePlans, userLicenses.TEAMS_ESS?.assigned)}
+        ${licenseCheckbox("ONEDRIVE_P1", LICENSE_POOL.ONEDRIVE_P1.name, LICENSE_POOL.ONEDRIVE_P1.available, LICENSE_POOL.ONEDRIVE_P1.servicePlans, userLicenses.ONEDRIVE_P1?.assigned)}
+        ${licenseCheckbox("AAD_P1", LICENSE_POOL.AAD_P1.name, LICENSE_POOL.AAD_P1.available, LICENSE_POOL.AAD_P1.servicePlans, userLicenses.AAD_P1?.assigned)}
       `;
 
       // Set prechecked licenses
       Object.keys(userLicenses).forEach(k => {
         const c = container.querySelector(`input[data-lic="${k}"]`);
-        if (c && userLicenses[k]?.assigned && !c.disabled) {
+        if (c && userLicenses[k]?.assigned) {
           c.checked = true;
-          // Enable service plan toggles for assigned licenses (except mandatory ones)
+          // Enable service plan toggles for assigned licenses
           const servicePlans = container.querySelectorAll(`input[data-service]`);
           servicePlans.forEach(toggle => {
             if (toggle.closest(`.license-item`).querySelector(`input[data-lic="${k}"]`)) {
-              const serviceId = toggle.getAttribute('data-service');
-              const licenseData = LICENSE_POOL[k];
-              const servicePlan = licenseData.servicePlans.find(sp => sp.id === serviceId);
-              if (servicePlan && !servicePlan.mandatory) {
-                toggle.disabled = false;
-              }
+              toggle.disabled = false;
             }
           });
         }
@@ -594,51 +482,20 @@
           const serviceToggles = licenseItem.querySelectorAll('input[data-service]');
           
           serviceToggles.forEach(toggle => {
-            const serviceId = toggle.getAttribute('data-service');
-            const licenseData = LICENSE_POOL[licenseId];
-            const servicePlan = licenseData.servicePlans.find(sp => sp.id === serviceId);
-            
-            if (servicePlan.mandatory) {
-              toggle.disabled = true;
-              toggle.checked = true;
+            toggle.disabled = !e.target.checked;
+            if (!e.target.checked) {
+              toggle.checked = false;
             } else {
-              toggle.disabled = !e.target.checked;
-              if (!e.target.checked) {
-                toggle.checked = false;
-              } else {
-                // Restore default service plan states for non-mandatory services
+              // Restore default service plan states
+              const licenseData = LICENSE_POOL[licenseId];
+              const servicePlan = licenseData.servicePlans.find(sp => sp.id === toggle.getAttribute('data-service'));
+              if (servicePlan) {
                 toggle.checked = servicePlan.enabled;
               }
             }
           });
-
-          // Update conflicts in real-time
-          if (!isBulk) {
-            const user = USERS.find(u => u.id === currentUserId);
-            const selected = getSelectedLicensesFromUI();
-            const newConflicts = checkLicenseConflicts(selected);
-            const conflictWarning = el("#licenseConflictWarning");
-            
-            if (newConflicts.length > 0) {
-              conflictWarning.classList.remove("hidden");
-              const conflictNames = newConflicts.map(c => 
-                `${LICENSE_POOL[c.license1].name} and ${LICENSE_POOL[c.license2].name}`
-              ).join(", ");
-              el("#conflictMessage").textContent = `Conflicting licenses: ${conflictNames}. These cannot be used together.`;
-            } else {
-              conflictWarning.classList.add("hidden");
-            }
-          }
         });
       });
-    }
-
-    function getSelectedLicensesFromUI() {
-      const selected = [];
-      el("#licenseList").querySelectorAll('input[data-lic]:checked').forEach(c => {
-        selected.push(c.getAttribute('data-lic'));
-      });
-      return selected;
     }
 
     // -------------------- Drawer (per-user) --------------------
@@ -653,11 +510,8 @@
       el("#drawerName").textContent = user.name;
       el("#drawerUPN").textContent = user.upn;
       el("#avatar").textContent = user.initials;
-      
-      currentUserLocation = user.location;
-      el("#locSelect").value = user.location;
 
-      renderLicenseList(el("#licenseList"), user.licenses, user.location);
+      renderLicenseList(el("#licenseList"), user.licenses);
 
       const d = el("#drawer");
       const m = el("#drawerMask");
@@ -697,15 +551,11 @@
       const user = USERS.find(u => u.id===currentUserId);
       const selected = {};
       
-      // Update user location
-      user.location = el("#locSelect").value;
-      currentUserLocation = user.location;
-      
       el("#licenseList").querySelectorAll('input[data-lic]').forEach(c => {
         const licenseId = c.getAttribute('data-lic');
         const isChecked = c.checked;
         
-        if (isChecked && isLicenseAvailableInLocation(licenseId, user.location)) {
+        if (isChecked) {
           selected[licenseId] = {
             assigned: true,
             services: {}
@@ -718,18 +568,6 @@
           });
         }
       });
-
-      // Check for conflicts
-      const selectedLicenseIds = Object.keys(selected);
-      const conflicts = checkLicenseConflicts(selectedLicenseIds);
-      
-      if (conflicts.length > 0) {
-        const conflictNames = conflicts.map(c => 
-          `${LICENSE_POOL[c.license1].name} and ${LICENSE_POOL[c.license2].name}`
-        ).join(", ");
-        toast(`Cannot assign conflicting licenses: ${conflictNames}`, "error");
-        return;
-      }
 
       if (!Object.keys(selected).length) {
         el("#userError").classList.remove("hidden");
@@ -768,7 +606,7 @@
     }
 
     function openBulkModal() {
-      renderLicenseList(el("#bulkLicenseList"), {}, currentUserLocation, true);
+      renderLicenseList(el("#bulkLicenseList"), {});
       el("#bulkCount").textContent = `Selected users: ${selectedIds.size}`;
       el("#bulkMask").classList.remove("hidden");
       el("#bulkModal").classList.remove("hidden");
@@ -783,41 +621,28 @@
       const toApply = {};
       el("#bulkLicenseList").querySelectorAll('input[data-lic]').forEach(c => {
         const licenseId = c.getAttribute('data-lic');
-        toApply[licenseId] = c.checked && !c.disabled;
+        toApply[licenseId] = c.checked;
       });
 
-      const appliedLicenses = Object.keys(toApply).filter(k => toApply[k]);
-      const conflicts = checkLicenseConflicts(appliedLicenses);
-      
-      if (conflicts.length > 0) {
-        const conflictNames = conflicts.map(c => 
-          `${LICENSE_POOL[c.license1].name} and ${LICENSE_POOL[c.license2].name}`
-        ).join(", ");
-        toast(`Cannot assign conflicting licenses: ${conflictNames}`, "error");
-        return;
-      }
-
       const targets = USERS.filter(u => selectedIds.has(u.id));
-      let assignedCount = 0;
       
-      appliedLicenses.forEach(k => {
-        if (LICENSE_POOL[k].available >= targets.length) {
+      Object.keys(toApply).forEach(k => {
+        if (toApply[k]) {
           targets.forEach(u => {
-            if (!u.licenses[k]?.assigned && isLicenseAvailableInLocation(k, u.location)) {
-              u.licenses[k] = {
-                assigned: true,
-                services: {}
-              };
-              // Set default service plan states
-              LICENSE_POOL[k].servicePlans.forEach(plan => {
-                u.licenses[k].services[plan.id] = plan.enabled;
-              });
-              assignedCount++;
+            if (!u.licenses[k]?.assigned) {
+              if (LICENSE_POOL[k].available > 0) {
+                LICENSE_POOL[k].available -= 1;
+                u.licenses[k] = {
+                  assigned: true,
+                  services: {}
+                };
+                // Set default service plan states
+                LICENSE_POOL[k].servicePlans.forEach(plan => {
+                  u.licenses[k].services[plan.id] = plan.enabled;
+                });
+              }
             }
           });
-          LICENSE_POOL[k].available = Math.max(0, LICENSE_POOL[k].available - targets.length);
-        } else {
-          toast(`Not enough ${LICENSE_POOL[k].name} licenses for all selected users`, "error");
         }
       });
 
@@ -828,7 +653,7 @@
 
       renderUsers();
       closeBulkModal();
-      toast(`Licenses assigned to ${targets.length} users (${assignedCount} assignments)`);
+      toast(`Licenses assigned to ${targets.length} users`);
       selectedIds.clear();
       renderUsers();
     }
@@ -836,13 +661,14 @@
     // -------------------- Reset / Close --------------------
     function resetLab() {
       Object.keys(LICENSE_POOL).forEach(k => {
-        LICENSE_POOL[k].available = LICENSE_POOL[k].total;
+        if (k==="EXO_P1") LICENSE_POOL[k].available = 2;
+        if (k==="M365_APPS") LICENSE_POOL[k].available = 3;
+        if (k==="TEAMS_ESS") LICENSE_POOL[k].available = 4;
+        if (k==="ONEDRIVE_P1") LICENSE_POOL[k].available = 4;
+        if (k==="AAD_P1") LICENSE_POOL[k].available = 2;
       });
       
-      USERS.forEach(u => {
-        u.licenses = {};
-        u.location = "Denmark";
-      });
+      USERS.forEach(u => u.licenses = {});
       USERS.find(u => u.name==="Customer Support").licenses = { 
         TEAMS_ESS: { 
           assigned: true, 
@@ -867,16 +693,6 @@
     el("#searchBox").addEventListener("input", (e)=>{
       filter = e.target.value.trim().toLowerCase();
       renderUsers();
-    });
-
-    // Location change handler
-    el("#locSelect").addEventListener("change", (e) => {
-      if (currentUserId) {
-        const user = USERS.find(u => u.id === currentUserId);
-        user.location = e.target.value;
-        currentUserLocation = e.target.value;
-        renderLicenseList(el("#licenseList"), user.licenses, user.location);
-      }
     });
 
     el("#saveUser").addEventListener("click", applyUserSave);
