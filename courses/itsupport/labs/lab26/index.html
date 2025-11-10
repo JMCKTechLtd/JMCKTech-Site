@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lab 26: OneDrive Sync (SharePoint Shortcut Path Too Long)</title>
+<style>
+/* ==== Desktop background ==== */
+html,body{height:100%;margin:0;font-family:Segoe UI, Roboto, Arial, Helvetica, sans-serif;}
+body{background:linear-gradient(120deg,#1976d2,#0d47a1);color:#111;overflow:hidden;}
+#desktop{position:absolute;inset:0 0 48px 0;padding:14px;}
+
+/* ==== Windows ==== */
+.window{
+  position:absolute;background:#fff;border:1px solid #c9c9c9;border-radius:10px;
+  box-shadow:0 14px 40px rgba(0,0,0,.35);display:none;flex-direction:column;overflow:hidden;
+}
+.window-header{
+  background:#e9e9e9;padding:8px 10px;display:flex;align-items:center;gap:8px;cursor:move;
+  border-bottom:1px solid #cfcfcf;user-select:none;
+}
+.window-title{font-weight:600;flex:1}
+.window-controls{display:flex;gap:6px}
+.window-control{width:24px;height:24px;border-radius:6px;background:#dcdcdc;display:grid;place-items:center;cursor:pointer}
+.window-control:hover{background:#cfcfcf}
+.window-body{padding:10px;overflow:auto;background:#fff;flex:1}
+
+/* ==== Start Menu ==== */
+.start-menu {
+  position: absolute; bottom: 52px; left: 12px; width: 520px; height: 420px;
+  background: rgba(30,30,30,0.97); color: white; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.4); backdrop-filter: blur(16px);
+  display: none; overflow: hidden; z-index: 200;
+}
+.start-menu-header { padding: 16px 20px; background: rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; font-size: 16px; }
+.start-menu-body { display: grid; grid-template-columns: 1fr 1fr; height: calc(100% - 60px); }
+.start-menu-left { padding: 16px; background: rgba(255,255,255,0.02); border-right: 1px solid rgba(255,255,255,0.08); }
+.start-menu-right { padding: 16px; }
+.app-list { max-height: 100%; overflow-y: auto; }
+.app-item { display:flex; align-items:center; gap:12px; padding:12px; border-radius:8px; cursor:pointer;
+  transition:background .2s ease; margin-bottom:8px; }
+.app-item:hover { background: rgba(255,255,255,0.08); }
+.app-item .icon { width:32px;height:32px;border-radius:6px;background:#0078d4;display:flex;align-items:center;justify-content:center;font-size:16px; }
+.instructions-icon { background: linear-gradient(45deg, #ff6b35, #f7931e) !important; }
+
+/* ==== Taskbar + tray ==== */
+.taskbar {
+  position: absolute; bottom: 0; width: 100%; height: 48px;
+  background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(20px);
+  display: flex; align-items: center; padding: 0 12px; z-index: 100;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.start-button {
+  color: white; font-weight: 600; display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border-radius: 8px; transition: all 0.2s ease; font-size: 14px;
+  background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.35); cursor:pointer;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+.start-button:hover { background-color: rgba(255,255,255,0.32); border-color: rgba(255,255,255,0.5); }
+.windows-logo { width: 20px; height: 20px; margin-right: 2px; display:inline-block; }
+.taskbar-icons { display:flex; gap:8px; margin-left:10px; }
+
+.system-tray { display:flex; align-items:center; color:white; font-size:13px; padding:0 6px; white-space:nowrap; gap:6px; margin-left:auto; }
+.tray-chip {
+  display:inline-flex; align-items:center; gap:8px; height:32px; padding:0 10px;
+  background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2);
+  border-radius:10px; cursor:pointer; user-select:none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.06);
+  transition: transform .12s ease, background .15s ease, border-color .15s ease;
+}
+.tray-chip:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.35); transform: translateY(-1px); }
+.tray-time { min-width: 110px; justify-content:center; font-variant-numeric: tabular-nums; }
+
+/* ==== Context menus ==== */
+.context-menu{position:absolute;display:none;background:rgba(30,30,30,0.97);color:#fff;border:1px solid rgba(255,255,255,0.12);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.4);z-index:400;overflow:hidden;backdrop-filter:blur(16px);min-width:260px;}
+.context-menu-item{padding:12px 16px;cursor:pointer;display:flex;align-items:center;color:white;font-size:14px;transition:all .2s ease;border-bottom:1px solid rgba(255,255,255,0.05);user-select:none;}
+.context-menu-item:last-child{border-bottom:none;}
+.context-menu-item:hover{background:rgba(255,255,255,0.08);}
+.context-menu-item .icon{width:20px;height:20px;margin-right:12px;display:inline-block}
+
+/* Toast */
+#toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 14px;border-radius:10px;display:none;z-index:500}
+
+/* In-sim modal dialog */
+.sim-modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:520;}
+.sim-dialog{width:360px;background:#1f1f1f;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.4);overflow:hidden;}
+.sim-dialog-header{padding:12px 16px;background:rgba(255,255,255,.06);font-weight:600;border-bottom:1px solid rgba(255,255,255,.1)}
+.sim-dialog-body{padding:16px;font-size:14px;line-height:1.45}
+.sim-dialog-actions{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;background:rgba(255,255,255,.04);border-top:1px solid rgba(255,255,255,.06)}
+.sim-btn{background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,.35);color:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+.sim-btn:hover{background:rgba(255,255,255,0.32)}
+.sim-btn-primary{background:#1976d2;border-color:#1976d2}
+
+/* ====== Tray Popover + Calendar styles ====== */
+.tray-popover {
+  position: absolute; display: none; min-width: 300px;
+  background: rgba(30,30,30,0.97); color: white;
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4); z-index: 400; overflow: hidden; backdrop-filter: blur(16px);
+}
+.tray-popover .pop-header { padding: 12px 16px; background: rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; font-size: 13px; }
+.tray-popover .pop-body { padding: 14px 16px; font-size: 13px; max-height: 380px; overflow:auto; }
+.row { display:flex; align-items:center; gap:10px; }
+.muted { opacity:0.85; }
+
+.calendar{ width:100%; user-select:none; }
+.calendar .big-clock{ font-size:28px; font-weight:700; margin-bottom:6px; }
+.calendar .small-date{ opacity:.9; margin-bottom:10px; }
+.calendar .cal-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.calendar .month{ font-weight:600; }
+.calendar .grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:12px; }
+.calendar .dow{ text-align:center; opacity:.8; padding:4px 0; }
+.calendar .day{ text-align:center; padding:6px 0; border-radius:6px; }
+.calendar .day.today{ background:#1976d2; color:#fff; }
+.calendar .day.other{ opacity:.35; }
+
+/* Lists / banners */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #ddd;background:#f3f6fb;font-size:12px}
+.list{border:1px solid #e6e6e6;border-radius:8px;padding:8px;background:#fafafa}
+.item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border-radius:6px;border:1px solid transparent;cursor:default}
+.item:hover{background:#fff;border-color:#e0e0e0}
+.name{display:flex;align-items:center;gap:8px;min-width:0}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:580px}
+.banner{padding:8px 10px;border-radius:8px;margin:8px 0;font-size:13px}
+.banner-warn{background:#fff7e6;border:1px solid #ffd591;color:#8a6100}
+.banner-ok{background:#edfdf6;border:1px solid #b7f0d0;color:#0b5d3b}
+.banner-info{background:#e6f3ff;border:1px solid #91caff;color:#0050b3}
+.small{font-size:12px}
+
+/* Progress indicators */
+.progress-bar { width: 100%; height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden; margin: 8px 0; }
+.progress-fill { height: 100%; background: #1976d2; transition: width 0.3s ease; width: 0%; }
+.syncing { animation: pulse 1.5s infinite; }
+@keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+/* Error details */
+.error-details { background: #fff5f5; border: 1px solid #ffcdd2; border-radius: 6px; padding: 10px; margin: 8px 0; font-size: 12px; }
+.error-code { font-family: monospace; background: #ffebee; padding: 2px 6px; border-radius: 3px; }
+</style>
+</head>
+<body>
+  <div id="desktop">
+    <!-- Instructions -->
+    <div class="window" id="instructionsWindow" style="left:20px;top:20px;width:520px;height:420px;display:flex;">
+      <div class="window-header">
+        <div class="window-title">Lab Instructions — OneDrive Sync (SharePoint Shortcut Path Too Long)</div>
+        <div class="window-controls">
+          <div class="window-control" data-minimize title="Minimize">−</div>
+          <div class="window-control" data-maximize title="Maximize">⬜</div>
+          <div class="window-control" data-close title="Close">✕</div>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="task-title" style="font-weight:600;color:#fff;background:linear-gradient(135deg,#0078d4 0%,#005a9e 100%);padding:8px 12px;border-radius:6px;display:inline-block;margin-bottom:10px;">Goal: Resolve sync failure by removing an over-length SharePoint shortcut</div>
+        <ol style="margin:0 0 10px 18px; line-height:1.6">
+          <li><input type="checkbox" id="s1"> Open the <b>OneDrive tray</b> (click the OneDrive chip).</li>
+          <li><input type="checkbox" id="s2"> Click <b>View sync problems</b>.</li>
+          <li><input type="checkbox" id="s3"> Try <b>Sync now</b> — observe it still fails.</li>
+          <li><input type="checkbox" id="s4"> In <b>OneDrive (Local)</b>, <b>right-click &gt; Delete</b> the shortcut — see <b>Unable to delete</b>.</li>
+          <li><input type="checkbox" id="s5"> Open <b>OneDrive Online</b> (Start → Browser).</li>
+          <li><input type="checkbox" id="s6"> Right-click the <b>shortcut</b> online.</li>
+          <li><input type="checkbox" id="s7"> <b>Delete</b> the shortcut online.</li>
+          <li><input type="checkbox" id="s8"> Verify the tray reads <b>Up to date</b> and the local shortcut vanishes.</li>
+        </ol>
+        <div class="note">Modern OneDrive/SharePoint path limit ≈ <b>400</b> characters. The target here intentionally exceeds it.</div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button id="resetLab">Reset Lab</button>
+          <button id="closeLab">Close Lab</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sync Problems -->
+    <div class="window" id="syncWindow" style="left:280px;top:80px;width:740px;height:360px;">
+      <div class="window-header">
+        <div class="window-title">OneDrive — Sync Problems</div>
+        <div class="window-controls">
+          <div class="window-control" data-minimize title="Minimize">−</div>
+          <div class="window-control" data-maximize title="Maximize">⬜</div>
+          <div class="window-control" data-close title="Close">✕</div>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="banner banner-warn" id="bannerWarn">
+          <b>SharePoint shortcut can't sync — full path is too long.</b> 
+          <div class="error-details">
+            <div><b>Error 0x80010135 (PathTooLongException)</b></div>
+            <div>Target path exceeds 400 character limit: <span class="error-code">\\sharepoint\sites\ProjectX\VeryLongFolderNameThatExceedsMaximumPathLength\AnotherExtremelyLongSubfolderName\EvenMoreCharactersAddedHere\FinalSubfolderWithExcessiveLength\TheActualTargetDocument.pdf</span></div>
+          </div>
+          Open OneDrive Online from the <b>Start menu</b> to remove the shortcut.
+        </div>
+        <div class="banner banner-ok" id="bannerOk" style="display:none">✔ No sync issues. OneDrive is <b>Up to date</b>.</div>
+        <div class="banner banner-info" id="bannerSyncing" style="display:none">
+          <div class="syncing">🔄 Syncing changes...</div>
+          <div class="progress-bar"><div class="progress-fill" id="syncProgress"></div></div>
+        </div>
+        <div class="small" style="margin:6px 0 10px"><b>Item:</b> Project X (SharePoint shortcut)</div>
+        <div class="toolbar">
+          <button id="btnSyncNow">Sync now</button>
+          <button id="btnViewDetails">View error details</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OneDrive Online (folders only) -->
+    <div class="window" id="webWindow" style="left:180px;top:70px;width:880px;height:520px;">
+      <div class="window-header">
+        <div class="window-title">OneDrive Online — blockshell.app</div>
+        <div class="window-controls">
+          <div class="window-control" data-minimize title="Minimize">−</div>
+          <div class="window-control" data-maximize title="Maximize">⬜</div>
+          <div class="window-control" data-close title="Close">✕</div>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="toolbar" style="justify-content:space-between">
+          <div>
+            <span class="badge">Signed in: joel@blockshell.app</span>
+            <span class="badge" style="background:#e8f5e8;border-color:#c8e6c9;color:#2e7d32">Connected</span>
+          </div>
+          <div class="right">
+            <button id="btnRefresh">Refresh</button>
+            <button id="btnHelp">?</button>
+          </div>
+        </div>
+
+        <div class="list" id="webList">
+          <div class="small" style="margin:2px 0 6px"><b>My files</b> (12 items, 2.4 GB used of 5 GB)</div>
+          <div class="item"><div class="name"><div class="iconbox">📁</div><div>Documents</div></div><div class="small">Modified 2 days ago · 12 items</div></div>
+          <div class="item"><div class="name"><div class="iconbox">📁</div><div>Pictures</div></div><div class="small">Modified 1 week ago · 5 items</div></div>
+          <div class="item"><div class="name"><div class="iconbox">📁</div><div>Training</div></div><div class="small">Modified today · 7 items</div></div>
+          <div class="item"><div class="name"><div class="iconbox">📁</div><div>Archives</div></div><div class="small">Modified 3 weeks ago · 23 items</div></div>
+          <!-- Problem Shortcut (web) -->
+          <div class="item" id="rowShortcut" title="Right-click for options">
+            <div class="name">
+              <div class="iconbox" style="background:#00a4ef">🔗</div>
+              <div class="ell"><b>Project X</b> (SharePoint shortcut)</div>
+            </div>
+            <div class="badge" style="background:#fff0f0;border-color:#ffcdd2;color:#c62828">Sync error</div>
+          </div>
+          <div class="item"><div class="name"><div class="iconbox">📁</div><div>Personal</div></div><div class="small">Modified yesterday · 8 items</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Explorer — OneDrive (folders only) -->
+    <div class="window" id="localWindow" style="left:160px;top:70px;width:760px;height:440px;display:none;">
+      <div class="window-header">
+        <div class="window-title">File Explorer — OneDrive - blockshell.app</div>
+        <div class="window-controls">
+          <div class="window-control" data-minimize>−</div>
+          <div class="window-control" data-maximize>⬜</div>
+          <div class="window-control" data-close>✕</div>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="toolbar">
+          <div class="small"><b>Status:</b> <span id="localStatus">Connected</span> · <b>Last sync:</b> <span id="lastSync">2 minutes ago</span></div>
+        </div>
+        <div class="list" id="localList">
+          <div class="small" style="margin:2px 0 6px"><b>OneDrive — blockshell.app</b> (Files available online only)</div>
+          <div class="item"><div class="name"><div class="iconbox">📁</div><div>Documents</div></div><div class="small">3 items · Online</div></div>
+          <div class="item"><div class="name"><div class="iconbox">📁</div><div>Pictures</div></div><div class="small">2 items · Online</div></div>
+          <div class="item"><div class="name"><div class="iconbox">📁</div><div>Training</div></div><div class="small">7 items · Online</div></div>
+          <!-- Same Shortcut (local) -->
+          <div class="item" id="localShortcut" title="Right-click for options">
+            <div class="name">
+              <div class="iconbox" style="background:#00a4ef">🔗</div>
+              <div class="ell"><b>Project X</b> (SharePoint shortcut)</div>
+            </div>
+            <div class="badge" style="background:#fff0f0;border-color:#ffcdd2;color:#c62828">Sync error</div>
+          </div>
+        </div>
+        <div class="banner banner-info" style="margin-top:12px">
+          <small>Some files are available online only to save space. <a href="#" style="color:#1976d2">Change settings</a></small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Context menu (web) -->
+    <div class="context-menu" id="shortcutMenuWeb">
+      <div class="context-menu-item" id="ctxOpenWeb"><span class="icon">📂</span> Open</div>
+      <div class="context-menu-item" id="ctxRenameWeb"><span class="icon">✏️</span> Rename</div>
+      <div class="context-menu-item" id="ctxDeleteWeb"><span class="icon">🗑️</span> Delete</div>
+      <div class="context-menu-item"><span class="icon">📋</span> Copy link</div>
+      <div class="context-menu-item"><span class="icon">👥</span> Share</div>
+      <div class="context-menu-item" id="ctxDetailsWeb"><span class="icon">ℹ️</span> Properties</div>
+    </div>
+
+    <!-- Context menu (local) -->
+    <div class="context-menu" id="shortcutMenuLocal">
+      <div class="context-menu-item" id="ctxOpenLocal"><span class="icon">📂</span> Open</div>
+      <div class="context-menu-item" id="ctxRenameLocal"><span class="icon">✏️</span> Rename</div>
+      <div class="context-menu-item" id="ctxDeleteLocal"><span class="icon">🗑️</span> Delete</div>
+      <div class="context-menu-item"><span class="icon">⭐</span> Always keep on this device</div>
+      <div class="context-menu-item"><span class="icon">📊</span> Free up space</div>
+      <div class="context-menu-item" id="ctxDetailsLocal"><span class="icon">ℹ️</span> Properties</div>
+    </div>
+  </div>
+
+  <!-- Taskbar -->
+  <div class="taskbar">
+    <div class="start-button" id="startButton" title="Start">
+      <span class="windows-logo">
+        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="8" height="8" fill="#00BCF9"/>
+          <rect x="11" y="1" width="8" height="8" fill="#00BCF9"/>
+          <rect x="1" y="11" width="8" height="8" fill="#00BCF9"/>
+          <rect x="11" y="11" width="8" height="8" fill="#00BCF9"/>
+        </svg>
+      </span>
+      Start
+    </div>
+    <div class="taskbar-icons"></div>
+    <div class="system-tray" id="systemTray">
+      <!-- OneDrive tray chip -->
+      <div class="tray-chip" id="oneDriveChip" title="OneDrive status">
+        <span style="width:16px;height:16px;border-radius:3px;background:#00a4ef;display:inline-block"></span>
+        <span id="chipText">OneDrive</span>
+        <span id="chipDot" style="width:8px;height:8px;border-radius:50%;background:#ffb020;display:inline-block"></span>
+      </div>
+      <!-- Time chip -->
+      <div class="tray-chip tray-time" id="trayTimeChip" title="Date and time">
+        <div class="tray-time-col">
+          <span id="trayTime">--:--</span>
+          <span id="trayDate">-- ---</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Menu -->
+  <div class="start-menu" id="startMenu">
+    <div class="start-menu-header">Start</div>
+    <div class="start-menu-body">
+      <div class="start-menu-left">
+        <div class="app-item" data-app="instructions">
+          <div class="icon instructions-icon">📋</div>
+          <span>Instructions</span>
+        </div>
+        <div class="app-item" data-app="onedrive-local">
+          <div class="icon" style="background:#00a4ef">☁️</div>
+          <span>OneDrive (Local)</span>
+        </div>
+        <div class="app-item" data-app="browser-onedrive">
+          <div class="icon" style="background:#4caf50">🌐</div>
+          <span>Browser — OneDrive Online</span>
+        </div>
+        <div class="app-item" data-app="file-explorer">
+          <div class="icon" style="background:#607d8b">📁</div>
+          <span>File Explorer</span>
+        </div>
+      </div>
+      <div class="start-menu-right"><div class="app-list"></div></div>
+    </div>
+  </div>
+
+  <!-- In-sim modal -->
+  <div class="sim-modal" id="simModal">
+    <div class="sim-dialog">
+      <div class="sim-dialog-header" id="simModalTitle">Notice</div>
+      <div class="sim-dialog-body" id="simModalBody">Message</div>
+      <div class="sim-dialog-actions">
+        <button class="sim-btn" id="simCancel">Cancel</button>
+        <button class="sim-btn sim-btn-primary" id="simOk">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+/* ===== Enhanced Lab State ===== */
+const state = { 
+  shortcutPresent: true,
+  isSyncing: false,
+  lastSyncTime: new Date(Date.now() - 120000), // 2 minutes ago
+  syncAttempts: 0
+};
+
+/* ===== Utilities ===== */
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+function flashToast(msg){ const t=$('#toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',1400); }
+function showDialog(message, {title='Confirm', okText='OK', cancelText='Cancel', showCancel=true}={}){
+  return new Promise(resolve=>{
+    const modal=$('#simModal'), ttl=$('#simModalTitle'), body=$('#simModalBody'), ok=$('#simOk'), cancel=$('#simCancel');
+    ttl.textContent=title; body.textContent=message;
+    cancel.style.display = showCancel ? 'inline-block' : 'none';
+    ok.textContent=okText; cancel.textContent=cancelText;
+    const cleanup=()=>{ modal.style.display='none'; ok.onclick=null; cancel.onclick=null; };
+    ok.onclick=()=>{ cleanup(); resolve(true); };
+    cancel.onclick=()=>{ cleanup(); resolve(false); };
+    modal.style.display='flex';
+  });
+}
+
+/* ===== Time chip ===== */
+const trayTime = $('#trayTime'), trayDate=$('#trayDate');
+function updateTime(){
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  trayTime.textContent = h+':'+m;
+  trayDate.textContent = now.toLocaleDateString(undefined, { day:'2-digit', month:'short' }).replace(' ', ' ');
+}
+updateTime(); setInterval(updateTime, 60000);
+
+/* ===== Enhanced Sync Simulation ===== */
+function simulateSync() {
+  if (state.isSyncing) return;
+  
+  state.isSyncing = true;
+  state.syncAttempts++;
+  const progressBar = $('#syncProgress');
+  const syncingBanner = $('#bannerSyncing');
+  const warnBanner = $('#bannerWarn');
+  
+  // Show syncing state
+  if (syncingBanner) syncingBanner.style.display = 'block';
+  if (warnBanner) warnBanner.style.display = 'none';
+  if (progressBar) progressBar.style.width = '0%';
+  
+  setTraySyncing();
+  
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += Math.random() * 15;
+    if (progressBar) progressBar.style.width = Math.min(progress, 100) + '%';
+    
+    if (progress >= 100) {
+      clearInterval(interval);
+      setTimeout(() => {
+        state.isSyncing = false;
+        state.lastSyncTime = new Date();
+        updateLastSyncTime();
+        
+        if (syncingBanner) syncingBanner.style.display = 'none';
+        
+        if (state.shortcutPresent) {
+          // Sync fails due to path length
+          if (warnBanner) warnBanner.style.display = 'block';
+          setTrayIssue();
+          flashToast(`Sync failed (attempt ${state.syncAttempts}) - Path too long`);
+        } else {
+          // Sync succeeds
+          setTrayOk();
+          if ($('#bannerOk')) $('#bannerOk').style.display = 'block';
+          flashToast('Sync complete - Up to date');
+        }
+      }, 500);
+    }
+  }, 100);
+}
+
+function updateLastSyncTime() {
+  const lastSync = $('#lastSync');
+  if (lastSync) {
+    const now = new Date();
+    const diff = Math.floor((now - state.lastSyncTime) / 1000 / 60);
+    if (diff === 0) lastSync.textContent = 'Just now';
+    else if (diff === 1) lastSync.textContent = '1 minute ago';
+    else lastSync.textContent = `${diff} minutes ago`;
+  }
+}
+
+/* ===== Start menu ===== */
+const startButton=$('#startButton'), startMenu=$('#startMenu'), startContext=$('#startContext');
+startButton.addEventListener('click', (e)=>{ e.stopPropagation(); startMenu.style.display = startMenu.style.display==='block'?'none':'block'; startContext.style.display='none'; });
+startButton.addEventListener('contextmenu', (e)=>{ e.preventDefault(); e.stopPropagation(); startMenu.style.display='none'; const r=startButton.getBoundingClientRect(); startContext.style.left=r.left+'px'; startContext.style.bottom='52px'; startContext.style.display='block'; });
+document.addEventListener('click', (e)=>{ if(!startMenu.contains(e.target)&&e.target!==startButton) startMenu.style.display='none'; if(!startContext.contains(e.target)&&e.target!==startButton) startContext.style.display='none'; });
+$$('.app-item').forEach(el=>el.addEventListener('click', ()=>{ 
+  startMenu.style.display='none'; 
+  const app=el.getAttribute('data-app'); 
+  if(app==='instructions') $('#instructionsWindow').style.display='flex'; 
+  if(app==='onedrive-local') $('#localWindow').style.display='flex'; 
+  if(app==='browser-onedrive'){ $('#webWindow').style.display='flex'; const s5=$('#s5'); if(s5) s5.checked=true; } 
+  if(app==='file-explorer'){ 
+    $('#localWindow').style.display='flex'; 
+    flashToast('Opening File Explorer...');
+  }
+}));
+
+/* ===== Window controls / drag ===== */
+document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click', e=>{ e.stopPropagation(); btn.closest('.window').style.display='none'; }));
+document.querySelectorAll('[data-minimize]').forEach(btn=>btn.addEventListener('click', e=>{ e.stopPropagation(); btn.closest('.window').style.display='none'; }));
+document.querySelectorAll('[data-maximize]').forEach(btn=>btn.addEventListener('click', e=>{
+  e.stopPropagation(); const w=btn.closest('.window');
+  if (w.style.width==='100%'){ // restore
+    if (w.id==='instructionsWindow') Object.assign(w.style,{width:'520px',height:'420px',top:'20px',left:'20px'});
+    else if (w.id==='syncWindow')   Object.assign(w.style,{width:'740px',height:'360px',top:'80px',left:'280px'});
+    else if (w.id==='localWindow')  Object.assign(w.style,{width:'760px',height:'440px',top:'70px',left:'160px'});
+    else                            Object.assign(w.style,{width:'880px',height:'520px',top:'70px',left:'180px'});
+  } else Object.assign(w.style,{width:'100%',height:'calc(100% - 48px)',top:'0',left:'0'});
+}));
+let dragWin=null,sx=0,sy=0,ix=0,iy=0,dragging=false;
+document.querySelectorAll('.window-header').forEach(h=>{
+  h.addEventListener('mousedown', e=>{
+    if (e.target.closest('.window-control')) return;
+    e.preventDefault(); dragWin=h.closest('.window'); dragging=true; sx=e.clientX; sy=e.clientY;
+    ix=parseInt(dragWin.style.left||getComputedStyle(dragWin).left); iy=parseInt(dragWin.style.top||getComputedStyle(dragWin).top);
+    document.addEventListener('mousemove', onDrag); document.addEventListener('mouseup', stopDrag);
+  });
+});
+function onDrag(e){ if(!dragging||!dragWin) return; dragWin.style.left=(ix+(e.clientX-sx))+'px'; dragWin.style.top=(iy+(e.clientY-sy))+'px'; }
+function stopDrag(){ dragging=false; dragWin=null; document.removeEventListener('mousemove', onDrag); document.removeEventListener('mouseup', stopDrag); }
+
+/* ===== Tray popovers ===== */
+const systemTray=$('#systemTray'), trayTimeChip=$('#trayTimeChip');
+function makePopover(html){ const el=document.createElement('div'); el.className='tray-popover'; el.innerHTML=html; document.body.appendChild(el); return el; }
+function togglePopover(pop, anchor){ const r=anchor.getBoundingClientRect(); pop.style.right=(window.innerWidth-r.right)+'px'; pop.style.bottom=(window.innerHeight-r.top+8)+'px'; const open=pop.style.display==='block'; document.querySelectorAll('.tray-popover').forEach(p=>p.style.display='none'); if(!open) pop.style.display='block'; }
+document.addEventListener('click',(e)=>{ if(!systemTray.contains(e.target)&&!e.target.closest('.tray-popover')) document.querySelectorAll('.tray-popover').forEach(p=>p.style.display='none'; p.classList.remove('syncing')); });
+
+/* Calendar popover */
+const timePopover=makePopover(`
+  <div class="pop-header">Date & time</div>
+  <div class="pop-body">
+    <div class="calendar">
+      <div class="big-clock" id="bigClock">--:--</div>
+      <div class="small-date" id="smallDate">-- ---, ----</div>
+      <div class="cal-header"><span id="prevMonth" style="cursor:pointer">‹</span><span class="month" id="monthLabel">Month Year</span><span id="nextMonth" style="cursor:pointer">›</span></div>
+      <div class="grid" id="calGrid"><div class="dow">Su</div><div class="dow">Mo</div><div class="dow">Tu</div><div class="dow">We</div><div class="dow">Th</div><div class="dow">Fr</div><div class="dow">Sa</div></div>
+    </div>
+  </div>
+`);
+function updateClockAndDate(){ const now=new Date(); $('#bigClock').textContent=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; $('#smallDate').textContent=now.toLocaleDateString(undefined,{weekday:'short',day:'2-digit',month:'short',year:'numeric'}); }
+let calRef=new Date();
+function renderCalendar(ref){ const monthLabel=$('#monthLabel'), grid=$('#calGrid'); Array.from(grid.querySelectorAll('.day')).forEach(d=>d.remove()); const y=ref.getFullYear(), m=ref.getMonth(); monthLabel.textContent=new Date(y,m,1).toLocaleString(undefined,{month:'long',year:'numeric'}); const first=new Date(y,m,1), startDow=first.getDay(), daysIn=new Date(y,m+1,0).getDate(), prevDays=new Date(y,m,0).getDate(); for(let i=startDow-1;i>=0;i--){ const el=document.createElement('div'); el.className='day other'; el.textContent=(prevDays-i); grid.appendChild(el);} const today=new Date(); const highlight=(today.getFullYear()===y&&today.getMonth()===m)?today.getDate():-1; for(let d=1; d<=daysIn; d++){ const el=document.createElement('div'); el.className='day'; el.textContent=d; if(d===highlight) el.classList.add('today'); grid.appendChild(el);} const total=grid.querySelectorAll('.dow').length+grid.querySelectorAll('.day').length; const rem=total%7; if(rem!==0){ const need=7-rem; for(let d=1; d<=need; d++){ const el=document.createElement('div'); el.className='day other'; el.textContent=d; grid.appendChild(el);} } }
+document.addEventListener('click',(e)=>{ if(e.target&&e.target.id==='prevMonth'){ e.stopPropagation(); calRef=new Date(calRef.getFullYear(),calRef.getMonth()-1,1); renderCalendar(calRef);} if(e.target&&e.target.id==='nextMonth'){ e.stopPropagation(); calRef=new Date(calRef.getFullYear(),calRef.getMonth()+1,1); renderCalendar(calRef);} });
+if (trayTimeChip){ trayTimeChip.addEventListener('click',(e)=>{ e.stopPropagation(); updateClockAndDate(); renderCalendar(calRef); togglePopover(timePopover, trayTimeChip); }); }
+
+/* ===== Enhanced OneDrive State Management ===== */
+const chipText=$('#chipText'), chipDot=$('#chipDot');
+const oneDriveChip=$('#oneDriveChip');
+const bannerOk=$('#bannerOk'), bannerWarn=$('#bannerWarn');
+const localShortcut=$('#localShortcut'), webShortcut=$('#rowShortcut');
+
+function setTrayIssue(){ 
+  chipText.textContent='OneDrive - Attention needed'; 
+  chipDot.style.background='#ffb020';
+  oneDriveChip.classList.add('syncing');
+}
+
+function setTraySyncing(){ 
+  chipText.textContent='OneDrive - Syncing...'; 
+  chipDot.style.background='#1976d2';
+  oneDriveChip.classList.add('syncing');
+}
+
+function setTrayOk(){ 
+  chipText.textContent='OneDrive - Up to date'; 
+  chipDot.style.background='#1ec776';
+  oneDriveChip.classList.remove('syncing');
+}
+
+function paint(){
+  updateLastSyncTime();
+  
+  if(state.shortcutPresent){
+    setTrayIssue();
+    if (bannerOk) bannerOk.style.display='none';
+    if (bannerWarn) bannerWarn.style.display='block';
+    if (webShortcut) webShortcut.style.display='flex';
+    if (localShortcut) localShortcut.style.display='flex';
+  } else {
+    setTrayOk();
+    if (bannerWarn) bannerWarn.style.display='none';
+    if (bannerOk) bannerOk.style.display='block';
+    if (webShortcut) webShortcut.style.display='none';
+    if (localShortcut) localShortcut.style.display='none';
+  }
+}
+
+/* Enhanced OneDrive tray popover */
+const oneDrivePopover=makePopover(`
+  <div class="pop-header">OneDrive — blockshell.app</div>
+  <div class="pop-body" id="odPopBody"></div>
+`);
+function fillOneDrivePopover(){
+  const body = oneDrivePopover.querySelector('#odPopBody');
+  if(state.shortcutPresent){
+    body.innerHTML = `
+      <div class="row" style="margin-bottom:8px">
+        <div style="width:9px;height:9px;border-radius:50%;background:#ffb020"></div>
+        <div><b>Sync issue</b> · ${state.syncAttempts} failed attempts</div>
+      </div>
+      <div class="row" style="align-items:flex-start;margin-bottom:8px">
+        <div style="width:18px;height:18px;border-radius:4px;background:#00a4ef"></div>
+        <div>
+          <div><b>SharePoint shortcut can't sync</b></div>
+          <div class="muted">Path exceeds 400 character limit · 0x80010135</div>
+          <div class="muted">Delete the shortcut online to resolve.</div>
+        </div>
+      </div>
+      <div style="margin:12px 0; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px;">
+        <div class="small"><b>Last sync:</b> ${Math.floor((new Date() - state.lastSyncTime) / 1000 / 60)} minutes ago</div>
+        <div class="small"><b>Files synced:</b> 147 of 148</div>
+      </div>
+      <div class="row" style="gap:8px;margin-top:8px">
+        <button id="popView">View sync problems</button>
+        <button id="popSync">Sync now</button>
+        <button id="popDismiss">Dismiss</button>
+      </div>`;
+  } else {
+    body.innerHTML = `
+      <div class="row" style="margin-bottom:8px">
+        <div style="width:9px;height:9px;border-radius:50%;background:#1ec776"></div>
+        <div><b>Up to date</b></div>
+      </div>
+      <div class="muted" style="margin-bottom:10px">All files are synced.</div>
+      <div style="margin:12px 0; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px;">
+        <div class="small"><b>Last sync:</b> Just now</div>
+        <div class="small"><b>Files synced:</b> 147 of 147</div>
+        <div class="small"><b>Storage:</b> 2.4 GB of 5 GB used</div>
+      </div>
+      <div class="row" style="gap:8px;margin-top:4px">
+        <button id="popSync">Sync now</button>
+        <button id="popDismiss">Close</button>
+      </div>`;
+  }
+  const dis = oneDrivePopover.querySelector('#popDismiss');
+  if(dis) dis.addEventListener('click',()=> oneDrivePopover.style.display='none');
+  const view = oneDrivePopover.querySelector('#popView');
+  if(view) view.addEventListener('click',()=>{ oneDrivePopover.style.display='none'; $('#syncWindow').style.display='flex'; $('#s2').checked=true; });
+  const sync = oneDrivePopover.querySelector('#popSync');
+  if(sync) sync.addEventListener('click',()=>{
+    oneDrivePopover.style.display='none';
+    simulateSync();
+    if(state.shortcutPresent){ $('#s3').checked=true; }
+  });
+}
+oneDriveChip.addEventListener('click',(e)=>{ e.stopPropagation(); fillOneDrivePopover(); togglePopover(oneDrivePopover, oneDriveChip); $('#s1').checked=true; });
+
+/* Sync Problems */
+$('#btnSyncNow').addEventListener('click',()=>{
+  simulateSync();
+  if(state.shortcutPresent) { $('#s3').checked=true; }
+});
+
+$('#btnViewDetails').addEventListener('click',()=>{
+  showDialog(
+    `Error Details:\n\n` +
+    `Error Code: 0x80010135 (PathTooLongException)\n` +
+    `File: Project X (SharePoint shortcut)\n` +
+    `Issue: Target path exceeds 400 character limit\n\n` +
+    `Full target path:\n` +
+    `\\\\sharepoint\\sites\\ProjectX\\VeryLongFolderNameThatExceedsMaximumPathLength\\AnotherExtremelyLongSubfolderName\\EvenMoreCharactersAddedHere\\FinalSubfolderWithExcessiveLength\\TheActualTargetDocument.pdf\n\n` +
+    `Resolution: Delete the shortcut from OneDrive Online.`,
+    {title: 'Sync Error Details', okText: 'OK', showCancel: false}
+  );
+});
+
+/* ===== Context menus: WEB ===== */
+const menuWeb=$('#shortcutMenuWeb');
+webShortcut.addEventListener('contextmenu', (e)=>{ e.preventDefault(); menuWeb.style.left=e.pageX+'px'; menuWeb.style.top=e.pageY+'px'; menuWeb.style.display='block'; });
+document.addEventListener('click', (e)=>{ if(!menuWeb.contains(e.target) && e.target!==webShortcut) menuWeb.style.display='none'; });
+
+$('#ctxOpenWeb').addEventListener('click', ()=>{ menuWeb.style.display='none'; flashToast('Redirecting to SharePoint...'); });
+$('#ctxRenameWeb').addEventListener('click', ()=>{ menuWeb.style.display='none'; flashToast('Renaming alias won\'t change the long SharePoint target path.'); });
+$('#ctxDetailsWeb').addEventListener('click', ()=>{ 
+  menuWeb.style.display='none'; 
+  showDialog(
+    'Properties:\n\n' +
+    'Name: Project X\n' +
+    'Type: SharePoint Shortcut\n' +
+    'Location: OneDrive - blockshell.app\n' +
+    'Target: (Path exceeds 400 characters)\n' +
+    'Status: Sync error - Path too long\n' +
+    'Created: 2 weeks ago\n' +
+    'Modified: 3 days ago',
+    {title: 'Properties', okText: 'OK', showCancel: false}
+  );
+});
+$('#ctxDeleteWeb').addEventListener('click', async ()=>{
+  menuWeb.style.display='none';
+  const yes = await showDialog('Delete "Project X" shortcut? This will remove the shortcut from your OneDrive. The original file in SharePoint will not be affected.', {title:'Delete Shortcut', okText:'Delete'});
+  if (!yes) return;
+  
+  // Show processing state
+  flashToast('Deleting shortcut...');
+  oneDriveChip.classList.add('syncing');
+  
+  setTimeout(() => {
+    state.shortcutPresent = false;
+    paint();
+    $('#s7').checked = true;
+    flashToast('Shortcut deleted. Syncing changes...');
+    
+    // Auto-sync after deletion
+    setTimeout(() => {
+      simulateSync();
+      setTimeout(() => { 
+        flashToast('Up to date'); 
+        $('#s8').checked = true; 
+      }, 1500);
+    }, 800);
+  }, 1000);
+});
+
+/* ===== Context menus: LOCAL ===== */
+const menuLocal=$('#shortcutMenuLocal');
+localShortcut.addEventListener('contextmenu', (e)=>{ e.preventDefault(); menuLocal.style.left=e.pageX+'px'; menuLocal.style.top=e.pageY+'px'; menuLocal.style.display='block'; });
+document.addEventListener('click', (e)=>{ if(!menuLocal.contains(e.target) && e.target!==localShortcut) menuLocal.style.display='none'; });
+
+$('#ctxOpenLocal').addEventListener('click', ()=>{ menuLocal.style.display='none'; flashToast('This shortcut cannot open - sync error'); });
+$('#ctxRenameLocal').addEventListener('click', ()=>{ menuLocal.style.display='none'; flashToast('Cannot rename - managed from SharePoint/Online'); });
+$('#ctxDetailsLocal').addEventListener('click', ()=>{ 
+  menuLocal.style.display='none'; 
+  showDialog(
+    'Properties:\n\n' +
+    'Name: Project X\n' +
+    'Type: SharePoint Shortcut\n' +
+    'Status: Sync error\n' +
+    'Location: This device only\n' +
+    'Size: Not available\n' +
+    'Date modified: Not available\n\n' +
+    'This item is managed by SharePoint Online.\nTo resolve sync issues, delete it from OneDrive Online.',
+    {title: 'Properties', okText: 'OK', showCancel: false}
+  );
+});
+$('#ctxDeleteLocal').addEventListener('click', async ()=>{
+  menuLocal.style.display='none';
+  $('#s4').checked = true;
+  
+  // Show attempting state first
+  flashToast('Attempting to delete...');
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  await showDialog(
+    'Unable to delete this SharePoint shortcut locally.\n\n' +
+    'This shortcut is managed by SharePoint Online. To remove it, please:\n\n' +
+    '1. Open OneDrive Online\n' +
+    '2. Locate the "Project X" shortcut\n' +
+    '3. Right-click and select "Delete"\n\n' +
+    'The change will sync to this device automatically.',
+    {title:'Unable to delete', okText:'OK', showCancel:false}
+  );
+});
+
+/* ===== Reset & Close lab ===== */
+const resetLab=$('#resetLab'), closeLabBtn=$('#closeLab');
+
+function attemptCloseWindow(){
+  window.close();
+  try{
+    const selfWin = window.open('','_self');
+    if(selfWin){ selfWin.opener=null; selfWin.close(); }
+  }catch(e){}
+  setTimeout(()=>{ 
+    try { window.location.replace('about:blank'); } catch(e) { window.location.href='about:blank'; }
+  }, 300);
+}
+
+resetLab.addEventListener('click', ()=>{
+  state.shortcutPresent = true;
+  state.syncAttempts = 0;
+  state.isSyncing = false;
+  state.lastSyncTime = new Date(Date.now() - 120000);
+  paint();
+  $('#instructionsWindow').style.display='flex';
+  Object.assign($('#instructionsWindow').style,{left:'20px',top:'20px',width:'520px',height:'420px'});
+  $('#syncWindow').style.display='none';
+  $('#webWindow').style.display='none';
+  $('#localWindow').style.display='none';
+  document.querySelectorAll('.tray-popover').forEach(p=>{ p.style.display='none'; p.classList.remove('syncing'); });
+  for(let i=1;i<=8;i++) $('#s'+i).checked=false;
+  flashToast('Lab reset to initial state');
+});
+
+closeLabBtn.addEventListener('click', async ()=>{
+  const yes = await showDialog('Are you sure you want to close this browser window?', {title:'Exit Lab', okText:'Close'});
+  if(!yes) return;
+  flashToast('Closing lab...');
+  setTimeout(attemptCloseWindow, 200);
+});
+
+/* ===== Enhanced Initialization ===== */
+function initializeLab() {
+  $('#instructionsWindow').style.display='flex';
+  paint();
+  updateClockAndDate(); 
+  renderCalendar(calRef);
+  setInterval(() => updateClockAndDate(), 60000);
+  setInterval(() => updateLastSyncTime(), 30000);
+  
+  // Auto-sync every 5 minutes in background (simulated)
+  setInterval(() => {
+    if (!state.isSyncing && state.shortcutPresent) {
+      state.lastSyncTime = new Date();
+      updateLastSyncTime();
+    }
+  }, 300000);
+}
+
+// Start the lab
+initializeLab();
+</script>
+</body>
+</html>

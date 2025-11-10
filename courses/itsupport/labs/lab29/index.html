@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lab 29: Intune – Apply a Compliance Policy (BitLocker Required)</title>
+<style>
+  :root{
+    --bg:#0b1220;--panel:#0f172a;--card:#111827;--muted:#94a3b8;--accent:#60a5fa;--accent-2:#34d399;--warn:#f59e0b;--error:#ef4444;--ok:#22c55e;--text:#e5e7eb;
+    --shadow:0 10px 24px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:linear-gradient(160deg,#0a0f1e,#0b1220 40%,#0b1220);font-family:Segoe UI,Tahoma,Arial,sans-serif;color:var(--text);}
+
+  /* Layout */
+  .lab{display:grid;grid-template-columns:320px 1fr;grid-template-rows:auto 1fr;gap:12px;padding:16px;min-height:100vh}
+  .lab-header{grid-column:1/-1;background:linear-gradient(135deg,#111827,#0f172a);border:1px solid #1f2937;border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;gap:12px;align-items:center}
+  .brand .logo{width:34px;height:34px;border-radius:10px;background:radial-gradient(circle at 30% 30%,#60a5fa,transparent 60%),radial-gradient(circle at 70% 70%,#34d399,transparent 60%);border:1px solid #1f2937}
+  .brand h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
+  .actions{display:flex;gap:8px}
+  button, .btn{border:1px solid #1f2937;background:#111827;color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;box-shadow:var(--shadow);font-weight:600}
+  button:hover,.btn:hover{border-color:#334155}
+  button:disabled{opacity:0.5;cursor:not-allowed;}
+
+  .left{background:#0f172a;border:1px solid #1f2937;border-radius:14px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;min-height:0}
+  .scroll{overflow:auto}
+
+  .instructions{padding:14px;border-bottom:1px solid #1f2937;background:linear-gradient(135deg,#0f172a,#0d152a)}
+  .instructions h2{margin:0 0 8px 0;font-size:16px}
+  .instructions ol{margin-left:18px}
+  .instructions li{margin:6px 0;color:#dbeafe}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px}
+
+  .tracker{padding:12px;border-top:1px solid #1f2937;background:#0f172a}
+  .tracker h3{margin:0 0 8px 0;font-size:14px;color:#93c5fd}
+  .task{display:flex;align-items:center;gap:8px;margin:6px 0}
+  .dot{width:10px;height:10px;border-radius:50%;background:#334155;border:1px solid #1f2937}
+  .dot.done{background:var(--ok)}
+  .dot.warn{background:var(--warn)}
+  .dot.error{background:var(--error)}
+
+  .right{display:grid;grid-template-columns:260px 1fr;gap:12px;min-height:0}
+  .portal-nav{background:#0f172a;border:1px solid #1f2937;border-radius:14px;box-shadow:var(--shadow);overflow:auto;padding:10px}
+  .portal{background:#0f172a;border:1px solid #1f2937;border-radius:14px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+  .portal-header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #1f2937;background:#101827}
+  .portal-title{font-weight:700}
+
+  .tree{list-style:none;padding:0;margin:0}
+  .tree li{padding:6px 8px;border-radius:8px;cursor:pointer;color:#cbd5e1}
+  .tree li:hover{background:#111b32}
+  .tree .section{opacity:.9;font-weight:700;color:#93c5fd;margin-top:6px}
+  .tree .active{background:#12203f;color:#fff;border:1px solid #1f2937}
+  .tree .child{padding-left:18px}
+
+  .content{padding:12px;overflow:auto;min-height:0}
+  .toolbar{display:flex;gap:8px;margin-bottom:10px}
+  .search{flex:1;display:flex;gap:8px}
+  .search input{flex:1;background:#0b1220;border:1px solid #1f2937;border-radius:10px;padding:8px 10px;color:#e5e7eb}
+
+  table{width:100%;border-collapse:separate;border-spacing:0 8px}
+  th,td{text-align:left;padding:10px}
+  th{font-size:12px;color:#93c5fd;border-bottom:1px solid #1f2937}
+  tr{background:#0b1220;border:1px solid #1f2937}
+  tr td{border-top:1px solid #1f2937;border-bottom:1px solid #1f2937}
+  tr td:first-child{border-left:1px solid #1f2937;border-top-left-radius:10px;border-bottom-left-radius:10px}
+  tr td:last-child{border-right:1px solid #1f2937;border-top-right-radius:10px;border-bottom-right-radius:10px}
+  .status{padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid #1f2937;display:inline-block}
+  .status.pending{background:#1f2937;color:#eab308}
+  .status.noncompliant{background:#3b1111;color:#fca5a5;border-color:#7f1d1d}
+  .status.compliant{background:#052e1a;color:#34d399;border-color:#14532d}
+  .status.encrypting{background:#1e3a8a;color:#93c5fd;border-color:#1e40af}
+  .status.error{background:#7f1d1d;color:#fca5a5;border-color:#991b1b}
+
+  /* Modals / wizard */
+  .modal{position:fixed;inset:0;background:rgba(2,6,23,.6);display:none;align-items:center;justify-content:center;padding:16px}
+  .modal.show{display:flex}
+  .sheet{background:#0b1220;border:1px solid #1f2937;border-radius:16px;box-shadow:var(--shadow);width:min(820px,95vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+  .sheet-header{padding:12px 14px;border-bottom:1px solid #1f2937;background:#0f172a;display:flex;justify-content:space-between;align-items:center}
+  .sheet-body{padding:14px;overflow:auto}
+  .sheet-footer{padding:12px 14px;border-top:1px solid #1f2937;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .steps{display:flex;gap:10px}
+  .step{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid #1f2937;background:#0f172a;color:#cbd5e1;opacity:.7}
+  .step.active{opacity:1;background:#12203f;color:#fff}
+
+  .radio-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .card{border:1px solid #1f2937;background:#0f172a;border-radius:12px;padding:12px}
+  .card h4{margin:0 0 6px 0}
+  .muted{color:#a1a1aa;font-size:12px}
+
+  .notice{background:#052e1a;border:1px solid #134e4a;color:#d1fae5;padding:8px 10px;border-radius:8px;font-size:13px}
+  .warning{background:#451a03;border:1px solid#713f12;color:#fed7aa;padding:8px 10px;border-radius:8px;font-size:13px}
+  .error-notice{background:#450a0a;border:1px solid#7f1d1d;color:#fecaca;padding:8px 10px;border-radius:8px;font-size:13px}
+
+  .toast{position:fixed;right:16px;bottom:16px;background:#0f172a;border:1px solid #1f2937;padding:10px 12px;border-radius:10px;box-shadow:var(--shadow);display:none}
+  .toast.show{display:block}
+
+  .badge{padding:2px 8px;border-radius:999px;border:1px solid #1f2937;background:#101827;font-size:11px;color:#93c5fd}
+  .kpi{display:flex;gap:8px;align-items:center}
+  .kpi strong{font-size:18px}
+
+  .done-banner{display:none;align-items:center;gap:10px;background:#052e1a;border:1px solid #134e4a;padding:10px;border-radius:12px;margin:10px 0}
+  .done-banner.show{display:flex}
+
+  .progress{width:100%;height:6px;background:#1f2937;border-radius:3px;overflow:hidden;margin:8px 0}
+  .progress-bar{height:100%;background:#60a5fa;transition:width 0.3s ease}
+
+  .device-hardware {display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0;}
+  .hardware-card {background: #0f172a; border: 1px solid #1f2937; border-radius: 8px; padding: 10px;}
+
+  @media (max-width: 980px){
+    .lab{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
+    .right{grid-template-columns:1fr}
+    .device-hardware {grid-template-columns: 1fr;}
+  }
+</style>
+</head>
+<body>
+  <div class="lab" role="application" aria-label="Intune compliance policy lab">
+    <header class="lab-header">
+      <div class="brand"><div class="logo" aria-hidden="true"></div><h1>Lab: Microsoft Intune – Require BitLocker via Compliance Policy</h1></div>
+      <div class="actions">
+        <button id="btn-reset" title="Reset the lab to the beginning">Reset</button>
+        <button id="btn-finish" title="Mark as complete (enabled when all tasks are done)" disabled>Finish Lab</button>
+      </div>
+    </header>
+
+    <aside class="left">
+      <section class="instructions scroll" id="instructions">
+        <h2>Instructions</h2>
+        <ol>
+          <li>In the <strong>Intune portal</strong> (right), go to <strong>Devices ▸ Compliance policies</strong>.</li>
+          <li>Select <strong>Create policy</strong>, choose <strong>Windows 10 and later</strong>.</li>
+          <li>Configure <strong>BitLocker settings</strong>: Require BitLocker, configure encryption method, and recovery options.</li>
+          <li>On <strong>Assignments</strong>, assign to <strong>All Intune Devices</strong>.</li>
+          <li><strong>Review + create</strong> then <strong>Create</strong>.</li>
+          <li>Trigger a device <strong>Sync</strong> and monitor the encryption progress.</li>
+          <li>Verify the device becomes <em>Compliant</em> under <strong>Devices ▸ Demo‑Laptop</strong> after encryption completes.</li>
+        </ol>
+        <p class="hint">Note: Real BitLocker deployment involves hardware checks, encryption time, and potential compatibility issues.</p>
+      </section>
+      <section class="tracker scroll" aria-live="polite">
+        <h3>Task Tracker</h3>
+        <div class="task"><span class="dot" id="t1"></span>Open <strong>Devices ▸ Compliance policies</strong></div>
+        <div class="task"><span class="dot" id="t2"></span>Create policy for <strong>Windows 10 and later</strong></div>
+        <div class="task"><span class="dot" id="t3"></span>Configure <strong>BitLocker settings</strong> properly</div>
+        <div class="task"><span class="dot" id="t4"></span>Assign to <strong>All Intune Devices</strong></div>
+        <div class="task"><span class="dot" id="t5"></span><strong>Create</strong> the policy</div>
+        <div class="task"><span class="dot" id="t6"></span>Sync device and monitor encryption</div>
+        <div class="task"><span class="dot" id="t7"></span>Verify device is <strong>Compliant</strong></div>
+        <div class="done-banner" id="doneBanner">✅ All steps complete. You can click <strong>Finish Lab</strong>.</div>
+      </section>
+    </aside>
+
+    <section class="right">
+      <!-- Left nav -->
+      <nav class="portal-nav" aria-label="Portal navigation">
+        <ul class="tree" id="nav">
+          <li class="section">Microsoft Intune</li>
+          <li data-key="dashboard">Dashboard</li>
+          <li data-key="devices" class="active">Devices</li>
+          <li class="child" data-key="all-devices">— All devices</li>
+          <li class="child" data-key="compliance">— Compliance policies</li>
+          <li class="child" data-key="monitor">— Monitor</li>
+          <li data-key="endpoint">Endpoint security</li>
+          <li data-key="apps">Apps</li>
+          <li data-key="reports">Reports</li>
+          <li data-key="tenant">Tenant administration</li>
+        </ul>
+      </nav>
+
+      <!-- Portal workspace -->
+      <section class="portal" aria-label="Portal workspace">
+        <div class="portal-header">
+          <div class="portal-title" id="portalTitle">Devices ▸ Compliance policies</div>
+          <div class="kpi"><span class="badge" id="syncBadge">Device sync: Idle</span><strong id="kpiState">Device: Noncompliant</strong></div>
+        </div>
+        <div class="content scroll" id="content">
+          <!-- Toolbar -->
+          <div class="toolbar" id="toolbar">
+            <div class="search">
+              <input aria-label="Search" placeholder="Search" id="searchInput" />
+              <button id="btn-search">Search</button>
+            </div>
+            <button id="btn-create">Create policy</button>
+            <button id="btn-sync">Sync</button>
+          </div>
+
+          <!-- Table / views area -->
+          <div id="viewArea"></div>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <!-- Create Policy Wizard Modal -->
+  <div class="modal" id="wizard">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="wizTitle">
+      <div class="sheet-header">
+        <div class="steps">
+          <span class="step" id="s1">Platform</span>
+          <span class="step" id="s2">Settings</span>
+          <span class="step" id="s3">Assignments</span>
+          <span class="step" id="s4">Review + create</span>
+        </div>
+        <button id="wizClose">✕</button>
+      </div>
+      <div class="sheet-body" id="wizBody"></div>
+      <div class="sheet-footer">
+        <div class="muted" id="wizHint">Choose the platform.</div>
+        <div>
+          <button id="wizBack" disabled>Back</button>
+          <button id="wizNext">Next</button>
+          <button id="wizCreate" style="display:none">Create</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Device Hardware Modal -->
+  <div class="modal" id="hardwareModal">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hwTitle">
+      <div class="sheet-header">
+        <h3 id="hwTitle">Device Hardware Configuration</h3>
+        <button id="hwClose">✕</button>
+      </div>
+      <div class="sheet-body">
+        <div class="device-hardware">
+          <div class="hardware-card">
+            <h4>TPM Status</h4>
+            <select id="tpmStatus">
+              <option value="2.0">TPM 2.0 (Recommended)</option>
+              <option value="1.2">TPM 1.2 (Limited)</option>
+              <option value="none">No TPM</option>
+            </select>
+          </div>
+          <div class="hardware-card">
+            <h4>Drive Configuration</h4>
+            <select id="driveType">
+              <option value="fixed">Fixed Internal Drive</option>
+              <option value="removable">Removable Drive</option>
+              <option value="both">Both Fixed & Removable</option>
+            </select>
+          </div>
+          <div class="hardware-card">
+            <h4>OS Drive Encryption</h4>
+            <select id="encryptionStatus">
+              <option value="unenrypted">Not Encrypted</option>
+              <option value="encrypted">Already Encrypted</option>
+              <option value="partial">Partially Encrypted</option>
+            </select>
+          </div>
+          <div class="hardware-card">
+            <h4>UEFI/Secure Boot</h4>
+            <select id="bootType">
+              <option value="uefi">UEFI with Secure Boot</option>
+              <option value="legacy">Legacy BIOS</option>
+            </select>
+          </div>
+        </div>
+        <div class="warning">
+          <strong>Note:</strong> Changing these settings simulates different hardware scenarios that affect BitLocker deployment.
+        </div>
+      </div>
+      <div class="sheet-footer">
+        <button id="hwApply">Apply Hardware Configuration</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const qs = s=>document.querySelector(s), qsa = s=>Array.from(document.querySelectorAll(s));
+  const state = {
+    view:'compliance',
+    tasks:{t1:false,t2:false,t3:false,t4:false,t5:false,t6:false,t7:false},
+    wizardStep:1,
+    platform:null,
+    bitlockerRequired:false,
+    encryptionMethod:'aes128',
+    recoveryBackup:true,
+    assigned:false,
+    policyCreated:false,
+    deviceCompliant:false,
+    encryptionProgress:0,
+    encryptionState:'not_started', // not_started, encrypting, encrypted, error
+    deviceHardware: {
+      tpm: '2.0',
+      driveType: 'fixed',
+      encryptionStatus: 'unenrypted',
+      bootType: 'uefi'
+    },
+    syncInProgress: false
+  };
+
+  // Helpers
+  function setTitle(){
+    const map={
+      'dashboard':'Dashboard',
+      'all-devices':'Devices ▸ All devices',
+      'compliance':'Devices ▸ Compliance policies',
+      'monitor':'Devices ▸ Monitor',
+      'device':'Devices ▸ Demo‑Laptop'
+    };
+    qs('#portalTitle').textContent = map[state.view] || 'Portal';
+  }
+  function toast(msg, type='info'){
+    const t=qs('#toast'); 
+    t.textContent=msg; 
+    t.className='toast';
+    if(type === 'error') t.style.background = '#450a0a';
+    else if(type === 'warning') t.style.background = '#451a03';
+    else if(type === 'success') t.style.background = '#052e1a';
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1800);
+  }
+  function mark(id, status='done'){
+    if(!state.tasks[id]){ 
+      state.tasks[id]=true; 
+      const dot = qs('#'+id);
+      dot.classList.remove('done','warn','error');
+      dot.classList.add(status);
+      
+      const allDone = Object.values(state.tasks).every(Boolean);
+      if(allDone){ qs('#doneBanner').classList.add('show'); qs('#btn-finish').disabled=false; }
+    }
+  }
+  function resetTracker(){
+    Object.keys(state.tasks).forEach(k=>{ state.tasks[k]=false; const el=qs('#'+k); el.classList.remove('done','warn','error'); });
+    qs('#doneBanner').classList.remove('show');
+    qs('#btn-finish').disabled=true;
+  }
+
+  // NAV
+  qs('#nav').addEventListener('click',e=>{
+    const li = e.target.closest('li[data-key]'); if(!li) return; qsa('#nav li').forEach(n=>n.classList.remove('active')); li.classList.add('active');
+    const key=li.getAttribute('data-key');
+    if(key==='compliance'){ state.view='compliance'; setTitle(); renderComplianceList(); mark('t1'); }
+    else if(key==='all-devices'){ state.view='all-devices'; setTitle(); renderDevicesList(); }
+    else if(key==='monitor'){ state.view='monitor'; setTitle(); renderMonitor(); }
+    else { state.view=key; setTitle(); renderPlaceholder(); }
+  });
+
+  function renderPlaceholder(){ qs('#viewArea').innerHTML = '<div class="notice">Section not simulated in this lab.</div>'; }
+
+  // Views
+  function renderComplianceList(){
+    const area=qs('#viewArea');
+    area.innerHTML = `
+      <table aria-label="Compliance policies">
+        <thead><tr><th>Name</th><th>Platform</th><th>Assignments</th><th>Status</th><th>BitLocker Settings</th></tr></thead>
+        <tbody id="polTbl">
+          ${state.policyCreated? `
+          <tr>
+            <td>Baseline – BitLocker required</td>
+            <td>Windows 10 and later</td>
+            <td>All Intune Devices</td>
+            <td><span class="status ${state.deviceCompliant?'compliant':'pending'}">${state.deviceCompliant?'Active':'Pending'}</span></td>
+            <td>Encryption: ${state.encryptionMethod.toUpperCase()}, Recovery: ${state.recoveryBackup?'Backed up':'Not configured'}</td>
+          </tr>`:''}
+        </tbody>
+      </table>
+      <div class="notice" style="margin-top:10px">Use <strong>Create policy</strong> to define compliance requirements.</div>
+    `;
+    bindToolbar();
+  }
+
+  function renderDevicesList(){
+    const area=qs('#viewArea');
+    area.innerHTML = `
+      <table><thead><tr><th>Name</th><th>Primary user</th><th>Compliance</th><th>Encryption Status</th><th>OS</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><a href="#" id="linkDevice">Demo‑Laptop</a></td>
+          <td>John Doe</td>
+          <td>${statusBadge()}</td>
+          <td>${encryptionStatusBadge()}</td>
+          <td>Windows 11</td>
+        </tr>
+      </tbody></table>
+      <div class="toolbar" style="margin-top:12px">
+        <button id="btnHardware">Configure Device Hardware</button>
+      </div>
+    `;
+    qs('#linkDevice').onclick = (e)=>{ e.preventDefault(); renderDeviceDetail(); };
+    qs('#btnHardware').onclick = openHardwareModal;
+  }
+  
+  function statusBadge(){
+    if(state.deviceCompliant) return '<span class="status compliant">Compliant</span>';
+    if(state.encryptionState === 'encrypting') return '<span class="status encrypting">Encrypting...</span>';
+    if(state.encryptionState === 'error') return '<span class="status error">Error</span>';
+    return '<span class="status noncompliant">Noncompliant</span>';
+  }
+  
+  function encryptionStatusBadge(){
+    switch(state.encryptionState) {
+      case 'encrypted': return '<span class="status compliant">Encrypted</span>';
+      case 'encrypting': return `<span class="status encrypting">Encrypting (${state.encryptionProgress}%)</span>`;
+      case 'error': return '<span class="status error">Encryption Failed</span>';
+      default: return '<span class="status noncompliant">Not Encrypted</span>';
+    }
+  }
+  
+  function renderDeviceDetail(){
+    state.view='device'; setTitle();
+    const area=qs('#viewArea');
+    const hardwareInfo = `
+      <div class="device-hardware">
+        <div class="hardware-card">
+          <strong>TPM:</strong> ${state.deviceHardware.tpm === 'none' ? 'Not Available' : `TPM ${state.deviceHardware.tpm}`}
+        </div>
+        <div class="hardware-card">
+          <strong>Drive Type:</strong> ${state.deviceHardware.driveType}
+        </div>
+        <div class="hardware-card">
+          <strong>Boot:</strong> ${state.deviceHardware.bootType === 'uefi' ? 'UEFI' : 'Legacy BIOS'}
+        </div>
+        <div class="hardware-card">
+          <strong>Current State:</strong> ${state.deviceHardware.encryptionStatus}
+        </div>
+      </div>
+    `;
+    
+    area.innerHTML = `
+      <div class="toolbar">
+        <span class="badge">Device: Demo‑Laptop</span>
+        <button id="btnCheckCompliance">Check compliance</button>
+        <button id="btnSyncDevice" ${state.syncInProgress ? 'disabled' : ''}>Sync</button>
+        <button id="btnHardwareDetail">Configure Hardware</button>
+      </div>
+      ${hardwareInfo}
+      ${state.encryptionState === 'encrypting' ? `
+        <div class="warning">
+          <strong>BitLocker Encryption in Progress</strong>
+          <div class="progress">
+            <div class="progress-bar" style="width: ${state.encryptionProgress}%"></div>
+          </div>
+          <div>This can take 30+ minutes for large drives. Do not interrupt power.</div>
+        </div>
+      ` : ''}
+      ${state.encryptionState === 'error' ? `
+        <div class="error-notice">
+          <strong>BitLocker Encryption Failed</strong>
+          <div>Possible causes: No TPM available, insufficient disk space, or hardware incompatibility.</div>
+        </div>
+      ` : ''}
+      <table><thead><tr><th>Setting</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>BitLocker Status</td><td>${getBitLockerStatusText()}</td></tr>
+          <tr><td>Compliance state</td><td>${statusBadge()}</td></tr>
+          <tr><td>Policy Applied</td><td>${state.policyCreated ? 'Yes' : 'No'}</td></tr>
+          <tr><td>Last Sync</td><td>${new Date().toLocaleTimeString()}</td></tr>
+        </tbody>
+      </table>
+      <div class="notice">Use <strong>Sync</strong> after creating the policy to evaluate compliance.</div>
+    `;
+    qs('#btnCheckCompliance').onclick = ()=> toast('Evaluation complete', 'info');
+    qs('#btnSyncDevice').onclick = ()=> simulateSync('device');
+    qs('#btnHardwareDetail').onclick = openHardwareModal;
+  }
+  
+  function getBitLockerStatusText() {
+    switch(state.encryptionState) {
+      case 'encrypted': return 'Enabled (meets policy)';
+      case 'encrypting': return `Encrypting... ${state.encryptionProgress}% complete`;
+      case 'error': return 'Failed - check hardware compatibility';
+      default: return 'Disabled (policy required)';
+    }
+  }
+  
+  function renderMonitor(){ 
+    qs('#viewArea').innerHTML = `
+      <div class="card">
+        <h4>Compliance Overview</h4>
+        <p>Devices compliant: ${state.deviceCompliant ? '1/1' : '0/1'}</p>
+        <p>Encryption status: ${state.encryptionState === 'encrypted' ? 'Fully Encrypted' : 'Not Encrypted'}</p>
+      </div>
+      <div class="notice">Monitor compliance trends here (simulation).</div>
+    `; 
+  }
+
+  function bindToolbar(){
+    qs('#btn-create').onclick = openWizard;
+    qs('#btn-sync').onclick = ()=> simulateSync('global');
+  }
+
+  // Hardware Configuration
+  function openHardwareModal() {
+    qs('#hardwareModal').classList.add('show');
+    qs('#tpmStatus').value = state.deviceHardware.tpm;
+    qs('#driveType').value = state.deviceHardware.driveType;
+    qs('#encryptionStatus').value = state.deviceHardware.encryptionStatus;
+    qs('#bootType').value = state.deviceHardware.bootType;
+  }
+  
+  function closeHardwareModal() {
+    qs('#hardwareModal').classList.remove('show');
+  }
+  
+  qs('#hwClose').onclick = closeHardwareModal;
+  qs('#hwApply').onclick = () => {
+    state.deviceHardware = {
+      tpm: qs('#tpmStatus').value,
+      driveType: qs('#driveType').value,
+      encryptionStatus: qs('#encryptionStatus').value,
+      bootType: qs('#bootType').value
+    };
+    
+    // Reset encryption state when hardware changes
+    if(state.encryptionState === 'encrypting') {
+      state.encryptionState = 'not_started';
+      state.encryptionProgress = 0;
+    }
+    
+    closeHardwareModal();
+    renderCurrentView();
+    toast('Hardware configuration updated', 'info');
+  };
+
+  // Wizard
+  function openWizard(){
+    qs('#wizard').classList.add('show');
+    state.wizardStep=1; state.platform=null; state.bitlockerRequired=false; state.assigned=false;
+    renderWizard(); mark('t2');
+  }
+  function closeWizard(){ qs('#wizard').classList.remove('show'); }
+  qs('#wizClose').onclick = closeWizard;
+  qs('#wizBack').onclick = ()=>{ if(state.wizardStep>1){ state.wizardStep--; renderWizard(); } };
+  qs('#wizNext').onclick = ()=>{
+    if(state.wizardStep===1 && state.platform!=='win10'){ toast('Choose "Windows 10 and later"', 'warning'); return; }
+    if(state.wizardStep===2 && !state.bitlockerRequired){ toast('Set BitLocker to Required', 'warning'); return; }
+    if(state.wizardStep===3 && !state.assigned){ toast('Assign to a device group', 'warning'); return; }
+    state.wizardStep++; renderWizard();
+  };
+  qs('#wizCreate').onclick = ()=>{
+    state.policyCreated=true; 
+    renderComplianceList(); 
+    closeWizard(); 
+    mark('t5'); 
+    toast('Policy created successfully', 'success');
+  };
+
+  function renderWizard(){
+    qsa('.step').forEach((el,i)=>{ el.classList.toggle('active', i===state.wizardStep-1); });
+    const body=qs('#wizBody'); const hint=qs('#wizHint');
+    qs('#wizBack').disabled = state.wizardStep===1;
+    qs('#wizNext').style.display = state.wizardStep<4? 'inline-block':'none';
+    qs('#wizCreate').style.display = state.wizardStep===4? 'inline-block':'none';
+
+    if(state.wizardStep===1){
+      body.innerHTML = `
+        <h3 id="wizTitle">Choose platform</h3>
+        <div class="radio-grid">
+          <label class="card"><input type="radio" name="platform" value="win10" ${state.platform==='win10'?'checked':''}/> <h4>Windows 10 and later</h4>
+            <div class="muted">Most common platform for this policy.</div>
+          </label>
+          <label class="card"><input type="radio" name="platform" value="mac" ${state.platform==='mac'?'checked':''}/> <h4>macOS</h4>
+            <div class="muted">Not used in this lab.</div>
+          </label>
+        </div>`;
+      qsa('input[name=platform]').forEach(r=>r.onchange = (e)=>{ state.platform=e.target.value; });
+      hint.textContent = 'Pick Windows 10 and later.';
+    }
+    if(state.wizardStep===2){
+      body.innerHTML = `
+        <h3>Compliance settings</h3>
+        <div class="warning">
+          <strong>Note:</strong> BitLocker requires compatible hardware (TPM, UEFI) and sufficient time for encryption.
+        </div>
+        <table><thead><tr><th>Setting</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Require BitLocker</td>
+            <td>
+              <select id="selBit">
+                <option value="notset">Not configured</option>
+                <option value="required" ${state.bitlockerRequired?'selected':''}>Required</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>Encryption Method</td>
+            <td>
+              <select id="selEncMethod">
+                <option value="aes128">AES 128-bit</option>
+                <option value="aes256">AES 256-bit</option>
+                <option value="xts_aes128">XTS-AES 128-bit</option>
+                <option value="xts_aes256">XTS-AES 256-bit</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>Recovery Key Backup</td>
+            <td>
+              <select id="selRecovery">
+                <option value="true">Backup to Azure AD</option>
+                <option value="false">Do not backup</option>
+              </select>
+            </td>
+          </tr>
+        </tbody></table>
+        <div class="muted" style="margin-top:8px">
+          <strong>Hardware Requirements:</strong> TPM 1.2 or 2.0, UEFI firmware recommended, sufficient disk space.
+        </div>
+      `;
+      qs('#selBit').onchange = (e)=>{ state.bitlockerRequired = (e.target.value==='required'); if(state.bitlockerRequired) mark('t3'); };
+      qs('#selEncMethod').value = state.encryptionMethod;
+      qs('#selEncMethod').onchange = (e)=>{ state.encryptionMethod = e.target.value; };
+      qs('#selRecovery').value = state.recoveryBackup.toString();
+      qs('#selRecovery').onchange = (e)=>{ state.recoveryBackup = (e.target.value==='true'); };
+      hint.textContent = 'Configure BitLocker settings appropriately.';
+    }
+    if(state.wizardStep===3){
+      body.innerHTML = `
+        <h3>Assignments</h3>
+        <table><thead><tr><th>Group</th><th>Type</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr id="rowAllDevices"><td>All Intune Devices</td><td>Device</td><td><button class="btn">Assign</button></td></tr>
+          <tr><td>Windows Devices</td><td>Device</td><td><button class="btn">Assign</button></td></tr>
+        </tbody></table>
+        <div class="muted" style="margin-top:8px">Select which devices should receive this compliance policy.</div>
+      `;
+      qs('#rowAllDevices button').onclick = ()=>{ state.assigned=true; mark('t4'); toast('Assigned to All Intune Devices', 'success'); };
+      hint.textContent = 'Assign to All Intune Devices.';
+    }
+    if(state.wizardStep===4){
+      body.innerHTML = `
+        <h3>Review + create</h3>
+        <div class="card">
+          <p><strong>Policy:</strong> Baseline – BitLocker required</p>
+          <p><strong>Platform:</strong> Windows 10 and later</p>
+          <p><strong>BitLocker:</strong> Required (${state.encryptionMethod.toUpperCase()})</p>
+          <p><strong>Recovery:</strong> ${state.recoveryBackup ? 'Backup to Azure AD' : 'Not configured'}</p>
+          <p><strong>Assignments:</strong> All Intune Devices</p>
+        </div>
+        <div class="notice" style="margin-top:10px">
+          After creation, devices will evaluate compliance on next sync. BitLocker encryption may take 30+ minutes.
+        </div>
+        <div class="warning">
+          <strong>Important:</strong> Verify device hardware compatibility (TPM, UEFI) before deployment.
+        </div>
+      `;
+      hint.textContent = 'Create the policy.';
+    }
+  }
+
+  // Sync simulation – now includes hardware checks and progressive encryption
+  function simulateSync(scope){
+    if(state.syncInProgress) return;
+    
+    state.syncInProgress = true;
+    qs('#syncBadge').textContent = 'Device sync: Running…';
+    toast('Sync started - evaluating compliance', 'info');
+    
+    setTimeout(()=>{
+      qs('#syncBadge').textContent = 'Device sync: Idle';
+      state.syncInProgress = false;
+      
+      if(state.policyCreated && state.bitlockerRequired){
+        // Check hardware compatibility
+        const canEncrypt = checkHardwareCompatibility();
+        
+        if(canEncrypt && state.encryptionState !== 'encrypted') {
+          startEncryptionProcess();
+          mark('t6');
+        } else if(!canEncrypt) {
+          state.encryptionState = 'error';
+          toast('BitLocker cannot be enabled - hardware incompatible', 'error');
+          mark('t6', 'error');
+        }
+        
+        renderCurrentView();
+      }
+    }, 1500);
+  }
+
+  function checkHardwareCompatibility() {
+    // Real BitLocker requires TPM for automatic encryption
+    if(state.deviceHardware.tpm === 'none') {
+      toast('No TPM detected - user intervention required', 'warning');
+      return false;
+    }
+    
+    // UEFI is recommended but not strictly required
+    if(state.deviceHardware.bootType !== 'uefi') {
+      toast('Legacy BIOS detected - some features limited', 'warning');
+    }
+    
+    return true;
+  }
+
+  function startEncryptionProcess() {
+    if(state.encryptionState === 'encrypting' || state.encryptionState === 'encrypted') return;
+    
+    state.encryptionState = 'encrypting';
+    state.encryptionProgress = 0;
+    toast('BitLocker encryption started - this will take several minutes', 'info');
+    
+    // Simulate progressive encryption (like real BitLocker)
+    const encryptionInterval = setInterval(() => {
+      state.encryptionProgress += Math.random() * 15;
+      
+      if(state.encryptionProgress >= 100) {
+        state.encryptionProgress = 100;
+        state.encryptionState = 'encrypted';
+        state.deviceCompliant = true;
+        qs('#kpiState').textContent = 'Device: Compliant';
+        clearInterval(encryptionInterval);
+        toast('BitLocker encryption completed successfully', 'success');
+        mark('t7');
+      }
+      
+      renderCurrentView();
+    }, 800);
+  }
+
+  function renderCurrentView(){
+    if(state.view==='compliance') renderComplianceList();
+    else if(state.view==='all-devices') renderDevicesList();
+    else if(state.view==='device') renderDeviceDetail();
+    else renderPlaceholder();
+  }
+
+  // Buttons
+  qs('#btn-reset').onclick = ()=>{
+    Object.assign(state,{
+      view:'compliance',
+      tasks:{t1:false,t2:false,t3:false,t4:false,t5:false,t6:false,t7:false},
+      wizardStep:1,
+      platform:null,
+      bitlockerRequired:false,
+      encryptionMethod:'aes128',
+      recoveryBackup:true,
+      assigned:false,
+      policyCreated:false,
+      deviceCompliant:false,
+      encryptionProgress:0,
+      encryptionState:'not_started',
+      deviceHardware: {tpm: '2.0', driveType: 'fixed', encryptionStatus: 'unenrypted', bootType: 'uefi'},
+      syncInProgress: false
+    });
+    resetTracker();
+    qsa('#nav li').forEach(n=>n.classList.remove('active')); 
+    qsa('#nav li[data-key="devices"], #nav li[data-key="compliance"]').forEach(n=>n.classList.add('active'));
+    setTitle(); renderComplianceList();
+    qs('#kpiState').textContent = 'Device: Noncompliant';
+    toast('Lab reset to initial state', 'info');
+  };
+  qs('#btn-finish').onclick = ()=>{ toast('Great job! Lab complete.', 'success'); };
+
+  // Init
+  setTitle(); renderComplianceList(); bindToolbar();
+})();
+</script>
+</body>
+</html>
