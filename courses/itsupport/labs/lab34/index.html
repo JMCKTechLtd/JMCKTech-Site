@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 34: Okta Verify Enrollment</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 40px 20px;
+      gap: 40px;
+    }
+
+    .lab-container {
+      display: flex;
+      gap: 40px;
+      max-width: 1200px;
+      width: 100%;
+      align-items: flex-start;
+    }
+
+    .phone-container {
+      width: 360px;
+      height: 700px;
+      background-color: #000;
+      border-radius: 40px;
+      padding: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background-color: #fff;
+      border-radius: 32px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Persistent Lab Controls */
+    .control-bar {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 2000;
+      display: flex;
+      gap: 10px;
+    }
+    .ctrl-btn {
+      background-color: #0b5bb3;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: transform 0.05s ease, background-color 0.2s ease;
+    }
+    .ctrl-btn:hover { background-color: #0a4a91; }
+    .ctrl-btn:active { transform: translateY(1px); }
+
+    .instructions-panel {
+      flex: 1;
+      max-width: 400px;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      height: fit-content;
+      position: sticky;
+      top: 40px;
+    }
+
+    .instructions-header {
+      font-size: 24px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #007dc1;
+      padding-bottom: 10px;
+    }
+
+    .step-instructions { display: none; }
+    .step-instructions.active { display: block; animation: fadeIn 0.3s ease; }
+
+    .step-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #007dc1;
+      margin-bottom: 15px;
+    }
+
+    .step-description {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    .step-list { list-style: none; padding: 0; }
+    .step-list li {
+      padding: 8px 0;
+      border-left: 3px solid #e9ecef;
+      padding-left: 15px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #555;
+    }
+    .step-list li.current {
+      border-left-color: #007dc1;
+      background: #f8f9ff;
+      font-weight: 500;
+      color: #007dc1;
+    }
+
+    .tips-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+    .tips-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 10px; }
+    .tip {
+      background: #f8f9ff;
+      border-left: 3px solid #007dc1;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #555;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .status-bar {
+      height: 44px;
+      background-color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #000;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .content { flex: 1; overflow: hidden; position: relative; }
+
+    .screen {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .screen.active { opacity: 1; pointer-events: all; }
+
+    .okta-logo {
+      width: 80px; height: 80px;
+      background-color: #007dc1;
+      border-radius: 16px;
+      margin: 40px auto 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    h1 { text-align: center; font-size: 22px; margin-bottom: 16px; color: #333; }
+    p { text-align: center; color: #666; margin-bottom: 30px; line-height: 1.5; }
+
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-weight: 500; color: #333; }
+    input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    input.error { border-color: #d93934; }
+
+    .error-message {
+      color: #d93934;
+      font-size: 14px;
+      margin-top: 8px;
+      display: none;
+    }
+    .error-message.show { display: block; }
+
+    .button {
+      background-color: #007dc1;
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      text-align: center;
+      transition: background-color 0.2s;
+    }
+    .button:hover { background-color: #0069a7; }
+    .button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+    .qr-container {
+      width: 200px; height: 200px;
+      margin: 30px auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .scan-animation {
+      position: absolute;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(to right, transparent, #007dc1, transparent);
+      top: 0;
+      animation: scan 2s infinite;
+      opacity: 1;
+    }
+    @keyframes scan {
+      0% { top: 0; }
+      50% { top: calc(100% - 4px); }
+      100% { top: 0; }
+    }
+
+    .success-check {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background-color: #00a86b;
+      margin: 40px auto 20px;
+      display: flex; justify-content: center; align-items: center;
+      color: white; font-size: 40px;
+    }
+
+    .success-details {
+      max-width: 280px;
+      margin: 0 auto;
+      background: #f8f9ff;
+      border: 1px solid #e0e7ff;
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: #1e293b;
+      font-size: 14px;
+    }
+    .success-details .row { display: flex; justify-content: space-between; margin: 6px 0; }
+    .success-details .label { color: #475569; font-weight: 600; margin-right: 8px; }
+    .success-details .value { color: #0f172a; font-weight: 600; }
+
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    .step { width: 8px; height: 8px; border-radius: 50%; background-color: #ddd; margin: 0 4px; }
+    .step.active { background-color: #007dc1; }
+
+    /* QR Scanning Animation Overlay */
+    .scanning-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(255, 255, 255, 0.95);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 1000;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    .scanning-overlay.active { opacity: 1; pointer-events: all; }
+    .scanner-container {
+      width: 320px; height: 400px;
+      background-color: #fff; border-radius: 20px; padding: 30px;
+      display: flex; flex-direction: column; align-items: center;
+      position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      border: 1px solid #ddd;
+    }
+    .scanner-frame { width: 220px; height: 220px; border: 3px solid #007dc1; border-radius: 16px; position: relative; overflow: hidden; background: #fff; }
+    .realistic-qr { width: 100%; height: 100%; background: #fff; position: relative; }
+    .realistic-qr::before {
+      content: '';
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-image:
+        radial-gradient(circle at 15% 15%, #000 0%, #000 5%, #fff 5%, #fff 8%, #000 8%, #000 15%, transparent 15%),
+        radial-gradient(circle at 85% 15%, #000 0%, #000 5%, #fff 5%, #fff 8%, #000 8%, #000 15%, transparent 15%),
+        radial-gradient(circle at 15% 85%, #000 0%, #000 5%, #fff 5%, #fff 8%, #000 8%, #000 15%, transparent 15%),
+        radial-gradient(circle at 50% 50%, #000 0%, #000 3%, #fff 3%, #fff 5%, #000 5%, #000 8%, transparent 8%),
+        repeating-linear-gradient(0deg, #000 0px, #000 3px, #fff 3px, #fff 6px, #000 6px, #000 9px, #fff 9px, #fff 12px),
+        repeating-linear-gradient(90deg, #000 0px, #000 3px, #fff 3px, #fff 6px, #000 6px, #000 9px, #fff 9px, #fff 12px),
+        radial-gradient(circle at 25% 35%, #000 0%, #000 1.5px, transparent 1.5px),
+        radial-gradient(circle at 75% 25%, #000 0%, #000 1.5px, transparent 1.5px),
+        radial-gradient(circle at 35% 65%, #000 0%, #000 1.5px, transparent 1.5px),
+        radial-gradient(circle at 65% 75%, #000 0%, #000 1.5px, transparent 1.5px),
+        radial-gradient(circle at 45% 35%, #000 0%, #000 1.5px, transparent 1.5px),
+        radial-gradient(circle at 55% 55%, #000 0%, #000 1.5px, transparent 1.5px),
+        radial-gradient(circle at 25% 75%, #000 0%, #000 1.5px, transparent 1.5px),
+        radial-gradient(circle at 75% 45%, #000 0%, #000 1.5px, transparent 1.5px),
+        radial-gradient(circle at 30% 45%, #000 0%, #000 1.5px, transparent 1.5px),
+        radial-gradient(circle at 70% 65%, #000 0%, #000 1.5px, transparent 1.5px),
+        radial-gradient(circle at 40% 25%, #000 0%, #000 1.5px, transparent 1.5px),
+        radial-gradient(circle at 60% 85%, #000 0%, #000 1.5px, transparent 1.5px);
+      background-size:
+        100% 100%, 100% 100%, 100% 100%, 100% 100%,
+        12px 100%, 100% 12px,
+        100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%,
+        100% 100%, 100% 100%, 100% 100%, 100% 100%;
+    }
+    .scanner-line {
+      position: absolute; width: 100%; height: 4px;
+      background: linear-gradient(to right, transparent, #007dc1, transparent);
+      top: 0; animation: scanning 2s ease-in-out infinite;
+    }
+    .scanner-text { color: #333; margin-top: 25px; font-size: 18px; text-align: center; font-weight: 600; }
+    .scanner-dots { display: flex; margin-top: 15px; }
+    .scanner-dot { width: 8px; height: 8px; background-color: #007dc1; border-radius: 50%; margin: 0 4px; animation: pulse 1.5s infinite; }
+    .scanner-dot:nth-child(2) { animation-delay: 0.5s; }
+    .scanner-dot:nth-child(3) { animation-delay: 1s; }
+    @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* NEW: Enhanced authentication styles */
+    .loading-spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #007dc1;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+    .button.loading .loading-spinner { display: inline-block; }
+
+    .mfa-options {
+      margin: 20px 0;
+      border: 1px solid #e0e7ff;
+      border-radius: 8px;
+      padding: 15px;
+      background: #f8f9ff;
+    }
+    .mfa-option {
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mfa-option:hover {
+      border-color: #007dc1;
+      background: #f0f7ff;
+    }
+    .mfa-option.selected {
+      border-color: #007dc1;
+      background: #e6f3ff;
+    }
+
+    .push-notification {
+      background: #f8f9ff;
+      border: 1px solid #e0e7ff;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .push-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 20px 10px; }
+      .lab-container { flex-direction: column; gap: 20px; align-items: center; }
+      .instructions-panel { position: relative; top: auto; max-width: 100%; width: 100%; }
+    }
+
+    /* Close-lab fallback modal */
+    #close-modal {
+      position: fixed; inset: 0;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.5); z-index: 3000;
+    }
+    #close-modal.show { display: flex; }
+    #close-modal .cm-panel {
+      width: 360px; max-width: 90vw; background: #fff; border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.2); padding: 22px;
+    }
+    #close-modal h2 { margin-bottom: 10px; font-size: 18px; color: #0f172a; }
+    #close-modal p { margin: 6px 0 10px; text-align: left; color: #475569; }
+    #close-modal ul { margin-left: 18px; color: #334155; }
+    #close-modal .actions { display:flex; justify-content:flex-end; margin-top:14px; }
+    #close-modal .actions .button { padding: 10px 14px; }
+  </style>
+</head>
+<body>
+  <!-- Persistent Lab Controls -->
+  <div class="control-bar" aria-label="Lab controls">
+    <button class="ctrl-btn" id="resetLabBtn" title="Reset Lab">Reset Lab</button>
+    <button class="ctrl-btn" id="closeLabBtn" title="Close Lab">Close Lab</button>
+  </div>
+
+  <!-- Close-lab fallback modal -->
+  <div id="close-modal" role="dialog" aria-modal="true" aria-labelledby="closeTitle">
+    <div class="cm-panel">
+      <h2 id="closeTitle">Close this lab</h2>
+      <p>Your browser blocked automatic closing of this tab.</p>
+      <p>Quick ways to close:</p>
+      <ul>
+        <li><strong>Windows/Linux:</strong> Ctrl + W</li>
+        <li><strong>Mac:</strong> ⌘ + W</li>
+      </ul>
+      <div class="actions">
+        <button class="button" id="cmOk">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Scanning Animation Overlay -->
+  <div class="scanning-overlay" id="scanning-overlay">
+    <div class="scanner-container">
+      <div class="scanner-frame">
+        <div class="realistic-qr"></div>
+        <div class="scanner-line"></div>
+      </div>
+      <div class="scanner-text">Scanning QR Code</div>
+      <div class="scanner-dots"><div class="scanner-dot"></div><div class="scanner-dot"></div><div class="scanner-dot"></div></div>
+    </div>
+  </div>
+
+  <div class="lab-container">
+    <div class="phone-container">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span>Okta Verify</span>
+          <span>🔋 100%</span>
+        </div>
+        <div class="content">
+          <!-- Step 1: Welcome Screen -->
+          <div class="screen active" id="welcome-screen">
+            <div class="okta-logo">OKTA</div>
+            <h1>Welcome to Okta Verify</h1>
+            <p>Okta Verify adds an extra layer of security to your account and enables secure access to applications.</p>
+            <div class="button" id="get-started-btn">Get Started</div>
+          </div>
+
+          <!-- Step 2: Domain Entry -->
+          <div class="screen" id="domain-screen">
+            <div class="step-indicator">
+              <div class="step active"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+            </div>
+            <h1>Enter your Okta domain</h1>
+            <p>This is usually your company's name followed by .okta.com</p>
+            <div class="form-group">
+              <label for="domain-input">Okta domain</label>
+              <input type="text" id="domain-input" placeholder="e.g., blockshell.app.okta.com">
+              <div class="error-message" id="domain-error">Please enter a valid Okta domain (must end with .okta.com)</div>
+            </div>
+            <div class="button" id="domain-continue-btn">
+              <span class="loading-spinner"></span>
+              Continue
+            </div>
+          </div>
+
+          <!-- Step 3: Credentials -->
+          <div class="screen" id="credentials-screen">
+            <div class="step-indicator">
+              <div class="step"></div>
+              <div class="step active"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+            </div>
+            <h1>Sign in to your account</h1>
+            <p>Enter your credentials to set up Okta Verify</p>
+            <div class="form-group">
+              <label for="username-input">Username</label>
+              <input type="text" id="username-input" placeholder="testuser or testuser@blockshell.app">
+            </div>
+            <div class="form-group">
+              <label for="password-input">Password</label>
+              <input type="password" id="password-input" placeholder="Enter your password">
+              <div class="error-message" id="credentials-error">
+                Invalid username or password. Use <strong>testuser</strong> or <strong>testuser@blockshell.app</strong> with <strong>Password123</strong>.
+              </div>
+            </div>
+            <div class="button" id="sign-in-btn">
+              <span class="loading-spinner"></span>
+              Sign In
+            </div>
+          </div>
+
+          <!-- NEW: MFA Challenge Screen -->
+          <div class="screen" id="mfa-challenge-screen">
+            <div class="step-indicator">
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step active"></div>
+              <div class="step"></div>
+            </div>
+            <h1>Additional Verification Required</h1>
+            <p>Choose your verification method:</p>
+            
+            <div class="mfa-options">
+              <div class="mfa-option selected" data-method="push">
+                <strong>Send Push Notification</strong>
+                <div style="font-size: 12px; color: #666; margin-top: 4px;">Send a push to your registered device</div>
+              </div>
+              <div class="mfa-option" data-method="sms">
+                <strong>Send SMS Code</strong>
+                <div style="font-size: 12px; color: #666; margin-top: 4px;">Send a code via SMS to ***-***-1234</div>
+              </div>
+              <div class="mfa-option" data-method="totp">
+                <strong>Enter Code Manually</strong>
+                <div style="font-size: 12px; color: #666; margin-top: 4px;">Use authenticator app code</div>
+              </div>
+            </div>
+
+            <div class="push-notification" id="push-notification">
+              <div class="push-icon">📱</div>
+              <h3>Push Sent to Your Device</h3>
+              <p>Check your mobile device for a verification request</p>
+              <div class="button" id="approve-push-btn">Approve on Device</div>
+            </div>
+
+            <div class="form-group" id="sms-code-group" style="display: none;">
+              <label for="sms-code-input">Enter SMS Code</label>
+              <input type="text" id="sms-code-input" placeholder="Enter 6-digit code" maxlength="6">
+              <div class="error-message" id="sms-error">Invalid code. Try 123456.</div>
+            </div>
+
+            <div class="form-group" id="totp-code-group" style="display: none;">
+              <label for="totp-code-input">Enter Authenticator Code</label>
+              <input type="text" id="totp-code-input" placeholder="Enter 6-digit code" maxlength="6">
+              <div class="error-message" id="totp-error">Invalid code. Try 654321.</div>
+            </div>
+
+            <div class="button" id="verify-mfa-btn">Verify</div>
+          </div>
+
+          <!-- Step 4: QR Code -->
+          <div class="screen" id="qr-screen">
+            <div class="step-indicator">
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step active"></div>
+            </div>
+            <h1>Set up Okta Verify</h1>
+            <p>Open Okta Verify on your phone and scan this QR code to finish setting up your account</p>
+            <div class="qr-container">
+              <!-- ACTUAL QR CODE IMPLEMENTATION -->
+              <canvas id="qr-canvas" width="200" height="200"></canvas>
+              <div class="scan-animation"></div>
+            </div>
+            <p style="font-size: 12px; color: #666; margin: 10px 0;">QR contains enrollment data for: <span id="qr-user-display"></span></p>
+            <div class="button scan-button" id="scan-btn">Scan the QR code</div>
+            <div class="button secondary-button" id="manual-setup-btn" style="background: transparent; color: #007dc1; margin-top: 10px;">Manual Setup</div>
+          </div>
+
+          <!-- Step 5: Success -->
+          <div class="screen" id="success-screen">
+            <div class="success-check">✓</div>
+            <h1>Enrollment Complete</h1>
+            <div class="success-details" aria-live="polite">
+              <div class="row"><span class="label">User</span><span class="value" id="display-username">—</span></div>
+              <div class="row"><span class="label">Organization</span><span class="value" id="display-company">—</span></div>
+              <div class="row"><span class="label">Account</span><span class="value" id="display-account">—</span></div>
+              <div class="row"><span class="label">MFA Method</span><span class="value" id="display-mfa-method">—</span></div>
+              <div class="row"><span class="label">Enrollment ID</span><span class="value" id="display-enrollment-id">—</span></div>
+            </div>
+            <p style="margin-top:16px;">You can now use Okta Verify to securely access your applications.</p>
+            <div class="button" id="finish-btn">Finish</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructions Panel -->
+    <div class="instructions-panel">
+      <div class="instructions-header">Lab Instructions</div>
+
+      <!-- Step 1 Instructions -->
+      <div class="step-instructions active" id="instructions-0">
+        <div class="step-title">Step 1: Getting Started</div>
+        <div class="step-description">
+          Welcome to the Okta Verify enrollment simulation for <strong>blockshell.app</strong>. This lab will guide you through MFA setup on a mobile device.
+        </div>
+        <ul class="step-list">
+          <li class="current">Click "Get Started" to begin</li>
+        </ul>
+        <div class="tips-section">
+          <div class="tips-title">Real-world Context</div>
+          <div class="tip">In production, Okta Verify connects to your organization's Okta tenant for actual MFA enrollment</div>
+        </div>
+      </div>
+
+      <!-- Step 2 Instructions -->
+      <div class="step-instructions" id="instructions-1">
+        <div class="step-title">Step 2: Enter Organization Domain</div>
+        <div class="step-description">Provide your organization's Okta domain to connect to the correct tenant.</div>
+        <ul class="step-list">
+          <li class="current">Enter: <strong>blockshell.app.okta.com</strong></li>
+          <li>Try an invalid domain to see error handling</li>
+          <li>Any valid <strong>*.okta.com</strong> works to proceed</li>
+        </ul>
+        <div class="tips-section">
+          <div class="tips-title">Real-world Context</div>
+          <div class="tip">This step validates the Okta tenant and retrieves organization-specific configuration</div>
+        </div>
+      </div>
+
+      <!-- Step 3 Instructions -->
+      <div class="step-instructions" id="instructions-2">
+        <div class="step-title">Step 3: User Authentication</div>
+        <div class="step-description">Sign in with your BlockShell credentials.</div>
+        <ul class="step-list">
+          <li>Use the test credentials</li>
+          <li class="current">Username: <strong>testuser</strong> or <strong>testuser@blockshell.app</strong></li>
+          <li class="current">Password: <strong>Password123</strong></li>
+        </ul>
+        <div class="tips-section">
+          <div class="tips-title">Real-world Context</div>
+          <div class="tip">In production, this communicates with Okta's authentication API to validate credentials</div>
+        </div>
+      </div>
+
+      <!-- NEW: MFA Challenge Instructions -->
+      <div class="step-instructions" id="instructions-3">
+        <div class="step-title">Step 4: MFA Challenge</div>
+        <div class="step-description">Complete multi-factor authentication to proceed with enrollment.</div>
+        <ul class="step-list">
+          <li class="current">Select Push Notification method</li>
+          <li>Click "Approve on Device" to simulate push approval</li>
+          <li>Try SMS (code: 123456) or TOTP (code: 654321) methods</li>
+        </ul>
+        <div class="tips-section">
+          <div class="tips-title">Real-world Context</div>
+          <div class="tip">MFA challenges ensure only authorized users can enroll new devices</div>
+        </div>
+      </div>
+
+      <!-- Step 4 Instructions -->
+      <div class="step-instructions" id="instructions-4">
+        <div class="step-title">Step 5: QR Code Enrollment</div>
+        <div class="step-description">Click "Scan the QR code" to simulate a scan and complete enrollment.</div>
+        <ul class="step-list">
+          <li>Observe the scanning animation</li>
+          <li class="current">Click "Scan the QR code"</li>
+          <li>QR contains actual enrollment data structure</li>
+        </ul>
+        <div class="tips-section">
+          <div class="tips-title">Real-world Context</div>
+          <div class="tip">QR codes contain encrypted enrollment data that pairs the mobile app with your account</div>
+        </div>
+      </div>
+
+      <!-- Step 5 Instructions -->
+      <div class="step-instructions" id="instructions-5">
+        <div class="step-title">Step 6: Enrollment Complete</div>
+        <div class="step-description">You'll see the signed-in user and organization details.</div>
+        <ul class="step-list">
+          <li>Review the displayed <strong>User</strong> and <strong>Organization</strong></li>
+          <li>Note the MFA method and enrollment ID</li>
+          <li class="current">Click "Finish" to restart or use the top-right controls</li>
+        </ul>
+        <div class="tips-section">
+          <div class="tips-title">Real-world Context</div>
+          <div class="tip">Successful enrollment creates a trusted device for future MFA challenges</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Enhanced user database with multiple test accounts
+      const userDatabase = {
+        'testuser': { password: 'Password123', email: 'testuser@blockshell.app', fullName: 'Test User' },
+        'admin': { password: 'Admin123!', email: 'admin@blockshell.app', fullName: 'Admin User' },
+        'jdoe': { password: 'Welcome1', email: 'jdoe@blockshell.app', fullName: 'John Doe' }
+      };
+
+      // Screens
+      const screens = document.querySelectorAll('.screen');
+      const welcomeScreen = document.getElementById('welcome-screen');
+      const domainScreen = document.getElementById('domain-screen');
+      const credentialsScreen = document.getElementById('credentials-screen');
+      const mfaChallengeScreen = document.getElementById('mfa-challenge-screen');
+      const qrScreen = document.getElementById('qr-screen');
+      const successScreen = document.getElementById('success-screen');
+
+      // Buttons
+      const getStartedBtn = document.getElementById('get-started-btn');
+      const domainContinueBtn = document.getElementById('domain-continue-btn');
+      const signInBtn = document.getElementById('sign-in-btn');
+      const verifyMfaBtn = document.getElementById('verify-mfa-btn');
+      const approvePushBtn = document.getElementById('approve-push-btn');
+      const scanBtn = document.getElementById('scan-btn');
+      const manualSetupBtn = document.getElementById('manual-setup-btn');
+      const finishBtn = document.getElementById('finish-btn');
+
+      // Persistent controls
+      const resetLabBtn = document.getElementById('resetLabBtn');
+      const closeLabBtn = document.getElementById('closeLabBtn');
+
+      // Close modal
+      const closeModal = document.getElementById('close-modal');
+      const cmOk = document.getElementById('cmOk');
+      function showCloseModal() { closeModal.classList.add('show'); }
+      cmOk.addEventListener('click', () => closeModal.classList.remove('show'));
+
+      // Inputs
+      const domainInput = document.getElementById('domain-input');
+      const usernameInput = document.getElementById('username-input');
+      const passwordInput = document.getElementById('password-input');
+      const smsCodeInput = document.getElementById('sms-code-input');
+      const totpCodeInput = document.getElementById('totp-code-input');
+
+      // Errors
+      const domainError = document.getElementById('domain-error');
+      const credentialsError = document.getElementById('credentials-error');
+      const smsError = document.getElementById('sms-error');
+      const totpError = document.getElementById('totp-error');
+
+      // Overlay
+      const scanningOverlay = document.getElementById('scanning-overlay');
+
+      // Success detail fields
+      const displayUsername = document.getElementById('display-username');
+      const displayCompany  = document.getElementById('display-company');
+      const displayAccount  = document.getElementById('display-account');
+      const displayMfaMethod = document.getElementById('display-mfa-method');
+      const displayEnrollmentId = document.getElementById('display-enrollment-id');
+      const qrUserDisplay = document.getElementById('qr-user-display');
+
+      // MFA Elements
+      const mfaOptions = document.querySelectorAll('.mfa-option');
+      const pushNotification = document.getElementById('push-notification');
+      const smsCodeGroup = document.getElementById('sms-code-group');
+      const totpCodeGroup = document.getElementById('totp-code-group');
+
+      // State
+      let company = 'blockshell.app';
+      let signedInUser = '';
+      let currentMfaMethod = 'push';
+      let userProfile = null;
+      let enrollmentData = null;
+
+      function updateInstructions(stepIndex) {
+        document.querySelectorAll('.step-instructions').forEach(inst => inst.classList.remove('active'));
+        const currentInstructions = document.getElementById(`instructions-${stepIndex}`);
+        if (currentInstructions) currentInstructions.classList.add('active');
+      }
+
+      function showScreen(screen, stepIndex) {
+        screens.forEach(s => s.classList.remove('active'));
+        screen.classList.add('active');
+        updateInstructions(stepIndex);
+      }
+
+      function parseCompanyFromDomain(domain) {
+        if (!domain || !domain.endsWith('.okta.com')) return company;
+        const base = domain.slice(0, -'.okta.com'.length);
+        return base || company;
+      }
+
+      function buildDisplayUsername(raw, org) {
+        const u = (raw || '').trim();
+        if (!u) return '';
+        if (u.includes('@')) return u;
+        return `${u}@${org}`;
+      }
+
+      function validateDomain(domain) {
+        return domain.endsWith('.okta.com') && domain.length > 10;
+      }
+
+      // Enhanced credential validation
+      function validateCredentials(username, password) {
+        const normalized = username.trim().toLowerCase();
+        
+        // Check username format and find matching user
+        let userKey = normalized;
+        if (normalized.includes('@')) {
+          userKey = normalized.split('@')[0];
+        }
+        
+        const user = userDatabase[userKey];
+        return user && user.password === password ? user : null;
+      }
+
+      // Generate realistic enrollment data
+      function generateEnrollmentData(user, org, mfaMethod) {
+        const enrollmentId = 'ENR_' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        const timestamp = new Date().toISOString();
+        
+        return {
+          enrollmentId: enrollmentId,
+          userId: user.email,
+          organization: org,
+          mfaMethod: mfaMethod,
+          timestamp: timestamp,
+          qrData: `okta-enroll://${org}/${user.email}/${enrollmentId}/${timestamp}`
+        };
+      }
+
+      // Draw actual QR code
+      function drawQRCode() {
+        const canvas = document.getElementById('qr-canvas');
+        const ctx = canvas.getContext('2d');
+        const size = 200;
+        
+        // Clear canvas
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, size, size);
+        
+        // Simple QR-like pattern (in real implementation, use a QR library)
+        ctx.fillStyle = 'black';
+        
+        // Position markers
+        ctx.fillRect(10, 10, 40, 40);
+        ctx.fillRect(10, 150, 40, 40);
+        ctx.fillRect(150, 10, 40, 40);
+        
+        // Alignment pattern
+        ctx.fillRect(85, 85, 30, 30);
+        
+        // Data pattern (simplified)
+        for (let i = 0; i < 8; i++) {
+          for (let j = 0; j < 8; j++) {
+            if (Math.random() > 0.5) {
+              ctx.fillRect(50 + i * 12, 50 + j * 12, 8, 8);
+            }
+          }
+        }
+        
+        qrUserDisplay.textContent = userProfile.email;
+      }
+
+      function showScanningAnimation() {
+        scanningOverlay.classList.add('active');
+        setTimeout(() => {
+          scanningOverlay.classList.remove('active');
+          
+          // Update success screen with enhanced data
+          const finalUsername = buildDisplayUsername(signedInUser, company);
+          displayUsername.textContent = userProfile.email;
+          displayCompany.textContent  = company;
+          displayAccount.textContent  = `${userProfile.fullName} (${company})`;
+          displayMfaMethod.textContent = currentMfaMethod.toUpperCase();
+          displayEnrollmentId.textContent = enrollmentData.enrollmentId;
+          
+          showScreen(successScreen, 5);
+        }, 2000);
+      }
+
+      // Simulate API call with loading state
+      function simulateAPICall(button, duration = 1500) {
+        return new Promise((resolve) => {
+          button.classList.add('loading');
+          button.disabled = true;
+          
+          setTimeout(() => {
+            button.classList.remove('loading');
+            button.disabled = false;
+            resolve();
+          }, duration);
+        });
+      }
+
+      // MFA option selection
+      mfaOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          mfaOptions.forEach(opt => opt.classList.remove('selected'));
+          option.classList.add('selected');
+          currentMfaMethod = option.dataset.method;
+          
+          // Show/hide appropriate input fields
+          pushNotification.style.display = currentMfaMethod === 'push' ? 'block' : 'none';
+          smsCodeGroup.style.display = currentMfaMethod === 'sms' ? 'block' : 'none';
+          totpCodeGroup.style.display = currentMfaMethod === 'totp' ? 'block' : 'none';
+        });
+      });
+
+      // Events
+      getStartedBtn.addEventListener('click', () => showScreen(domainScreen, 1));
+
+      domainContinueBtn.addEventListener('click', async () => {
+        const domain = domainInput.value.trim();
+        if (validateDomain(domain)) {
+          await simulateAPICall(domainContinueBtn);
+          domainInput.classList.remove('error');
+          domainError.classList.remove('show');
+          company = parseCompanyFromDomain(domain);
+          showScreen(credentialsScreen, 2);
+        } else {
+          domainInput.classList.add('error');
+          domainError.classList.add('show');
+        }
+      });
+
+      domainInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') domainContinueBtn.click(); });
+
+      signInBtn.addEventListener('click', async () => {
+        const u = usernameInput.value.trim();
+        const p = passwordInput.value;
+        userProfile = validateCredentials(u, p);
+        
+        if (userProfile) {
+          await simulateAPICall(signInBtn);
+          credentialsError.classList.remove('show');
+          signedInUser = u;
+          showScreen(mfaChallengeScreen, 3);
+        } else {
+          credentialsError.classList.add('show');
+        }
+      });
+
+      usernameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') signInBtn.click(); });
+      passwordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') signInBtn.click(); });
+
+      // MFA Verification
+      verifyMfaBtn.addEventListener('click', async () => {
+        let isValid = false;
+        
+        switch (currentMfaMethod) {
+          case 'push':
+            // Push is handled by separate button
+            return;
+          case 'sms':
+            isValid = smsCodeInput.value === '123456';
+            if (!isValid) {
+              smsError.classList.add('show');
+            }
+            break;
+          case 'totp':
+            isValid = totpCodeInput.value === '654321';
+            if (!isValid) {
+              totpError.classList.add('show');
+            }
+            break;
+        }
+        
+        if (isValid) {
+          await simulateAPICall(verifyMfaBtn, 1000);
+          enrollmentData = generateEnrollmentData(userProfile, company, currentMfaMethod);
+          drawQRCode();
+          showScreen(qrScreen, 4);
+        }
+      });
+
+      approvePushBtn.addEventListener('click', async () => {
+        await simulateAPICall(approvePushBtn, 1000);
+        enrollmentData = generateEnrollmentData(userProfile, company, currentMfaMethod);
+        drawQRCode();
+        showScreen(qrScreen, 4);
+      });
+
+      scanBtn.addEventListener('click', showScanningAnimation);
+
+      manualSetupBtn.addEventListener('click', () => {
+        alert('Manual setup would display a code and instructions for manual entry in the Okta Verify app.');
+      });
+
+      function resetLab() {
+        // Clear fields and errors
+        domainInput.value = '';
+        usernameInput.value = '';
+        passwordInput.value = '';
+        smsCodeInput.value = '';
+        totpCodeInput.value = '';
+        
+        domainInput.classList.remove('error');
+        domainError.classList.remove('show');
+        credentialsError.classList.remove('show');
+        smsError.classList.remove('show');
+        totpError.classList.remove('show');
+
+        // Reset MFA UI
+        mfaOptions[0].click();
+        pushNotification.style.display = 'block';
+
+        // Reset state
+        company = 'blockshell.app';
+        signedInUser = '';
+        userProfile = null;
+        enrollmentData = null;
+        currentMfaMethod = 'push';
+
+        // Clear displays
+        displayUsername.textContent = '—';
+        displayCompany.textContent = '—';
+        displayAccount.textContent = '—';
+        displayMfaMethod.textContent = '—';
+        displayEnrollmentId.textContent = '—';
+        qrUserDisplay.textContent = '—';
+
+        // Back to start
+        showScreen(welcomeScreen, 0);
+      }
+
+      finishBtn.addEventListener('click', resetLab);
+      resetLabBtn.addEventListener('click', resetLab);
+
+      // Improved Close Lab handler
+      closeLabBtn.addEventListener('click', () => {
+        if (window.opener && !window.opener.closed) {
+          window.close();
+          return;
+        }
+
+        try {
+          const selfRef = window.open('', '_self');
+          if (selfRef) selfRef.close();
+        } catch (e) { /* ignore */ }
+
+        try { window.top.close(); } catch (e) { /* ignore */ }
+
+        setTimeout(() => {
+          if (!document.hidden) showCloseModal();
+        }, 150);
+      });
+
+      // Init
+      updateInstructions(0);
+    });
+  </script>
+</body>
+</html>

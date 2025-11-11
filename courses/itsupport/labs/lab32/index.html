@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lab 32: Entra ID - Block/Unblock Sign-in</title>
+<style>
+/* Existing styles remain the same, adding new ones below */
+.sub-nav {
+  background: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 12px 24px;
+  display: flex; gap: 24px; font-size: 14px;
+}
+.sub-nav-item { 
+  color: #495057; cursor: pointer; padding: 4px 0; border-bottom: 2px solid transparent;
+}
+.sub-nav-item.active { color: #0078d4; border-bottom-color: #0078d4; font-weight: 500; }
+.breadcrumb { padding: 16px 24px; background: white; border-bottom: 1px solid #dee2e6; font-size: 14px; color: #6c757d; }
+.breadcrumb span { color: #0078d4; cursor: pointer; }
+.breadcrumb span:last-child { color: #495057; cursor: default; }
+.filter-bar { padding: 16px 24px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; display: flex; gap: 12px; align-items: center; }
+.filter-select { padding: 6px 12px; border: 1px solid #ced4da; border-radius: 4px; background: white; font-size: 13px; }
+.pagination { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #dee2e6; }
+.pagination-info { font-size: 13px; color: #6c757d; }
+.admin-units { background: #e7f3ff; border: 1px solid #b3d7ff; border-radius: 6px; padding: 12px 16px; margin: 0 24px 16px; font-size: 14px; }
+.admin-units strong { color: #005a9e; }
+.risk-events { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 12px 16px; margin: 0 24px 16px; font-size: 14px; }
+.risk-events strong { color: #856404; }
+.mfa-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #e7f3ff; color: #005a9e; }
+.auth-methods { margin-top: 16px; }
+.auth-method-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f3f4; }
+.auth-method-item:last-child { border-bottom: none; }
+.conditional-access { background: #f8f9fa; border-radius: 6px; padding: 12px; margin-top: 12px; font-size: 13px; }
+.ca-policy { display: flex; justify-content: space-between; padding: 8px 0; }
+.license-badge { background: #e7f3ff; color: #005a9e; }
+.required-role { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); display: none; z-index: 1001; text-align: center; }
+.required-role h3 { margin-bottom: 12px; color: #721c24; }
+</style>
+</head>
+<body>
+<div class="task-instructions">
+  <div class="task-title">Lab: Entra ID - Block/Unblock Sign-in</div>
+  <div class="task-description">
+  <strong>Goal:</strong> Block <strong>Jane Smith</strong>'s sign-in, then revoke her active sessions.
+  <ol>
+    <li>Navigate to <strong>Azure Active Directory → Users → All users</strong></li>
+    <li>Search for and open <strong>Jane Smith</strong>'s user profile</li>
+    <li>Go to <strong>Authentication methods</strong> (not "Sign-in status")</li>
+    <li>Click <strong>Manage user sign-in preferences</strong></li>
+    <li>Enable <strong>Block sign-in</strong> and save</li>
+    <li>Go to <strong>Sign-ins</strong> and revoke active sessions</li>
+    <li>Observe the status change and verify in user list</li>
+  </ol>
+  <em>Note: You need User Administrator role to perform these actions</em>
+  </div>
+</div>
+
+<div class="lab-container">
+  
+  <div class="azure-header">
+    <div class="logo">🌐 Microsoft Azure</div>
+    <input class="search" placeholder="Search resources, services, and docs">
+  </div>
+
+  <div class="azure-nav">
+    <div class="nav-item"><span class="icon">🏠</span>Home</div>
+    <div class="nav-item"><span class="icon">📊</span>Dashboard</div>
+    <div class="nav-item"><span class="icon">💰</span>Cost Management</div>
+    <div class="nav-item active" id="aadNav"><span class="icon">👥</span>Azure Active Directory</div>
+    <div class="nav-item"><span class="icon">🔐</span>Security Center</div>
+    <div class="nav-item"><span class="icon">💾</span>Storage accounts</div>
+    <div class="nav-item"><span class="icon">🖥️</span>Virtual machines</div>
+  </div>
+
+  <!-- Main AAD Admin Center -->
+  <div class="main-content" id="mainContent">
+    <div class="content-header">
+      <div class="content-title">Azure Active Directory admin center</div>
+      <div class="content-subtitle">Contoso | Default Directory | <span style="color:#28a745;">●</span> Global Administrator</div>
+    </div>
+
+    <div class="sub-nav">
+      <div class="sub-nav-item">Overview</div>
+      <div class="sub-nav-item active">Users</div>
+      <div class="sub-nav-item">Groups</div>
+      <div class="sub-nav-item">Roles and administrators</div>
+      <div class="sub-nav-item">Security</div>
+      <div class="sub-nav-item">Monitoring</div>
+    </div>
+
+    <div class="breadcrumb">
+      <span>Azure Active Directory</span> > <span>Users</span> > <span>All users</span>
+    </div>
+
+    <div class="admin-units">
+      <strong>📋 Administrative Unit:</strong> Default Directory (All users) • <strong>👥 User count:</strong> 247 • <strong>🔄 Last sync:</strong> Today, 09:14 AM
+    </div>
+
+    <div class="filter-bar">
+      <select class="filter-select">
+        <option>All users</option>
+        <option>Member users</option>
+        <option>Guest users</option>
+      </select>
+      <select class="filter-select">
+        <option>All sign-in status</option>
+        <option>Signed-in last 30 days</option>
+        <option>Never signed in</option>
+      </select>
+      <input type="text" placeholder="Search by name or email" style="padding:6px 12px; border:1px solid #ced4da; border-radius:4px; width:300px;">
+      <button class="btn">Refresh</button>
+      <button class="btn btn-primary">+ New user</button>
+    </div>
+
+    <div class="user-list">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th> 
+              <input type="checkbox" style="margin-right:8px;">Display Name
+            </th>
+            <th>User Principal Name</th>
+            <th>Status</th>
+            <th>Department</th>
+            <th>MFA Status</th>
+            <th>Last sign-in</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody">
+          <tr data-user="jane.smith">
+            <td><input type="checkbox" style="margin-right:8px;">Jane Smith</td>
+            <td>jane.smith@contoso.com</td>
+            <td><span class="status-badge status-active" id="statusCell">Active</span></td>
+            <td>Marketing</td>
+            <td><span class="mfa-status">● Enabled</span></td>
+            <td>Today, 08:30 AM</td>
+          </tr>
+          <tr data-user="admin.user">
+            <td><input type="checkbox" style="margin-right:8px;">Admin User</td>
+            <td>admin@contoso.com</td>
+            <td><span class="status-badge status-active">Active</span></td>
+            <td>IT</td>
+            <td><span class="mfa-status">● Enabled</span></td>
+            <td>Today, 07:45 AM</td>
+          </tr>
+          <tr data-user="mike.sales">
+            <td><input type="checkbox" style="margin-right:8px;">Mike Sales</td>
+            <td>mike.sales@contoso.com</td>
+            <td><span class="status-badge status-active">Active</span></td>
+            <td>Sales</td>
+            <td><span class="mfa-status" style="background:#fff3cd;color:#856404;">○ Disabled</span></td>
+            <td>Yesterday, 02:15 PM</td>
+          </tr>
+          <tr data-user="blocked.user">
+            <td><input type="checkbox" style="margin-right:8px;">Blocked User</td>
+            <td>blocked@contoso.com</td>
+            <td><span class="status-badge status-blocked">Blocked</span></td>
+            <td>Finance</td>
+            <td><span class="mfa-status">● Enabled</span></td>
+            <td>7 days ago</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <div class="pagination-info">Showing 1-4 of 247 users</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn">Previous</button>
+        <button class="btn">1</button>
+        <button class="btn">2</button>
+        <button class="btn">3</button>
+        <button class="btn">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced User Detail View -->
+  <div class="user-detail" id="userDetail">
+    <div class="detail-header">
+      <button class="back-btn" id="backBtn">← Back to users</button>
+      <div class="detail-title">Jane Smith</div>
+      <div style="margin-left:auto; display:flex; gap:8px;">
+        <button class="btn">Reset password</button>
+        <button class="btn">Delete user</button>
+        <button class="btn btn-primary">Manage</button>
+      </div>
+    </div>
+
+    <div class="breadcrumb">
+      <span>Azure Active Directory</span> > <span>Users</span> > <span>All users</span> > <span>Jane Smith</span>
+    </div>
+
+    <div class="sub-nav">
+      <div class="sub-nav-item" data-tab="profile">Profile</div>
+      <div class="sub-nav-item" data-tab="groups">Groups</div>
+      <div class="sub-nav-item" data-tab="devices">Devices</div>
+      <div class="sub-nav-item active" data-tab="authentication">Authentication methods</div>
+      <div class="sub-nav-item" data-tab="signins">Sign-ins</div>
+      <div class="sub-nav-item" data-tab="licenses">Licenses</div>
+    </div>
+
+    <div class="tab-content">
+      <!-- Profile Tab -->
+      <div id="profileTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <h3 style="margin-bottom:12px;">Account</h3>
+          <p><strong>Display Name:</strong> Jane Smith</p>
+          <p><strong>User Principal Name:</strong> jane.smith@contoso.com</p>
+          <p><strong>Status:</strong> <span class="status-badge status-active" id="profileStatus">Active</span></p>
+          <p><strong>Job title:</strong> Marketing Manager</p>
+          <p><strong>Department:</strong> Marketing</p>
+        </div>
+      </div>
+
+      <!-- Authentication Methods Tab -->
+      <div id="authenticationTab" class="tab-panel">
+        <div class="section">
+          <h3 style="margin-bottom:16px;">Authentication methods</h3>
+          
+          <div class="auth-methods">
+            <div class="auth-method-item">
+              <div>
+                <strong>Microsoft Authenticator</strong>
+                <div style="font-size:12px;color:#6c757d;">Registered • Default method</div>
+              </div>
+              <span class="badge">Enabled</span>
+            </div>
+            
+            <div class="auth-method-item">
+              <div>
+                <strong>Phone</strong>
+                <div style="font-size:12px;color:#6c757d;">+1 XXX-XXX-1234</div>
+              </div>
+              <span class="badge">Enabled</span>
+            </div>
+          </div>
+
+          <div style="margin-top:24px; padding:16px; background:#f8f9fa; border-radius:6px;">
+            <h4 style="margin-bottom:12px;">User sign-in preferences</h4>
+            <div class="list">
+              <div class="list-item">
+                <div>
+                  <strong>Block sign-in</strong>
+                  <div style="font-size:12px;color:#6c757d;">Prevent this user from signing in to any Microsoft cloud applications.</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="blockToggle"> 
+                  <span class="toggle-slider"></span>
+                  Block sign-in
+                </label>
+              </div>
+            </div>
+            <div style="margin-top:16px; font-size:12px; color:#6c757d;">
+              <strong>Note:</strong> Blocking sign-in will immediately prevent access. User will see "Your account has been blocked" when trying to sign in.
+            </div>
+          </div>
+
+          <div class="conditional-access">
+            <strong>Conditional Access policies affecting this user:</strong>
+            <div class="ca-policy">
+              <span>Require MFA for all cloud apps</span>
+              <span class="badge">Applied</span>
+            </div>
+            <div class="ca-policy">
+              <span>Block legacy authentication</span>
+              <span class="badge">Applied</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sign-ins Tab -->
+      <div id="signinsTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <h3 style="margin-bottom:16px;">Recent sign-in activity</h3>
+          
+          <div class="risk-events">
+            <strong>⚠️ Active sessions detected:</strong> 2 devices currently signed in
+          </div>
+
+          <div class="list">
+            <div class="list-item">
+              <div>
+                <strong>Windows Device - CONTOSO-LAPTOP</strong>
+                <div style="font-size:12px;color:#6c757d;">Today, 08:30 AM • Windows 11 • Chrome Browser</div>
+              </div>
+              <span class="badge license-badge">Active now</span>
+            </div>
+            
+            <div class="list-item">
+              <div>
+                <strong>iPhone - Jane's iPhone</strong>
+                <div style="font-size:12px;color:#6c757d;">Today, 07:45 AM • iOS 16 • Outlook Mobile</div>
+              </div>
+              <span class="badge license-badge">Active now</span>
+            </div>
+          </div>
+
+          <div style="margin-top:24px;">
+            <h4 style="margin-bottom:12px;">Session management</h4>
+            <div class="list-item">
+              <div>
+                <strong>Revoke sign-in sessions</strong>
+                <div style="font-size:12px;color:#6c757d;">Signs user out of all devices and forces reauthentication. Useful after password reset or security incident.</div>
+              </div>
+              <button class="btn btn-primary" id="revokeBtn">Revoke sessions</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Other tabs remain similar but enhanced -->
+      <div id="groupsTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <h3 style="margin-bottom:12px;">Group memberships</h3>
+          <div class="list">
+            <div class="list-item">
+              <span>All Marketing</span>
+              <span class="badge">Security group</span>
+            </div>
+            <div class="list-item">
+              <span>Contoso-AllEmployees</span>
+              <span class="badge">Microsoft 365 group</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="success-toast" id="successToast">✅ Done</div>
+
+  <!-- Role Requirement Modal -->
+  <div class="required-role" id="roleModal">
+    <h3>⚠️ Privileged Identity Management</h3>
+    <p>You need <strong>User Administrator</strong> or <strong>Global Administrator</strong> role to manage user sign-in settings.</p>
+    <p style="font-size:12px; color:#6c757d; margin:12px 0;">Your current role: Global Administrator</p>
+    <button class="btn btn-primary" onclick="document.getElementById('roleModal').style.display='none'">Continue</button>
+  </div>
+</div>
+
+<script>
+// Enhanced navigation
+document.getElementById('aadNav').addEventListener('click', () => {
+  document.getElementById('userDetail').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+});
+
+// Sub-navigation
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('sub-nav-item')) {
+    document.querySelectorAll('.sub-nav-item').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    const tabId = e.target.getAttribute('data-tab');
+    if (tabId) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.style.display='none');
+      document.getElementById(tabId + 'Tab').style.display = 'block';
+    }
+  }
+});
+
+// Open user with role check
+document.getElementById('userTableBody').addEventListener('click', (e) => {
+  const row = e.target.closest('tr');
+  if (!row) return;
+  if (row.getAttribute('data-user') === 'jane.smith') {
+    // Show role requirement modal first
+    document.getElementById('roleModal').style.display = 'block';
+    setTimeout(() => {
+      document.getElementById('roleModal').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'none';
+      document.getElementById('userDetail').style.display = 'block';
+    }, 1500);
+  }
+});
+
+// Enhanced block toggle with confirmation
+const blockToggle = document.getElementById('blockToggle');
+blockToggle.addEventListener('change', () => {
+  if (blockToggle.checked) {
+    if (confirm('Block sign-in for Jane Smith?\n\nThis will immediately prevent the user from accessing any Microsoft cloud applications.')) {
+      updateUserStatus(true);
+      toast('Sign-in blocked for Jane Smith. User will be signed out of all sessions.');
+    } else {
+      blockToggle.checked = false;
+    }
+  } else {
+    updateUserStatus(false);
+    toast('Sign-in unblocked for Jane Smith');
+  }
+});
+
+function updateUserStatus(blocked) {
+  const profileBadge = document.getElementById('profileStatus');
+  const tableBadge = document.getElementById('statusCell');
+  
+  if (blocked) {
+    profileBadge.className = 'status-badge status-blocked';
+    profileBadge.textContent = 'Blocked';
+    tableBadge.className = 'status-badge status-blocked';
+    tableBadge.textContent = 'Blocked';
+  } else {
+    profileBadge.className = 'status-badge status-active';
+    profileBadge.textContent = 'Active';
+    tableBadge.className = 'status-badge status-active';
+    tableBadge.textContent = 'Active';
+  }
+}
+
+// Enhanced revoke sessions
+document.getElementById('revokeBtn').addEventListener('click', () => {
+  if (confirm('Revoke all sign-in sessions for Jane Smith?\n\nThis will sign the user out of all devices and applications immediately.')) {
+    const btn = document.getElementById('revokeBtn');
+    btn.innerHTML = '<span class="loading"></span> Revoking sessions...';
+    btn.disabled = true;
+    
+    setTimeout(() => {
+      btn.textContent = 'Revoke sessions';
+      btn.disabled = false;
+      toast('All sign-in sessions revoked for Jane Smith. User must sign in again.');
+    }, 2000);
+  }
+});
+
+function toast(msg) {
+  const t = document.getElementById('successToast');
+  t.textContent = '✅ ' + msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 4000);
+}
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  document.getElementById('userDetail').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+});
+</script>
+</body>
+</html>
