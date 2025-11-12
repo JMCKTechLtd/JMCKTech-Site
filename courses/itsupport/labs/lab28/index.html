@@ -126,6 +126,79 @@ input[type="text"]:focus, input[type="search"]:focus, select:focus, textarea:foc
 .loading { opacity: 0.6; pointer-events: none; }
 .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #f3f3f3; border-top: 2px solid var(--blue); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Floating Help Button */
+.help-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: var(--blue);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.help-btn:hover {
+  background: #1d4ed8;
+  transform: scale(1.05);
+}
+
+/* Instructions Modal */
+.instructions-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  z-index: 1000;
+  display: none;
+}
+
+.instructions-modal.show {
+  display: block;
+}
+
+.instructions-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.instructions-body {
+  padding: 16px;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.instructions-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+  display: none;
+}
+
+.instructions-overlay.show {
+  display: block;
+}
 </style>
 </head>
 <body>
@@ -160,6 +233,21 @@ input[type="text"]:focus, input[type="search"]:focus, select:focus, textarea:foc
     <main class="main">
       <div id="page"></div>
     </main>
+  </div>
+
+  <!-- Floating Help Button -->
+  <button class="help-btn" id="helpBtn" title="Show Instructions">?</button>
+
+  <!-- Instructions Modal -->
+  <div class="instructions-overlay" id="instructionsOverlay"></div>
+  <div class="instructions-modal" id="instructionsModal">
+    <div class="instructions-header">
+      <h3 style="margin:0">Lab Instructions</h3>
+      <button id="closeInstructions">✕</button>
+    </div>
+    <div class="instructions-body" id="instructionsBody">
+      <!-- Instructions content will be inserted here -->
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -239,6 +327,37 @@ input[type="text"]:focus, input[type="search"]:focus, select:focus, textarea:foc
     map.forEach(([k,id])=>{ const el=qs(id); if(el) el.checked=!!state.tasks[k]; });
   }
   function chip(cls,txt){return `<span class="chip ${cls}">${txt}</span>`;}
+
+  /* ---------------- Instructions Modal ---------------- */
+  function showInstructions(){
+    qs('#instructionsBody').innerHTML = instructionsCardContent();
+    qs('#instructionsModal').classList.add('show');
+    qs('#instructionsOverlay').classList.add('show');
+  }
+  
+  function hideInstructions(){
+    qs('#instructionsModal').classList.remove('show');
+    qs('#instructionsOverlay').classList.remove('show');
+  }
+  
+  function instructionsCardContent(){
+    return `
+      <div class="card-h">Lab 2 — Deploy Microsoft Teams (Store app) to a user</div>
+      <div class="card-b">
+        <div class="tasklist">
+          <label><input type="checkbox" id="t1" disabled> 1) Open <strong>Apps</strong>.</label>
+          <label><input type="checkbox" id="t2" disabled> 2) Select <strong>Add</strong> → <em>Microsoft Store app (new)</em>.</label>
+          <label><input type="checkbox" id="t3" disabled> 3) Search for and select <strong>Microsoft Teams</strong>.</label>
+          <label><input type="checkbox" id="t4" disabled> 4) Configure app settings (use defaults).</label>
+          <label><input type="checkbox" id="t5" disabled> 5) Assign to <strong>All Intune Users</strong> as <em>Required</em>.</label>
+          <label><input type="checkbox" id="t6" disabled> 6) <strong>Create</strong> the app.</label>
+          <label><input type="checkbox" id="t7" disabled> 7) In <strong>Apps</strong>, use <strong>Sync</strong> until Teams shows <em>Installed</em>.</label>
+          <label><input type="checkbox" id="t8" disabled> 8) Confirm on <strong>Devices ▸ BlockShell-Laptop ▸ Managed apps</strong> (Teams appears and is highlighted).</label>
+        </div>
+        <div class="small" style="margin-top:6px">Tip: Real Intune sync can take 15-60 minutes. This lab simulates faster sync for learning.</div>
+      </div>
+    `;
+  }
 
   /* ---------------- Page renderers ---------------- */
   function render(){ setActiveNav(); 
@@ -758,7 +877,7 @@ input[type="text"]:focus, input[type="search"]:focus, select:focus, textarea:foc
     });
     render(); toast('Lab reset');
   };
-  qs('#closeBtn').onclick=()=>{ try{window.close();}catch(e){} toast('If the window didn't close, please close this tab.'); };
+  qs('#closeBtn').onclick=()=>{ try{window.close();}catch(e){} toast('If the window didn\'t close, please close this tab.'); };
 
   // Sidebar routing (Apps & Devices are functional)
   qs('#sidebar').addEventListener('click',e=>{
@@ -767,6 +886,11 @@ input[type="text"]:focus, input[type="search"]:focus, select:focus, textarea:foc
     if(!['apps','devices','dashboard','groups'].includes(page)) return;
     state.page=page; render();
   });
+
+  // Instructions modal bindings
+  qs('#helpBtn').onclick = showInstructions;
+  qs('#closeInstructions').onclick = hideInstructions;
+  qs('#instructionsOverlay').onclick = hideInstructions;
 
   // Init
   render();

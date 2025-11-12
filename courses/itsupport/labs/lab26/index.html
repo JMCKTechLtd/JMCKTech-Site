@@ -467,21 +467,36 @@ function updateLastSyncTime() {
 }
 
 /* ===== Start menu ===== */
-const startButton=$('#startButton'), startMenu=$('#startMenu'), startContext=$('#startContext');
-startButton.addEventListener('click', (e)=>{ e.stopPropagation(); startMenu.style.display = startMenu.style.display==='block'?'none':'block'; startContext.style.display='none'; });
-startButton.addEventListener('contextmenu', (e)=>{ e.preventDefault(); e.stopPropagation(); startMenu.style.display='none'; const r=startButton.getBoundingClientRect(); startContext.style.left=r.left+'px'; startContext.style.bottom='52px'; startContext.style.display='block'; });
-document.addEventListener('click', (e)=>{ if(!startMenu.contains(e.target)&&e.target!==startButton) startMenu.style.display='none'; if(!startContext.contains(e.target)&&e.target!==startButton) startContext.style.display='none'; });
-$$('.app-item').forEach(el=>el.addEventListener('click', ()=>{ 
-  startMenu.style.display='none'; 
-  const app=el.getAttribute('data-app'); 
-  if(app==='instructions') $('#instructionsWindow').style.display='flex'; 
-  if(app==='onedrive-local') $('#localWindow').style.display='flex'; 
-  if(app==='browser-onedrive'){ $('#webWindow').style.display='flex'; const s5=$('#s5'); if(s5) s5.checked=true; } 
-  if(app==='file-explorer'){ 
-    $('#localWindow').style.display='flex'; 
-    flashToast('Opening File Explorer...');
+const startButton=$('#startButton'), startMenu=$('#startMenu');
+startButton.addEventListener('click', (e)=>{
+  e.stopPropagation(); 
+  startMenu.style.display = startMenu.style.display==='block'?'none':'block'; 
+});
+
+document.addEventListener('click', (e)=>{
+  if(!startMenu.contains(e.target) && e.target!==startButton) {
+    startMenu.style.display='none';
   }
-}));
+});
+
+$$('.app-item').forEach(el=>{
+  el.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    startMenu.style.display='none'; 
+    const app=el.getAttribute('data-app'); 
+    if(app==='instructions') $('#instructionsWindow').style.display='flex'; 
+    if(app==='onedrive-local') $('#localWindow').style.display='flex'; 
+    if(app==='browser-onedrive'){
+      $('#webWindow').style.display='flex'; 
+      const s5=$('#s5'); 
+      if(s5) s5.checked=true; 
+    } 
+    if(app==='file-explorer'){ 
+      $('#localWindow').style.display='flex'; 
+      flashToast('Opening File Explorer...');
+    }
+  });
+});
 
 /* ===== Window controls / drag ===== */
 document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click', e=>{ e.stopPropagation(); btn.closest('.window').style.display='none'; }));
@@ -510,8 +525,22 @@ function stopDrag(){ dragging=false; dragWin=null; document.removeEventListener(
 /* ===== Tray popovers ===== */
 const systemTray=$('#systemTray'), trayTimeChip=$('#trayTimeChip');
 function makePopover(html){ const el=document.createElement('div'); el.className='tray-popover'; el.innerHTML=html; document.body.appendChild(el); return el; }
-function togglePopover(pop, anchor){ const r=anchor.getBoundingClientRect(); pop.style.right=(window.innerWidth-r.right)+'px'; pop.style.bottom=(window.innerHeight-r.top+8)+'px'; const open=pop.style.display==='block'; document.querySelectorAll('.tray-popover').forEach(p=>p.style.display='none'); if(!open) pop.style.display='block'; }
-document.addEventListener('click',(e)=>{ if(!systemTray.contains(e.target)&&!e.target.closest('.tray-popover')) document.querySelectorAll('.tray-popover').forEach(p=>p.style.display='none'; p.classList.remove('syncing')); });
+function togglePopover(pop, anchor){ 
+  const r=anchor.getBoundingClientRect(); 
+  pop.style.right=(window.innerWidth-r.right)+'px'; 
+  pop.style.bottom=(window.innerHeight-r.top+8)+'px'; 
+  const open=pop.style.display==='block'; 
+  document.querySelectorAll('.tray-popover').forEach(p=>p.style.display='none'); 
+  if(!open) pop.style.display='block'; 
+}
+document.addEventListener('click',(e)=>{ 
+  if(!systemTray.contains(e.target)&&!e.target.closest('.tray-popover')) {
+    document.querySelectorAll('.tray-popover').forEach(p=>{
+      p.style.display='none'; 
+      p.classList.remove('syncing');
+    }); 
+  }
+});
 
 /* Calendar popover */
 const timePopover=makePopover(`
@@ -527,9 +556,60 @@ const timePopover=makePopover(`
 `);
 function updateClockAndDate(){ const now=new Date(); $('#bigClock').textContent=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; $('#smallDate').textContent=now.toLocaleDateString(undefined,{weekday:'short',day:'2-digit',month:'short',year:'numeric'}); }
 let calRef=new Date();
-function renderCalendar(ref){ const monthLabel=$('#monthLabel'), grid=$('#calGrid'); Array.from(grid.querySelectorAll('.day')).forEach(d=>d.remove()); const y=ref.getFullYear(), m=ref.getMonth(); monthLabel.textContent=new Date(y,m,1).toLocaleString(undefined,{month:'long',year:'numeric'}); const first=new Date(y,m,1), startDow=first.getDay(), daysIn=new Date(y,m+1,0).getDate(), prevDays=new Date(y,m,0).getDate(); for(let i=startDow-1;i>=0;i--){ const el=document.createElement('div'); el.className='day other'; el.textContent=(prevDays-i); grid.appendChild(el);} const today=new Date(); const highlight=(today.getFullYear()===y&&today.getMonth()===m)?today.getDate():-1; for(let d=1; d<=daysIn; d++){ const el=document.createElement('div'); el.className='day'; el.textContent=d; if(d===highlight) el.classList.add('today'); grid.appendChild(el);} const total=grid.querySelectorAll('.dow').length+grid.querySelectorAll('.day').length; const rem=total%7; if(rem!==0){ const need=7-rem; for(let d=1; d<=need; d++){ const el=document.createElement('div'); el.className='day other'; el.textContent=d; grid.appendChild(el);} } }
-document.addEventListener('click',(e)=>{ if(e.target&&e.target.id==='prevMonth'){ e.stopPropagation(); calRef=new Date(calRef.getFullYear(),calRef.getMonth()-1,1); renderCalendar(calRef);} if(e.target&&e.target.id==='nextMonth'){ e.stopPropagation(); calRef=new Date(calRef.getFullYear(),calRef.getMonth()+1,1); renderCalendar(calRef);} });
-if (trayTimeChip){ trayTimeChip.addEventListener('click',(e)=>{ e.stopPropagation(); updateClockAndDate(); renderCalendar(calRef); togglePopover(timePopover, trayTimeChip); }); }
+function renderCalendar(ref){ 
+  const monthLabel=$('#monthLabel'), grid=$('#calGrid'); 
+  // Clear existing day elements
+  Array.from(grid.querySelectorAll('.day')).forEach(d=>d.remove()); 
+  const y=ref.getFullYear(), m=ref.getMonth(); 
+  monthLabel.textContent=new Date(y,m,1).toLocaleString(undefined,{month:'long',year:'numeric'}); 
+  const first=new Date(y,m,1), startDow=first.getDay(), daysIn=new Date(y,m+1,0).getDate(), prevDays=new Date(y,m,0).getDate(); 
+  for(let i=startDow-1;i>=0;i--){ 
+    const el=document.createElement('div'); 
+    el.className='day other'; 
+    el.textContent=(prevDays-i); 
+    grid.appendChild(el);
+  } 
+  const today=new Date(); 
+  const highlight=(today.getFullYear()===y&&today.getMonth()===m)?today.getDate():-1; 
+  for(let d=1; d<=daysIn; d++){ 
+    const el=document.createElement('div'); 
+    el.className='day'; 
+    el.textContent=d; 
+    if(d===highlight) el.classList.add('today'); 
+    grid.appendChild(el);
+  } 
+  const total=grid.querySelectorAll('.dow').length+grid.querySelectorAll('.day').length; 
+  const rem=total%7; 
+  if(rem!==0){ 
+    const need=7-rem; 
+    for(let d=1; d<=need; d++){ 
+      const el=document.createElement('div'); 
+      el.className='day other'; 
+      el.textContent=d; 
+      grid.appendChild(el);
+    } 
+  } 
+}
+document.addEventListener('click',(e)=>{ 
+  if(e.target&&e.target.id==='prevMonth'){ 
+    e.stopPropagation(); 
+    calRef=new Date(calRef.getFullYear(),calRef.getMonth()-1,1); 
+    renderCalendar(calRef);
+  } 
+  if(e.target&&e.target.id==='nextMonth'){ 
+    e.stopPropagation(); 
+    calRef=new Date(calRef.getFullYear(),calRef.getMonth()+1,1); 
+    renderCalendar(calRef);
+  }
+});
+if (trayTimeChip){ 
+  trayTimeChip.addEventListener('click',(e)=>{ 
+    e.stopPropagation(); 
+    updateClockAndDate(); 
+    renderCalendar(calRef); 
+    togglePopover(timePopover, trayTimeChip); 
+  }); 
+}
 
 /* ===== Enhanced OneDrive State Management ===== */
 const chipText=$('#chipText'), chipDot=$('#chipDot');
@@ -623,20 +703,37 @@ function fillOneDrivePopover(){
   const dis = oneDrivePopover.querySelector('#popDismiss');
   if(dis) dis.addEventListener('click',()=> oneDrivePopover.style.display='none');
   const view = oneDrivePopover.querySelector('#popView');
-  if(view) view.addEventListener('click',()=>{ oneDrivePopover.style.display='none'; $('#syncWindow').style.display='flex'; $('#s2').checked=true; });
+  if(view) view.addEventListener('click',()=>{ 
+    oneDrivePopover.style.display='none'; 
+    $('#syncWindow').style.display='flex'; 
+    const s2 = $('#s2');
+    if(s2) s2.checked=true; 
+  });
   const sync = oneDrivePopover.querySelector('#popSync');
   if(sync) sync.addEventListener('click',()=>{
     oneDrivePopover.style.display='none';
     simulateSync();
-    if(state.shortcutPresent){ $('#s3').checked=true; }
+    if(state.shortcutPresent){ 
+      const s3 = $('#s3');
+      if(s3) s3.checked=true; 
+    }
   });
 }
-oneDriveChip.addEventListener('click',(e)=>{ e.stopPropagation(); fillOneDrivePopover(); togglePopover(oneDrivePopover, oneDriveChip); $('#s1').checked=true; });
+oneDriveChip.addEventListener('click',(e)=>{ 
+  e.stopPropagation(); 
+  fillOneDrivePopover(); 
+  togglePopover(oneDrivePopover, oneDriveChip); 
+  const s1 = $('#s1');
+  if(s1) s1.checked=true; 
+});
 
 /* Sync Problems */
 $('#btnSyncNow').addEventListener('click',()=>{
   simulateSync();
-  if(state.shortcutPresent) { $('#s3').checked=true; }
+  if(state.shortcutPresent) { 
+    const s3 = $('#s3');
+    if(s3) s3.checked=true; 
+  }
 });
 
 $('#btnViewDetails').addEventListener('click',()=>{
@@ -654,8 +751,20 @@ $('#btnViewDetails').addEventListener('click',()=>{
 
 /* ===== Context menus: WEB ===== */
 const menuWeb=$('#shortcutMenuWeb');
-webShortcut.addEventListener('contextmenu', (e)=>{ e.preventDefault(); menuWeb.style.left=e.pageX+'px'; menuWeb.style.top=e.pageY+'px'; menuWeb.style.display='block'; });
-document.addEventListener('click', (e)=>{ if(!menuWeb.contains(e.target) && e.target!==webShortcut) menuWeb.style.display='none'; });
+if (webShortcut) {
+  webShortcut.addEventListener('contextmenu', (e)=>{ 
+    e.preventDefault(); 
+    menuWeb.style.left=e.pageX+'px'; 
+    menuWeb.style.top=e.pageY+'px'; 
+    menuWeb.style.display='block'; 
+    // FIX: Check step 6 when right-clicking the shortcut online
+    const s6 = $('#s6');
+    if(s6) s6.checked = true;
+  });
+}
+document.addEventListener('click', (e)=>{ 
+  if(!menuWeb.contains(e.target) && e.target!==webShortcut) menuWeb.style.display='none'; 
+});
 
 $('#ctxOpenWeb').addEventListener('click', ()=>{ menuWeb.style.display='none'; flashToast('Redirecting to SharePoint...'); });
 $('#ctxRenameWeb').addEventListener('click', ()=>{ menuWeb.style.display='none'; flashToast('Renaming alias won\'t change the long SharePoint target path.'); });
@@ -685,7 +794,8 @@ $('#ctxDeleteWeb').addEventListener('click', async ()=>{
   setTimeout(() => {
     state.shortcutPresent = false;
     paint();
-    $('#s7').checked = true;
+    const s7 = $('#s7');
+    if(s7) s7.checked = true;
     flashToast('Shortcut deleted. Syncing changes...');
     
     // Auto-sync after deletion
@@ -693,7 +803,8 @@ $('#ctxDeleteWeb').addEventListener('click', async ()=>{
       simulateSync();
       setTimeout(() => { 
         flashToast('Up to date'); 
-        $('#s8').checked = true; 
+        const s8 = $('#s8');
+        if(s8) s8.checked = true; 
       }, 1500);
     }, 800);
   }, 1000);
@@ -701,8 +812,17 @@ $('#ctxDeleteWeb').addEventListener('click', async ()=>{
 
 /* ===== Context menus: LOCAL ===== */
 const menuLocal=$('#shortcutMenuLocal');
-localShortcut.addEventListener('contextmenu', (e)=>{ e.preventDefault(); menuLocal.style.left=e.pageX+'px'; menuLocal.style.top=e.pageY+'px'; menuLocal.style.display='block'; });
-document.addEventListener('click', (e)=>{ if(!menuLocal.contains(e.target) && e.target!==localShortcut) menuLocal.style.display='none'; });
+if (localShortcut) {
+  localShortcut.addEventListener('contextmenu', (e)=>{ 
+    e.preventDefault(); 
+    menuLocal.style.left=e.pageX+'px'; 
+    menuLocal.style.top=e.pageY+'px'; 
+    menuLocal.style.display='block'; 
+  });
+}
+document.addEventListener('click', (e)=>{ 
+  if(!menuLocal.contains(e.target) && e.target!==localShortcut) menuLocal.style.display='none'; 
+});
 
 $('#ctxOpenLocal').addEventListener('click', ()=>{ menuLocal.style.display='none'; flashToast('This shortcut cannot open - sync error'); });
 $('#ctxRenameLocal').addEventListener('click', ()=>{ menuLocal.style.display='none'; flashToast('Cannot rename - managed from SharePoint/Online'); });
@@ -722,7 +842,8 @@ $('#ctxDetailsLocal').addEventListener('click', ()=>{
 });
 $('#ctxDeleteLocal').addEventListener('click', async ()=>{
   menuLocal.style.display='none';
-  $('#s4').checked = true;
+  const s4 = $('#s4');
+  if(s4) s4.checked = true;
   
   // Show attempting state first
   flashToast('Attempting to delete...');
@@ -765,7 +886,10 @@ resetLab.addEventListener('click', ()=>{
   $('#webWindow').style.display='none';
   $('#localWindow').style.display='none';
   document.querySelectorAll('.tray-popover').forEach(p=>{ p.style.display='none'; p.classList.remove('syncing'); });
-  for(let i=1;i<=8;i++) $('#s'+i).checked=false;
+  for(let i=1;i<=8;i++) {
+    const checkbox = $('#s'+i);
+    if(checkbox) checkbox.checked=false;
+  }
   flashToast('Lab reset to initial state');
 });
 
