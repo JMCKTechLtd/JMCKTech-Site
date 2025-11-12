@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lab 33: Entra ID - Add User to Group</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { 
+  background: linear-gradient(135deg, #1e1e1e 0%, #2d2d30 100%); 
+  padding: 0;
+  overflow: hidden; 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+  color: #111; 
+  display: flex;
+  flex-direction: column;
+}
+.task-instructions {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f1f8e9 100%);
+  border: 1px solid #90caf9; 
+  border-radius: 0; 
+  padding: 12px 20px; 
+  margin: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: relative;
+  z-index: 1000;
+  max-height: 140px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.task-instructions .task-title {
+  font-weight: 600; 
+  color: #ffffff; 
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  padding: 6px 12px; 
+  border-radius: 4px; 
+  display: inline-block; 
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.task-instructions .task-description { 
+  color: #1e1e1e; 
+  line-height: 1.4; 
+  font-size: 13px;
+}
+.task-instructions ol { 
+  margin: 6px 0 0 20px; 
+  line-height: 1.4;
+}
+.task-instructions li {
+  margin-bottom: 2px;
+  font-size: 13px;
+}
+.lab-container {
+  width: 100%;
+  height: calc(100vh - 140px);
+  background: #ffffff; 
+  overflow: hidden; 
+  position: relative;
+  flex: 1;
+}
+.azure-header {
+  height: 48px; 
+  background: #0078d4; 
+  color: white; 
+  display: flex; 
+  align-items: center;
+  padding: 0 16px; 
+  font-weight: 500; 
+  border-bottom: 1px solid #005a9e;
+  font-size: 14px;
+}
+.azure-header .logo { 
+  margin-right: 12px; 
+  font-size: 16px; 
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.azure-header .search { 
+  margin-left: auto; 
+  background: rgba(255,255,255,0.15); 
+  border: 1px solid rgba(255,255,255,0.3); 
+  padding: 6px 12px; 
+  border-radius: 4px; 
+  color: white; 
+  width: 240px; 
+  font-size: 13px;
+}
+.azure-header .search::placeholder { color: rgba(255,255,255,0.7); }
+
+/* Collapsible Side Menu */
+.azure-nav {
+  width: 220px; 
+  height: calc(100% - 48px); 
+  background: #f8f9fa; 
+  border-right: 1px solid #dee2e6;
+  overflow-y: auto; 
+  padding: 12px 0;
+  font-size: 13px;
+  position: absolute;
+  left: 0;
+  top: 48px;
+  transition: transform 0.3s ease;
+  z-index: 100;
+}
+.azure-nav.collapsed {
+  transform: translateX(-100%);
+}
+.menu-toggle {
+  position: absolute;
+  left: 220px;
+  top: 60px;
+  background: #0078d4;
+  color: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  width: 20px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 101;
+  transition: left 0.3s ease;
+}
+.menu-toggle.collapsed {
+  left: 0;
+}
+.nav-item {
+  padding: 8px 16px; 
+  cursor: pointer; 
+  color: #495057;
+  border-left: 3px solid transparent; 
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-item:hover { background: #e9ecef; }
+.nav-item.active { 
+  background: #e3f2fd; 
+  color: #0078d4; 
+  border-left-color: #0078d4; 
+  font-weight: 500; 
+}
+.nav-item .icon { 
+  width: 16px; 
+  text-align: center;
+}
+.main-content {
+  position: absolute; 
+  left: 220px; 
+  top: 48px; 
+  right: 0; 
+  bottom: 0;
+  background: white; 
+  overflow: auto;
+  transition: left 0.3s ease;
+  padding: 20px;
+}
+.main-content.expanded {
+  left: 0;
+}
+.content-header {
+  padding: 16px 20px; 
+  border-bottom: 1px solid #dee2e6; 
+  background: #fafbfc;
+}
+.content-title { 
+  font-size: 18px; 
+  font-weight: 600; 
+  margin-bottom: 4px; 
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.content-subtitle { color: #6c757d; font-size: 13px; }
+
+/* Progress indicator */
+.progress-indicator {
+  display: flex;
+  gap: 20px;
+  margin: 0 20px 20px 20px;
+  padding-top: 20px;
+}
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e9ecef;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+.step-active .step-number {
+  background: #0078d4;
+  color: white;
+}
+.step-completed .step-number {
+  background: #28a745;
+  color: white;
+}
+.step-label {
+  font-size: 12px;
+  color: #6c757d;
+  text-align: center;
+}
+.step-active .step-label {
+  color: #0078d4;
+  font-weight: 500;
+}
+.step-completed .step-label {
+  color: #28a745;
+}
+.step-connector {
+  flex: 1;
+  height: 2px;
+  background: #e9ecef;
+  margin-top: 13px;
+}
+.step-completed .step-connector {
+  background: #28a745;
+}
+
+/* Entra Admin Center Styles */
+.entra-admin-center { 
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  display: none; 
+}
+.entra-nav { padding: 8px 0; }
+.entra-nav-section { padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
+.entra-nav-header { 
+  padding: 8px 16px; 
+  font-weight: 600; 
+  color: #374151; 
+  font-size: 12px; 
+  text-transform: uppercase; 
+  letter-spacing: 0.5px;
+}
+.entra-nav-item { 
+  padding: 7px 16px 7px 32px; 
+  cursor: pointer; 
+  font-size: 13px; 
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.entra-nav-item:hover { background: #f3f4f6; }
+.entra-nav-item.active { background: #dbeafe; color: #1e40af; font-weight: 500; }
+.breadcrumb { 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+  font-size: 13px; 
+  color: #6b7280; 
+  margin-bottom: 16px; 
+}
+.breadcrumb a { color: #0078d4; text-decoration: none; cursor: pointer; }
+.breadcrumb a:hover { text-decoration: underline; }
+.admin-role-badge { 
+  background: #dcfce7; 
+  color: #166534; 
+  padding: 2px 8px; 
+  border-radius: 10px; 
+  font-size: 11px; 
+  font-weight: 600; 
+}
+
+/* User List Styles */
+.user-list { padding: 20px; }
+.user-table {
+  width: 100%; 
+  border-collapse: collapse; 
+  background: white; 
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+  overflow: hidden;
+  font-size: 13px;
+}
+.user-table th {
+  background: #f8f9fa; 
+  padding: 10px 12px; 
+  text-align: left; 
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6; 
+  color: #495057;
+}
+.user-table td {
+  padding: 10px 12px; 
+  border-bottom: 1px solid #f1f3f4;
+}
+.user-table tbody tr:hover { background: #f8f9fa; }
+.user-table tbody tr { cursor: pointer; transition: background 0.2s ease; }
+.status-badge {
+  display: inline-block; 
+  padding: 3px 8px; 
+  border-radius: 10px; 
+  font-size: 11px;
+  font-weight: 600; 
+  text-transform: uppercase; 
+  letter-spacing: 0.5px;
+}
+.status-active { background: #d4edda; color: #155724; }
+.status-unlicensed { background: #fff3cd; color: #856404; }
+.status-blocked { background: #f8d7da; color: #721c24; }
+.search-box { margin-bottom: 16px; position: relative; }
+.search-box input {
+  width: 280px; 
+  padding: 7px 12px 7px 36px; 
+  border: 1px solid #ced4da;
+  border-radius: 4px; 
+  font-size: 13px;
+}
+.search-box::before {
+  content: "🔍"; 
+  position: absolute; 
+  left: 12px; 
+  top: 50%; 
+  transform: translateY(-50%);
+  color: #6c757d;
+  font-size: 13px;
+}
+.filter-bar { 
+  display: flex; 
+  gap: 10px; 
+  margin-bottom: 16px; 
+  align-items: center; 
+  flex-wrap: wrap;
+}
+.filter-select { 
+  padding: 6px 10px; 
+  border: 1px solid #d1d5db; 
+  border-radius: 4px; 
+  background: white; 
+  font-size: 13px; 
+}
+.btn { 
+  padding: 6px 12px; 
+  border: 1px solid #ced4da; 
+  border-radius: 4px;
+  background: white; 
+  cursor: pointer; 
+  font-size: 13px; 
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: #0078d4; color: white; border-color: #0078d4; }
+.btn-primary:hover { background: #106ebe; }
+.btn-outline { border: 1px solid #0078d4; color: #0078d4; background: white; }
+.btn-outline:hover { background: #e3f2fd; }
+
+/* User Detail Styles */
+.user-detail {
+  position: absolute; 
+  left: 0; 
+  top: 0; 
+  right: 0; 
+  bottom: 0;
+  background: white; 
+  display: none; 
+  z-index: 100;
+  overflow-y: auto;
+}
+.detail-header {
+  padding: 16px 20px; 
+  border-bottom: 1px solid #dee2e6; 
+  background: #fafbfc;
+  display: flex; 
+  align-items: center; 
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+}
+.detail-title { font-size: 18px; font-weight: 600; }
+.back-btn {
+  padding: 6px 12px; 
+  border: 1px solid #ced4da; 
+  border-radius: 4px;
+  background: white; 
+  cursor: pointer; 
+  font-size: 13px; 
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.back-btn:hover { background: #f8f9fa; }
+.detail-tabs { 
+  display: flex; 
+  border-bottom: 1px solid #dee2e6; 
+  background: #fafbfc; 
+  padding: 0 20px;
+  position: sticky;
+  top: 73px;
+  z-index: 10;
+  background: white;
+}
+.tab {
+  padding: 12px 16px; 
+  cursor: pointer; 
+  border-bottom: 2px solid transparent;
+  font-weight: 500; 
+  color: #6c757d; 
+  transition: all 0.2s ease;
+  font-size: 13px;
+}
+.tab.active { color: #0078d4; border-bottom-color: #0078d4; }
+.tab:hover:not(.active) { color: #495057; }
+.tab-content { 
+  padding: 20px; 
+  max-width: 1000px;
+}
+.section {
+  background: white; 
+  border: 1px solid #dee2e6; 
+  border-radius: 6px;
+  padding: 16px; 
+  margin-bottom: 16px;
+}
+.property-grid { display: grid; grid-template-columns: 180px 1fr; gap: 8px 16px; font-size: 13px; }
+.property-label { color: #6c757d; text-align: right; }
+.property-value { color: #323130; }
+
+/* Group Management Styles */
+.list { border:1px solid #e5e7eb; border-radius:4px; }
+.list-item {
+  display:flex; 
+  align-items:center; 
+  justify-content:space-between; 
+  padding:8px 12px; 
+  border-bottom:1px solid #f1f5f9;
+  font-size: 13px;
+}
+.list-item:last-child { border-bottom:none; }
+.badge { 
+  display:inline-block; 
+  padding:3px 8px; 
+  border-radius:10px; 
+  font-size:11px; 
+  background:#eef2ff; 
+  color:#1f3a93; 
+}
+.badge-secondary { background: #e9ecef; color: #495057; }
+.member-count { color: #6c757d; font-size: 12px; margin-left: 8px; }
+
+/* Modal Styles */
+.modal {
+  position: fixed; 
+  inset: 0; 
+  background: rgba(0,0,0,0.5);
+  display: none; 
+  align-items: center; 
+  justify-content: center; 
+  z-index: 1000;
+}
+.modal-card {
+  background: white; 
+  border-radius: 6px; 
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  width: 600px; 
+  max-height: 70vh; 
+  overflow: auto;
+}
+.modal-header { 
+  padding: 16px 20px; 
+  border-bottom: 1px solid #dee2e6; 
+  font-weight: 600;
+  font-size: 15px;
+}
+.modal-body { padding: 16px 20px; }
+.modal-footer { 
+  padding: 12px 20px; 
+  border-top: 1px solid #dee2e6; 
+  display: flex; 
+  gap: 8px; 
+  justify-content: flex-end; 
+}
+.input, .select { 
+  width: 100%; 
+  padding: 7px 10px; 
+  border: 1px solid #ced4da; 
+  border-radius: 4px; 
+  font-size: 13px; 
+}
+.label { 
+  display:block; 
+  margin: 0 0 6px 0; 
+  font-weight: 500; 
+  color: #495057; 
+  font-size: 13px;
+}
+
+/* Success Toast */
+.success-toast {
+  position: fixed; 
+  bottom: 20px; 
+  right: 20px; 
+  background: #d4edda;
+  color: #155724; 
+  padding: 12px 16px; 
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+  display: none;
+  border-left: 4px solid #28a745;
+  font-size: 13px;
+  z-index: 2000;
+}
+
+/* Pagination */
+.pagination { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-top: 16px; 
+  padding: 12px 0; 
+  border-top: 1px solid #e5e7eb; 
+  font-size: 13px;
+}
+.page-info { color: #6b7280; }
+.page-nav { display: flex; gap: 6px; }
+.page-btn { 
+  padding: 5px 10px; 
+  border: 1px solid #d1d5db; 
+  border-radius: 4px; 
+  background: white; 
+  cursor: pointer; 
+  font-size: 13px; 
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.page-btn:disabled { color: #9ca3af; cursor: not-allowed; }
+
+/* Azure Dashboard View */
+.azure-dashboard {
+  padding: 20px;
+}
+.dashboard-card {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.dashboard-card h3 {
+  margin-bottom: 12px;
+  font-size: 16px;
+  color: #0078d4;
+}
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.resource-item {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.resource-item:hover {
+  background: #e9ecef;
+  border-color: #0078d4;
+}
+</style>
+</head>
+<body>
+<div class="task-instructions">
+  <div class="task-title">Lab: Entra ID - Add User to Group</div>
+  <div class="task-description">
+  <strong>Goal:</strong> Add <strong>Jane Smith</strong> to the <strong>Marketing Team</strong> group.
+  <ol>
+    <li>Navigate to <strong>Azure Active Directory admin center</strong> from Azure portal</li>
+    <li>Go to <strong>Users > All users</strong> in the left navigation</li>
+    <li>Search for and select <strong>Jane Smith</strong></li>
+    <li>Go to the <strong>Groups</strong> tab in the user profile</li>
+    <li>Click <strong>+ Add to group</strong></li>
+    <li>Select <strong>Marketing Team</strong> and click <strong>Add</strong></li>
+    <li>Verify the membership appears in the list and the success toast is shown</li>
+  </ol>
+  </div>
+</div>
+
+<div class="lab-container">
+  
+  <!-- Progress Indicator -->
+  <div class="progress-indicator" id="progressIndicator">
+    <div class="progress-step step-completed" id="step1">
+      <div class="step-number">1</div>
+      <div class="step-label">Navigate to Entra ID</div>
+      <div class="step-connector"></div>
+    </div>
+    <div class="progress-step" id="step2">
+      <div class="step-number">2</div>
+      <div class="step-label">Find User</div>
+      <div class="step-connector"></div>
+    </div>
+    <div class="progress-step" id="step3">
+      <div class="step-number">3</div>
+      <div class="step-label">Add to Group</div>
+      <div class="step-connector"></div>
+    </div>
+    <div class="progress-step" id="step4">
+      <div class="step-number">4</div>
+      <div class="step-label">Complete</div>
+    </div>
+  </div>
+
+  <div class="azure-header">
+    <div class="logo">🌐 <span>Microsoft Azure</span></div>
+    <input class="search" placeholder="Search resources, services, and docs">
+  </div>
+
+  <!-- Menu Toggle Button -->
+  <button class="menu-toggle" id="menuToggle">☰</button>
+
+  <div class="azure-nav" id="azureNav">
+    <div class="nav-item"><span class="icon">🏠</span>Home</div>
+    <div class="nav-item"><span class="icon">📊</span>Dashboard</div>
+    <div class="nav-item"><span class="icon">💰</span>Cost Management</div>
+    <div class="nav-item active" id="entraPortalNav"><span class="icon">👥</span>Azure Active Directory</div>
+    <div class="nav-item"><span class="icon">🔐</span>Security Center</div>
+    <div class="nav-item"><span class="icon">💾</span>Storage accounts</div>
+    <div class="nav-item"><span class="icon">🖥️</span>Virtual machines</div>
+  </div>
+
+  <!-- Default Azure Dashboard View -->
+  <div class="main-content" id="mainContent">
+    <div class="azure-dashboard">
+      <h1>Azure Dashboard</h1>
+      <p>Welcome to your Azure portal. Select a service from the left navigation to get started.</p>
+      
+      <div class="dashboard-card">
+        <h3>Recent resources</h3>
+        <div class="resource-grid">
+          <div class="resource-item">Virtual machines</div>
+          <div class="resource-item">Storage accounts</div>
+          <div class="resource-item">App Services</div>
+          <div class="resource-item">SQL databases</div>
+        </div>
+      </div>
+      
+      <div class="dashboard-card">
+        <h3>Getting started</h3>
+        <p>To complete this lab, click on <strong>Azure Active Directory</strong> in the left navigation menu.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entra ID Admin Center View -->
+  <div class="entra-admin-center" id="entraAdminCenter">
+    <div class="content-header">
+      <div class="content-title">Microsoft Entra admin center <span class="admin-role-badge">Global Administrator</span></div>
+      <div class="content-subtitle">Contoso | Default Directory</div>
+    </div>
+
+    <div class="main-content" style="display: flex; left: 0; top: 0;">
+      <!-- Entra Navigation -->
+      <div class="azure-nav" style="width: 240px; background: #f8f9fa; position: relative; top: 0; height: 100%;">
+        <div class="entra-nav">
+          <div class="entra-nav-section">
+            <div class="entra-nav-header">Manage</div>
+            <div class="entra-nav-item" data-nav="identity"><span class="icon">👤</span>Identity</div>
+            <div class="entra-nav-item active" data-nav="users"><span class="icon">👥</span>Users</div>
+            <div class="entra-nav-item" data-nav="groups"><span class="icon">👪</span>Groups</div>
+            <div class="entra-nav-item" data-nav="roles"><span class="icon">🛡️</span>Roles & administrators</div>
+          </div>
+          <div class="entra-nav-section">
+            <div class="entra-nav-header">Protect</div>
+            <div class="entra-nav-item" data-nav="security"><span class="icon">🔒</span>Security</div>
+            <div class="entra-nav-item" data-nav="conditional"><span class="icon">⚙️</span>Conditional Access</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users Content Area -->
+      <div style="flex: 1; padding: 20px; overflow: auto;">
+        <div class="breadcrumb">
+          <a id="breadcrumbHome">Microsoft Entra admin center</a> > <a id="breadcrumbUsers">Users</a> > <span>All users</span>
+        </div>
+
+        <div class="content-header" style="padding: 0 0 16px 0; border: none;">
+          <div class="content-title">All users</div>
+          <div class="content-subtitle">Manage user identities and access</div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="search-box">
+            <input type="text" placeholder="Search by name or email" id="entraUserSearch">
+          </div>
+          <select class="filter-select" id="statusFilter">
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="blocked">Blocked sign-in</option>
+          </select>
+          <select class="filter-select" id="departmentFilter">
+            <option value="all">All departments</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Sales">Sales</option>
+            <option value="HR">Human Resources</option>
+            <option value="Development">Development</option>
+          </select>
+          <button class="btn btn-primary" style="margin-left: auto;">+ New user</button>
+        </div>
+
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>User Principal Name</th>
+              <th>Status</th>
+              <th>Department</th>
+              <th>Job title</th>
+            </tr>
+          </thead>
+          <tbody id="entraUserTableBody">
+            <tr data-user="jane.smith">
+              <td><strong>Jane Smith</strong></td>
+              <td>jane.smith@contoso.com</td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>Marketing</td>
+              <td>Marketing Specialist</td>
+            </tr>
+            <tr data-user="mike.sales">
+              <td><strong>Mike Johnson</strong></td>
+              <td>mike.johnson@contoso.com</td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>Sales</td>
+              <td>Sales Manager</td>
+            </tr>
+            <tr data-user="sarah.hr">
+              <td><strong>Sarah Chen</strong></td>
+              <td>sarah.chen@contoso.com</td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>Human Resources</td>
+              <td>HR Director</td>
+            </tr>
+            <tr data-user="bob.dev">
+              <td><strong>Bob Wilson</strong></td>
+              <td>bob.wilson@contoso.com</td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>Engineering</td>
+              <td>Senior Developer</td>
+            </tr>
+            <tr data-user="tom.guest">
+              <td><strong>Tom Reynolds (Guest)</strong></td>
+              <td>tom@partnercompany.com</td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>External</td>
+              <td>Consultant</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="pagination">
+          <div class="page-info">Showing 1-5 of 247 users</div>
+          <div class="page-nav">
+            <button class="page-btn" disabled>← Previous</button>
+            <button class="page-btn">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Detail View -->
+  <div class="user-detail" id="userDetail">
+    <div class="detail-header">
+      <button class="back-btn" id="backBtn">← Back</button>
+      <div class="detail-title">Jane Smith</div>
+      <div style="margin-left: auto; display: flex; gap: 8px;">
+        <button class="btn btn-outline">Reset password</button>
+        <button class="btn btn-outline">Delete user</button>
+        <button class="btn">Manage</button>
+      </div>
+    </div>
+    <div class="detail-tabs">
+      <div class="tab active" data-tab="profile">Profile</div>
+      <div class="tab" data-tab="groups">Groups</div>
+      <div class="tab" data-tab="devices">Devices</div>
+      <div class="tab" data-tab="licenses">Licenses</div>
+      <div class="tab" data-tab="authentication">Authentication</div>
+    </div>
+    <div class="tab-content">
+      <div id="profileTab" class="tab-panel">
+        <div class="section">
+          <h3>Identity</h3>
+          <div class="property-grid">
+            <div class="property-label">Display name</div>
+            <div class="property-value">Jane Smith</div>
+            
+            <div class="property-label">User ID</div>
+            <div class="property-value">a1b2c3d4-e5f6-7890-abcd-ef1234567890</div>
+            
+            <div class="property-label">User principal name</div>
+            <div class="property-value">jane.smith@contoso.com</div>
+            
+            <div class="property-label">Object ID</div>
+            <div class="property-value">b2c3d4e5-f6g7-8901-bcde-f23456789012</div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>Job information</h3>
+          <div class="property-grid">
+            <div class="property-label">Job title</div>
+            <div class="property-value">Marketing Specialist</div>
+            
+            <div class="property-label">Department</div>
+            <div class="property-value">Marketing</div>
+            
+            <div class="property-label">Manager</div>
+            <div class="property-value">Lisa Marketing (lisa.marketing@contoso.com)</div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>Contact information</h3>
+          <div class="property-grid">
+            <div class="property-label">Office location</div>
+            <div class="property-value">Seattle</div>
+            
+            <div class="property-label">Mobile phone</div>
+            <div class="property-value">+1 (555) 123-4567</div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="groupsTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin:0 0 16px 0;">
+            <div>
+              <h3>Group memberships <span id="groupCount">(2)</span></h3>
+              <p style="color:#6c757d; margin-top:4px; font-size:13px;">Direct and transitive group memberships</p>
+            </div>
+            <button class="btn btn-primary" id="addGroupBtn">+ Add to group</button>
+          </div>
+          
+          <div class="search-box" style="margin-bottom: 16px;">
+            <input type="text" placeholder="Search groups" id="groupListSearch">
+          </div>
+          
+          <div id="groupList" class="list">
+            <div class="list-item">
+              <div>
+                <strong>All Employees</strong>
+                <div style="font-size:11px;color:#6c757d; margin-top:2px;">Security group • 247 members</div>
+              </div>
+              <span class="badge badge-secondary">Direct</span>
+            </div>
+            <div class="list-item">
+              <div>
+                <strong>Marketing Department</strong>
+                <div style="font-size:11px;color:#6c757d; margin-top:2px;">Microsoft 365 group • 24 members</div>
+              </div>
+              <span class="badge">Transitive</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="devicesTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <h3>Registered devices</h3>
+          <p style="color:#6c757d; font-size:13px;">No devices registered to this user.</p>
+        </div>
+      </div>
+      
+      <div id="licensesTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <h3>Assigned licenses</h3>
+          <div class="list">
+            <div class="list-item">
+              <div>
+                <strong>Office 365 E3</strong>
+                <div style="font-size:11px;color:#6c757d; margin-top:2px;">Microsoft 365 Apps, Exchange Online, SharePoint Online</div>
+              </div>
+              <span class="status-badge status-active">Assigned</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="authenticationTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <h3>Authentication methods</h3>
+          <p style="color:#6c757d; font-size:13px;">No additional authentication methods configured.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Group Selection Modal -->
+  <div class="modal" id="groupModal">
+    <div class="modal-card">
+      <div class="modal-header">Add Jane Smith to groups</div>
+      <div class="modal-body">
+        <label class="label" for="groupSearch">Search groups</label>
+        <input id="groupSearch" class="input" placeholder="Type to filter groups">
+        <div class="list" style="margin-top:12px; max-height: 300px; overflow-y: auto;" id="groupPickList">
+          <div class="list-item" data-group="Marketing Team">
+            <div>
+              <strong>Marketing Team</strong>
+              <div style="font-size:11px;color:#6c757d; margin-top:2px;">Security group • 15 members</div>
+            </div>
+            <input type="checkbox">
+          </div>
+          <div class="list-item" data-group="Sales All">
+            <div>
+              <strong>Sales All</strong>
+              <div style="font-size:11px;color:#6c757d; margin-top:2px;">Microsoft 365 group • 42 members</div>
+            </div>
+            <input type="checkbox">
+          </div>
+          <div class="list-item" data-group="All Staff">
+            <div>
+              <strong>All Staff</strong>
+              <div style="font-size:11px;color:#6c757d; margin-top:2px;">Security group • 247 members</div>
+            </div>
+            <input type="checkbox">
+          </div>
+          <div class="list-item" data-group="Project Phoenix">
+            <div>
+              <strong>Project Phoenix</strong>
+              <div style="font-size:11px;color:#6c757d; margin-top:2px;">Security group • 8 members</div>
+            </div>
+            <input type="checkbox">
+          </div>
+          <div class="list-item" data-group="Intune Enrolled">
+            <div>
+              <strong>Intune Enrolled</strong>
+              <div style="font-size:11px;color:#6c757d; margin-top:2px;">Dynamic device group • 89 members</div>
+            </div>
+            <input type="checkbox" disabled>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="cancelGroup">Cancel</button>
+        <button class="btn btn-primary" id="confirmGroup" disabled>Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="success-toast" id="successToast">✅ Successfully added user to group</div>
+</div>
+
+<script>
+// Progress tracking
+let currentStep = 1;
+const steps = document.querySelectorAll('.progress-step');
+
+function updateProgress(step) {
+  steps.forEach((s, index) => {
+    s.classList.remove('step-active', 'step-completed');
+    if (index + 1 < step) {
+      s.classList.add('step-completed');
+    } else if (index + 1 === step) {
+      s.classList.add('step-active');
+    }
+  });
+  currentStep = step;
+}
+
+// Collapsible menu functionality
+const menuToggle = document.getElementById('menuToggle');
+const azureNav = document.getElementById('azureNav');
+const mainContent = document.getElementById('mainContent');
+
+function updateMenuToggleState() {
+  if (azureNav.classList.contains('collapsed')) {
+    menuToggle.textContent = '☰';
+  } else {
+    menuToggle.textContent = '✕';
+  }
+}
+
+menuToggle.addEventListener('click', () => {
+  azureNav.classList.toggle('collapsed');
+  menuToggle.classList.toggle('collapsed');
+  mainContent.classList.toggle('expanded');
+  updateMenuToggleState();
+});
+
+// Enhanced navigation
+document.getElementById('entraPortalNav').addEventListener('click', () => {
+  // Hide the main Azure dashboard
+  document.getElementById('mainContent').style.display = 'none';
+  // Show the Entra admin center
+  document.getElementById('entraAdminCenter').style.display = 'block';
+  
+  // HIDE the menu toggle button when in Entra admin center
+  menuToggle.style.display = 'none';
+  
+  updateProgress(2);
+});
+
+// Breadcrumb navigation
+document.getElementById('breadcrumbHome').addEventListener('click', () => {
+  document.getElementById('entraAdminCenter').style.display = 'none';
+  document.getElementById('userDetail').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+  
+  // SHOW the menu toggle button when back to Azure dashboard
+  menuToggle.style.display = 'flex';
+  
+  updateProgress(1);
+});
+
+// Entra navigation
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('entra-nav-item')) {
+    document.querySelectorAll('.entra-nav-item').forEach(item => item.classList.remove('active'));
+    e.target.classList.add('active');
+    
+    if (e.target.getAttribute('data-nav') === 'users') {
+      // Already on users page
+    }
+  }
+});
+
+// Enhanced user search and filtering
+document.getElementById('entraUserSearch').addEventListener('input', (e) => {
+  const term = e.target.value.toLowerCase();
+  filterUsers();
+});
+
+document.getElementById('statusFilter').addEventListener('change', filterUsers);
+document.getElementById('departmentFilter').addEventListener('change', filterUsers);
+
+function filterUsers() {
+  const searchTerm = document.getElementById('entraUserSearch').value.toLowerCase();
+  const statusFilter = document.getElementById('statusFilter').value;
+  const deptFilter = document.getElementById('departmentFilter').value;
+  
+  document.querySelectorAll('#entraUserTableBody tr').forEach(row => {
+    const name = row.children[0].textContent.toLowerCase();
+    const upn = row.children[1].textContent.toLowerCase();
+    const status = row.children[2].textContent.toLowerCase();
+    const department = row.children[3].textContent;
+    
+    const matchesSearch = name.includes(searchTerm) || upn.includes(searchTerm);
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'active' && status.includes('active')) ||
+                         (statusFilter === 'blocked' && status.includes('blocked'));
+    const matchesDept = deptFilter === 'all' || department === deptFilter;
+    
+    row.style.display = (matchesSearch && matchesStatus && matchesDept) ? '' : 'none';
+  });
+}
+
+// Open user detail from Entra admin
+document.getElementById('entraUserTableBody').addEventListener('click', (e) => {
+  const row = e.target.closest('tr');
+  if (!row) return;
+  const username = row.getAttribute('data-user');
+  
+  if (username === 'jane.smith') {
+    document.getElementById('entraAdminCenter').style.display = 'none';
+    document.getElementById('userDetail').style.display = 'block';
+    document.querySelector('.detail-title').textContent = 'Jane Smith';
+    updateProgress(3);
+    
+    // Reset to profile tab when opening user detail
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('[data-tab="profile"]').classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display='none');
+    document.getElementById('profileTab').style.display = 'block';
+  } else {
+    toast('For this lab, please select Jane Smith to complete the add to group task.');
+  }
+});
+
+// Tabs
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('tab')) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    const tabId = e.target.getAttribute('data-tab');
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display='none');
+    document.getElementById(tabId + 'Tab').style.display = 'block';
+  }
+});
+
+function toast(msg) {
+  const t = document.getElementById('successToast');
+  t.textContent = '✅ ' + msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3500);
+}
+
+// Navigation
+document.getElementById('backBtn').addEventListener('click', () => {
+  document.getElementById('userDetail').style.display = 'none';
+  document.getElementById('entraAdminCenter').style.display = 'block';
+  updateProgress(2);
+});
+
+document.getElementById('breadcrumbUsers').addEventListener('click', () => {
+  document.getElementById('userDetail').style.display = 'none';
+  document.getElementById('entraAdminCenter').style.display = 'block';
+  updateProgress(2);
+});
+
+// Group management
+document.getElementById('addGroupBtn').addEventListener('click', () => {
+  document.getElementById('groupModal').style.display = 'flex';
+});
+
+document.getElementById('cancelGroup').addEventListener('click', () => {
+  document.getElementById('groupModal').style.display = 'none';
+  document.querySelectorAll('#groupPickList input[type="checkbox"]').forEach(cb => cb.checked = false);
+  document.getElementById('confirmGroup').disabled = true;
+});
+
+document.getElementById('groupSearch').addEventListener('input', (e) => {
+  const term = e.target.value.toLowerCase();
+  document.querySelectorAll('#groupPickList .list-item').forEach(item => {
+    const name = item.getAttribute('data-group').toLowerCase();
+    item.style.display = name.includes(term) ? '' : 'none';
+  });
+});
+
+document.querySelectorAll('#groupPickList input[type="checkbox"]').forEach(cb => {
+  cb.addEventListener('change', () => {
+    const any = Array.from(document.querySelectorAll('#groupPickList input[type="checkbox"]:not(:disabled)')).some(x => x.checked);
+    document.getElementById('confirmGroup').disabled = !any;
+  });
+});
+
+document.getElementById('confirmGroup').addEventListener('click', () => {
+  const selected = Array.from(document.querySelectorAll('#groupPickList .list-item')).filter(i => i.querySelector('input[type="checkbox"]').checked);
+  const list = document.getElementById('groupList');
+  
+  selected.forEach(item => {
+    const name = item.getAttribute('data-group');
+    // Check if already in list
+    const existing = Array.from(list.querySelectorAll('.list-item strong')).some(el => el.textContent === name);
+    if (!existing) {
+      const row = document.createElement('div');
+      row.className = 'list-item';
+      row.innerHTML = `
+        <div>
+          <strong>${name}</strong>
+          <div style="font-size:11px;color:#6c757d; margin-top:2px;">Security group • 15 members</div>
+        </div>
+        <span class="badge">Direct</span>
+      `;
+      list.appendChild(row);
+    }
+  });
+  
+  // Update group count
+  const groupCount = list.querySelectorAll('.list-item').length;
+  document.getElementById('groupCount').textContent = `(${groupCount})`;
+  
+  document.getElementById('groupModal').style.display = 'none';
+  document.querySelectorAll('#groupPickList input[type="checkbox"]').forEach(cb => cb.checked = false);
+  document.getElementById('confirmGroup').disabled = true;
+  
+  toast('Successfully added user to selected group(s)');
+  updateProgress(4);
+});
+
+// Group list search
+document.getElementById('groupListSearch').addEventListener('input', (e) => {
+  const term = e.target.value.toLowerCase();
+  document.querySelectorAll('#groupList .list-item').forEach(item => {
+    const name = item.querySelector('strong').textContent.toLowerCase();
+    item.style.display = name.includes(term) ? '' : 'none';
+  });
+});
+
+// Initialize progress and menu state
+updateProgress(1);
+updateMenuToggleState();
+</script>
+</body>
+</html>

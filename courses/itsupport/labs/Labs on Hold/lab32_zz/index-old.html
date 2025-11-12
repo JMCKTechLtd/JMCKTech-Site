@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lab 32: Entra ID - Block/Unblock Sign-in</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { 
+  background: linear-gradient(135deg, #1e1e1e 0%, #2d2d30 100%); 
+  padding: 0;
+  overflow: hidden; 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+  color: #111; 
+  display: flex;
+  flex-direction: column;
+}
+.task-instructions {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f1f8e9 100%);
+  border: 1px solid #90caf9; 
+  border-radius: 0; 
+  padding: 12px 20px; 
+  margin: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: relative;
+  z-index: 1000;
+  max-height: 140px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.task-instructions .task-title {
+  font-weight: 600; 
+  color: #ffffff; 
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+  padding: 6px 12px; 
+  border-radius: 4px; 
+  display: inline-block; 
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.task-instructions .task-description { 
+  color: #1e1e1e; 
+  line-height: 1.4; 
+  font-size: 13px;
+}
+.task-instructions ol { 
+  margin: 6px 0 0 20px; 
+  line-height: 1.4;
+}
+.task-instructions li {
+  margin-bottom: 2px;
+  font-size: 13px;
+}
+.lab-container {
+  width: 100%;
+  height: calc(100vh - 140px);
+  background: #ffffff; 
+  overflow: hidden; 
+  position: relative;
+  flex: 1;
+}
+.azure-header {
+  height: 48px; 
+  background: #0078d4; 
+  color: white; 
+  display: flex; 
+  align-items: center;
+  padding: 0 16px; 
+  font-weight: 500; 
+  border-bottom: 1px solid #005a9e;
+  font-size: 14px;
+}
+.azure-header .logo { 
+  margin-right: 12px; 
+  font-size: 16px; 
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.azure-header .search { 
+  margin-left: auto; 
+  background: rgba(255,255,255,0.15); 
+  border: 1px solid rgba(255,255,255,0.3); 
+  padding: 6px 12px; 
+  border-radius: 4px; 
+  color: white; 
+  width: 240px; 
+  font-size: 13px;
+}
+.azure-header .search::placeholder { color: rgba(255,255,255,0.7); }
+
+/* Collapsible Side Menu */
+.azure-nav {
+  width: 220px; 
+  height: calc(100% - 48px); 
+  background: #f8f9fa; 
+  border-right: 1px solid #dee2e6;
+  overflow-y: auto; 
+  padding: 12px 0;
+  font-size: 13px;
+  position: absolute;
+  left: 0;
+  top: 48px;
+  transition: transform 0.3s ease;
+  z-index: 100;
+}
+.azure-nav.collapsed {
+  transform: translateX(-100%);
+}
+.menu-toggle {
+  position: absolute;
+  left: 220px;
+  top: 60px;
+  background: #0078d4;
+  color: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  width: 20px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 101;
+  transition: left 0.3s ease;
+}
+.menu-toggle.collapsed {
+  left: 0;
+}
+.nav-item {
+  padding: 8px 16px; 
+  cursor: pointer; 
+  color: #495057;
+  border-left: 3px solid transparent; 
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-item:hover { background: #e9ecef; }
+.nav-item.active { 
+  background: #e3f2fd; 
+  color: #0078d4; 
+  border-left-color: #0078d4; 
+  font-weight: 500; 
+}
+.nav-item .icon { 
+  width: 16px; 
+  text-align: center;
+}
+.main-content {
+  position: absolute; 
+  left: 220px; 
+  top: 48px; 
+  right: 0; 
+  bottom: 0;
+  background: white; 
+  overflow: auto;
+  transition: left 0.3s ease;
+}
+.main-content.expanded {
+  left: 0;
+}
+.content-header {
+  padding: 16px 20px; 
+  border-bottom: 1px solid #dee2e6; 
+  background: #fafbfc;
+}
+.content-title { 
+  font-size: 18px; 
+  font-weight: 600; 
+  margin-bottom: 4px; 
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.content-subtitle { color: #6c757d; font-size: 13px; }
+.user-list { padding: 20px; }
+.user-table {
+  width: 100%; 
+  border-collapse: collapse; 
+  background: white; 
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+  overflow: hidden;
+  font-size: 13px;
+}
+.user-table th {
+  background: #f8f9fa; 
+  padding: 10px 12px; 
+  text-align: left; 
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6; 
+  color: #495057;
+}
+.user-table td {
+  padding: 10px 12px; 
+  border-bottom: 1px solid #f1f3f4;
+}
+.user-table tbody tr:hover { background: #f8f9fa; }
+.user-table tbody tr { cursor: pointer; transition: background 0.2s ease; }
+.status-badge {
+  display: inline-block; 
+  padding: 3px 8px; 
+  border-radius: 10px; 
+  font-size: 11px;
+  font-weight: 600; 
+  text-transform: uppercase; 
+  letter-spacing: 0.5px;
+}
+.status-active { background: #d4edda; color: #155724; }
+.status-blocked { background: #f8d7da; color: #721c24; }
+.status-warning { background: #ffeaa7; color: #856404; }
+.search-box { margin-bottom: 16px; position: relative; }
+.search-box input {
+  width: 280px; 
+  padding: 7px 12px 7px 36px; 
+  border: 1px solid #ced4da;
+  border-radius: 4px; 
+  font-size: 13px;
+}
+.search-box::before {
+  content: "🔍"; 
+  position: absolute; 
+  left: 12px; 
+  top: 50%; 
+  transform: translateY(-50%);
+  color: #6c757d;
+  font-size: 13px;
+}
+.user-detail {
+  position: absolute; 
+  left: 0; 
+  top: 0; 
+  right: 0; 
+  bottom: 0;
+  background: white; 
+  display: none; 
+  z-index: 100;
+  overflow-y: auto;
+}
+.detail-header {
+  padding: 16px 20px; 
+  border-bottom: 1px solid #dee2e6; 
+  background: #fafbfc;
+  display: flex; 
+  align-items: center; 
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+}
+.detail-title { font-size: 18px; font-weight: 600; }
+.back-btn {
+  padding: 6px 12px; 
+  border: 1px solid #ced4da; 
+  border-radius: 4px;
+  background: white; 
+  cursor: pointer; 
+  font-size: 13px; 
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.back-btn:hover { background: #f8f9fa; }
+.detail-tabs { 
+  display: flex; 
+  border-bottom: 1px solid #dee2e6; 
+  background: #fafbfc; 
+  padding: 0 20px;
+  position: sticky;
+  top: 73px;
+  z-index: 10;
+  background: white;
+}
+.tab {
+  padding: 12px 16px; 
+  cursor: pointer; 
+  border-bottom: 2px solid transparent;
+  font-weight: 500; 
+  color: #6c757d; 
+  transition: all 0.2s ease;
+  font-size: 13px;
+}
+.tab.active { color: #0078d4; border-bottom-color: #0078d4; }
+.tab:hover:not(.active) { color: #495057; }
+.tab-content { 
+  padding: 20px; 
+  max-width: 1000px;
+}
+.section {
+  background: white; 
+  border: 1px solid #dee2e6; 
+  border-radius: 6px;
+  padding: 16px; 
+  margin-bottom: 16px;
+}
+.btn { 
+  padding: 6px 12px; 
+  border: 1px solid #ced4da; 
+  border-radius: 4px;
+  background: white; 
+  cursor: pointer; 
+  font-size: 13px; 
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: #0078d4; color: white; border-color: #0078d4; }
+.btn-primary:hover { background: #106ebe; }
+.success-toast {
+  position: fixed; 
+  bottom: 20px; 
+  right: 20px; 
+  background: #d4edda;
+  color: #155724; 
+  padding: 12px 16px; 
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+  display: none;
+  border-left: 4px solid #28a745;
+  font-size: 13px;
+  z-index: 2000;
+}
+.loading {
+  display: inline-block; 
+  width: 16px; 
+  height: 16px; 
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #0078d4; 
+  border-radius: 50%; 
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.badge { 
+  display:inline-block; 
+  padding:3px 8px; 
+  border-radius:10px; 
+  font-size:11px; 
+  background:#eef2ff; 
+  color:#1f3a93; 
+}
+.modal {
+  position: fixed; 
+  inset: 0; 
+  background: rgba(0,0,0,0.5);
+  display: none; 
+  align-items: center; 
+  justify-content: center; 
+  z-index: 1000;
+}
+.modal-card {
+  background: white; 
+  border-radius: 6px; 
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  width: 500px; 
+  max-height: 80vh; 
+  overflow: auto;
+}
+.modal-header { 
+  padding: 16px 20px; 
+  border-bottom: 1px solid #dee2e6; 
+  font-weight: 600;
+  font-size: 15px;
+}
+.modal-body { padding: 16px 20px; }
+.modal-footer { 
+  padding: 12px 20px; 
+  border-top: 1px solid #dee2e6; 
+  display: flex; 
+  gap: 8px; 
+  justify-content: flex-end; 
+}
+.input, .select { 
+  width: 100%; 
+  padding: 7px 10px; 
+  border: 1px solid #ced4da; 
+  border-radius: 4px; 
+  font-size: 13px; 
+}
+.label { 
+  display:block; 
+  margin: 0 0 6px 0; 
+  font-weight: 500; 
+  color: #495057; 
+  font-size: 13px;
+}
+.list { border:1px solid #e5e7eb; border-radius:4px; }
+.list-item {
+  display:flex; 
+  align-items:center; 
+  justify-content:space-between; 
+  padding:8px 12px; 
+  border-bottom:1px solid #f1f5f9;
+  font-size: 13px;
+}
+.list-item:last-child { border-bottom:none; }
+
+/* New styles for enhanced functionality */
+.entra-admin-center { 
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  display: none; 
+}
+.entra-nav { padding: 8px 0; }
+.entra-nav-section { padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
+.entra-nav-header { 
+  padding: 8px 16px; 
+  font-weight: 600; 
+  color: #374151; 
+  font-size: 12px; 
+  text-transform: uppercase; 
+  letter-spacing: 0.5px;
+}
+.entra-nav-item { 
+  padding: 7px 16px 7px 32px; 
+  cursor: pointer; 
+  font-size: 13px; 
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.entra-nav-item:hover { background: #f3f4f6; }
+.entra-nav-item.active { background: #dbeafe; color: #1e40af; font-weight: 500; }
+.breadcrumb { 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+  font-size: 13px; 
+  color: #6b7280; 
+  margin-bottom: 16px; 
+  padding: 0 20px;
+}
+.breadcrumb a { color: #0078d4; text-decoration: none; cursor: pointer; }
+.breadcrumb a:hover { text-decoration: underline; }
+.admin-role-badge { 
+  background: #dcfce7; 
+  color: #166534; 
+  padding: 2px 8px; 
+  border-radius: 10px; 
+  font-size: 11px; 
+  font-weight: 600; 
+}
+.filter-bar { 
+  display: flex; 
+  gap: 10px; 
+  margin-bottom: 16px; 
+  align-items: center; 
+  flex-wrap: wrap;
+  padding: 0 20px;
+}
+.filter-select { 
+  padding: 6px 10px; 
+  border: 1px solid #d1d5db; 
+  border-radius: 4px; 
+  background: white; 
+  font-size: 13px; 
+}
+.pagination { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-top: 16px; 
+  padding: 12px 20px; 
+  border-top: 1px solid #e5e7eb; 
+  font-size: 13px;
+}
+.page-info { color: #6b7280; }
+.page-nav { display: flex; gap: 6px; }
+.page-btn { 
+  padding: 5px 10px; 
+  border: 1px solid #d1d5db; 
+  border-radius: 4px; 
+  background: white; 
+  cursor: pointer; 
+  font-size: 13px; 
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.page-btn:disabled { color: #9ca3af; cursor: not-allowed; }
+
+/* Progress indicator */
+.progress-indicator {
+  display: flex;
+  gap: 20px;
+  margin: 0 20px 20px 20px;
+  padding-top: 20px;
+}
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e9ecef;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+.step-active .step-number {
+  background: #0078d4;
+  color: white;
+}
+.step-completed .step-number {
+  background: #28a745;
+  color: white;
+}
+.step-label {
+  font-size: 12px;
+  color: #6c757d;
+  text-align: center;
+}
+.step-active .step-label {
+  color: #0078d4;
+  font-weight: 500;
+}
+.step-completed .step-label {
+  color: #28a745;
+}
+.step-connector {
+  flex: 1;
+  height: 2px;
+  background: #e9ecef;
+  margin-top: 13px;
+}
+.step-completed .step-connector {
+  background: #28a745;
+}
+
+/* Authentication methods styles */
+.mfa-status { 
+  display: inline-flex; 
+  align-items: center; 
+  gap: 6px; 
+  font-size: 12px; 
+  padding: 2px 8px; 
+  border-radius: 10px; 
+  background: #e7f3ff; 
+  color: #005a9e; 
+}
+.auth-methods { margin-top: 16px; }
+.auth-method-item { 
+  display: flex; 
+  justify-content: space-between; 
+  padding: 8px 0; 
+  border-bottom: 1px solid #f1f3f4; 
+}
+.auth-method-item:last-child { border-bottom: none; }
+.conditional-access { 
+  background: #f8f9fa; 
+  border-radius: 6px; 
+  padding: 12px; 
+  margin-top: 12px; 
+  font-size: 13px; 
+}
+.ca-policy { display: flex; justify-content: space-between; padding: 8px 0; }
+.license-badge { background: #e7f3ff; color: #005a9e; }
+.required-role { 
+  position: fixed; 
+  top: 50%; 
+  left: 50%; 
+  transform: translate(-50%, -50%); 
+  background: white; 
+  padding: 24px; 
+  border-radius: 8px; 
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3); 
+  display: none; 
+  z-index: 1001; 
+  text-align: center; 
+  width: 400px;
+}
+.required-role h3 { margin-bottom: 12px; color: #721c24; }
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+.toggle input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .toggle-slider {
+  background-color: #0078d4;
+}
+input:checked + .toggle-slider:before {
+  transform: translateX(26px);
+}
+
+/* Admin units and risk events */
+.admin-units { 
+  background: #e7f3ff; 
+  border: 1px solid #b3d7ff; 
+  border-radius: 6px; 
+  padding: 12px 16px; 
+  margin: 0 20px 16px; 
+  font-size: 14px; 
+}
+.admin-units strong { color: #005a9e; }
+.risk-events { 
+  background: #fff3cd; 
+  border: 1px solid #ffeaa7; 
+  border-radius: 6px; 
+  padding: 12px 16px; 
+  margin: 0 20px 16px; 
+  font-size: 14px; 
+}
+.risk-events strong { color: #856404; }
+
+/* Default Azure dashboard view */
+.azure-dashboard {
+  padding: 20px;
+}
+.dashboard-card {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.dashboard-card h3 {
+  margin-bottom: 12px;
+  font-size: 16px;
+  color: #0078d4;
+}
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.resource-item {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.resource-item:hover {
+  background: #e9ecef;
+  border-color: #0078d4;
+}
+
+/* Make sure authentication section is fully accessible */
+#authenticationTab {
+  padding-bottom: 40px;
+}
+
+/* Fix overlapping issues */
+.entra-admin-center .main-content {
+  left: 0 !important;
+}
+
+.entra-admin-center .azure-nav {
+  position: relative !important;
+  top: 0 !important;
+  height: auto;
+}
+
+/* Ensure proper layout for user detail */
+#userDetail .tab-content {
+  min-height: 400px;
+}
+
+/* Hide menu toggle when not in main Azure view */
+.entra-admin-center .menu-toggle,
+.user-detail .menu-toggle {
+  display: none;
+}
+</style>
+</head>
+<body>
+<div class="task-instructions">
+  <div class="task-title">Lab: Entra ID - Block/Unblock Sign-in</div>
+  <div class="task-description">
+    <strong>Goal:</strong> Block <strong>Jane Smith</strong>'s sign-in, then revoke her active sessions.
+    <ol>
+      <li>Navigate to <strong>Azure Active Directory → Users → All users</strong></li>
+      <li>Search for and open <strong>Jane Smith</strong>'s user profile</li>
+      <li>Go to <strong>Authentication methods</strong> (not "Sign-in status")</li>
+      <li>Click <strong>Manage user sign-in preferences</strong></li>
+      <li>Enable <strong>Block sign-in</strong> and save</li>
+      <li>Go to <strong>Sign-ins</strong> and revoke active sessions</li>
+      <li>Observe the status change and verify in user list</li>
+    </ol>
+    <em>Note: You need User Administrator role to perform these actions</em>
+  </div>
+</div>
+
+<div class="lab-container">
+  
+  <!-- Progress Indicator inside lab container -->
+  <div class="progress-indicator" id="progressIndicator">
+    <div class="progress-step step-completed" id="step1">
+      <div class="step-number">1</div>
+      <div class="step-label">Navigate to Entra ID</div>
+      <div class="step-connector"></div>
+    </div>
+    <div class="progress-step" id="step2">
+      <div class="step-number">2</div>
+      <div class="step-label">Find User</div>
+      <div class="step-connector"></div>
+    </div>
+    <div class="progress-step" id="step3">
+      <div class="step-number">3</div>
+      <div class="step-label">Block Sign-in</div>
+      <div class="step-connector"></div>
+    </div>
+    <div class="progress-step" id="step4">
+      <div class="step-number">4</div>
+      <div class="step-label">Revoke Sessions</div>
+      <div class="step-connector"></div>
+    </div>
+    <div class="progress-step" id="step5">
+      <div class="step-number">5</div>
+      <div class="step-label">Complete</div>
+    </div>
+  </div>
+
+  <div class="azure-header">
+    <div class="logo">🌐 <span>Microsoft Azure</span></div>
+    <input class="search" placeholder="Search resources, services, and docs">
+  </div>
+
+  <!-- Menu Toggle Button -->
+  <button class="menu-toggle" id="menuToggle">☰</button>
+
+  <div class="azure-nav" id="azureNav">
+    <div class="nav-item"><span class="icon">🏠</span>Home</div>
+    <div class="nav-item"><span class="icon">📊</span>Dashboard</div>
+    <div class="nav-item"><span class="icon">💰</span>Cost Management</div>
+    <div class="nav-item active" id="entraPortalNav"><span class="icon">👥</span>Azure Active Directory</div>
+    <div class="nav-item"><span class="icon">🔐</span>Security Center</div>
+    <div class="nav-item"><span class="icon">💾</span>Storage accounts</div>
+    <div class="nav-item"><span class="icon">🖥️</span>Virtual machines</div>
+  </div>
+
+  <!-- Default Azure Dashboard View -->
+  <div class="main-content" id="mainContent">
+    <div class="azure-dashboard">
+      <h1>Azure Dashboard</h1>
+      <p>Welcome to your Azure portal. Select a service from the left navigation to get started.</p>
+      
+      <div class="dashboard-card">
+        <h3>Recent resources</h3>
+        <div class="resource-grid">
+          <div class="resource-item">Virtual machines</div>
+          <div class="resource-item">Storage accounts</div>
+          <div class="resource-item">App Services</div>
+          <div class="resource-item">SQL databases</div>
+        </div>
+      </div>
+      
+      <div class="dashboard-card">
+        <h3>Getting started</h3>
+        <p>To complete this lab, click on <strong>Azure Active Directory</strong> in the left navigation menu.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entra ID Admin Center View -->
+  <div class="entra-admin-center" id="entraAdminCenter">
+    <div class="content-header">
+      <div class="content-title">Microsoft Entra admin center <span class="admin-role-badge">Global Administrator</span></div>
+      <div class="content-subtitle">Contoso | Default Directory</div>
+    </div>
+
+    <div class="main-content" style="display: flex; left: 0; top: 0;">
+      <!-- Entra Navigation -->
+      <div class="azure-nav" style="width: 240px; background: #f8f9fa; position: relative; top: 0; height: 100%;">
+        <div class="entra-nav">
+          <div class="entra-nav-section">
+            <div class="entra-nav-header">Manage</div>
+            <div class="entra-nav-item" data-nav="identity"><span class="icon">👤</span>Identity</div>
+            <div class="entra-nav-item active" data-nav="users"><span class="icon">👥</span>Users</div>
+            <div class="entra-nav-item" data-nav="groups"><span class="icon">👪</span>Groups</div>
+            <div class="entra-nav-item" data-nav="roles"><span class="icon">🛡️</span>Roles & administrators</div>
+          </div>
+          <div class="entra-nav-section">
+            <div class="entra-nav-header">Protect</div>
+            <div class="entra-nav-item" data-nav="security"><span class="icon">🔒</span>Security</div>
+            <div class="entra-nav-item" data-nav="conditional"><span class="icon">⚙️</span>Conditional Access</div>
+          </div>
+          <div class="entra-nav-section">
+            <div class="entra-nav-header">Monitor</div>
+            <div class="entra-nav-item" data-nav="signins"><span class="icon">📋</span>Sign-in logs</div>
+            <div class="entra-nav-item" data-nav="audit"><span class="icon">📊</span>Audit logs</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users Content Area -->
+      <div style="flex: 1; padding: 20px; overflow: auto;">
+        <div class="breadcrumb">
+          <a id="breadcrumbHome">Microsoft Entra admin center</a> > <a id="breadcrumbUsers">Users</a> > <span>All users</span>
+        </div>
+
+        <div class="content-header" style="padding: 0 0 16px 0; border: none;">
+          <div class="content-title">All users</div>
+          <div class="content-subtitle">Manage user identities and access</div>
+        </div>
+
+        <div class="admin-units">
+          <strong>📋 Administrative Unit:</strong> Default Directory (All users) • <strong>👥 User count:</strong> 247 • <strong>🔄 Last sync:</strong> Today, 09:14 AM
+        </div>
+
+        <div class="filter-bar">
+          <div class="search-box">
+            <input type="text" placeholder="Search by name or email" id="entraUserSearch">
+          </div>
+          <select class="filter-select" id="statusFilter">
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="blocked">Blocked</option>
+          </select>
+          <select class="filter-select" id="departmentFilter">
+            <option value="all">All departments</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Sales">Sales</option>
+            <option value="IT">IT</option>
+            <option value="Finance">Finance</option>
+          </select>
+          <button class="btn btn-primary" style="margin-left: auto;">+ New user</button>
+        </div>
+
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th>Display Name</th>
+              <th>User Principal Name</th>
+              <th>Status</th>
+              <th>Department</th>
+              <th>MFA Status</th>
+              <th>Last sign-in</th>
+            </tr>
+          </thead>
+          <tbody id="entraUserTableBody">
+            <tr data-user="jane.smith">
+              <td><strong>Jane Smith</strong></td>
+              <td>jane.smith@contoso.com</td>
+              <td><span class="status-badge status-active" id="statusCell">Active</span></td>
+              <td>Marketing</td>
+              <td><span class="mfa-status">● Enabled</span></td>
+              <td>Today, 08:30 AM</td>
+            </tr>
+            <tr data-user="admin.user">
+              <td><strong>Admin User</strong></td>
+              <td>admin@contoso.com</td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>IT</td>
+              <td><span class="mfa-status">● Enabled</span></td>
+              <td>Today, 07:45 AM</td>
+            </tr>
+            <tr data-user="mike.sales">
+              <td><strong>Mike Sales</strong></td>
+              <td>mike.sales@contoso.com</td>
+              <td><span class="status-badge status-active">Active</span></td>
+              <td>Sales</td>
+              <td><span class="mfa-status" style="background:#fff3cd;color:#856404;">○ Disabled</span></td>
+              <td>Yesterday, 02:15 PM</td>
+            </tr>
+            <tr data-user="blocked.user">
+              <td><strong>Blocked User</strong></td>
+              <td>blocked@contoso.com</td>
+              <td><span class="status-badge status-blocked">Blocked</span></td>
+              <td>Finance</td>
+              <td><span class="mfa-status">● Enabled</span></td>
+              <td>7 days ago</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="pagination">
+          <div class="page-info">Showing 1-4 of 247 users</div>
+          <div class="page-nav">
+            <button class="page-btn" disabled>← Previous</button>
+            <button class="page-btn">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Detail View -->
+  <div class="user-detail" id="userDetail">
+    <div class="detail-header">
+      <button class="back-btn" id="backBtn">← Back</button>
+      <div class="detail-title">Jane Smith</div>
+      <div style="margin-left: auto; display: flex; gap: 8px;">
+        <button class="btn">Reset password</button>
+        <button class="btn">Delete user</button>
+        <button class="btn">Refresh</button>
+      </div>
+    </div>
+    <div class="detail-tabs">
+      <div class="tab" data-tab="profile">Profile</div>
+      <div class="tab" data-tab="groups">Groups</div>
+      <div class="tab" data-tab="devices">Devices</div>
+      <div class="tab active" data-tab="authentication">Authentication methods</div>
+      <div class="tab" data-tab="signins">Sign-ins</div>
+      <div class="tab" data-tab="licenses">Licenses</div>
+    </div>
+    <div class="tab-content">
+      <div id="profileTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <h3 style="margin-bottom:12px; font-size:15px;">Identity</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <p style="margin-bottom:8px;"><strong>Display Name:</strong> Jane Smith</p>
+              <p style="margin-bottom:8px;"><strong>User Principal Name:</strong> jane.smith@contoso.com</p>
+              <p style="margin-bottom:8px;"><strong>Object ID:</strong> a1b2c3d4-e5f6-7890-abcd-ef1234567890</p>
+            </div>
+            <div>
+              <p style="margin-bottom:8px;"><strong>Job title:</strong> Marketing Manager</p>
+              <p style="margin-bottom:8px;"><strong>Department:</strong> Marketing</p>
+              <p style="margin-bottom:8px;"><strong>Status:</strong> <span class="status-badge status-active" id="profileStatus">Active</span></p>
+            </div>
+          </div>
+        </div>
+        <div class="section">
+          <h3 style="margin-bottom:12px; font-size:15px;">Contact info</h3>
+          <p style="margin-bottom:8px;"><strong>Email:</strong> jane.smith@contoso.com</p>
+          <p style="margin-bottom:8px;"><strong>Office location:</strong> New York</p>
+        </div>
+      </div>
+      <div id="authenticationTab" class="tab-panel">
+        <div class="section">
+          <h3 style="margin-bottom:16px; font-size:16px;">Authentication methods</h3>
+          
+          <div class="auth-methods">
+            <div class="auth-method-item">
+              <div>
+                <strong>Microsoft Authenticator</strong>
+                <div style="font-size:12px;color:#6c757d;">Registered • Default method</div>
+              </div>
+              <span class="badge">Enabled</span>
+            </div>
+            
+            <div class="auth-method-item">
+              <div>
+                <strong>Phone</strong>
+                <div style="font-size:12px;color:#6c757d;">+1 XXX-XXX-1234</div>
+              </div>
+              <span class="badge">Enabled</span>
+            </div>
+          </div>
+
+          <div style="margin-top:24px; padding:16px; background:#f8f9fa; border-radius:6px;">
+            <h4 style="margin-bottom:12px;">User sign-in preferences</h4>
+            <div class="list">
+              <div class="list-item">
+                <div>
+                  <strong>Block sign-in</strong>
+                  <div style="font-size:12px;color:#6c757d;">Prevent this user from signing in to any Microsoft cloud applications.</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="blockToggle"> 
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            <div style="margin-top:16px; font-size:12px; color:#6c757d;">
+              <strong>Note:</strong> Blocking sign-in will immediately prevent access. User will see "Your account has been blocked" when trying to sign in.
+            </div>
+          </div>
+
+          <div class="conditional-access">
+            <strong>Conditional Access policies affecting this user:</strong>
+            <div class="ca-policy">
+              <span>Require MFA for all cloud apps</span>
+              <span class="badge">Applied</span>
+            </div>
+            <div class="ca-policy">
+              <span>Block legacy authentication</span>
+              <span class="badge">Applied</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="signinsTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <h3 style="margin-bottom:16px; font-size:16px;">Recent sign-in activity</h3>
+          
+          <div class="risk-events">
+            <strong>⚠️ Active sessions detected:</strong> 2 devices currently signed in
+          </div>
+
+          <div class="list">
+            <div class="list-item">
+              <div>
+                <strong>Windows Device - CONTOSO-LAPTOP</strong>
+                <div style="font-size:12px;color:#6c757d;">Today, 08:30 AM • Windows 11 • Chrome Browser</div>
+              </div>
+              <span class="badge license-badge">Active now</span>
+            </div>
+            
+            <div class="list-item">
+              <div>
+                <strong>iPhone - Jane's iPhone</strong>
+                <div style="font-size:12px;color:#6c757d;">Today, 07:45 AM • iOS 16 • Outlook Mobile</div>
+              </div>
+              <span class="badge license-badge">Active now</span>
+            </div>
+          </div>
+
+          <div style="margin-top:24px;">
+            <h4 style="margin-bottom:12px;">Session management</h4>
+            <div class="list-item">
+              <div>
+                <strong>Revoke sign-in sessions</strong>
+                <div style="font-size:12px;color:#6c757d;">Signs user out of all devices and forces reauthentication. Useful after password reset or security incident.</div>
+              </div>
+              <button class="btn btn-primary" id="revokeBtn">Revoke sessions</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="groupsTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <h3 style="margin-bottom:16px; font-size:15px;">Group memberships</h3>
+          <div class="list">
+            <div class="list-item">
+              <div>
+                <strong>All Marketing</strong>
+                <div style="font-size: 12px; color: #6b7280;">Security group</div>
+              </div>
+              <div class="badge">Direct</div>
+            </div>
+            <div class="list-item">
+              <div>
+                <strong>Contoso-AllEmployees</strong>
+                <div style="font-size: 12px; color: #6b7280;">Microsoft 365 group</div>
+              </div>
+              <div class="badge">Direct</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="licensesTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <h3 style="margin-bottom:16px; font-size:15px;">Assigned Licenses</h3>
+          <p>Microsoft 365 Business Premium</p>
+        </div>
+      </div>
+      <div id="devicesTab" class="tab-panel" style="display:none;">
+        <div class="section">
+          <h3 style="margin-bottom:16px; font-size:15px;">Registered devices</h3>
+          <p>No devices registered.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Role Requirement Modal -->
+  <div class="required-role" id="roleModal">
+    <h3>⚠️ Privileged Identity Management</h3>
+    <p>You need <strong>User Administrator</strong> or <strong>Global Administrator</strong> role to manage user sign-in settings.</p>
+    <p style="font-size:12px; color:#6c757d; margin:12px 0;">Your current role: Global Administrator</p>
+    <button class="btn btn-primary" onclick="document.getElementById('roleModal').style.display='none'">Continue</button>
+  </div>
+
+  <div class="success-toast" id="successToast">✅ Done</div>
+</div>
+
+<script>
+// Progress tracking
+let currentStep = 1;
+const steps = document.querySelectorAll('.progress-step');
+
+function updateProgress(step) {
+  steps.forEach((s, index) => {
+    s.classList.remove('step-active', 'step-completed');
+    if (index + 1 < step) {
+      s.classList.add('step-completed');
+    } else if (index + 1 === step) {
+      s.classList.add('step-active');
+    }
+  });
+  currentStep = step;
+}
+
+// Collapsible menu functionality - FIXED
+const menuToggle = document.getElementById('menuToggle');
+const azureNav = document.getElementById('azureNav');
+const mainContent = document.getElementById('mainContent');
+
+menuToggle.addEventListener('click', () => {
+  azureNav.classList.toggle('collapsed');
+  menuToggle.classList.toggle('collapsed');
+  mainContent.classList.toggle('expanded');
+  
+  // Update toggle button icon
+  if (azureNav.classList.contains('collapsed')) {
+    menuToggle.textContent = '☰';
+  } else {
+    menuToggle.textContent = '✕';
+  }
+});
+
+// Enhanced navigation
+document.getElementById('entraPortalNav').addEventListener('click', () => {
+  // Hide the main Azure dashboard
+  document.getElementById('mainContent').style.display = 'none';
+  // Show the Entra admin center
+  document.getElementById('entraAdminCenter').style.display = 'block';
+  // Hide the menu toggle when in Entra admin center
+  menuToggle.style.display = 'none';
+  updateProgress(2);
+});
+
+// Breadcrumb navigation
+document.getElementById('breadcrumbHome').addEventListener('click', () => {
+  document.getElementById('entraAdminCenter').style.display = 'none';
+  document.getElementById('userDetail').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+  // Show the menu toggle when back to main Azure view
+  menuToggle.style.display = 'flex';
+  updateProgress(1);
+});
+
+// Entra navigation
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('entra-nav-item')) {
+    document.querySelectorAll('.entra-nav-item').forEach(item => item.classList.remove('active'));
+    e.target.classList.add('active');
+    
+    if (e.target.getAttribute('data-nav') === 'users') {
+      // Already on users page
+    }
+  }
+});
+
+// Enhanced user search and filtering
+document.getElementById('entraUserSearch').addEventListener('input', (e) => {
+  const term = e.target.value.toLowerCase();
+  filterUsers();
+});
+
+document.getElementById('statusFilter').addEventListener('change', filterUsers);
+document.getElementById('departmentFilter').addEventListener('change', filterUsers);
+
+function filterUsers() {
+  const searchTerm = document.getElementById('entraUserSearch').value.toLowerCase();
+  const statusFilter = document.getElementById('statusFilter').value;
+  const deptFilter = document.getElementById('departmentFilter').value;
+  
+  document.querySelectorAll('#entraUserTableBody tr').forEach(row => {
+    const name = row.children[0].textContent.toLowerCase();
+    const upn = row.children[1].textContent.toLowerCase();
+    const status = row.children[2].textContent.toLowerCase();
+    const department = row.children[3].textContent;
+    
+    const matchesSearch = name.includes(searchTerm) || upn.includes(searchTerm);
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'active' && status.includes('active')) ||
+                         (statusFilter === 'blocked' && status.includes('blocked'));
+    const matchesDept = deptFilter === 'all' || department === deptFilter;
+    
+    row.style.display = (matchesSearch && matchesStatus && matchesDept) ? '' : 'none';
+  });
+}
+
+// Open user detail from Entra admin
+document.getElementById('entraUserTableBody').addEventListener('click', (e) => {
+  const row = e.target.closest('tr');
+  if (!row) return;
+  const username = row.getAttribute('data-user');
+  
+  if (username === 'jane.smith') {
+    // Show role requirement modal first
+    document.getElementById('roleModal').style.display = 'block';
+    setTimeout(() => {
+      document.getElementById('roleModal').style.display = 'none';
+      document.getElementById('entraAdminCenter').style.display = 'none';
+      document.getElementById('userDetail').style.display = 'block';
+      // Hide the menu toggle when in user detail view
+      menuToggle.style.display = 'none';
+      updateProgress(3);
+      
+      // Reset tabs to active state when opening user detail
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector('[data-tab="authentication"]').classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach(p => p.style.display='none');
+      document.getElementById('authenticationTab').style.display = 'block';
+    }, 1500);
+  } else {
+    toast('For this lab, please select Jane Smith to complete the task.');
+  }
+});
+
+// Tabs
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('tab')) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    const tabId = e.target.getAttribute('data-tab');
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display='none');
+    document.getElementById(tabId + 'Tab').style.display = 'block';
+    
+    // Update progress when navigating to sign-ins tab
+    if (tabId === 'signins' && currentStep === 3) {
+      updateProgress(4);
+    }
+  }
+});
+
+function toast(msg) {
+  const t = document.getElementById('successToast');
+  t.textContent = '✅ ' + msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3500);
+}
+
+// Navigation
+document.getElementById('backBtn').addEventListener('click', () => {
+  document.getElementById('userDetail').style.display = 'none';
+  document.getElementById('entraAdminCenter').style.display = 'block';
+  // Keep menu toggle hidden in Entra admin center
+  menuToggle.style.display = 'none';
+  updateProgress(2);
+});
+
+document.getElementById('breadcrumbUsers').addEventListener('click', () => {
+  document.getElementById('userDetail').style.display = 'none';
+  document.getElementById('entraAdminCenter').style.display = 'block';
+  // Keep menu toggle hidden in Entra admin center
+  menuToggle.style.display = 'none';
+  updateProgress(2);
+});
+
+// Enhanced block toggle with confirmation
+const blockToggle = document.getElementById('blockToggle');
+blockToggle.addEventListener('change', () => {
+  if (blockToggle.checked) {
+    if (confirm('Block sign-in for Jane Smith?\n\nThis will immediately prevent the user from accessing any Microsoft cloud applications.')) {
+      updateUserStatus(true);
+      toast('Sign-in blocked for Jane Smith. User will be signed out of all sessions.');
+      updateProgress(4);
+    } else {
+      blockToggle.checked = false;
+    }
+  } else {
+    updateUserStatus(false);
+    toast('Sign-in unblocked for Jane Smith');
+  }
+});
+
+function updateUserStatus(blocked) {
+  const profileBadge = document.getElementById('profileStatus');
+  const tableBadge = document.getElementById('statusCell');
+  
+  if (blocked) {
+    profileBadge.className = 'status-badge status-blocked';
+    profileBadge.textContent = 'Blocked';
+    tableBadge.className = 'status-badge status-blocked';
+    tableBadge.textContent = 'Blocked';
+  } else {
+    profileBadge.className = 'status-badge status-active';
+    profileBadge.textContent = 'Active';
+    tableBadge.className = 'status-badge status-active';
+    tableBadge.textContent = 'Active';
+  }
+}
+
+// Enhanced revoke sessions
+document.getElementById('revokeBtn').addEventListener('click', () => {
+  if (confirm('Revoke all sign-in sessions for Jane Smith?\n\nThis will sign the user out of all devices and applications immediately.')) {
+    const btn = document.getElementById('revokeBtn');
+    btn.innerHTML = '<span class="loading"></span> Revoking sessions...';
+    btn.disabled = true;
+    
+    setTimeout(() => {
+      btn.textContent = 'Revoke sessions';
+      btn.disabled = false;
+      toast('All sign-in sessions revoked for Jane Smith. User must sign in again.');
+      updateProgress(5);
+    }, 2000);
+  }
+});
+
+// Initialize progress
+updateProgress(1);
+</script>
+</body>
+</html>
