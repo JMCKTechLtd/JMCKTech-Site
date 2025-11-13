@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 3.2 - Manage LVM (PVs, VGs, LVs)</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .lvm-diagram {
+            background: #1e1e1e;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid #444;
+        }
+        .lvm-diagram img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 3.2: Manage LVM (PVs, VGs, LVs)</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: Physical Volumes (PVs)</h3>
+<p class="required-command">Type exactly: <code>sudo pvcreate /dev/sdb</code></p>
+<p class="required-command">Then type: <code>sudo pvdisplay</code></p>
+
+<div class="concept">
+<h4>Understanding Physical Volumes</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Physical storage devices prepared for LVM
+</div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Foundation for LVM storage management
+</div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Typically disk partitions or whole disks
+</div>
+<div class="concept-item">
+<strong>When</strong>
+                                First step in LVM configuration
+</div>
+</div>
+<p><strong>How it works:</strong> <code>pvcreate</code> initializes a device for LVM. <code>pvdisplay</code> shows PV details including size, free space, and VG membership.</p>
+
+<div class="lvm-diagram">
+<strong>LVM Structure:</strong><br>
+[Physical Disks] → [Physical Volumes] → [Volume Groups] → [Logical Volumes] → [Filesystems]
+</div>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Volume Groups (VGs)</h3>
+<p class="required-command">Type exactly: <code>sudo vgcreate vg_data /dev/sdb</code></p>
+<p class="required-command">Then type: <code>sudo vgdisplay vg_data</code></p>
+
+<div class="concept">
+<h4>Understanding Volume Groups</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Pools of PVs that provide storage for LVs
+</div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Combine multiple PVs into flexible storage pools
+</div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Created from one or more PVs
+</div>
+<div class="concept-item">
+<strong>When</strong>
+                                After PV creation, before LV creation
+</div>
+</div>
+<p><strong>How it works:</strong> <code>vgcreate</code> combines PVs into a VG. <code>vgdisplay</code> shows VG details including size, free space, and PV composition. VGs can be extended by adding more PVs.</p>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Logical Volumes (LVs)</h3>
+<p class="required-command">Type exactly: <code>sudo lvcreate -n lv_app -L 2G vg_data</code></p>
+<p class="required-command">Then type: <code>sudo lvdisplay /dev/vg_data/lv_app</code></p>
+
+<div class="concept">
+<h4>Understanding Logical Volumes</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Virtual partitions carved from VGs
+</div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Flexible, resizable storage units
+</div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Created within VGs
+</div>
+<div class="concept-item">
+<strong>When</strong>
+                                After VG creation, before filesystem creation
+</div>
+</div>
+<p><strong>How it works:</strong> <code>lvcreate</code> allocates space from a VG to create an LV. <code>lvdisplay</code> shows LV details including size, VG source, and device path. LVs can be resized as needed.</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Filesystem Creation</h3>
+<p class="required-command">Type exactly: <code>sudo mkfs.xfs /dev/vg_data/lv_app</code></p>
+<p class="required-command">Then type: <code>sudo blkid /dev/vg_data/lv_app</code></p>
+
+<div class="concept">
+<h4>Understanding Filesystems on LVs</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Filesystem creation on LVs
+</div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Make storage usable by the OS
+</div>
+<div class="concept-item">
+<strong>Where</strong>
+                                On top of LVM logical volumes
+</div>
+<div class="concept-item">
+<strong>When</strong>
+                                Final step before mounting
+</div>
+</div>
+<p><strong>How it works:</strong> <code>mkfs.xfs</code> creates an XFS filesystem on the LV. <code>blkid</code> shows filesystem details including UUID. Other filesystems like ext4 can also be used.</p>
+</div>
+</div>
+<div class="guide-step" id="step5">
+<h3>Step 5: Extending LVM</h3>
+<p class="required-command">Type exactly: <code>sudo lvextend -L +1G /dev/vg_data/lv_app</code></p>
+<p class="required-command">Then type: <code>sudo xfs_growfs /dev/vg_data/lv_app</code></p>
+
+<div class="concept">
+<h4>Understanding LVM Extension</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Online storage expansion
+</div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Increase capacity without downtime
+</div>
+<div class="concept-item">
+<strong>Where</strong>
+                                On existing LVs with free space
+</div>
+<div class="concept-item">
+<strong>When</strong>
+                                When more storage is needed
+</div>
+</div>
+<p><strong>How it works:</strong> <code>lvextend</code> increases LV size (requires VG free space). <code>xfs_growfs</code> expands XFS filesystem to use new space. For ext4, use <code>resize2fs</code> instead.</p>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[root@lab ~]#</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[root@lab ~]# <span class="prompt">Welcome to RHCSA Lab 3.2 - LVM Management!</span></div>
+<div>[root@lab ~]# <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'sudo pvcreate /dev/sdb', step: 0, feedback: 'Type exactly: sudo pvcreate /dev/sdb' },
+    { command: 'sudo pvdisplay', step: 0, feedback: 'Type exactly: sudo pvdisplay' },
+    { command: 'sudo vgcreate vg_data /dev/sdb', step: 1, feedback: 'Type exactly: sudo vgcreate vg_data /dev/sdb' },
+    { command: 'sudo vgdisplay vg_data', step: 1, feedback: 'Type exactly: sudo vgdisplay vg_data' },
+    { command: 'sudo lvcreate -n lv_app -L 2G vg_data', step: 2, feedback: 'Type exactly: sudo lvcreate -n lv_app -L 2G vg_data' },
+    { command: 'sudo lvdisplay /dev/vg_data/lv_app', step: 2, feedback: 'Type exactly: sudo lvdisplay /dev/vg_data/lv_app' },
+    { command: 'sudo mkfs.xfs /dev/vg_data/lv_app', step: 3, feedback: 'Type exactly: sudo mkfs.xfs /dev/vg_data/lv_app' },
+    { command: 'sudo blkid /dev/vg_data/lv_app', step: 3, feedback: 'Type exactly: sudo blkid /dev/vg_data/lv_app' },
+    { command: 'sudo lvextend -L +1G /dev/vg_data/lv_app', step: 4, feedback: 'Type exactly: sudo lvextend -L +1G /dev/vg_data/lv_app' },
+    { command: 'sudo xfs_growfs /dev/vg_data/lv_app', step: 4, feedback: 'Type exactly: sudo xfs_growfs /dev/vg_data/lv_app' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+
+const commands = {
+    'sudo': (args) => {
+        const cmd = args[0];
+        const cmdArgs = args.slice(1);
+        
+        if (cmd === 'pvcreate') {
+            return `Physical volume "/dev/sdb" successfully created.`;
+        } else if (cmd === 'pvdisplay') {
+            return `/dev/sdb\n  PV Name               /dev/sdb\n  VG Name               vg_data\n  PV Size               10.00 GiB\n  Allocatable           yes\n  PE Size               4.00 MiB\n  Total PE              2559\n  Free PE               2047\n  Allocated PE          512\n  PV UUID               abc123-xyz-456`;
+        } else if (cmd === 'vgcreate') {
+            return `Volume group "vg_data" successfully created`;
+        } else if (cmd === 'vgdisplay') {
+            return `--- Volume group ---\nVG Name               vg_data\nSystem ID\nFormat                lvm2\nVG Size               10.00 GiB\nPE Size               4.00 MiB\nTotal PE              2559\nAlloc PE / Size       512 / 2.00 GiB\nFree  PE / Size      2047 / 8.00 GiB\nVG UUID               def456-uvw-789`;
+        } else if (cmd === 'lvcreate') {
+            return `Logical volume "lv_app" created.`;
+        } else if (cmd === 'lvdisplay') {
+            return `--- Logical volume ---\nLV Path                /dev/vg_data/lv_app\nLV Name                lv_app\nVG Name                vg_data\nLV Size                2.00 GiB\nLV UUID                ghi789-rst-012`;
+        } else if (cmd === 'mkfs.xfs') {
+            return `meta-data=/dev/vg_data/lv_app isize=512    agcount=4, agsize=131072 blks\n=                       sectsz=512   attr=2, projid32bit=1\n=                       crc=1        finobt=1, sparse=1, rmapbt=0\n=                       reflink=1\ndata     =                       bsize=4096   blocks=524288, imaxpct=25\n=                       sunit=0      swidth=0 blks\nnaming   =version 2              bsize=4096   ascii-ci=0, ftype=1\nlog      =internal log           bsize=4096   blocks=2560, version=2\n=                       sectsz=512   sunit=0 blks, lazy-count=1\nrealtime =none                   extsz=4096   blocks=0, rtextents=0`;
+        } else if (cmd === 'blkid') {
+            return `/dev/vg_data/lv_app: UUID="a1b2c3d4-e5f6-7890" TYPE="xfs"`;
+        } else if (cmd === 'lvextend') {
+            return `Size of logical volume vg_data/lv_app changed from 2.00 GiB (512 extents) to 3.00 GiB (768 extents).\nLogical volume vg_data/lv_app successfully resized.`;
+        } else if (cmd === 'xfs_growfs') {
+            return `meta-data=/dev/vg_data/lv_app  isize=512    agcount=4, agsize=131072 blks\n=                       sectsz=512   attr=2, projid32bit=1\n=                       crc=1        finobt=1, sparse=1\ndata     =                       bsize=4096   blocks=524288, imaxpct=25\n=                       sunit=0      swidth=0 blks\nnaming   =version 2              bsize=4096   ascii-ci=0, ftype=1\nlog      =internal               bsize=4096   blocks=2560, version=2\n=                       sectsz=512   sunit=0 blks, lazy-count=1\nrealtime =none                   extsz=4096   blocks=0, rtextents=0\ndata blocks changed from 524288 to 786432`;
+        }
+        return `Command '${cmd}' executed successfully`;
+    },
+    'help': () => 'Available commands: sudo pvcreate, sudo pvdisplay, sudo vgcreate, sudo vgdisplay, sudo lvcreate, sudo lvdisplay, sudo mkfs.xfs, sudo blkid, sudo lvextend, sudo xfs_growfs',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[root@lab ~]# ${commandText}</div><div>${output}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[root@lab ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All LVM commands executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

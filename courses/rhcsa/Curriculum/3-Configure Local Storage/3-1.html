@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 3.1 - Partition Management</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .danger-zone {
+            background: rgba(204, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin: 10px 0;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 3.1: List, Create, and Delete Partitions</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: Listing Partitions</h3>
+<p class="required-command">Type exactly: <code>lsblk</code></p>
+<p class="required-command">Then type: <code>sudo fdisk -l /dev/sda</code></p>
+
+<div class="concept">
+<h4>Understanding Disk Partitioning</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Partition tables divide disks into logical sections
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Separate OS, applications, and user data
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Stored in disk's first sector (MBR/GPT)
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                During OS install or disk configuration
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>lsblk</code> lists block devices. <code>fdisk -l</code> shows partition tables. MBR (fdisk) supports up to 4 primary partitions, while GPT (gdisk) supports up to 128.</p>
+</div>
+
+<div class="danger-zone">
+<h4>⚠️ Warning</h4>
+<p>Partitioning commands can destroy data if used incorrectly. Always double-check the device name before executing commands.</p>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Creating MBR Partitions with fdisk</h3>
+<p class="required-command">Type exactly: <code>sudo fdisk /dev/sdb</code></p>
+<p class="required-command">In fdisk, type: <code>n</code> (for new partition)</p>
+<p class="required-command">Then: <code>p</code> (primary), <code>1</code> (partition number)</p>
+<p class="required-command">Accept defaults for first/last sectors</p>
+<p class="required-command">Finally: <code>w</code> (write changes)</p>
+
+<div class="concept">
+<h4>Understanding fdisk</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Traditional MBR partition editor
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                For disks ≤2TB with MBR partition tables
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Works with MBR-formatted disks
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Legacy systems or small disks
+                            </div>
+</div>
+<p><strong>How it works:</strong> fdisk is interactive. Common commands: <code>n</code> (new), <code>d</code> (delete), <code>p</code> (print), <code>w</code> (write), <code>q</code> (quit). Changes take effect after writing.</p>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Creating GPT Partitions with gdisk</h3>
+<p class="required-command">Type exactly: <code>sudo gdisk /dev/sdc</code></p>
+<p class="required-command">In gdisk, type: <code>n</code> (for new partition)</p>
+<p class="required-command">Accept defaults for partition number, first/last sectors</p>
+<p class="required-command">Set type: <code>8200</code> (Linux swap)</p>
+<p class="required-command">Finally: <code>w</code> (write changes)</p>
+
+<div class="concept">
+<h4>Understanding gdisk</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                GPT partition editor (modern alternative)
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                For disks >2TB or modern systems
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Works with GPT-formatted disks
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                UEFI systems or large disks
+                            </div>
+</div>
+<p><strong>How it works:</strong> Similar to fdisk but for GPT. Common commands: <code>n</code>, <code>d</code>, <code>p</code>, <code>w</code>, <code>q</code>. Type codes: <code>8300</code> (Linux filesystem), <code>8200</code> (Linux swap).</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Using parted for Advanced Partitioning</h3>
+<p class="required-command">Type exactly: <code>sudo parted /dev/sdd</code></p>
+<p class="required-command">In parted, type: <code>mklabel gpt</code></p>
+<p class="required-command">Then: <code>mkpart primary ext4 1MiB 500MiB</code></p>
+<p class="required-command">Finally: <code>print</code> then <code>quit</code></p>
+
+<div class="concept">
+<h4>Understanding parted</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Advanced partition manipulation tool
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Scriptable and supports both MBR/GPT
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Useful for precise partition sizing
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Automation or complex partitioning
+                            </div>
+</div>
+<p><strong>How it works:</strong> parted allows precise control. Commands: <code>mklabel</code> (create partition table), <code>mkpart</code> (create partition), <code>rm</code> (delete), <code>print</code> (show info). Changes take effect immediately.</p>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[user@lab ~]$</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 3.1 - Partition Management!</span></div>
+<div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+<div>[user@lab ~]$ <span class="warning">⚠️ Warning: This lab simulates partition operations. No real disks are modified.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'lsblk', step: 0, feedback: 'Type exactly: lsblk' },
+    { command: 'sudo fdisk -l /dev/sda', step: 0, feedback: 'Type exactly: sudo fdisk -l /dev/sda' },
+    { command: 'sudo fdisk /dev/sdb', step: 1, feedback: 'Type exactly: sudo fdisk /dev/sdb' },
+    { command: 'n', step: 1, isFdisk: true, feedback: 'In fdisk, type: n (for new partition)' },
+    { command: 'p', step: 1, isFdisk: true, feedback: 'Then: p (primary)' },
+    { command: '1', step: 1, isFdisk: true, feedback: 'Then: 1 (partition number)' },
+    { command: 'w', step: 1, isFdisk: true, feedback: 'Finally: w (write changes)' },
+    { command: 'sudo gdisk /dev/sdc', step: 2, feedback: 'Type exactly: sudo gdisk /dev/sdc' },
+    { command: 'n', step: 2, isGdisk: true, feedback: 'In gdisk, type: n (for new partition)' },
+    { command: '8200', step: 2, isGdisk: true, feedback: 'Set type: 8200 (Linux swap)' },
+    { command: 'w', step: 2, isGdisk: true, feedback: 'Finally: w (write changes)' },
+    { command: 'sudo parted /dev/sdd', step: 3, feedback: 'Type exactly: sudo parted /dev/sdd' },
+    { command: 'mklabel gpt', step: 3, isParted: true, feedback: 'In parted, type: mklabel gpt' },
+    { command: 'mkpart primary ext4 1MiB 500MiB', step: 3, isParted: true, feedback: 'Then: mkpart primary ext4 1MiB 500MiB' },
+    { command: 'print', step: 3, isParted: true, feedback: 'Finally: print' },
+    { command: 'quit', step: 3, isParted: true, feedback: 'Then: quit' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+let inFdiskMode = false;
+let inGdiskMode = false;
+let inPartedMode = false;
+
+const commands = {
+    'lsblk': () => 'NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT\nsda      8:0    0   20G  0 disk\n├─sda1   8:1    0    1G  0 part /boot\n└─sda2   8:2    0   19G  0 part /\nsdb      8:16   0   10G  0 disk\nsdc      8:32   0   10G  0 disk\nsdd      8:48   0   10G  0 disk',
+    'sudo': (args) => {
+        if (args[0] === 'fdisk' && args[1] === '-l' && args[2] === '/dev/sda') {
+            return 'Disk /dev/sda: 20 GiB, 21474836480 bytes, 41943040 sectors\nUnits: sectors of 1 * 512 = 512 bytes\nSector size (logical/physical): 512 bytes / 512 bytes\nI/O size (minimum/optimal): 512 bytes / 512 bytes\nDisklabel type: dos\nDisk identifier: 0x000a1b2c\n\nDevice     Boot   Start      End  Sectors Size Id Type\n/dev/sda1  *       2048  2099199  2097152   1G 83 Linux\n/dev/sda2       2099200 41943039 39843840  19G 83 Linux';
+        }
+        if (args[0] === 'fdisk' && args[1] === '/dev/sdb') {
+            inFdiskMode = true;
+            return 'Welcome to fdisk (util-linux 2.32.1).\nChanges will remain in memory only until you decide to write them.\nBe careful before using the write command.\n\nCommand (m for help):';
+        }
+        if (args[0] === 'gdisk' && args[1] === '/dev/sdc') {
+            inGdiskMode = true;
+            return 'GPT fdisk (gdisk) version 1.0.3\n\nPartition table scan:\n  MBR: not present\n  BSD: not present\n  APM: not present\n  GPT: not present\n\nCreating new GPT entries.\n\nCommand (? for help):';
+        }
+        if (args[0] === 'parted' && args[1] === '/dev/sdd') {
+            inPartedMode = true;
+            return 'GNU Parted 3.2\nUsing /dev/sdd\nWelcome to GNU Parted! Type \'help\' to view a list of commands.\n(parted)';
+        }
+        return `Command '${args.join(' ')}' executed as root`;
+    },
+    'help': () => 'Available commands: lsblk, sudo fdisk, sudo gdisk, sudo parted, help',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (inFdiskMode) {
+        output = processFdiskCommand(commandText);
+    } else if (inGdiskMode) {
+        output = processGdiskCommand(commandText);
+    } else if (inPartedMode) {
+        output = processPartedCommand(commandText);
+    } else if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+            }
+        }
+    });
+
+    // Special handling for interactive tool commands
+    if (inFdiskMode || inGdiskMode || inPartedMode) {
+        const currentStepCommands = requiredCommands.filter(req => 
+            req.step === currentStep && 
+            ((inFdiskMode && req.isFdisk) || (inGdiskMode && req.isGdisk) || (inPartedMode && req.isParted))
+        );
+        
+        currentStepCommands.forEach(req => {
+            if (req.command === commandText.trim() && !completedCommands[requiredCommands.findIndex(c => c.command === req.command)]) {
+                completedCommands[requiredCommands.findIndex(c => c.command === req.command)] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct interactive command: ${req.command}</div>`;
+            }
+        });
+    }
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched && !(inFdiskMode || inGdiskMode || inPartedMode)) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function processFdiskCommand(cmd) {
+    let output = '';
+    switch (cmd) {
+        case 'n':
+            output = 'Partition type\n   p   primary (0 primary, 0 extended, 4 free)\n   e   extended (container for logical partitions)\nSelect (default p):';
+            break;
+        case 'p':
+            output = 'Selected partition type: primary\nPartition number (1-4, default 1):';
+            break;
+        case '1':
+            output = 'First sector (2048-20971519, default 2048):\nLast sector, +/-sectors or +/-size{K,M,G,T,P} (2048-20971519, default 20971519):\nCreated a new partition 1 of type \'Linux\' and of size 10 GiB.\n\nCommand (m for help):';
+            break;
+        case 'w':
+            output = 'The partition table has been altered.\nCalling ioctl() to re-read partition table.\nSyncing disks.';
+            inFdiskMode = false;
+            break;
+        default:
+            output = 'Command (m for help):';
+    }
+    terminalOutput.innerHTML += `<div>${cmd}</div><div>${output}</div>`;
+    return output;
+}
+
+function processGdiskCommand(cmd) {
+    let output = '';
+    switch (cmd) {
+        case 'n':
+            output = 'Partition number (1-128, default 1): \nFirst sector (34-20971486, default = 2048) or {+-}size{KMGTP}: \nLast sector (2048-20971486, default = 20971486) or {+-}size{KMGTP}: \nCurrent type is \'Linux filesystem\'\nHex code or GUID (L to show codes, Enter = 8300):';
+            break;
+        case '8200':
+            output = 'Changed type of partition to \'Linux swap\'\n\nCommand (? for help):';
+            break;
+        case 'w':
+            output = 'Final checks complete. About to write GPT data. This will overwrite existing partitions!\nDo you want to proceed? (Y/N): Y\nOK; writing new GUID partition table (GPT) to /dev/sdc.\nThe operation has completed successfully.';
+            inGdiskMode = false;
+            break;
+        default:
+            output = 'Command (? for help):';
+    }
+    terminalOutput.innerHTML += `<div>${cmd}</div><div>${output}</div>`;
+    return output;
+}
+
+function processPartedCommand(cmd) {
+    let output = '';
+    switch (cmd) {
+        case 'mklabel gpt':
+            output = 'Warning: The existing disk label on /dev/sdd will be destroyed and all data on this disk will be lost. Do you want to continue?\nYes/No? yes\nNew disk label type? gpt\n(parted)';
+            break;
+        case 'mkpart primary ext4 1MiB 500MiB':
+            output = '(parted)';
+            break;
+        case 'print':
+            output = 'Model: Virtual disk (scsi)\nDisk /dev/sdd: 10.7GB\nSector size (logical/physical): 512B/512B\nPartition Table: gpt\nDisk Flags: \n\nNumber  Start   End    Size   File system  Name     Flags\n 1      1049kB  525MB  524MB               primary\n\n(parted)';
+            break;
+        case 'quit':
+            inPartedMode = false;
+            output = '';
+            break;
+        default:
+            output = '(parted)';
+    }
+    terminalOutput.innerHTML += `<div>${cmd}</div><div>${output}</div>`;
+    return output;
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All partition operations executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

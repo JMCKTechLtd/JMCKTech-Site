@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 1.2 - I/O Redirection</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .io-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .io-table th, .io-table td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: left;
+        }
+        .io-table th {
+            background-color: #333;
+            color: var(--redhat-accent);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 1.2: I/O Redirection</h1>
+        </div>
+        
+        <div class="terminal-container">
+            <div class="guide">
+                <h2>Lab Instructions</h2>
+                
+                <div class="guide-step active-step" id="step1">
+                    <h3>Step 1: Output Redirection (>)</h3>
+                    <p class="required-command">Type exactly: <code>echo "Hello RHCSA" > hello.txt</code></p>
+                    <p class="required-command">Then type: <code>cat hello.txt</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Output Redirection</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Sends command output to a file instead of screen
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                To save output for later use or logging
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Works with most commands that produce output
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When you need to capture command output
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> The <code>></code> operator creates/overwrites a file. <code>echo</code> writes to the file instead of the terminal. <code>cat</code> displays file contents.</p>
+                        
+                        <table class="io-table">
+                            <tr>
+                                <th>Operator</th>
+                                <th>Description</th>
+                                <th>Example</th>
+                            </tr>
+                            <tr>
+                                <td><code>></code></td>
+                                <td>Overwrite file</td>
+                                <td><code>ls > files.txt</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>>></code></td>
+                                <td>Append to file</td>
+                                <td><code>date >> log.txt</code></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="guide-step" id="step2">
+                    <h3>Step 2: Input Redirection (<)</h3>
+                    <p class="required-command">Type exactly: <code>wc -l < hello.txt</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Input Redirection</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Uses file contents as command input
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                To process files without typing content
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Works with commands expecting stdin
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When feeding files to commands
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> The <code><</code> operator makes the command read from the file instead of keyboard input. <code>wc -l</code> counts lines from the redirected input.</p>
+                    </div>
+                </div>
+                
+                <div class="guide-step" id="step3">
+                    <h3>Step 3: Pipes (|)</h3>
+                    <p class="required-command">Type exactly: <code>cat hello.txt | grep "RHCSA"</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Pipes</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Connects command output to another's input
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                To chain commands together
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Between any commands producing/consuming text
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                Creating processing pipelines
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> The <code>|</code> takes <code>cat</code>'s output and feeds it to <code>grep</code>, which filters for lines containing "RHCSA".</p>
+                    </div>
+                </div>
+                
+                <div class="guide-step" id="step4">
+                    <h3>Step 4: Error Redirection (2>)</h3>
+                    <p class="required-command">Type exactly: <code>ls /nonexistent 2> error.log</code></p>
+                    <p class="required-command">Then type: <code>cat error.log</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Error Redirection</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Redirects error messages separately
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                To handle errors differently than normal output
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                When commands may produce errors
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                Debugging or logging errors
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> File descriptor <code>2</code> (stderr) is redirected to a file. Normal output would still appear on screen unless also redirected.</p>
+                        
+                        <table class="io-table">
+                            <tr>
+                                <th>Descriptor</th>
+                                <th>Stream</th>
+                                <th>Example</th>
+                            </tr>
+                            <tr>
+                                <td><code>0</code></td>
+                                <td>stdin (input)</td>
+                                <td><code>< input.txt</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>1</code></td>
+                                <td>stdout (output)</td>
+                                <td><code>> output.txt</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>2</code></td>
+                                <td>stderr (errors)</td>
+                                <td><code>2> errors.txt</code></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus id="command-input" placeholder="Type a command..." type="text"/>
+            </div>
+            
+            <div class="terminal" id="terminal-output">
+                <div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 1.2: I/O Redirection</span></div>
+                <div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const commandInput = document.getElementById('command-input');
+        const terminalOutput = document.getElementById('terminal-output');
+        const steps = document.querySelectorAll('.guide-step');
+        let currentStep = 0;
+        let commandHistory = [];
+        let historyIndex = -1;
+        
+        // Simulated filesystem
+        let filesystem = {
+            'hello.txt': '',
+            'error.log': ''
+        };
+
+        const requiredCommands = [
+            { command: 'echo "Hello RHCSA" > hello.txt', step: 0, feedback: 'Type exactly: echo "Hello RHCSA" > hello.txt' },
+            { command: 'cat hello.txt', step: 0, feedback: 'Type exactly: cat hello.txt' },
+            { command: 'wc -l < hello.txt', step: 1, feedback: 'Type exactly: wc -l < hello.txt' },
+            { command: 'cat hello.txt | grep "RHCSA"', step: 2, feedback: 'Type exactly: cat hello.txt | grep "RHCSA"' },
+            { command: 'ls /nonexistent 2> error.log', step: 3, feedback: 'Type exactly: ls /nonexistent 2> error.log' },
+            { command: 'cat error.log', step: 3, feedback: 'Type exactly: cat error.log' }
+        ];
+
+        let completedCommands = new Array(requiredCommands.length).fill(false);
+
+        const commands = {
+            'echo': (args) => {
+                // Handle output redirection
+                const redirIndex = args.indexOf('>');
+                if (redirIndex > -1) {
+                    const filename = args[redirIndex + 1];
+                    const content = args.slice(0, redirIndex).join(' ');
+                    filesystem[filename] = content;
+                    return `Output redirected to ${filename}`;
+                }
+                return args.join(' ');
+            },
+            'cat': (args) => {
+                if (args.length === 0) return 'Usage: cat [filename]';
+                const filename = args[0];
+                return filesystem[filename] || `cat: ${filename}: No such file or directory`;
+            },
+            'wc': (args) => {
+                if (args.includes('-l') && args.includes('<')) {
+                    const filename = args[args.indexOf('<') + 1];
+                    const content = filesystem[filename] || '';
+                    return `${content.split('\n').length} ${filename}`;
+                }
+                return 'Invalid arguments for wc';
+            },
+            'grep': (args) => {
+                if (args.includes('|')) {
+                    const pattern = args[args.indexOf('|') + 2].replace(/"/g, '');
+                    const filename = args[args.indexOf('|') - 1];
+                    const content = filesystem[filename] || '';
+                    return content.includes(pattern) ? content : '';
+                }
+                return 'Invalid pipe usage';
+            },
+            'ls': (args) => {
+                if (args.includes('/nonexistent') && args.includes('2>')) {
+                    const filename = args[args.indexOf('2>') + 1];
+                    filesystem[filename] = "ls: cannot access '/nonexistent': No such file or directory";
+                    return 'Error redirected to file';
+                }
+                if (args.includes('/nonexistent')) {
+                    return "ls: cannot access '/nonexistent': No such file or directory";
+                }
+                return Object.keys(filesystem).join('\n');
+            },
+            'clear': () => {
+                terminalOutput.innerHTML = '<div>[user@lab ~]$ <span class="prompt">Terminal cleared</span></div>';
+                return '';
+            },
+            'help': () => 'Available commands: echo, cat, wc, grep, ls, clear, help'
+        };
+
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const commandText = commandInput.value.trim();
+                if (commandText) {
+                    commandHistory.push(commandText);
+                    historyIndex = commandHistory.length;
+                    processCommand(commandText);
+                }
+                commandInput.value = '';
+            } else if (e.key === 'ArrowUp') {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    commandInput.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    commandInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    commandInput.value = '';
+                }
+            }
+        });
+
+        function processCommand(commandText) {
+            const parts = commandText.split(/\s+/);
+            const cmd = parts[0];
+            const args = parts.slice(1);
+
+            let output;
+            if (commands[cmd]) {
+                output = commands[cmd](args);
+                if (output) {
+                    terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+                }
+            } else {
+                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+            }
+
+            let commandMatched = false;
+            requiredCommands.forEach((req, index) => {
+                if (req.step === currentStep && req.command === commandText.trim()) {
+                    commandMatched = true;
+                    if (!completedCommands[index]) {
+                        completedCommands[index] = true;
+                        terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+                    }
+                }
+            });
+
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+            if (isRequiredCommand && !commandMatched) {
+                const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+                terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+            }
+
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            checkStepCompletion();
+        }
+
+        function checkStepCompletion() {
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const allCompleted = currentStepCommands.every(req =>
+                completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+            );
+            if (allCompleted) {
+                setTimeout(() => {
+                    nextStep();
+                }, 1000);
+            }
+        }
+
+        function nextStep() {
+            steps[currentStep].classList.remove('active-step');
+            currentStep++;
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('active-step');
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All I/O redirection concepts mastered!</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

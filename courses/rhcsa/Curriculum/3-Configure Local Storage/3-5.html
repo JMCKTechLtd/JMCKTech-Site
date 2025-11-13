@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 3.5 - Managing Swap Space</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .swap-info {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Red Hat Mono', monospace;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 3.5: Managing Swap Space with swapon/swapoff</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: Checking Current Swap Space</h3>
+<p class="required-command">Type exactly: <code>swapon --show</code></p>
+<p class="required-command">Then type: <code>free -h</code></p>
+
+<div class="concept">
+<h4>Understanding Swap Space</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Disk space used when RAM is full
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Prevents system crashes when memory is exhausted
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Configured in /etc/fstab or created manually
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Needed when physical memory is insufficient
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>swapon --show</code> displays active swap areas. <code>free -h</code> shows memory usage including swap in human-readable format. Swap can be a dedicated partition or a swap file.</p>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Creating a Swap File</h3>
+<p class="required-command">Type exactly: <code>sudo fallocate -l 512M /swapfile</code></p>
+<p class="required-command">Then type: <code>sudo chmod 600 /swapfile</code></p>
+<p class="required-command">Then type: <code>sudo mkswap /swapfile</code></p>
+
+<div class="concept">
+<h4>Understanding Swap File Creation</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Creating a file-based swap space
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Flexible alternative to swap partitions
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Typically in root directory (/swapfile)
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When you need temporary swap space
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>fallocate</code> creates the file, <code>chmod</code> sets secure permissions, and <code>mkswap</code> formats it as swap space. Swap files are useful when you can't repartition the disk.</p>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Activating and Deactivating Swap</h3>
+<p class="required-command">Type exactly: <code>sudo swapon /swapfile</code></p>
+<p class="required-command">Then type: <code>swapon --show</code></p>
+<p class="required-command">Then type: <code>sudo swapoff /swapfile</code></p>
+
+<div class="concept">
+<h4>Understanding Swap Management</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Enabling/disabling swap space
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Temporary activation or system maintenance
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Works on both partitions and files
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When adjusting memory resources
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>swapon</code> activates swap space, while <code>swapoff</code> deactivates it. Changes are temporary unless added to <code>/etc/fstab</code>. Always verify with <code>swapon --show</code>.</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Making Swap Persistent</h3>
+<p class="required-command">Type exactly: <code>echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab</code></p>
+<p class="required-command">Then type: <code>sudo swapon -a</code></p>
+<p class="required-command">Then type: <code>swapon --show</code></p>
+
+<div class="concept">
+<h4>Understanding Persistent Swap</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Automatically activated swap at boot
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Ensures swap is available after reboot
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Configured in /etc/fstab
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                For permanent swap space
+                            </div>
+</div>
+<p><strong>How it works:</strong> The <code>/etc/fstab</code> entry tells the system to activate this swap space at boot. <code>swapon -a</code> activates all swap spaces listed in <code>/etc/fstab</code>. This ensures your swap space survives reboots.</p>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[root@lab ~]#</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[root@lab ~]# <span class="prompt">Welcome to RHCSA Lab 3.5: Managing Swap Space!</span></div>
+<div>[root@lab ~]# <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+<div class="swap-info">Initial swap status:
+NAME      TYPE      SIZE USED PRIO
+/dev/sda2 partition 2G   0B   -2</div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'swapon --show', step: 0, feedback: 'Type exactly: swapon --show' },
+    { command: 'free -h', step: 0, feedback: 'Type exactly: free -h' },
+    { command: 'sudo fallocate -l 512M /swapfile', step: 1, feedback: 'Type exactly: sudo fallocate -l 512M /swapfile' },
+    { command: 'sudo chmod 600 /swapfile', step: 1, feedback: 'Type exactly: sudo chmod 600 /swapfile' },
+    { command: 'sudo mkswap /swapfile', step: 1, feedback: 'Type exactly: sudo mkswap /swapfile' },
+    { command: 'sudo swapon /swapfile', step: 2, feedback: 'Type exactly: sudo swapon /swapfile' },
+    { command: 'swapon --show', step: 2, feedback: 'Type exactly: swapon --show' },
+    { command: 'sudo swapoff /swapfile', step: 2, feedback: 'Type exactly: sudo swapoff /swapfile' },
+    { command: 'echo \'/swapfile none swap sw 0 0\' | sudo tee -a /etc/fstab', step: 3, feedback: 'Type exactly: echo \'/swapfile none swap sw 0 0\' | sudo tee -a /etc/fstab' },
+    { command: 'sudo swapon -a', step: 3, feedback: 'Type exactly: sudo swapon -a' },
+    { command: 'swapon --show', step: 3, feedback: 'Type exactly: swapon --show' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+
+const commands = {
+    'swapon': (args) => {
+        if (args.includes('--show')) {
+            if (args.includes('-a')) {
+                return '/swapfile file 512M 0B -3\n/dev/sda2 partition 2G 0B -2';
+            }
+            return currentStep >= 2 && currentStep <= 3 ? 
+                '/swapfile file 512M 0B -3\n/dev/sda2 partition 2G 0B -2' : 
+                '/dev/sda2 partition 2G 0B -2';
+        }
+        return 'Activated swap space';
+    },
+    'free': (args) => {
+        return `              total        used        free      shared  buff/cache   available\nMem:           1.9G        1.1G        200M         20M        600M        700M\nSwap:          2.0G         0B         2.0G`;
+    },
+    'sudo': (args) => {
+        const subCmd = args[0];
+        if (subCmd === 'fallocate') {
+            return `Created 512M swap file at ${args[2]}`;
+        } else if (subCmd === 'chmod') {
+            return `Changed permissions of ${args[2]}`;
+        } else if (subCmd === 'mkswap') {
+            return `Setting up swapspace version 1, size = 512 MiB (536866816 bytes)\nno label, UUID=3a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d`;
+        } else if (subCmd === 'swapon') {
+            if (args[1] === '-a') {
+                return 'Activated all swap spaces from /etc/fstab';
+            }
+            return 'Swap space activated';
+        } else if (subCmd === 'swapoff') {
+            return 'Swap space deactivated';
+        } else if (subCmd === 'tee') {
+            return '/swapfile none swap sw 0 0';
+        }
+        return `Executed sudo command: ${args.join(' ')}`;
+    },
+    'echo': (args) => args.join(' '),
+    'help': () => 'Available commands: swapon, free, sudo, echo, help',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[root@lab ~]# ${commandText}</div><div>${output}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[root@lab ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All swap management commands executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 5.1 - Schedule Tasks (cron, at)</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .cron-example {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Red Hat Mono', monospace;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 5.1: Schedule Tasks (cron, at)</h1>
+        </div>
+        <div class="terminal-container">
+            <div class="guide">
+                <h2>Lab Instructions</h2>
+                <div class="guide-step active-step" id="step1">
+                    <h3>Step 1: Understanding cron</h3>
+                    <p class="required-command">Type exactly: <code>crontab -l</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding cron</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                A time-based job scheduler in Unix-like systems
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Automate repetitive tasks at specific times
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                System-wide (/etc/crontab) or per-user (crontab -e)
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                For recurring tasks (daily, weekly, etc.)
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> The cron daemon (crond) runs in the background and executes scheduled commands. <code>crontab -l</code> lists your current cron jobs.</p>
+                        
+                        <div class="cron-example">
+                            <p><strong>Cron time format:</strong></p>
+                            <p>* * * * * command-to-execute</p>
+                            <p>│ │ │ │ │</p>
+                            <p>│ │ │ │ └── Day of week (0-6, 0=Sunday)</p>
+                            <p>│ │ │ └──── Month (1-12)</p>
+                            <p>│ │ └────── Day of month (1-31)</p>
+                            <p>│ └──────── Hour (0-23)</p>
+                            <p>└────────── Minute (0-59)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="guide-step" id="step2">
+                    <h3>Step 2: Creating a cron job</h3>
+                    <p class="required-command">Type exactly: <code>crontab -e</code></p>
+                    <p class="required-command">Then add this line exactly: <code>* * * * * echo "Cron test" >> ~/cron_test.log</code></p>
+                    <p class="required-command">Save and exit the editor (in this lab, just type the command)</p>
+
+                    <div class="concept">
+                        <h4>Editing crontab</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                User-specific cron job configuration
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Personal automated tasks without root access
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Stored in /var/spool/cron/username
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When you need user-level automation
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>crontab -e</code> opens your personal crontab in an editor. The example job runs every minute and appends "Cron test" to a log file.</p>
+                        <div class="strict-feedback">
+                            <p><strong>Important:</strong> In a real system, this job would run every minute. For this lab, we're simulating the behavior.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="guide-step" id="step3">
+                    <h3>Step 3: Verifying cron jobs</h3>
+                    <p class="required-command">Type exactly: <code>crontab -l</code></p>
+                    <p class="required-command">Then type: <code>ls ~/cron_test.log</code></p>
+
+                    <div class="concept">
+                        <h4>Managing cron jobs</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Viewing and verifying cron jobs
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Ensure jobs are scheduled correctly
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Output goes to files or email
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                After creating or modifying jobs
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>crontab -l</code> lists your cron jobs. The log file should appear after the job runs (simulated in this lab).</p>
+                    </div>
+                </div>
+                <div class="guide-step" id="step4">
+                    <h3>Step 4: Using the at command</h3>
+                    <p class="required-command">Type exactly: <code>echo "echo 'AT test' >> ~/at_test.log" | at now + 1 minute</code></p>
+                    <p class="required-command">Then type: <code>atq</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding at</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                One-time task scheduler
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Run a command once at a specific time
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Jobs stored in /var/spool/at/
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                For non-recurring future tasks
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>at</code> schedules a one-time job. <code>atq</code> lists pending jobs. The example schedules a job to run in 1 minute (simulated in this lab).</p>
+                        <div class="strict-feedback">
+                            <p><strong>Note:</strong> In a real system, you'd need to ensure the atd service is running (<code>systemctl status atd</code>).</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="guide-step" id="step5">
+                    <h3>Step 5: Managing at jobs</h3>
+                    <p class="required-command">Type exactly: <code>atrm 1</code></p>
+                    <p class="required-command">Then verify with: <code>atq</code></p>
+
+                    <div class="concept">
+                        <h4>Removing at jobs</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Deleting scheduled at jobs
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Cancel jobs that are no longer needed
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Uses job numbers from atq
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When you need to cancel a scheduled job
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>atrm</code> removes jobs by their ID (shown in <code>atq</code> output). After removal, <code>atq</code> should show no jobs.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+            </div>
+            <div class="terminal" id="terminal-output">
+                <div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 5.1: Schedule Tasks!</span></div>
+                <div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const commandInput = document.getElementById('command-input');
+        const terminalOutput = document.getElementById('terminal-output');
+        const steps = document.querySelectorAll('.guide-step');
+        let currentStep = 0;
+        let commandHistory = [];
+        let historyIndex = -1;
+
+        const requiredCommands = [
+            { command: 'crontab -l', step: 0, feedback: 'Type exactly: crontab -l' },
+            { command: 'crontab -e', step: 1, feedback: 'Type exactly: crontab -e' },
+            { command: '* * * * * echo "Cron test" >> ~/cron_test.log', step: 1, feedback: 'Add exactly: * * * * * echo "Cron test" >> ~/cron_test.log' },
+            { command: 'crontab -l', step: 2, feedback: 'Type exactly: crontab -l' },
+            { command: 'ls ~/cron_test.log', step: 2, feedback: 'Type exactly: ls ~/cron_test.log' },
+            { command: 'echo "echo \'AT test\' >> ~/at_test.log" | at now + 1 minute', step: 3, feedback: 'Type exactly: echo "echo \'AT test\' >> ~/at_test.log" | at now + 1 minute' },
+            { command: 'atq', step: 3, feedback: 'Type exactly: atq' },
+            { command: 'atrm 1', step: 4, feedback: 'Type exactly: atrm 1' },
+            { command: 'atq', step: 4, feedback: 'Type exactly: atq' }
+        ];
+
+        let completedCommands = new Array(requiredCommands.length).fill(false);
+        let cronJobAdded = false;
+        let atJobScheduled = false;
+
+        const commands = {
+            'crontab': (args) => {
+                if (args[0] === '-l') {
+                    if (cronJobAdded) {
+                        return '* * * * * echo "Cron test" >> ~/cron_test.log';
+                    }
+                    return 'no crontab for user';
+                } else if (args[0] === '-e') {
+                    return 'Opening crontab in editor... (simulated in this lab)';
+                }
+                return 'Usage: crontab [-u user] [-e | -l | -r]';
+            },
+            'ls': (args) => {
+                if (args[0] === '~/cron_test.log' && cronJobAdded) {
+                    return '/home/user/cron_test.log';
+                } else if (args[0] === '~/at_test.log' && atJobScheduled) {
+                    return '/home/user/at_test.log';
+                }
+                return 'ls: cannot access ' + args[0] + ': No such file or directory';
+            },
+            'atq': () => {
+                if (atJobScheduled) {
+                    return '1\t2023-01-01 00:01 a user';
+                }
+                return '';
+            },
+            'atrm': (args) => {
+                if (args[0] === '1' && atJobScheduled) {
+                    atJobScheduled = false;
+                    return '';
+                }
+                return 'atrm: cannot remove job 1: No such job';
+            },
+            'echo': () => '',
+            'help': () => 'Available commands: crontab, ls, atq, atrm, echo, help',
+        };
+
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const commandText = commandInput.value.trim();
+                if (commandText) {
+                    commandHistory.push(commandText);
+                    historyIndex = commandHistory.length;
+                    processCommand(commandText);
+                }
+                commandInput.value = '';
+            } else if (e.key === 'ArrowUp') {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    commandInput.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    commandInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    commandInput.value = '';
+                }
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                // Tab completion not critical for this lab
+            }
+        });
+
+        function processCommand(commandText) {
+            const parts = commandText.trim().split(/\s+/);
+            const cmd = parts[0];
+            const args = parts.slice(1);
+
+            // Special handling for cron job addition
+            if (commandText.trim() === '* * * * * echo "Cron test" >> ~/cron_test.log') {
+                cronJobAdded = true;
+                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="completion">✅ Cron job added successfully!</div>`;
+                checkCommandCompletion(commandText);
+                return;
+            }
+
+            // Special handling for at job scheduling
+            if (commandText.trim() === 'echo "echo \'AT test\' >> ~/at_test.log" | at now + 1 minute') {
+                atJobScheduled = true;
+                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="completion">✅ AT job scheduled to run in 1 minute!</div>`;
+                checkCommandCompletion(commandText);
+                return;
+            }
+
+            let output;
+            if (commands[cmd]) {
+                output = commands[cmd](args);
+                if (output) {
+                    terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+                } else {
+                    terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div>`;
+                }
+            } else {
+                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+            }
+
+            checkCommandCompletion(commandText);
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        function checkCommandCompletion(commandText) {
+            requiredCommands.forEach((req, index) => {
+                if (req.step === currentStep && req.command === commandText.trim() && !completedCommands[index]) {
+                    completedCommands[index] = true;
+                    terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+                }
+            });
+
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === commandText.split(' ')[0]);
+
+            if (isRequiredCommand && !completedCommands[requiredCommands.findIndex(c => c.command === commandText.trim())]) {
+                const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === commandText.split(' ')[0]);
+                terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+            }
+
+            checkStepCompletion();
+        }
+
+        function checkStepCompletion() {
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const allCompleted = currentStepCommands.every(req =>
+                completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+            );
+            if (allCompleted) {
+                setTimeout(() => {
+                    nextStep();
+                }, 1000);
+            }
+        }
+
+        function nextStep() {
+            steps[currentStep].classList.remove('active-step');
+            currentStep++;
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('active-step');
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All scheduling tasks executed correctly!</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

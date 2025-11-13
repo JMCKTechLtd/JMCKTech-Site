@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 8.3 - Manage Container Storage &amp; Networking</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .container-network {
+            color: #00BFFF;
+        }
+        .container-storage {
+            color: #FF8C00;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 8.3: Manage Container Storage &amp; Networking</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: Container Storage Basics</h3>
+<p class="required-command">Type exactly: <code>podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile</code></p>
+
+<div class="concept">
+<h4>Understanding Container Storage</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Persistent storage for containers
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Preserve data beyond container lifecycle
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Host directories or volumes
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When data persistence is needed
+                            </div>
+</div>
+<p><strong>How it works:</strong> The <code>-v</code> flag mounts a host directory (<code>/tmp/container-data</code>) into the container (<code>/data</code>). The <code>:Z</code> option applies proper SELinux context. This command creates a test file in the mounted directory.</p>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Verify Volume Mount</h3>
+<p class="required-command">Type exactly: <code>ls -l /tmp/container-data</code></p>
+<p class="required-command">Then type: <code>podman volume create myvol</code></p>
+
+<div class="concept">
+<h4>Understanding Volume Mounts</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Host-container file sharing
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Persistent, shared, or configuration data
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Any directory accessible to host and container
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                For databases, configs, or shared data
+                            </div>
+</div>
+<p><strong>How it works:</strong> The <code>ls</code> command verifies the file created by the container exists on the host. <code>podman volume create</code> makes a managed volume (stored in <code>/var/lib/containers/storage/volumes/</code>).</p>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Container Networking Basics</h3>
+<p class="required-command">Type exactly: <code>podman run -d --name web -p 8080:80 nginx</code></p>
+<p class="required-command">Then type: <code>curl http://localhost:8080</code></p>
+
+<div class="concept">
+<h4>Understanding Container Networking</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Network isolation and port mapping
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Secure communication between containers/host
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Virtual networks and port mappings
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                For multi-container apps or external access
+                            </div>
+</div>
+<p><strong>How it works:</strong> The <code>-p</code> flag maps host port 8080 to container port 80. <code>-d</code> runs in detached mode. <code>curl</code> verifies the nginx web server is accessible.</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Network Inspection</h3>
+<p class="required-command">Type exactly: <code>podman inspect web --format "{{.NetworkSettings.IPAddress}}"</code></p>
+<p class="required-command">Then type: <code>podman network ls</code></p>
+
+<div class="concept">
+<h4>Understanding Container Networks</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Virtual networks for containers
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Isolate and connect container communications
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Managed by Podman/container runtime
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                For multi-container applications
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>podman inspect</code> shows the container's network details. <code>podman network ls</code> lists available networks. By default, containers use a bridge network with NAT.</p>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[user@lab ~]$</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 8.3: Container Storage & Networking!</span></div>
+<div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile', step: 0, feedback: 'Type exactly: podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile' },
+    { command: 'ls -l /tmp/container-data', step: 1, feedback: 'Type exactly: ls -l /tmp/container-data' },
+    { command: 'podman volume create myvol', step: 1, feedback: 'Type exactly: podman volume create myvol' },
+    { command: 'podman run -d --name web -p 8080:80 nginx', step: 2, feedback: 'Type exactly: podman run -d --name web -p 8080:80 nginx' },
+    { command: 'curl http://localhost:8080', step: 2, feedback: 'Type exactly: curl http://localhost:8080' },
+    { command: 'podman inspect web --format "{{.NetworkSettings.IPAddress}}"', step: 3, feedback: 'Type exactly: podman inspect web --format "{{.NetworkSettings.IPAddress}}"' },
+    { command: 'podman network ls', step: 3, feedback: 'Type exactly: podman network ls' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+let tabUsedInCurrentStep = false;
+
+const commands = {
+    'podman': (args) => {
+        if (args[0] === 'run') {
+            if (args.includes('-v') && args.includes('alpine')) {
+                return 'Creating container with volume mount...';
+            } else if (args.includes('-p') && args.includes('nginx')) {
+                return 'Running nginx container in detached mode...';
+            }
+        } else if (args[0] === 'volume' && args[1] === 'create') {
+            return 'myvol';
+        } else if (args[0] === 'inspect' && args[1] === 'web') {
+            return '10.88.0.2';
+        } else if (args[0] === 'network' && args[1] === 'ls') {
+            return 'NETWORK ID    NAME        DRIVER\n2f259bab93aa  podman      bridge';
+        }
+        return 'Podman command executed';
+    },
+    'ls': (args) => {
+        if (args.includes('-l') && args.includes('/tmp/container-data')) {
+            return 'total 0\n-rw-r--r--. 1 root root 0 Jan 10 10:00 testfile';
+        }
+        return 'testfile';
+    },
+    'curl': (args) => {
+        if (args.includes('http://localhost:8080')) {
+            return '<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n</head>\n<body>\n<h1>Welcome to nginx!</h1>\n</body>\n</html>';
+        }
+        return 'Curl output';
+    },
+    'clear': () => {
+        terminalOutput.innerHTML = '<div>[user@lab ~]$ <span class="prompt">Terminal cleared</span></div>';
+        return '';
+    },
+    'help': () => 'Available commands: podman, ls, curl, clear, help',
+};
+
+const paths = ['/tmp/container-data', '/var/lib/containers'];
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    } else if (e.key === 'Tab') {
+        e.preventDefault();
+        const partial = commandInput.value.split(' ').pop();
+        const match = paths.find(path => path.startsWith(partial));
+        if (match) {
+            commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), match);
+            tabUsedInCurrentStep = true;
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+                if (req.requiresTab) {
+                    if (tabUsedInCurrentStep) {
+                        terminalOutput.innerHTML += `<div class="completion">🏆 Tab completion used correctly!</div>`;
+                    } else {
+                        terminalOutput.innerHTML += `<div class="error">You must use Tab to autocomplete for: ${req.command}</div>`;
+                        completedCommands[index] = false;
+                        return;
+                    }
+                    tabUsedInCurrentStep = false;
+                }
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All container storage and networking commands executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

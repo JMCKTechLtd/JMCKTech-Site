@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 5.4 - Configure Networking</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .network-interface {
+            color: #00BFFF;
+        }
+        .ip-address {
+            color: #FFA500;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 5.4: Configure Networking (nmcli, ip, hostnamectl)</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: Network Interface Information</h3>
+<p class="required-command">Type exactly: <code>ip addr show</code></p>
+
+<div class="concept">
+<h4>Understanding Network Interfaces</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Physical and virtual network interfaces
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Identify available network connections
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                System-wide network configuration
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Initial setup or troubleshooting
+                            </div>
+</div>
+<p><strong>How it works:</strong> The <code>ip</code> command shows detailed network information. Common interfaces include <span class="network-interface">eth0</span> (Ethernet) and <span class="network-interface">wlan0</span> (Wi-Fi). Look for <span class="ip-address">inet</span> addresses (IPv4) and state (UP/DOWN).</p>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: NetworkManager Control</h3>
+<p class="required-command">Type exactly: <code>nmcli connection show</code></p>
+
+<div class="concept">
+<h4>Understanding NetworkManager</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                NetworkManager service (nmcli)
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Manage network connections consistently
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                System service controlling all interfaces
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Configuring or modifying network settings
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>nmcli</code> is the command-line interface to NetworkManager. It shows connection profiles with their names, UUIDs, devices, and types (ethernet, wifi, etc.).</p>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Configure Static IP</h3>
+<p class="required-command">Type exactly: <code>nmcli connection modify "Wired connection 1" ipv4.addresses 192.168.1.100/24</code></p>
+<p class="required-command">Then type: <code>nmcli connection up "Wired connection 1"</code></p>
+
+<div class="concept">
+<h4>Understanding Static IP Configuration</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Manual IP address assignment
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Consistent addressing for servers
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Connection profile settings
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Setting up servers or network devices
+                            </div>
+</div>
+<p><strong>How it works:</strong> The <code>modify</code> subcommand changes connection properties. <code>ipv4.addresses</code> sets the static IP (192.168.1.100) with netmask (/24). <code>connection up</code> activates the changes.</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Hostname Management</h3>
+<p class="required-command">Type exactly: <code>hostnamectl set-hostname rhcsa-lab</code></p>
+<p class="required-command">Then type: <code>hostnamectl status</code></p>
+
+<div class="concept">
+<h4>Understanding Hostname Control</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                System hostname configuration
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Identify system on the network
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                System-wide setting
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Initial setup or renaming
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>hostnamectl</code> manages the system hostname. Changes are persistent across reboots. The status shows static (configured), transient (DHCP), and pretty (formatted) hostnames.</p>
+</div>
+</div>
+<div class="guide-step" id="step5">
+<h3>Step 5: Connectivity Testing</h3>
+<p class="required-command">Type exactly: <code>ping -c 4 8.8.8.8</code></p>
+
+<div class="concept">
+<h4>Understanding Network Testing</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Basic connectivity verification
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Confirm network functionality
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Any system with network access
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                After configuration changes
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>ping</code> sends ICMP packets to test reachability. <code>-c 4</code> sends exactly 4 packets. Success shows response times; failure may indicate configuration issues.</p>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[user@lab ~]$</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 5.4: Networking Configuration!</span></div>
+<div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'ip addr show', step: 0, feedback: 'Type exactly: ip addr show' },
+    { command: 'nmcli connection show', step: 1, feedback: 'Type exactly: nmcli connection show' },
+    { command: 'nmcli connection modify "Wired connection 1" ipv4.addresses 192.168.1.100/24', step: 2, feedback: 'Type exactly: nmcli connection modify "Wired connection 1" ipv4.addresses 192.168.1.100/24' },
+    { command: 'nmcli connection up "Wired connection 1"', step: 2, feedback: 'Type exactly: nmcli connection up "Wired connection 1"' },
+    { command: 'hostnamectl set-hostname rhcsa-lab', step: 3, feedback: 'Type exactly: hostnamectl set-hostname rhcsa-lab' },
+    { command: 'hostnamectl status', step: 3, feedback: 'Type exactly: hostnamectl status' },
+    { command: 'ping -c 4 8.8.8.8', step: 4, feedback: 'Type exactly: ping -c 4 8.8.8.8' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+
+const commands = {
+    'ip': (args) => {
+        if (args.includes('addr') && args.includes('show')) {
+            return '1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000\n    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\n    inet 127.0.0.1/8 scope host lo\n       valid_lft forever preferred_lft forever\n2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000\n    link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff\n    inet 192.168.1.100/24 brd 192.168.1.255 scope global dynamic noprefixroute eth0\n       valid_lft 86388sec preferred_lft 86388sec';
+        }
+        return 'Usage: ip [ OPTIONS ] OBJECT { COMMAND | help }';
+    },
+    'nmcli': (args) => {
+        if (args.includes('connection') && args.includes('show')) {
+            return 'NAME                UUID                                  TYPE      DEVICE \nWired connection 1  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  ethernet  eth0';
+        }
+        if (args.includes('connection') && args.includes('modify')) {
+            return 'Connection \'Wired connection 1\' (5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03) successfully modified.';
+        }
+        if (args.includes('connection') && args.includes('up')) {
+            return 'Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/4)';
+        }
+        return 'Usage: nmcli [OPTIONS] OBJECT { COMMAND | help }';
+    },
+    'hostnamectl': (args) => {
+        if (args.includes('set-hostname')) {
+            return '';
+        }
+        if (args.includes('status')) {
+            return 'Static hostname: rhcsa-lab\nIcon name: computer-vm\nChassis: vm\nMachine ID: 2a1b3c4d5e6f7g8h9i0j1k2l3m4n5o6p\nBoot ID: 1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p\nVirtualization: kvm\nOperating System: Red Hat Enterprise Linux 9.0 (Plow)\nCPE OS Name: cpe:/o:redhat:enterprise_linux:9::baseos\nKernel: Linux 5.14.0-70.13.1.el9_0.x86_64\nArchitecture: x86-64';
+        }
+        return 'Usage: hostnamectl [OPTIONS...] COMMAND';
+    },
+    'ping': (args) => {
+        if (args.includes('-c') && args.includes('4') && args.includes('8.8.8.8')) {
+            return 'PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.\n64 bytes from 8.8.8.8: icmp_seq=1 ttl=117 time=12.3 ms\n64 bytes from 8.8.8.8: icmp_seq=2 ttl=117 time=11.8 ms\n64 bytes from 8.8.8.8: icmp_seq=3 ttl=117 time=12.1 ms\n64 bytes from 8.8.8.8: icmp_seq=4 ttl=117 time=12.5 ms\n\n--- 8.8.8.8 ping statistics ---\n4 packets transmitted, 4 received, 0% packet loss, time 3005ms\nrtt min/avg/max/mdev = 11.800/12.175/12.500/0.258 ms';
+        }
+        return 'Usage: ping [-c count] destination';
+    },
+    'help': () => 'Available commands: ip, nmcli, hostnamectl, ping, help',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+        } else {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All networking commands executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

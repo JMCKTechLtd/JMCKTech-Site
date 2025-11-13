@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 6.3 - Configure Hostname Resolution</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 6.3: Configure Hostname Resolution</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: View Current Hostname Resolution</h3>
+<p class="required-command">Type exactly: <code>cat /etc/hosts</code></p>
+
+<div class="concept">
+<h4>Understanding /etc/hosts</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Static hostname resolution file
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Maps IP addresses to hostnames locally
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                <code>/etc/hosts</code>
+</div>
+<div class="concept-item">
+<strong>When</strong>
+                                Checked before DNS queries
+                            </div>
+</div>
+<p><strong>Format:</strong> Each line contains an IP address followed by hostnames (primary first, then aliases).</p>
+<div class="file-content">
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+</div>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Add a Host Entry</h3>
+<p class="required-command">Type exactly: <code>sudo nano /etc/hosts</code></p>
+<p class="required-command">Add this line: <code>192.168.1.100 server1.example.com server1</code></p>
+<p class="required-command">Save with <kbd>Ctrl+O</kbd>, then exit with <kbd>Ctrl+X</kbd></p>
+<p class="required-command">Verify with: <code>cat /etc/hosts</code></p>
+
+<div class="concept">
+<h4>Editing System Files</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                System configuration files
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Need root privileges to modify
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Typically in <code>/etc</code>
+</div>
+<div class="concept-item">
+<strong>When</strong>
+                                When configuring system settings
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>sudo</code> elevates privileges. <code>nano</code> is a simple text editor. After saving, verify changes with <code>cat</code>.</p>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Test Hostname Resolution</h3>
+<p class="required-command">Type exactly: <code>ping -c 3 server1</code></p>
+<p class="required-command">Then type: <code>ping -c 3 server1.example.com</code></p>
+
+<div class="concept">
+<h4>Testing Resolution</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Verification tools
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Confirm entries work correctly
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Available on all Linux systems
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                After modifying resolution files
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>ping</code> tests network connectivity. The <code>-c 3</code> option sends 3 packets. Both hostname forms should resolve to the same IP.</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Configure DNS Resolution</h3>
+<p class="required-command">Type exactly: <code>cat /etc/resolv.conf</code></p>
+<p class="required-command">Then type: <code>sudo nano /etc/resolv.conf</code></p>
+<p class="required-command">Add these lines (press Tab after typing "nameserver"):<br>
+<code>nameserver 8.8.8.8</code><br>
+<code>nameserver 8.8.4.4</code></p>
+<p class="required-command">Save and exit nano (<kbd>Ctrl+O</kbd>, <kbd>Ctrl+X</kbd>)</p>
+<p class="required-command">Verify with: <code>cat /etc/resolv.conf</code></p>
+
+<div class="concept">
+<h4>Understanding /etc/resolv.conf</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                DNS resolver configuration
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Specifies DNS servers to use
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                <code>/etc/resolv.conf</code>
+</div>
+<div class="concept-item">
+<strong>When</strong>
+                                For all DNS queries not in /etc/hosts
+                            </div>
+</div>
+<p><strong>Format:</strong> Each <code>nameserver</code> line specifies a DNS server (max 3). They're queried in order.</p>
+<div class="file-content">
+# Generated by NetworkManager
+search example.com
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+</div>
+</div>
+</div>
+<div class="guide-step" id="step5">
+<h3>Step 5: Test DNS Resolution</h3>
+<p class="required-command">Type exactly: <code>nslookup google.com</code></p>
+<p class="required-command">Then type: <code>dig redhat.com</code></p>
+
+<div class="concept">
+<h4>DNS Testing Tools</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                DNS diagnostic utilities
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Verify DNS configuration works
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                May need to install (<code>bind-utils</code>)
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                After changing DNS settings
+                            </div>
+</div>
+<p><strong>How they work:</strong> <code>nslookup</code> provides basic DNS queries. <code>dig</code> gives detailed DNS information including TTL and authoritative servers.</p>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[user@lab ~]$</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 6.3!</span></div>
+<div>[user@lab ~]$ <span class="prompt">Configure hostname resolution by editing system files.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'cat /etc/hosts', step: 0, feedback: 'Type exactly: cat /etc/hosts' },
+    { command: 'sudo nano /etc/hosts', step: 1, feedback: 'Type exactly: sudo nano /etc/hosts' },
+    { command: 'cat /etc/hosts', step: 1, verifyContent: '192.168.1.100 server1.example.com server1', feedback: 'Verify your changes with: cat /etc/hosts' },
+    { command: 'ping -c 3 server1', step: 2, feedback: 'Type exactly: ping -c 3 server1' },
+    { command: 'ping -c 3 server1.example.com', step: 2, feedback: 'Type exactly: ping -c 3 server1.example.com' },
+    { command: 'cat /etc/resolv.conf', step: 3, feedback: 'Type exactly: cat /etc/resolv.conf' },
+    { command: 'sudo nano /etc/resolv.conf', step: 3, feedback: 'Type exactly: sudo nano /etc/resolv.conf' },
+    { command: 'cat /etc/resolv.conf', step: 3, verifyContent: 'nameserver 8.8.8.8', feedback: 'Verify your changes with: cat /etc/resolv.conf' },
+    { command: 'nslookup google.com', step: 4, feedback: 'Type exactly: nslookup google.com' },
+    { command: 'dig redhat.com', step: 4, feedback: 'Type exactly: dig redhat.com' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+let tabUsedInCurrentStep = false;
+
+const commands = {
+    'cat': (args) => {
+        if (args[0] === '/etc/hosts') {
+            return `127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n192.168.1.100 server1.example.com server1`;
+        } else if (args[0] === '/etc/resolv.conf') {
+            return `# Generated by NetworkManager\nsearch example.com\nnameserver 8.8.8.8\nnameserver 8.8.4.4`;
+        }
+        return `Contents of ${args[0]}`;
+    },
+    'sudo': (args) => {
+        if (args[0] === 'nano') {
+            return `Editing ${args[1]}... (simulated)`;
+        }
+        return `Executing with elevated privileges: ${args.join(' ')}`;
+    },
+    'ping': (args) => {
+        if (args.includes('-c') && (args.includes('server1') || args.includes('server1.example.com'))) {
+            return `PING server1.example.com (192.168.1.100) 56(84) bytes of data.\n64 bytes from server1.example.com (192.168.1.100): icmp_seq=1 ttl=64 time=0.123 ms\n64 bytes from server1.example.com (192.168.1.100): icmp_seq=2 ttl=64 time=0.456 ms\n64 bytes from server1.example.com (192.168.1.100): icmp_seq=3 ttl=64 time=0.789 ms\n\n--- server1.example.com ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 2000ms`;
+        }
+        return `PING ${args[args.length - 1]}: Unknown host`;
+    },
+    'nslookup': () => `Server:         8.8.8.8\nAddress:        8.8.8.8#53\n\nNon-authoritative answer:\nName:   google.com\nAddress: 172.217.0.46`,
+    'dig': () => `; <<>> DiG 9.11.4-P2-RedHat-9.11.4-26.P2.el8 <<>> redhat.com\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 12345\n\n;; ANSWER SECTION:\nredhat.com.             300     IN      A       209.132.183.105`,
+    'clear': () => {
+        terminalOutput.innerHTML = '<div>[user@lab ~]$ <span class="prompt">Terminal cleared</span></div>';
+        return '';
+    },
+    'help': () => 'Available commands: cat, sudo, ping, nslookup, dig, clear, help',
+};
+
+const paths = ['/etc/hosts', '/etc/resolv.conf'];
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    } else if (e.key === 'Tab') {
+        e.preventDefault();
+        const partial = commandInput.value.split(' ').pop();
+        const match = paths.find(path => path.startsWith(partial));
+        if (match) {
+            commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), match);
+            tabUsedInCurrentStep = true;
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+                if (req.requiresTab) {
+                    if (tabUsedInCurrentStep) {
+                        terminalOutput.innerHTML += `<div class="completion">🏆 Tab completion used correctly!</div>`;
+                    } else {
+                        terminalOutput.innerHTML += `<div class="error">You must use Tab to autocomplete for: ${req.command}</div>`;
+                        completedCommands[index] = false;
+                        return;
+                    }
+                    tabUsedInCurrentStep = false;
+                }
+            }
+        }
+        
+        // Special verification for commands that need content verification
+        if (req.step === currentStep && req.verifyContent && commandText.trim() === req.command) {
+            const outputDivs = terminalOutput.getElementsByTagName('div');
+            const lastOutput = outputDivs[outputDivs.length - 1].textContent;
+            if (!lastOutput.includes(req.verifyContent)) {
+                terminalOutput.innerHTML += `<div class="error">⚠️ Content verification failed. Make sure you added: ${req.verifyContent}</div>`;
+                completedCommands[index] = false;
+                return;
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All commands executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

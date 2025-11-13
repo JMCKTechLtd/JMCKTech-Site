@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 2.2 - Changing Runlevels/Targets</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .target-info {
+            background: #2a2a2a;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #FFD700;
+        }
+        .target-info h5 {
+            margin-top: 0;
+            color: #FFD700;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 2.2: Changing Runlevels/Targets</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: Check Current Target</h3>
+<p class="required-command">Type exactly: <code>systemctl get-default</code></p>
+
+<div class="concept">
+<h4>Understanding Systemd Targets</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Systemd targets replace traditional runlevels
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                To manage system states and services
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Defined in /usr/lib/systemd/system/
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                During boot or system state changes
+                            </div>
+</div>
+<p><strong>How it works:</strong> The <code>systemctl get-default</code> command shows the default target that boots automatically. Common targets include:</p>
+
+<div class="target-info">
+<h5>Common Targets</h5>
+<ul>
+<li><strong>graphical.target</strong> - GUI with networking (runlevel 5)</li>
+<li><strong>multi-user.target</strong> - CLI with networking (runlevel 3)</li>
+<li><strong>rescue.target</strong> - Single-user mode (runlevel 1)</li>
+<li><strong>emergency.target</strong> - Emergency shell (most minimal)</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Change to Multi-User Target</h3>
+<p class="required-command">Type exactly: <code>sudo systemctl isolate multi-user.target</code></p>
+
+<div class="concept">
+<h4>Understanding Target Isolation</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Switching system state immediately
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                For maintenance or performance
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Affects all running services
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When you need CLI-only access
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>isolate</code> stops services not needed for the new target and starts required ones. Multi-user target provides a console interface with networking but no GUI.</p>
+<div class="strict-feedback">
+<strong>RHCSA Tip:</strong> On exam systems, use <code>sudo</code> as shown. In production, you might need root access.
+</div>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Change to Graphical Target</h3>
+<p class="required-command">Type exactly: <code>sudo systemctl isolate graphical.target</code></p>
+
+<div class="concept">
+<h4>Understanding Graphical Target</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Desktop environment target
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                For GUI-based workstations
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Requires Xorg/Wayland and display manager
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Normal desktop usage
+                            </div>
+</div>
+<p><strong>How it works:</strong> This target starts the display manager (GDM, SDDM, etc.) and all GUI-related services. It consumes more resources than multi-user target.</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Set Default Target</h3>
+<p class="required-command">Type exactly: <code>sudo systemctl set-default multi-user.target</code></p>
+<p class="required-command">Then verify with: <code>systemctl get-default</code></p>
+
+<div class="concept">
+<h4>Understanding Persistent Changes</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Changes boot-time target
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                For servers or headless systems
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Creates symlink in /etc/systemd/system/
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When changing system purpose
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>set-default</code> creates a symlink from the target to /etc/systemd/system/default.target. This affects future boots but not the current session.</p>
+</div>
+</div>
+<div class="guide-step" id="step5">
+<h3>Step 5: Rescue Mode</h3>
+<p class="required-command">Type exactly: <code>sudo systemctl rescue</code></p>
+<p class="required-command">After seeing the simulated output, type: <code>exit</code></p>
+
+<div class="concept">
+<h4>Understanding Rescue Mode</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Minimal environment with networking
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                For system recovery operations
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Mounts filesystems read-only by default
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When system won't boot normally
+                            </div>
+</div>
+<p><strong>How it works:</strong> Rescue mode provides a single-user root shell with minimal services running. <strong>Warning:</strong> In a real system, this would actually switch modes.</p>
+<div class="strict-feedback">
+<strong>Exam Note:</strong> Know how to boot into rescue mode from GRUB for the RHCSA exam.
+</div>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[root@lab ~]#</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[root@lab ~]# <span class="prompt">Welcome to RHCSA Lab 2.2 - Changing Runlevels/Targets!</span></div>
+<div>[root@lab ~]# <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'systemctl get-default', step: 0, feedback: 'Type exactly: systemctl get-default' },
+    { command: 'sudo systemctl isolate multi-user.target', step: 1, feedback: 'Type exactly: sudo systemctl isolate multi-user.target' },
+    { command: 'sudo systemctl isolate graphical.target', step: 2, feedback: 'Type exactly: sudo systemctl isolate graphical.target' },
+    { command: 'sudo systemctl set-default multi-user.target', step: 3, feedback: 'Type exactly: sudo systemctl set-default multi-user.target' },
+    { command: 'systemctl get-default', step: 3, feedback: 'Type exactly: systemctl get-default to verify' },
+    { command: 'sudo systemctl rescue', step: 4, feedback: 'Type exactly: sudo systemctl rescue' },
+    { command: 'exit', step: 4, feedback: 'Type exactly: exit to continue' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+
+const commands = {
+    'systemctl': (args) => {
+        if (args[0] === 'get-default') {
+            return 'graphical.target'; // Default response
+        } else if (args[0] === 'isolate' && args[1] === 'multi-user.target') {
+            return 'Stopping graphical.target...\nStarting multi-user.target...\nSwitched to multi-user.target';
+        } else if (args[0] === 'isolate' && args[1] === 'graphical.target') {
+            return 'Stopping multi-user.target...\nStarting graphical.target...\nSwitched to graphical.target';
+        } else if (args[0] === 'set-default' && args[1] === 'multi-user.target') {
+            return 'Removed /etc/systemd/system/default.target.\nCreated symlink /etc/systemd/system/default.target → /usr/lib/systemd/system/multi-user.target.';
+        } else if (args[0] === 'rescue') {
+            return 'System is entering rescue mode...\nYou are in rescue mode. Type "exit" to continue.\n[root@lab rescue]#';
+        }
+        return 'Usage: systemctl [OPTIONS...] {COMMAND} ...';
+    },
+    'exit': () => 'Exiting rescue mode simulation...\n[root@lab ~]#',
+    'help': () => 'Available commands: systemctl, exit, help',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[root@lab ~]# ${commandText}</div><div>${output}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[root@lab ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All runlevel/target commands executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

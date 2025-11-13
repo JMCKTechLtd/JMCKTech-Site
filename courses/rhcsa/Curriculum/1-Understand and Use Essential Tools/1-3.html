@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 1.3 - grep & Regular Expressions</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .regex-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .regex-table th, .regex-table td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: left;
+        }
+        .regex-table th {
+            background-color: #333;
+            color: var(--redhat-accent);
+        }
+        .regex-example {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Red Hat Mono', monospace;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 1.3: grep & Regular Expressions</h1>
+        </div>
+        
+        <div class="terminal-container">
+            <div class="guide">
+                <h2>Lab Instructions</h2>
+                
+                <div class="guide-step active-step" id="step1">
+                    <h3>Step 1: Basic grep Usage</h3>
+                    <p class="required-command">Type exactly: <code>grep "error" sample.log</code></p>
+                    <p class="required-command">Then type: <code>grep -i "warning" sample.log</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding grep Basics</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Searches for patterns in text
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                To find specific information in files
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Works on text files or command output
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When you need to filter or search text
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>grep</code> scans each line of input for matches to the pattern. The <code>-i</code> option makes the search case-insensitive.</p>
+                        
+                        <table class="regex-table">
+                            <tr>
+                                <th>Option</th>
+                                <th>Description</th>
+                                <th>Example</th>
+                            </tr>
+                            <tr>
+                                <td><code>-i</code></td>
+                                <td>Case-insensitive search</td>
+                                <td><code>grep -i "hello" file.txt</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>-v</code></td>
+                                <td>Invert match (non-matching lines)</td>
+                                <td><code>grep -v "success" log.txt</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>-n</code></td>
+                                <td>Show line numbers</td>
+                                <td><code>grep -n "error" log.txt</code></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="guide-step" id="step2">
+                    <h3>Step 2: Regular Expression Basics</h3>
+                    <p class="required-command">Type exactly: <code>grep "^2023" sample.log</code></p>
+                    <p class="required-command">Then type: <code>grep "failed$" sample.log</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Regular Expressions</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Patterns that match text
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                For powerful text searching
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Used with grep, sed, awk, etc.
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When simple text matching isn't enough
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> The <code>^</code> matches start of line, <code>$</code> matches end of line. These anchors help find text in specific positions.</p>
+                        
+                        <div class="regex-example">
+                            <strong>Sample log file content:</strong><br>
+                            2023-01-10 10:00:01 System started<br>
+                            2023-01-10 10:05:23 Warning: disk space low<br>
+                            2023-01-10 10:10:45 Error: connection failed<br>
+                            2023-01-10 10:15:12 Operation completed successfully
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="guide-step" id="step3">
+                    <h3>Step 3: Character Classes</h3>
+                    <p class="required-command">Type exactly: <code>grep "[0-9]%" sample.log</code></p>
+                    <p class="required-command">Then type: <code>grep "[AEIOU]" sample.log</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Character Classes</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Match any character from a set
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                To match variations of a pattern
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Inside regular expressions
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When you need flexible matching
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>[0-9]</code> matches any digit, <code>[AEIOU]</code> matches any uppercase vowel. Use <code>[^...]</code> to negate the match.</p>
+                        
+                        <table class="regex-table">
+                            <tr>
+                                <th>Pattern</th>
+                                <th>Matches</th>
+                                <th>Example</th>
+                            </tr>
+                            <tr>
+                                <td><code>[abc]</code></td>
+                                <td>a, b, or c</td>
+                                <td><code>gr[ae]y</code> (gray or grey)</td>
+                            </tr>
+                            <tr>
+                                <td><code>[a-z]</code></td>
+                                <td>Any lowercase letter</td>
+                                <td><code>[a-z]@domain.com</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>[^0-9]</code></td>
+                                <td>Any non-digit</td>
+                                <td><code>[^0-9]%</code></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="guide-step" id="step4">
+                    <h3>Step 4: Extended Regular Expressions</h3>
+                    <p class="required-command">Type exactly: <code>grep -E "error|warning" sample.log</code></p>
+                    <p class="required-command">Then type: <code>grep -E "[0-9]{3}-[0-9]{2}-[0-9]{4}" data.txt</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Extended Regex</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                More powerful pattern matching
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                For complex matching requirements
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                With <code>grep -E</code> or <code>egrep</code>
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When basic regex isn't sufficient
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>-E</code> enables extended regex features. <code>|</code> means OR, <code>{n}</code> matches exactly n occurrences.</p>
+                        
+                        <table class="regex-table">
+                            <tr>
+                                <th>Pattern</th>
+                                <th>Meaning</th>
+                                <th>Example</th>
+                            </tr>
+                            <tr>
+                                <td><code>|</code></td>
+                                <td>Alternation (OR)</td>
+                                <td><code>error|warning</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>+</code></td>
+                                <td>One or more occurrences</td>
+                                <td><code>[0-9]+</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>{n}</code></td>
+                                <td>Exactly n occurrences</td>
+                                <td><code>[0-9]{3}</code></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus id="command-input" placeholder="Type a command..." type="text"/>
+            </div>
+            
+            <div class="terminal" id="terminal-output">
+                <div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 1.3: grep & Regular Expressions</span></div>
+                <div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const commandInput = document.getElementById('command-input');
+        const terminalOutput = document.getElementById('terminal-output');
+        const steps = document.querySelectorAll('.guide-step');
+        let currentStep = 0;
+        let commandHistory = [];
+        let historyIndex = -1;
+        
+        // Sample data files
+        const filesystem = {
+            'sample.log': `2023-01-10 10:00:01 System started
+2023-01-10 10:05:23 Warning: disk space low
+2023-01-10 10:10:45 Error: connection failed
+2023-01-10 10:15:12 Operation completed successfully
+2023-01-10 10:20:34 CPU usage at 75%
+2023-01-10 10:25:56 Error: authentication failed
+2023-01-10 10:30:18 WARNING: memory threshold exceeded
+2023-01-10 10:35:40 Backup completed with 90% success
+2023-01-10 10:40:02 Error: disk I/O failed
+2023-01-10 10:45:24 System shutdown`,
+            'data.txt': `User: john.doe, SSN: 123-45-6789
+User: jane.smith, SSN: 987-65-4321
+User: bob.johnson, Phone: (555) 123-4567
+User: alice.williams, SSN: 456-78-9012
+User: charlie.brown, Phone: (555) 987-6543`
+        };
+
+        const requiredCommands = [
+            { command: 'grep "error" sample.log', step: 0, feedback: 'Type exactly: grep "error" sample.log' },
+            { command: 'grep -i "warning" sample.log', step: 0, feedback: 'Type exactly: grep -i "warning" sample.log' },
+            { command: 'grep "^2023" sample.log', step: 1, feedback: 'Type exactly: grep "^2023" sample.log' },
+            { command: 'grep "failed$" sample.log', step: 1, feedback: 'Type exactly: grep "failed$" sample.log' },
+            { command: 'grep "[0-9]%" sample.log', step: 2, feedback: 'Type exactly: grep "[0-9]%" sample.log' },
+            { command: 'grep "[AEIOU]" sample.log', step: 2, feedback: 'Type exactly: grep "[AEIOU]" sample.log' },
+            { command: 'grep -E "error|warning" sample.log', step: 3, feedback: 'Type exactly: grep -E "error|warning" sample.log' },
+            { command: 'grep -E "[0-9]{3}-[0-9]{2}-[0-9]{4}" data.txt', step: 3, feedback: 'Type exactly: grep -E "[0-9]{3}-[0-9]{2}-[0-9]{4}" data.txt' }
+        ];
+
+        let completedCommands = new Array(requiredCommands.length).fill(false);
+
+        const commands = {
+            'grep': (args) => {
+                const filename = args[args.length - 1];
+                const content = filesystem[filename] || '';
+                const lines = content.split('\n');
+                
+                // Handle grep options and pattern
+                let pattern = '';
+                let caseInsensitive = false;
+                let extendedRegex = false;
+                
+                for (let i = 0; i < args.length - 1; i++) {
+                    if (args[i] === '-i') {
+                        caseInsensitive = true;
+                    } else if (args[i] === '-E') {
+                        extendedRegex = true;
+                    } else if (args[i] !== '-n' && args[i] !== '-v') {
+                        pattern = args[i].replace(/"/g, '');
+                    }
+                }
+                
+                // Simple regex implementation for the lab
+                const regexFlags = caseInsensitive ? 'i' : '';
+                let regex;
+                
+                try {
+                    if (extendedRegex) {
+                        // Convert basic extended regex patterns for JavaScript
+                        let jsPattern = pattern
+                            .replace(/\|/g, '|') // OR
+                            .replace(/\{(\d+)\}/g, '{$1}') // Quantifiers
+                            .replace(/\(([^)]+)\)/g, '($1)'); // Groups
+                        regex = new RegExp(jsPattern, regexFlags);
+                    } else {
+                        // Convert basic regex patterns for JavaScript
+                        let jsPattern = pattern
+                            .replace(/\^/g, '^') // Start of line
+                            .replace(/\$/g, '$') // End of line
+                            .replace(/\[([^\]]+)\]/g, '[$1]'); // Character classes
+                        regex = new RegExp(jsPattern, regexFlags);
+                    }
+                } catch (e) {
+                    return `grep: invalid regular expression: ${pattern}`;
+                }
+                
+                // Filter matching lines
+                const matches = lines.filter(line => regex.test(line));
+                
+                return matches.join('\n') || `No matches found for pattern: ${pattern}`;
+            },
+            'cat': (args) => {
+                if (args.length === 0) return 'Usage: cat [filename]';
+                const filename = args[0];
+                return filesystem[filename] || `cat: ${filename}: No such file or directory`;
+            },
+            'clear': () => {
+                terminalOutput.innerHTML = '<div>[user@lab ~]$ <span class="prompt">Terminal cleared</span></div>';
+                return '';
+            },
+            'help': () => 'Available commands: grep, cat, clear, help'
+        };
+
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const commandText = commandInput.value.trim();
+                if (commandText) {
+                    commandHistory.push(commandText);
+                    historyIndex = commandHistory.length;
+                    processCommand(commandText);
+                }
+                commandInput.value = '';
+            } else if (e.key === 'ArrowUp') {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    commandInput.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    commandInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    commandInput.value = '';
+                }
+            }
+        });
+
+        function processCommand(commandText) {
+            const parts = commandText.split(/\s+/);
+            const cmd = parts[0];
+            const args = parts.slice(1);
+
+            let output;
+            if (commands[cmd]) {
+                output = commands[cmd](args);
+                if (output) {
+                    terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+                }
+            } else {
+                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+            }
+
+            let commandMatched = false;
+            requiredCommands.forEach((req, index) => {
+                if (req.step === currentStep && req.command === commandText.trim()) {
+                    commandMatched = true;
+                    if (!completedCommands[index]) {
+                        completedCommands[index] = true;
+                        terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+                    }
+                }
+            });
+
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+            if (isRequiredCommand && !commandMatched) {
+                const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+                terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+            }
+
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            checkStepCompletion();
+        }
+
+        function checkStepCompletion() {
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const allCompleted = currentStepCommands.every(req =>
+                completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+            );
+            if (allCompleted) {
+                setTimeout(() => {
+                    nextStep();
+                }, 1000);
+            }
+        }
+
+        function nextStep() {
+            steps[currentStep].classList.remove('active-step');
+            currentStep++;
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('active-step');
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All grep and regex concepts mastered!</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

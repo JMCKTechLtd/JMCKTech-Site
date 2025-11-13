@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 7.1 - Configure Firewall Rules (firewalld)</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .firewall-zone {
+            background: #1e2b3a;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #cc0000;
+        }
+        .firewall-service {
+            background: #2a3a1e;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 7.1: Configure Firewall Rules (firewalld)</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            <div class="guide-step active-step" id="step1">
+                <h3>Step 1: Verify firewalld Status</h3>
+                <p class="required-command">Type exactly: <code>sudo firewall-cmd --state</code></p>
+
+                <div class="concept">
+                    <h4>Understanding firewalld</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Dynamic firewall management daemon
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Provides flexible, zone-based network security
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Runs as a systemd service (firewalld.service)
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            Default firewall solution on RHEL 7+
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> firewalld uses zones and services to manage firewall rules. The <code>firewall-cmd</code> is the primary configuration tool. Check status with <code>--state</code> and runtime configuration with <code>--list-all</code>.</p>
+                </div>
+            </div>
+            <div class="guide-step" id="step2">
+                <h3>Step 2: List Current Configuration</h3>
+                <p class="required-command">Type exactly: <code>sudo firewall-cmd --list-all</code></p>
+                <p class="required-command">Then type: <code>sudo firewall-cmd --list-all-zones</code></p>
+
+                <div class="concept">
+                    <h4>Understanding Zones</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Predefined trust levels for network connections
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Different security levels for different networks
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Defined in /usr/lib/firewalld/zones/
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            Assigned to network interfaces
+                        </div>
+                    </div>
+                    <div class="firewall-zone">
+                        <h5>Common Zones:</h5>
+                        <ul>
+                            <li><strong>public</strong>: Default zone for untrusted networks</li>
+                            <li><strong>trusted</strong>: Allow all incoming traffic</li>
+                            <li><strong>internal</strong>: For internal networks</li>
+                            <li><strong>dmz</strong>: For publicly accessible services</li>
+                            <li><strong>block</strong>: Reject all incoming connections</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Add a Service to the Firewall</h3>
+                <p class="required-command">Type exactly: <code>sudo firewall-cmd --add-service=http</code></p>
+                <p class="required-command">Then verify with: <code>sudo firewall-cmd --list-services</code></p>
+
+                <div class="concept">
+                    <h4>Understanding Services</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Predefined rules for common applications
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Simplify firewall configuration
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Defined in /usr/lib/firewalld/services/
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When allowing specific application traffic
+                        </div>
+                    </div>
+                    <div class="firewall-service">
+                        <h5>Common Services:</h5>
+                        <ul>
+                            <li><strong>http</strong>: Port 80 (web traffic)</li>
+                            <li><strong>https</strong>: Port 443 (secure web)</li>
+                            <li><strong>ssh</strong>: Port 22 (secure shell)</li>
+                            <li><strong>ftp</strong>: Port 21 (file transfer)</li>
+                            <li><strong>samba</strong>: Windows file sharing</li>
+                        </ul>
+                    </div>
+                    <p><strong>Note:</strong> Changes made with <code>--add-service</code> are temporary. Add <code>--permanent</code> to make them persistent across reboots.</p>
+                </div>
+            </div>
+            <div class="guide-step" id="step4">
+                <h3>Step 4: Add a Port and Make Rules Permanent</h3>
+                <p class="required-command">Type exactly: <code>sudo firewall-cmd --add-port=8080/tcp</code></p>
+                <p class="required-command">Then make permanent: <code>sudo firewall-cmd --runtime-to-permanent</code></p>
+                <p class="required-command">Verify with: <code>sudo firewall-cmd --list-ports</code></p>
+
+                <div class="concept">
+                    <h4>Runtime vs Permanent Configuration</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Runtime: Immediate but temporary
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Test changes before making permanent
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Runtime: memory; Permanent: config files
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            Always test runtime first
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> Runtime changes take effect immediately but are lost on reload/reboot. Permanent changes are saved to configuration files but require a reload to take effect. <code>--runtime-to-permanent</code> copies runtime changes to permanent configuration.</p>
+                </div>
+            </div>
+            <div class="guide-step" id="step5">
+                <h3>Step 5: Change Default Zone and Reload</h3>
+                <p class="required-command">Type exactly: <code>sudo firewall-cmd --set-default-zone=internal</code></p>
+                <p class="required-command">Then reload: <code>sudo firewall-cmd --reload</code></p>
+                <p class="required-command">Verify with: <code>sudo firewall-cmd --get-default-zone</code></p>
+
+                <div class="concept">
+                    <h4>Managing Zones</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Default zone applies to all interfaces
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Define base security level
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Stored in firewalld.conf
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When network environment changes
+                        </div>
+                    </div>
+                    <p><strong>Important:</strong> The reload command applies permanent configuration changes. After changing the default zone, existing connections might be affected. Always verify with <code>--get-default-zone</code>.</p>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[user@lab ~]$</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 7.1: Firewall Configuration!</span></div>
+            <div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+        </div>
+    </div>
+</div>
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const steps = document.querySelectorAll('.guide-step');
+    let currentStep = 0;
+    let commandHistory = [];
+    let historyIndex = -1;
+
+    const requiredCommands = [
+        { command: 'sudo firewall-cmd --state', step: 0, feedback: 'Type exactly: sudo firewall-cmd --state' },
+        { command: 'sudo firewall-cmd --list-all', step: 1, feedback: 'Type exactly: sudo firewall-cmd --list-all' },
+        { command: 'sudo firewall-cmd --list-all-zones', step: 1, feedback: 'Type exactly: sudo firewall-cmd --list-all-zones' },
+        { command: 'sudo firewall-cmd --add-service=http', step: 2, feedback: 'Type exactly: sudo firewall-cmd --add-service=http' },
+        { command: 'sudo firewall-cmd --list-services', step: 2, feedback: 'Type exactly: sudo firewall-cmd --list-services' },
+        { command: 'sudo firewall-cmd --add-port=8080/tcp', step: 3, feedback: 'Type exactly: sudo firewall-cmd --add-port=8080/tcp' },
+        { command: 'sudo firewall-cmd --runtime-to-permanent', step: 3, feedback: 'Type exactly: sudo firewall-cmd --runtime-to-permanent' },
+        { command: 'sudo firewall-cmd --list-ports', step: 3, feedback: 'Type exactly: sudo firewall-cmd --list-ports' },
+        { command: 'sudo firewall-cmd --set-default-zone=internal', step: 4, feedback: 'Type exactly: sudo firewall-cmd --set-default-zone=internal' },
+        { command: 'sudo firewall-cmd --reload', step: 4, feedback: 'Type exactly: sudo firewall-cmd --reload' },
+        { command: 'sudo firewall-cmd --get-default-zone', step: 4, feedback: 'Type exactly: sudo firewall-cmd --get-default-zone' }
+    ];
+
+    let completedCommands = new Array(requiredCommands.length).fill(false);
+
+    const commands = {
+        'sudo': (args) => {
+            const cmd = args[0];
+            const subArgs = args.slice(1);
+            
+            if (cmd === 'firewall-cmd') {
+                return processFirewallCmd(subArgs);
+            }
+            return `Executed: sudo ${args.join(' ')}`;
+        },
+        'help': () => 'Available commands: sudo firewall-cmd [options], help',
+    };
+
+    let firewallState = {
+        defaultZone: 'public',
+        zones: {
+            public: {
+                services: ['ssh', 'dhcpv6-client'],
+                ports: [],
+                interfaces: ['eth0'],
+                active: true
+            },
+            internal: {
+                services: ['ssh', 'mdns', 'samba-client'],
+                ports: [],
+                interfaces: [],
+                active: false
+            }
+        },
+        runtimeChanges: []
+    };
+
+    function processFirewallCmd(args) {
+        if (args.length === 0) return 'Error: firewall-cmd requires options';
+        
+        const option = args[0];
+        
+        switch (option) {
+            case '--state':
+                return 'running';
+                
+            case '--list-all':
+                return formatZoneInfo(firewallState.defaultZone);
+                
+            case '--list-all-zones':
+                let output = '';
+                for (const zone in firewallState.zones) {
+                    output += `${zone}\n${formatZoneInfo(zone)}\n`;
+                }
+                return output;
+                
+            case '--list-services':
+                return firewallState.zones[firewallState.defaultZone].services.join(' ');
+                
+            case '--list-ports':
+                return firewallState.zones[firewallState.defaultZone].ports.join(' ');
+                
+            case '--get-default-zone':
+                return firewallState.defaultZone;
+                
+            case '--add-service':
+                if (args.length < 2) return 'Error: missing service name';
+                const service = args[1];
+                firewallState.zones[firewallState.defaultZone].services.push(service);
+                firewallState.runtimeChanges.push(`Added service ${service} to ${firewallState.defaultZone}`);
+                return 'success';
+                
+            case '--add-port':
+                if (args.length < 2) return 'Error: missing port/protocol';
+                const port = args[1];
+                firewallState.zones[firewallState.defaultZone].ports.push(port);
+                firewallState.runtimeChanges.push(`Added port ${port} to ${firewallState.defaultZone}`);
+                return 'success';
+                
+            case '--runtime-to-permanent':
+                firewallState.runtimeChanges = [];
+                return 'success';
+                
+            case '--reload':
+                return 'success';
+                
+            case '--set-default-zone':
+                if (args.length < 2) return 'Error: missing zone name';
+                const newZone = args[1];
+                if (!firewallState.zones[newZone]) {
+                    return `Error: Zone '${newZone}' not found`;
+                }
+                firewallState.defaultZone = newZone;
+                return 'success';
+                
+            default:
+                return `Error: Unknown option '${option}'`;
+        }
+    }
+
+    function formatZoneInfo(zone) {
+        const z = firewallState.zones[zone];
+        return `  ${zone} (${z.active ? 'active' : 'inactive'})
+  target: default
+  icmp-block-inversion: no
+  interfaces: ${z.interfaces.join(' ')}
+  sources: 
+  services: ${z.services.join(' ')}
+  ports: ${z.ports.join(' ')}
+  protocols: 
+  masquerade: no
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules: `;
+    }
+
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        }
+    });
+
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+
+        let commandMatched = false;
+        requiredCommands.forEach((req, index) => {
+            if (req.step === currentStep && req.command === commandText.trim()) {
+                commandMatched = true;
+                if (!completedCommands[index]) {
+                    completedCommands[index] = true;
+                    terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+                }
+            }
+        });
+
+        const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+        const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+        if (isRequiredCommand && !commandMatched) {
+            const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+            terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+        }
+
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        checkStepCompletion();
+    }
+
+    function checkStepCompletion() {
+        const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+        const allCompleted = currentStepCommands.every(req =>
+            completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+        );
+        if (allCompleted) {
+            setTimeout(() => {
+                nextStep();
+            }, 1000);
+        }
+    }
+
+    function nextStep() {
+        steps[currentStep].classList.remove('active-step');
+        currentStep++;
+        if (currentStep < steps.length) {
+            steps[currentStep].classList.add('active-step');
+            steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+        } else {
+            terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All firewall commands executed correctly!</div>`;
+        }
+    }
+</script>
+</body>
+</html>

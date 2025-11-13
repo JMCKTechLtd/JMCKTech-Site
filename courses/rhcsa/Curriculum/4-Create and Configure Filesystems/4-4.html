@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 4.4 - Create & Manage Hard/Soft Links</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .file-structure {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Red Hat Mono', monospace;
+            margin: 10px 0;
+            white-space: pre;
+            overflow-x: auto;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 4.4: Create & Manage Hard/Soft Links</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: Create a Sample File</h3>
+<p class="required-command">Type exactly: <code>echo "This is original content" > original_file.txt</code></p>
+<p class="required-command">Then type: <code>ls -l original_file.txt</code></p>
+
+<div class="concept">
+<h4>Understanding Files and Inodes</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Files store data, inodes store metadata
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Need original file before creating links
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Files stored in filesystem with unique inodes
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Before creating any type of link
+                            </div>
+</div>
+<p><strong>How it works:</strong> The <code>echo</code> command creates a file with content. <code>ls -l</code> shows file details including permissions, size, and modification time.</p>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Create a Hard Link</h3>
+<p class="required-command">Type exactly: <code>ln original_file.txt hard_link.txt</code></p>
+<p class="required-command">Then type: <code>ls -li original_file.txt hard_link.txt</code></p>
+
+<div class="concept">
+<h4>Understanding Hard Links</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Additional name for the same inode
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Multiple access points to same data
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Must be on same filesystem
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Need multiple names for same file
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>ln</code> creates a hard link. Notice identical inode numbers and link counts in <code>ls -li</code> output. Changes to one affect all links.</p>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Create a Soft Link (Symbolic Link)</h3>
+<p class="required-command">Type exactly: <code>ln -s original_file.txt soft_link.txt</code></p>
+<p class="required-command">Then type: <code>ls -li original_file.txt soft_link.txt</code></p>
+
+<div class="concept">
+<h4>Understanding Soft Links</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Pointer to another file path
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Link across filesystems or to directories
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Anywhere in the filesystem
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Need flexible references
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>ln -s</code> creates a symbolic link. Note different inode numbers. The link shows as <code>soft_link.txt -> original_file.txt</code> in <code>ls -l</code> output.</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Compare Link Behavior</h3>
+<p class="required-command">Type exactly: <code>rm original_file.txt</code></p>
+<p class="required-command">Then type: <code>cat hard_link.txt</code></p>
+<p class="required-command">Then type: <code>cat soft_link.txt</code></p>
+
+<div class="concept">
+<h4>Understanding Link Differences</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>Hard Links</strong>
+                                Survive original deletion (same inode)
+                            </div>
+<div class="concept-item">
+<strong>Soft Links</strong>
+                                Break if original deleted (dangling link)
+                            </div>
+<div class="concept-item">
+<strong>Hard Link Limits</strong>
+                                Can't link directories or cross filesystems
+                            </div>
+<div class="concept-item">
+<strong>Soft Link Advantages</strong>
+                                Can link to directories and across filesystems
+                            </div>
+</div>
+<p><strong>Key Differences:</strong> After deleting the original, the hard link still works (same data), while the soft link fails (points to non-existent path).</p>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[user@lab ~]$</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 4.4!</span></div>
+<div>[user@lab ~]$ <span class="prompt">Learn to create and manage hard and soft links.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'echo "This is original content" > original_file.txt', step: 0, feedback: 'Type exactly: echo "This is original content" > original_file.txt' },
+    { command: 'ls -l original_file.txt', step: 0, feedback: 'Type exactly: ls -l original_file.txt' },
+    { command: 'ln original_file.txt hard_link.txt', step: 1, feedback: 'Type exactly: ln original_file.txt hard_link.txt' },
+    { command: 'ls -li original_file.txt hard_link.txt', step: 1, feedback: 'Type exactly: ls -li original_file.txt hard_link.txt' },
+    { command: 'ln -s original_file.txt soft_link.txt', step: 2, feedback: 'Type exactly: ln -s original_file.txt soft_link.txt' },
+    { command: 'ls -li original_file.txt soft_link.txt', step: 2, feedback: 'Type exactly: ls -li original_file.txt soft_link.txt' },
+    { command: 'rm original_file.txt', step: 3, feedback: 'Type exactly: rm original_file.txt' },
+    { command: 'cat hard_link.txt', step: 3, feedback: 'Type exactly: cat hard_link.txt' },
+    { command: 'cat soft_link.txt', step: 3, feedback: 'Type exactly: cat soft_link.txt' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+
+const commands = {
+    'echo': (args) => {
+        if (args.includes('>')) {
+            return 'File created successfully';
+        }
+        return args.join(' ');
+    },
+    'ls': (args) => {
+        if (args.includes('-li')) {
+            if (args.includes('original_file.txt') && args.includes('hard_link.txt')) {
+                return '123456 -rw-r--r-- 2 user user 25 Jan 10 10:00 original_file.txt\n123456 -rw-r--r-- 2 user user 25 Jan 10 10:00 hard_link.txt';
+            } else if (args.includes('original_file.txt') && args.includes('soft_link.txt')) {
+                return '123456 -rw-r--r-- 1 user user 25 Jan 10 10:00 original_file.txt\n789012 lrwxrwxrwx 1 user user 16 Jan 10 10:00 soft_link.txt -> original_file.txt';
+            } else if (args.includes('original_file.txt')) {
+                return '-rw-r--r-- 1 user user 25 Jan 10 10:00 original_file.txt';
+            }
+        } else if (args.includes('-l')) {
+            return '-rw-r--r-- 1 user user 25 Jan 10 10:00 original_file.txt';
+        }
+        return 'original_file.txt\nhard_link.txt\nsoft_link.txt';
+    },
+    'ln': (args) => {
+        if (args.includes('-s')) {
+            return `Created symbolic link '${args[2]}' -> '${args[1]}'`;
+        }
+        return `Created hard link '${args[1]}'`;
+    },
+    'rm': (args) => `Removed '${args[0]}'`,
+    'cat': (args) => {
+        if (args[0] === 'hard_link.txt') {
+            return 'This is original content';
+        } else if (args[0] === 'soft_link.txt') {
+            return 'cat: soft_link.txt: No such file or directory';
+        }
+        return '';
+    },
+    'help': () => 'Available commands: echo, ls, ln, rm, cat, help',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All commands executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

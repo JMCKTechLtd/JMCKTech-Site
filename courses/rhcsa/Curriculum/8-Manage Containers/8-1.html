@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 8.1 - Pull Container Images (Podman)</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .image-list {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .image-list div {
+            padding: 5px;
+            border-bottom: 1px solid #333;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 8.1: Pull Container Images (Podman)</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: Verify Podman Installation</h3>
+<p class="required-command">Type exactly: <code>podman --version</code></p>
+
+<div class="concept">
+<h4>Understanding Podman</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                A daemonless container engine (Docker alternative)
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Runs containers securely without root daemon
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Available in RHEL 8+ repositories
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When you need to manage OCI containers
+                            </div>
+</div>
+<p><strong>How it works:</strong> Podman is compatible with Docker CLI commands but runs containers without a daemon. The <code>--version</code> flag shows the installed version.</p>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Pull a Container Image</h3>
+<p class="required-command">Type exactly: <code>podman pull registry.access.redhat.com/ubi8/ubi</code></p>
+
+<div class="concept">
+<h4>Understanding Image Pull</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Downloads container image from registry
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                To get images for container deployment
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                From configured container registries
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Before running a container for the first time
+                            </div>
+</div>
+<p><strong>How it works:</strong> Podman pulls images from registries like Docker Hub, Red Hat Registry, or Quay.io. UBI (Universal Base Image) is Red Hat's free-to-use container base image.</p>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: List Local Images</h3>
+<p class="required-command">Type exactly: <code>podman images</code></p>
+
+<div class="concept">
+<h4>Understanding Image Management</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Lists locally available container images
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Verify images are downloaded correctly
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Stored in local storage (usually ~/.local/share/containers)
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                After pulling or building images
+                            </div>
+</div>
+<p><strong>How it works:</strong> The <code>images</code> command shows repository, tag, image ID, size, and creation date. Images are stored in layers for efficiency.</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Pull with Specific Tag</h3>
+<p class="required-command">Type exactly: <code>podman pull registry.access.redhat.com/ubi8/ubi:8.6</code></p>
+<p class="required-command">Then type: <code>podman images</code></p>
+
+<div class="concept">
+<h4>Understanding Image Tags</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Version identifier for container images
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                To specify exact image versions
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Appended after repository name with colon
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When you need a specific image version
+                            </div>
+</div>
+<p><strong>How it works:</strong> Tags typically represent versions (8.6), stability (latest), or variants (minimal). If no tag is specified, <code>latest</code> is assumed.</p>
+</div>
+</div>
+<div class="guide-step" id="step5">
+<h3>Step 5: Search Registry</h3>
+<p class="required-command">Type exactly: <code>podman search ubi --limit=3</code></p>
+
+<div class="concept">
+<h4>Understanding Image Search</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Finds images in configured registries
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Discover available container images
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Searches registry.access.redhat.com by default
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When you need to find specific software
+                            </div>
+</div>
+<p><strong>How it works:</strong> The <code>search</code> command queries registries for matching images. <code>--limit</code> restricts results. Official images are marked "OK" in output.</p>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[user@lab ~]$</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 8.1 - Podman Image Management!</span></div>
+<div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'podman --version', step: 0, feedback: 'Type exactly: podman --version' },
+    { command: 'podman pull registry.access.redhat.com/ubi8/ubi', step: 1, feedback: 'Type exactly: podman pull registry.access.redhat.com/ubi8/ubi' },
+    { command: 'podman images', step: 2, feedback: 'Type exactly: podman images' },
+    { command: 'podman pull registry.access.redhat.com/ubi8/ubi:8.6', step: 3, feedback: 'Type exactly: podman pull registry.access.redhat.com/ubi8/ubi:8.6' },
+    { command: 'podman images', step: 3, feedback: 'Type exactly: podman images' },
+    { command: 'podman search ubi --limit=3', step: 4, feedback: 'Type exactly: podman search ubi --limit=3' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+
+const commands = {
+    'podman': (args) => {
+        if (args[0] === '--version') {
+            return 'podman version 3.4.4';
+        } else if (args[0] === 'pull') {
+            if (args[1] === 'registry.access.redhat.com/ubi8/ubi') {
+                return 'Trying to pull registry.access.redhat.com/ubi8/ubi:latest...\nGetting image source signatures\nCopying blob sha256:...\nCopying config sha256:...\nWriting manifest to image destination\nStoring signatures\n...';
+            } else if (args[1] === 'registry.access.redhat.com/ubi8/ubi:8.6') {
+                return 'Trying to pull registry.access.redhat.com/ubi8/ubi:8.6...\nGetting image source signatures\nCopying blob sha256:...\nCopying config sha256:...\nWriting manifest to image destination\nStoring signatures\n...';
+            }
+        } else if (args[0] === 'images') {
+            return `<div class="image-list">
+                <div>REPOSITORY                              TAG     IMAGE ID      CREATED       SIZE</div>
+                <div>registry.access.redhat.com/ubi8/ubi     latest  a1b2c3d4e5f6 2 weeks ago   234 MB</div>
+                <div>registry.access.redhat.com/ubi8/ubi     8.6     x1y2z3a4b5c6 1 month ago   230 MB</div>
+            </div>`;
+        } else if (args[0] === 'search') {
+            return `<div class="image-list">
+                <div>INDEX                  NAME                                        DESCRIPTION   STARS   OFFICIAL</div>
+                <div>redhat.io             registry.access.redhat.com/ubi8/ubi         UBI 8 image   1000    OK</div>
+                <div>redhat.io             registry.access.redhat.com/ubi8/ubi-minimal  Minimal UBI   800     OK</div>
+                <div>redhat.io             registry.access.redhat.com/ubi7/ubi         UBI 7 image   750     OK</div>
+            </div>`;
+        }
+        return 'Error: Invalid podman command. Use --help for more information.';
+    },
+    'help': () => 'Available commands: podman, help',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All Podman commands executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

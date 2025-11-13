@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 3.4 - Mount &amp; Unmount Filesystems</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .filesystem-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .filesystem-table th, .filesystem-table td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: left;
+        }
+        .filesystem-table th {
+            background-color: #333;
+            color: var(--redhat-accent);
+        }
+        .filesystem-table tr:nth-child(even) {
+            background-color: #2a2a2a;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 3.4: Mount &amp; Unmount Filesystems</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: View Mounted Filesystems</h3>
+<p class="required-command">Type exactly: <code>mount</code></p>
+
+<div class="concept">
+<h4>Understanding Mounted Filesystems</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Shows currently mounted filesystems
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Verify what's mounted and where
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Works on any Linux system
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Before/after mounting operations
+                            </div>
+</div>
+<p><strong>How it works:</strong> The <code>mount</code> command without arguments displays all mounted filesystems with their mount points, types, and options.</p>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Mount a Filesystem Temporarily</h3>
+<p class="required-command">Type exactly: <code>sudo mount /dev/sdb1 /mnt</code></p>
+<p class="required-command">Then verify with: <code>mount | grep /mnt</code></p>
+
+<div class="concept">
+<h4>Understanding Temporary Mounts</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Mounts a filesystem until reboot
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Temporary access to storage
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Any available block device
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                For temporary storage needs
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>mount</code> attaches the filesystem on <code>/dev/sdb1</code> to the directory <code>/mnt</code>. The <code>sudo</code> command is needed for root privileges.</p>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Unmount a Filesystem</h3>
+<p class="required-command">Type exactly: <code>sudo umount /mnt</code></p>
+<p class="required-command">Then verify with: <code>mount | grep /mnt</code></p>
+
+<div class="concept">
+<h4>Understanding Unmounting</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Safely detaches a filesystem
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Prevent data corruption
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Any mounted filesystem
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Before removing storage
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>umount</code> (note the spelling) detaches the filesystem from its mount point. The filesystem must not be in use (no open files or processes using it).</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Configure Persistent Mounts (/etc/fstab)</h3>
+<p class="required-command">Type exactly: <code>sudo vim /etc/fstab</code></p>
+<p class="required-command">Add this line (use Tab between fields): <code>/dev/sdb1 /mnt ext4 defaults 0 0</code></p>
+<p class="required-command">Then test with: <code>sudo mount -a</code></p>
+
+<div class="concept">
+<h4>Understanding /etc/fstab</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Filesystem table configuration
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Persistent mounts across reboots
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                <code>/etc/fstab</code>
+</div>
+<div class="concept-item">
+<strong>When</strong>
+                                System boot or mount -a
+                            </div>
+</div>
+<p><strong>How it works:</strong> The fstab file defines how filesystems should be mounted. Fields are: device, mount point, type, options, dump, fsck order.</p>
+
+<table class="filesystem-table">
+<thead>
+<tr>
+<th>Field</th>
+<th>Example</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Device</td>
+<td>/dev/sdb1</td>
+<td>Block device or UUID</td>
+</tr>
+<tr>
+<td>Mount point</td>
+<td>/mnt</td>
+<td>Directory to mount to</td>
+</tr>
+<tr>
+<td>Filesystem type</td>
+<td>ext4</td>
+<td>Type of filesystem</td>
+</tr>
+<tr>
+<td>Options</td>
+<td>defaults</td>
+<td>Mount options (ro,rw,etc)</td>
+</tr>
+<tr>
+<td>Dump</td>
+<td>0</td>
+<td>Backup utility flag</td>
+</tr>
+<tr>
+<td>Fsck order</td>
+<td>0</td>
+<td>Filesystem check order</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[user@lab ~]$</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 3.4!</span></div>
+<div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'mount', step: 0, feedback: 'Type exactly: mount' },
+    { command: 'sudo mount /dev/sdb1 /mnt', step: 1, feedback: 'Type exactly: sudo mount /dev/sdb1 /mnt' },
+    { command: 'mount | grep /mnt', step: 1, feedback: 'Type exactly: mount | grep /mnt' },
+    { command: 'sudo umount /mnt', step: 2, feedback: 'Type exactly: sudo umount /mnt' },
+    { command: 'mount | grep /mnt', step: 2, feedback: 'Type exactly: mount | grep /mnt' },
+    { command: 'sudo vim /etc/fstab', step: 3, feedback: 'Type exactly: sudo vim /etc/fstab' },
+    { command: '/dev/sdb1 /mnt ext4 defaults 0 0', step: 3, isFstabEntry: true, feedback: 'Add this line to /etc/fstab: /dev/sdb1 /mnt ext4 defaults 0 0' },
+    { command: 'sudo mount -a', step: 3, feedback: 'Type exactly: sudo mount -a' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+let fstabEntryAdded = false;
+
+const commands = {
+    'mount': (args) => {
+        if (args.length === 0) {
+            return '/dev/sda1 on / type ext4 (rw,relatime)\n/dev/sdb1 on /mnt type ext4 (rw,relatime) (if mounted)\n';
+        } else if (args[0] === '-a') {
+            return 'Mounting all filesystems from /etc/fstab...';
+        }
+        return `Mounting ${args[0]} on ${args[1] || 'default location'}`;
+    },
+    'umount': (args) => `Unmounted ${args[0]}`,
+    'sudo': (args) => {
+        if (args[0] === 'mount' && args[1] === '/dev/sdb1' && args[2] === '/mnt') {
+            return 'Successfully mounted /dev/sdb1 on /mnt';
+        } else if (args[0] === 'umount' && args[1] === '/mnt') {
+            return 'Successfully unmounted /mnt';
+        } else if (args[0] === 'mount' && args[1] === '-a') {
+            return fstabEntryAdded 
+                ? 'Successfully mounted all filesystems from /etc/fstab' 
+                : 'mount: /etc/fstab: no valid filesystems to mount';
+        } else if (args[0] === 'vim' && args[1] === '/etc/fstab') {
+            return 'Opening /etc/fstab in vim... (simulated)';
+        }
+        return `Executing sudo command: ${args.join(' ')}`;
+    },
+    'grep': (args) => {
+        if (args[0] === '/mnt') {
+            return fstabEntryAdded 
+                ? '/dev/sdb1 on /mnt type ext4 (rw,relatime)' 
+                : '';
+        }
+        return `grep: ${args.join(' ')}`;
+    },
+    'help': () => 'Available commands: mount, umount, sudo, grep, help',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep) {
+            if (req.isFstabEntry && commandText.includes('/dev/sdb1 /mnt ext4 defaults 0 0')) {
+                commandMatched = true;
+                if (!completedCommands[index]) {
+                    completedCommands[index] = true;
+                    fstabEntryAdded = true;
+                    terminalOutput.innerHTML += `<div class="completion">✅ Correct fstab entry added!</div>`;
+                }
+            } else if (!req.isFstabEntry && req.command === commandText.trim()) {
+                commandMatched = true;
+                if (!completedCommands[index]) {
+                    completedCommands[index] = true;
+                    terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+                }
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd || req.isFstabEntry);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => 
+            req.command.split(' ')[0] === cmd || 
+            (req.isFstabEntry && cmd === 'sudo' && args[0] === 'vim' && args[1] === '/etc/fstab')
+        );
+        if (reqCmd) {
+            terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+        }
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All filesystem operations executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

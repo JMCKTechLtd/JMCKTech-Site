@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 5.5 - Manage Users & Groups</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .user-list {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Red Hat Mono', monospace;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 5.5: Manage Users & Groups</h1>
+        </div>
+        <div class="terminal-container">
+            <div class="guide">
+                <h2>Lab Instructions</h2>
+                <div class="guide-step active-step" id="step1">
+                    <h3>Step 1: Create a New User</h3>
+                    <p class="required-command">Type exactly: <code>sudo useradd -m -s /bin/bash rhcsa_user</code></p>
+                    <p class="required-command">Then type: <code>sudo passwd rhcsa_user</code> and set password to "redhat"</p>
+
+                    <div class="concept">
+                        <h4>Understanding User Creation</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Creating a new system user account
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Each user needs their own account for security and resource management
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                User info stored in <code>/etc/passwd</code> and <code>/etc/shadow</code>
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When adding new users to the system
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>useradd</code> creates the account, <code>-m</code> creates home directory, <code>-s</code> sets shell. <code>passwd</code> sets/changes the password. Always use strong passwords in production!</p>
+                    </div>
+                </div>
+                <div class="guide-step" id="step2">
+                    <h3>Step 2: Create a New Group</h3>
+                    <p class="required-command">Type exactly: <code>sudo groupadd rhcsa_group</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Group Management</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Creating a new user group
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Groups simplify permission management for multiple users
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Group info stored in <code>/etc/group</code>
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When you need to share resources among users
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>groupadd</code> creates a new group. Groups are essential for managing file permissions and system access.</p>
+                    </div>
+                </div>
+                <div class="guide-step" id="step3">
+                    <h3>Step 3: Add User to Group</h3>
+                    <p class="required-command">Type exactly: <code>sudo usermod -aG rhcsa_group rhcsa_user</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding User Modification</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Modifying user account properties
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                To change user attributes like groups, shell, or home directory
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Updates <code>/etc/group</code> and <code>/etc/passwd</code>
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When user attributes need modification
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>usermod</code> modifies user accounts. <code>-aG</code> appends the user to supplementary groups without removing existing group memberships.</p>
+                    </div>
+                </div>
+                <div class="guide-step" id="step4">
+                    <h3>Step 4: Verify User and Group</h3>
+                    <p class="required-command">Type exactly: <code>id rhcsa_user</code></p>
+                    <p class="required-command">Then type: <code>groups rhcsa_user</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding User Verification</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Checking user and group information
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Verify correct configuration of users and groups
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Queries system user/group databases
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                After creating or modifying users/groups
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>id</code> shows user and group IDs, <code>groups</code> shows group memberships. These commands help verify your changes were applied correctly.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@lab ~]#</span>
+                <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+            </div>
+            <div class="terminal" id="terminal-output">
+                <div>[root@lab ~]# <span class="prompt">Welcome to RHCSA Lab 5.5: User & Group Management!</span></div>
+                <div>[root@lab ~]# <span class="prompt">Use sudo for all commands in this lab.</span></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const commandInput = document.getElementById('command-input');
+        const terminalOutput = document.getElementById('terminal-output');
+        const steps = document.querySelectorAll('.guide-step');
+        let currentStep = 0;
+        let commandHistory = [];
+        let historyIndex = -1;
+
+        // Simulated system state
+        let users = [
+            { name: 'root', uid: 0, gid: 0, groups: ['root'], home: '/root', shell: '/bin/bash' }
+        ];
+        let groups = [
+            { name: 'root', gid: 0, members: ['root'] }
+        ];
+
+        const requiredCommands = [
+            { command: 'sudo useradd -m -s /bin/bash rhcsa_user', step: 0, feedback: 'Type exactly: sudo useradd -m -s /bin/bash rhcsa_user' },
+            { command: 'sudo passwd rhcsa_user', step: 0, feedback: 'Type exactly: sudo passwd rhcsa_user (set password to "redhat")' },
+            { command: 'sudo groupadd rhcsa_group', step: 1, feedback: 'Type exactly: sudo groupadd rhcsa_group' },
+            { command: 'sudo usermod -aG rhcsa_group rhcsa_user', step: 2, feedback: 'Type exactly: sudo usermod -aG rhcsa_group rhcsa_user' },
+            { command: 'id rhcsa_user', step: 3, feedback: 'Type exactly: id rhcsa_user' },
+            { command: 'groups rhcsa_user', step: 3, feedback: 'Type exactly: groups rhcsa_user' }
+        ];
+
+        let completedCommands = new Array(requiredCommands.length).fill(false);
+
+        const commands = {
+            'sudo': (args) => {
+                if (args[0] === 'useradd') {
+                    if (args.includes('-m') && args.includes('-s') && args.includes('rhcsa_user')) {
+                        // Add the new user
+                        users.push({
+                            name: 'rhcsa_user',
+                            uid: 1000,
+                            gid: 1000,
+                            groups: ['rhcsa_user'],
+                            home: '/home/rhcsa_user',
+                            shell: '/bin/bash'
+                        });
+                        groups.push({
+                            name: 'rhcsa_user',
+                            gid: 1000,
+                            members: ['rhcsa_user']
+                        });
+                        return 'User rhcsa_user created successfully';
+                    }
+                    return 'Usage: sudo useradd [options] LOGIN';
+                } else if (args[0] === 'passwd') {
+                    if (args[1] === 'rhcsa_user') {
+                        return 'Changing password for user rhcsa_user.\nNew password: redhat\nRetype new password: redhat\npasswd: all authentication tokens updated successfully.';
+                    }
+                    return 'Usage: sudo passwd [username]';
+                } else if (args[0] === 'groupadd') {
+                    if (args[1] === 'rhcsa_group') {
+                        groups.push({
+                            name: 'rhcsa_group',
+                            gid: 1001,
+                            members: []
+                        });
+                        return 'Group rhcsa_group created successfully';
+                    }
+                    return 'Usage: sudo groupadd [groupname]';
+                } else if (args[0] === 'usermod') {
+                    if (args.includes('-aG') && args.includes('rhcsa_group') && args.includes('rhcsa_user')) {
+                        const group = groups.find(g => g.name === 'rhcsa_group');
+                        if (group) {
+                            group.members.push('rhcsa_user');
+                            const user = users.find(u => u.name === 'rhcsa_user');
+                            if (user) {
+                                user.groups.push('rhcsa_group');
+                            }
+                            return 'User rhcsa_user added to group rhcsa_group';
+                        }
+                    }
+                    return 'Usage: sudo usermod [options] LOGIN';
+                }
+                return `sudo: ${args.join(' ')}: command executed`;
+            },
+            'id': (args) => {
+                if (args[0] === 'rhcsa_user') {
+                    const user = users.find(u => u.name === 'rhcsa_user');
+                    if (user) {
+                        return `uid=${user.uid}(rhcsa_user) gid=${user.gid}(rhcsa_user) groups=${user.gid}(rhcsa_user),${groups.find(g => g.name === 'rhcsa_group').gid}(rhcsa_group)`;
+                    }
+                    return `id: 'rhcsa_user': no such user`;
+                }
+                return 'Usage: id [username]';
+            },
+            'groups': (args) => {
+                if (args[0] === 'rhcsa_user') {
+                    const user = users.find(u => u.name === 'rhcsa_user');
+                    if (user) {
+                        return `rhcsa_user : rhcsa_user rhcsa_group`;
+                    }
+                    return `groups: 'rhcsa_user': no such user`;
+                }
+                return 'Usage: groups [username]';
+            },
+            'clear': () => {
+                terminalOutput.innerHTML = '<div>[root@lab ~]# <span class="prompt">Terminal cleared</span></div>';
+                return '';
+            },
+            'help': () => 'Available commands: sudo, id, groups, clear, help',
+        };
+
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const commandText = commandInput.value.trim();
+                if (commandText) {
+                    commandHistory.push(commandText);
+                    historyIndex = commandHistory.length;
+                    processCommand(commandText);
+                }
+                commandInput.value = '';
+            } else if (e.key === 'ArrowUp') {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    commandInput.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    commandInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    commandInput.value = '';
+                }
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                // Basic tab completion for our simulated environment
+                const partial = commandInput.value.split(' ').pop();
+                const matches = ['rhcsa_user', 'rhcsa_group'].filter(item => item.startsWith(partial));
+                if (matches.length === 1) {
+                    commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+                }
+            }
+        });
+
+        function processCommand(commandText) {
+            const parts = commandText.trim().split(/\s+/);
+            const cmd = parts[0];
+            const args = parts.slice(1);
+
+            let output;
+            if (commands[cmd]) {
+                output = commands[cmd](args);
+                if (output) {
+                    terminalOutput.innerHTML += `<div>[root@lab ~]# ${commandText}</div><div>${output}</div>`;
+                }
+            } else {
+                terminalOutput.innerHTML += `<div>[root@lab ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+            }
+
+            // Special handling for passwd command (since it requires interactive input)
+            if (commandText === 'sudo passwd rhcsa_user') {
+                terminalOutput.innerHTML += `<div>Changing password for user rhcsa_user.</div>
+                                           <div>New password: redhat</div>
+                                           <div>Retype new password: redhat</div>
+                                           <div>passwd: all authentication tokens updated successfully.</div>`;
+            }
+
+            let commandMatched = false;
+            requiredCommands.forEach((req, index) => {
+                if (req.step === currentStep && req.command === commandText.trim()) {
+                    commandMatched = true;
+                    if (!completedCommands[index]) {
+                        completedCommands[index] = true;
+                        terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+                    }
+                }
+            });
+
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd || 
+                                     (req.command.startsWith('sudo') && req.command.split(' ')[1] === cmd))
+
+            if (isRequiredCommand && !commandMatched) {
+                const reqCmd = currentStepCommands.find(req => 
+                    req.command.split(' ')[0] === cmd || 
+                    (req.command.startsWith('sudo') && req.command.split(' ')[1] === cmd)
+                );
+                if (reqCmd) {
+                    terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+                }
+            }
+
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            checkStepCompletion();
+        }
+
+        function checkStepCompletion() {
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const allCompleted = currentStepCommands.every(req =>
+                completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+            );
+            if (allCompleted) {
+                setTimeout(() => {
+                    nextStep();
+                }, 1000);
+            }
+        }
+
+        function nextStep() {
+            steps[currentStep].classList.remove('active-step');
+            currentStep++;
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('active-step');
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All user and group management tasks executed correctly!</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

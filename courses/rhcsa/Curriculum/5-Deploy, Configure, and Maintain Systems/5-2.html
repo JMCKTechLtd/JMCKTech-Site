@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 5.2 - Install/update/remove software (dnf, yum, rpm)</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .package-list {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Red Hat Mono', monospace;
+            margin: 10px 0;
+        }
+        .package-item {
+            padding: 3px 0;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 5.2: Install/update/remove software (dnf, yum, rpm)</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: Querying Packages with rpm</h3>
+<p class="required-command">Type exactly: <code>rpm -qa | grep bash</code></p>
+
+<div class="concept">
+<h4>Understanding rpm</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Low-level package manager (RPM Package Manager)
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Install, query, verify, update, and remove packages
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Works with local .rpm files
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When you need direct package manipulation
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>rpm -qa</code> lists all installed packages. Piping to <code>grep</code> filters results. Common options: <code>-q</code> (query), <code>-i</code> (info), <code>-e</code> (erase), <code>-V</code> (verify).</p>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Searching Packages with dnf</h3>
+<p class="required-command">Type exactly: <code>dnf search nano</code></p>
+
+<div class="concept">
+<h4>Understanding dnf</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Next-generation package manager (Dandified YUM)
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Resolves dependencies automatically
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Works with repositories
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Preferred for package management in RHEL 8+
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>dnf search</code> finds packages in repositories. Other common commands: <code>install</code>, <code>remove</code>, <code>update</code>, <code>info</code>, <code>list</code>. Uses <code>/etc/dnf/dnf.conf</code> for configuration.</p>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Installing a Package</h3>
+<p class="required-command">Type exactly: <code>sudo dnf install -y nano</code></p>
+
+<div class="concept">
+<h4>Understanding Package Installation</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Adding software to the system
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                To make new software available
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                From configured repositories
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When you need new functionality
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>sudo</code> elevates privileges. <code>-y</code> automatically answers yes to prompts. DNF resolves and installs dependencies automatically. Packages are installed to standard locations (e.g., <code>/usr/bin/</code>).</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Removing a Package</h3>
+<p class="required-command">Type exactly: <code>sudo dnf remove -y nano</code></p>
+
+<div class="concept">
+<h4>Understanding Package Removal</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Uninstalling software from the system
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                To free space or remove unneeded software
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                From installed packages
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When software is no longer needed
+                            </div>
+</div>
+<p><strong>How it works:</strong> DNF removes the specified package and any dependencies that are no longer needed. The <code>-y</code> flag confirms the action automatically. Always verify you're removing the correct package.</p>
+</div>
+</div>
+<div class="guide-step" id="step5">
+<h3>Step 5: Updating Packages</h3>
+<p class="required-command">Type exactly: <code>sudo dnf update -y</code></p>
+
+<div class="concept">
+<h4>Understanding System Updates</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Applying available updates
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Security patches and bug fixes
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                From configured repositories
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Regularly for security and stability
+                            </div>
+</div>
+<p><strong>How it works:</strong> DNF checks repositories for newer versions of installed packages. The <code>update</code> command upgrades all packages with available updates. For a single package: <code>dnf update package_name</code>.</p>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[user@lab ~]$</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 5.2!</span></div>
+<div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'rpm -qa | grep bash', step: 0, feedback: 'Type exactly: rpm -qa | grep bash' },
+    { command: 'dnf search nano', step: 1, feedback: 'Type exactly: dnf search nano' },
+    { command: 'sudo dnf install -y nano', step: 2, feedback: 'Type exactly: sudo dnf install -y nano' },
+    { command: 'sudo dnf remove -y nano', step: 3, feedback: 'Type exactly: sudo dnf remove -y nano' },
+    { command: 'sudo dnf update -y', step: 4, feedback: 'Type exactly: sudo dnf update -y' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+
+const commands = {
+    'rpm': (args) => {
+        if (args.includes('-qa') && args.includes('grep')) {
+            return 'bash-5.1.8-2.el8.x86_64\nbash-completion-2.7-5.el8.noarch';
+        }
+        return 'Error: Invalid rpm command. Try: rpm -qa | grep bash';
+    },
+    'dnf': (args) => {
+        if (args.includes('search') && args.includes('nano')) {
+            return `Last metadata expiration check: 0:01:23 ago on Mon Jan 10 10:00:00 2022.
+================================ Name & Summary Matched: nano ================================
+nano.x86_64 : A small text editor
+nano-tiny.x86_64 : A tiny version of nano`;
+        } else if (args.includes('install') && args.includes('nano')) {
+            return `Dependencies resolved.
+==============================================================================================
+ Package         Architecture    Version             Repository                          Size
+==============================================================================================
+Installing:
+ nano            x86_64          2.9.8-1.el8        rhel-8-for-x86_64-appstream-rpms   590 k
+
+Transaction Summary
+==============================================================================================
+Install  1 Package
+
+Total download size: 590 k
+Installed size: 2.2 M
+Downloading Packages:
+nano-2.9.8-1.el8.x86_64.rpm                                 590 kB/s | 590 kB     00:01
+----------------------------------------------------------------------------------------------
+Total                                                       590 kB/s | 590 kB     00:01
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                   1/1
+  Installing       : nano-2.9.8-1.el8.x86_64                                          1/1
+  Running scriptlet: nano-2.9.8-1.el8.x86_64                                          1/1
+  Verifying        : nano-2.9.8-1.el8.x86_64                                          1/1
+
+Installed:
+  nano-2.9.8-1.el8.x86_64
+
+Complete!`;
+        } else if (args.includes('remove') && args.includes('nano')) {
+            return `Dependencies resolved.
+==============================================================================================
+ Package         Architecture    Version             Repository                          Size
+==============================================================================================
+Removing:
+ nano            x86_64          2.9.8-1.el8        @rhel-8-for-x86_64-appstream-rpms   2.2 M
+
+Transaction Summary
+==============================================================================================
+Remove  1 Package
+
+Freed space: 2.2 M
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                   1/1
+  Erasing          : nano-2.9.8-1.el8.x86_64                                          1/1
+  Running scriptlet: nano-2.9.8-1.el8.x86_64                                          1/1
+  Verifying        : nano-2.9.8-1.el8.x86_64                                          1/1
+
+Removed:
+  nano-2.9.8-1.el8.x86_64
+
+Complete!`;
+        } else if (args.includes('update')) {
+            return `Last metadata expiration check: 0:01:23 ago on Mon Jan 10 10:00:00 2022.
+Dependencies resolved.
+Nothing to do.
+Complete!`;
+        }
+        return 'Error: Invalid dnf command. Try: dnf search nano, dnf install nano, dnf remove nano, or dnf update';
+    },
+    'sudo': (args) => {
+        if (args[0] === 'dnf') {
+            const dnfArgs = args.slice(1);
+            return commands['dnf'](dnfArgs);
+        }
+        return 'Error: sudo can only be used with dnf commands in this lab';
+    },
+    'help': () => 'Available commands: rpm, dnf, sudo, help',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All package management commands executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

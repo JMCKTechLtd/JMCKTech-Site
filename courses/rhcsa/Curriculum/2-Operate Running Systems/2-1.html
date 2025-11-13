@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 2.1 - Boot, Reboot &amp; Shutdown</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .boot-message {
+            color: #00BCD4;
+            font-weight: bold;
+        }
+        .shutdown-message {
+            color: #FF9800;
+            font-weight: bold;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 2.1: Boot, Reboot &amp; Shutdown</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: System Boot Process</h3>
+<p class="required-command">Type exactly: <code>systemctl list-units --type target</code></p>
+
+<div class="concept">
+<h4>Understanding the Boot Process</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                System initialization and service startup
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Bring system to operational state
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Managed by systemd
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                After power-on or reboot
+                            </div>
+</div>
+<p><strong>How it works:</strong> The command shows all active systemd targets (similar to runlevels). The default target (usually graphical.target or multi-user.target) determines which services start at boot.</p>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Change Default Target</h3>
+<p class="required-command">Type exactly: <code>systemctl get-default</code></p>
+<p class="required-command">Then type: <code>systemctl set-default multi-user.target</code></p>
+
+<div class="concept">
+<h4>Understanding System Targets</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                System states (like runlevels)
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Control which services start
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Defined in /usr/lib/systemd/system/
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                At boot or when changing state
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>get-default</code> shows the current default target, while <code>set-default</code> changes it. Multi-user target provides a console interface without GUI.</p>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: System Reboot</h3>
+<p class="required-command">Type exactly: <code>systemctl reboot</code></p>
+
+<div class="concept">
+<h4>Understanding System Reboot</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Graceful system restart
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Apply changes needing restart
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Initiated from any terminal
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                After kernel updates or major changes
+                            </div>
+</div>
+<p><strong>How it works:</strong> The command cleanly stops services, unmounts filesystems, and restarts the system. Similar to <code>shutdown -r now</code> but more modern.</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: System Shutdown</h3>
+<p class="required-command">Type exactly: <code>systemctl poweroff</code></p>
+
+<div class="concept">
+<h4>Understanding System Shutdown</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Graceful system power off
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Safe power down
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Initiated from any terminal
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When system needs to be turned off
+                            </div>
+</div>
+<p><strong>How it works:</strong> The command cleanly stops services, unmounts filesystems, and powers off the system. Similar to <code>shutdown -h now</code> but more modern.</p>
+</div>
+</div>
+<div class="guide-step" id="step5">
+<h3>Step 5: Emergency Procedures</h3>
+<p class="required-command">Type exactly: <code>systemctl rescue</code></p>
+<p class="required-command">Then type: <code>systemctl emergency</code></p>
+
+<div class="concept">
+<h4>Understanding Rescue Modes</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Minimal system environments
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                System recovery when normal boot fails
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Accessed from bootloader or command line
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Critical system failures
+                            </div>
+</div>
+<p><strong>How it works:</strong> Rescue mode provides a single-user environment with network, while emergency mode provides the most basic environment without network. Use these for system recovery when normal boot isn't possible.</p>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[root@lab ~]#</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[root@lab ~]# <span class="prompt">Welcome to RHCSA Lab 2.1!</span></div>
+<div>[root@lab ~]# <span class="prompt">Practice system boot, reboot, and shutdown commands.</span></div>
+<div>[root@lab ~]# <span class="prompt">Note: These commands are simulated for safety.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'systemctl list-units --type target', step: 0, feedback: 'Type exactly: systemctl list-units --type target' },
+    { command: 'systemctl get-default', step: 1, feedback: 'Type exactly: systemctl get-default' },
+    { command: 'systemctl set-default multi-user.target', step: 1, feedback: 'Type exactly: systemctl set-default multi-user.target' },
+    { command: 'systemctl reboot', step: 2, feedback: 'Type exactly: systemctl reboot' },
+    { command: 'systemctl poweroff', step: 3, feedback: 'Type exactly: systemctl poweroff' },
+    { command: 'systemctl rescue', step: 4, feedback: 'Type exactly: systemctl rescue' },
+    { command: 'systemctl emergency', step: 4, feedback: 'Type exactly: systemctl emergency' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+
+const commands = {
+    'systemctl': (args) => {
+        if (args.includes('list-units') && args.includes('--type target')) {
+            return 'UNIT                     LOAD   ACTIVE SUB    DESCRIPTION\nbasic.target            loaded active active Basic System\ncryptsetup.target      loaded active active Local Encrypted Volumes\ndefault.target         loaded active active Graphical Interface\ngraphical.target       loaded active active Graphical Interface\nmulti-user.target      loaded active active Multi-User System\n';
+        }
+        if (args.includes('get-default')) {
+            return 'graphical.target';
+        }
+        if (args.includes('set-default')) {
+            return 'Created symlink /etc/systemd/system/default.target → /usr/lib/systemd/system/multi-user.target.';
+        }
+        if (args.includes('reboot')) {
+            return '<div class="boot-message">System will now reboot. All services stopping...</div>';
+        }
+        if (args.includes('poweroff')) {
+            return '<div class="shutdown-message">System will now power off. All services stopping...</div>';
+        }
+        if (args.includes('rescue')) {
+            return '<div class="warning">Entering rescue mode. Provide root password for maintenance.</div>';
+        }
+        if (args.includes('emergency')) {
+            return '<div class="error">Entering emergency mode. No services started. Filesystem mounted read-only.</div>';
+        }
+        return 'Invalid systemctl command. Try: list-units, get-default, set-default, reboot, poweroff, rescue, emergency';
+    },
+    'help': () => 'Available commands: systemctl, help',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[root@lab ~]# ${commandText}</div><div>${output}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[root@lab ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All system control commands executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

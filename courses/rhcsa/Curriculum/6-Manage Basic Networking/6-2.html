@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 6.2 - Test Network Connectivity</title>
+<style>
+    :root {
+        --redhat-red: #cc0000;
+        --redhat-dark: #1e1e1e;
+        --redhat-light: #f0f0f0;
+        --redhat-accent: #4CAF50;
+        --redhat-blue: #007ACC;
+    }
+    body {
+        font-family: 'Red Hat Text', 'Overpass', sans-serif;
+        background-color: var(--redhat-dark);
+        color: var(--redhat-light);
+        margin: 0;
+        padding: 0;
+        line-height: 1.6;
+    }
+    .lab-container {
+        max-width: 900px;
+        margin: 20px auto;
+        background: #252525;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+        border-top: 4px solid var(--redhat-red);
+    }
+    .header {
+        background: linear-gradient(to right, #1e1e1e, #333);
+        padding: 15px 20px;
+        color: white;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #444;
+    }
+    .header img {
+        height: 30px;
+        margin-right: 15px;
+    }
+    .header h1 {
+        margin: 0;
+        font-size: 1.5em;
+        font-weight: normal;
+    }
+    .terminal-container {
+        display: flex;
+        flex-direction: column;
+        height: 600px;
+    }
+    .guide {
+        padding: 20px;
+        background: #2d2d2d;
+        flex: 1;
+        overflow-y: auto;
+    }
+    .guide h2 {
+        margin-top: 0;
+        color: var(--redhat-accent);
+        border-bottom: 1px solid #444;
+        padding-bottom: 10px;
+    }
+    .guide-step {
+        margin-bottom: 15px;
+        padding: 15px;
+        background: #333;
+        border-left: 4px solid var(--redhat-accent);
+        display: none;
+    }
+    .active-step {
+        display: block;
+    }
+    .terminal {
+        background: #000;
+        padding: 15px;
+        height: 250px;
+        overflow-y: auto;
+        font-family: 'Red Hat Mono', monospace;
+        border-top: 1px solid #444;
+    }
+    .prompt {
+        color: var(--redhat-accent);
+    }
+    .command-line {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        background: #333;
+        border-top: 1px solid #444;
+    }
+    #command-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--redhat-light);
+        font-family: 'Red Hat Mono', monospace;
+        font-size: 16px;
+        outline: none;
+        padding: 8px;
+    }
+    .success {
+        color: var(--redhat-accent);
+        font-weight: bold;
+    }
+    .error {
+        color: #FF5252;
+    }
+    .completion {
+        color: #FFD700;
+        font-weight: bold;
+    }
+    .concept {
+        background: #2a2a2a;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 5px;
+        border-left: 4px solid var(--redhat-blue);
+    }
+    .concept h4 {
+        margin-top: 0;
+        color: var(--redhat-blue);
+        border-bottom: 1px solid #444;
+        padding-bottom: 5px;
+    }
+    .concept-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .concept-item {
+        background: #252525;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 2px solid var(--redhat-red);
+    }
+    .concept-item strong {
+        color: var(--redhat-red);
+        display: block;
+        margin-bottom: 5px;
+    }
+    code {
+        background: #1e1e1e;
+        padding: 2px 5px;
+        border-radius: 3px;
+        color: var(--redhat-accent);
+        font-family: 'Red Hat Mono', monospace;
+    }
+    kbd {
+        background: #444;
+        padding: 2px 5px;
+        border-radius: 3px;
+        color: white;
+        font-family: 'Red Hat Mono', monospace;
+    }
+    .required-command {
+        background: rgba(76, 175, 80, 0.1);
+        padding: 5px;
+        border-radius: 3px;
+        border-left: 3px solid var(--redhat-accent);
+    }
+    .trophy {
+        display: inline-block;
+        margin-left: 5px;
+    }
+    .syntax-error {
+        color: #FF5252;
+        font-weight: bold;
+    }
+    .warning {
+        color: #FFD700;
+        font-weight: bold;
+    }
+    .strict-feedback {
+        background: rgba(204, 0, 0, 0.1);
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 3px solid var(--redhat-red);
+        margin-top: 10px;
+    }
+    .network-diagram {
+        background: #252525;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 15px 0;
+        border: 1px solid #444;
+    }
+    .network-diagram pre {
+        margin: 0;
+        font-family: 'Red Hat Mono', monospace;
+        color: var(--redhat-light);
+    }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 6.2: Test Network Connectivity</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: Basic Connectivity Testing with ping</h3>
+<p class="required-command">Type exactly: <code>ping -c 4 127.0.0.1</code></p>
+
+<div class="concept">
+<h4>Understanding ping</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+    Tests basic network connectivity (ICMP protocol)
+</div>
+<div class="concept-item">
+<strong>Why</strong>
+    Verify if a host is reachable and measure latency
+</div>
+<div class="concept-item">
+<strong>Where</strong>
+    Works across all network-connected systems
+</div>
+<div class="concept-item">
+<strong>When</strong>
+    First step in network troubleshooting
+</div>
+</div>
+<p><strong>How it works:</strong> ping sends ICMP Echo Request packets and listens for Echo Reply packets. The <code>-c</code> option specifies the number of packets to send (4 in this case). 127.0.0.1 is the loopback address (your own machine).</p>
+</div>
+
+<div class="network-diagram">
+<pre>
++----------------+       ICMP Echo Request       +----------------+
+| Your Computer  | ----------------------------> | Target Host    |
+| (127.0.0.1)    | <---------------------------- | (127.0.0.1)    |
++----------------+       ICMP Echo Reply         +----------------+
+</pre>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Checking Active Connections with ss</h3>
+<p class="required-command">Type exactly: <code>ss -tuln</code></p>
+
+<div class="concept">
+<h4>Understanding ss (Socket Statistics)</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+    Modern replacement for netstat (shows socket info)
+</div>
+<div class="concept-item">
+<strong>Why</strong>
+    View listening ports and active connections
+</div>
+<div class="concept-item">
+<strong>Where</strong>
+    Useful on any Linux system
+</div>
+<div class="concept-item">
+<strong>When</strong>
+    Troubleshooting network services
+</div>
+</div>
+<p><strong>How it works:</strong> <code>-t</code> shows TCP, <code>-u</code> shows UDP, <code>-l</code> shows listening ports, <code>-n</code> shows numeric addresses. Output shows protocol, local address:port, and state.</p>
+</div>
+
+<div class="concept">
+<h4>Common Ports to Recognize</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>22</strong>
+    SSH
+</div>
+<div class="concept-item">
+<strong>80</strong>
+    HTTP
+</div>
+<div class="concept-item">
+<strong>443</strong>
+    HTTPS
+</div>
+<div class="concept-item">
+<strong>53</strong>
+    DNS
+</div>
+</div>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Advanced Testing with netcat (nc)</h3>
+<p class="required-command">First terminal: <code>nc -l 12345</code></p>
+<p class="required-command">Second terminal: <code>nc 127.0.0.1 12345</code></p>
+<p class="required-command">Then type any message and press Enter</p>
+
+<div class="concept">
+<h4>Understanding netcat (nc)</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+    "Swiss army knife" of networking
+</div>
+<div class="concept-item">
+<strong>Why</strong>
+    Test arbitrary TCP/UDP connections
+</div>
+<div class="concept-item">
+<strong>Where</strong>
+    Useful for testing firewalls and services
+</div>
+<div class="concept-item">
+<strong>When</strong>
+    Need to verify if a port is truly accessible
+</div>
+</div>
+<p><strong>How it works:</strong> In this lab, we create a simple listener on port 12345 (<code>-l</code>) and connect to it from another terminal. Any text sent from one side appears on the other.</p>
+</div>
+
+<div class="network-diagram">
+<pre>
++----------------+                               +----------------+
+| Terminal 1     |                               | Terminal 2     |
+| nc -l 12345    | <---------------------------> | nc 127.0.0.1   |
+| (Listener)     |     TCP Connection            | 12345          |
++----------------+                               +----------------+
+</pre>
+</div>
+
+<div class="strict-feedback">
+<strong>Note:</strong> In a real environment, always use secure protocols like SSH instead of plain nc for sensitive communications.
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Comprehensive Network Check</h3>
+<p class="required-command">Type exactly: <code>ping -c 2 google.com</code></p>
+<p class="required-command">Then type: <code>ss -t sport = :80</code></p>
+
+<div class="concept">
+<h4>Putting It All Together</h4>
+<p>This step combines what you've learned:</p>
+<ol>
+<li>Test external connectivity with ping</li>
+<li>Check for active HTTP connections (port 80)</li>
+</ol>
+<p><strong>Real-world use:</strong> This sequence helps diagnose whether you can reach external networks and whether your system is making web connections.</p>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[user@lab ~]$</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 6.2: Network Connectivity Testing!</span></div>
+<div>[user@lab ~]$ <span class="prompt">Use ping, ss, and nc to test network connections.</span></div>
+</div>
+</div>
+</div>
+<script>
+const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'ping -c 4 127.0.0.1', step: 0, feedback: 'Type exactly: ping -c 4 127.0.0.1' },
+    { command: 'ss -tuln', step: 1, feedback: 'Type exactly: ss -tuln' },
+    { command: 'nc -l 12345', step: 2, feedback: 'First terminal: nc -l 12345' },
+    { command: 'nc 127.0.0.1 12345', step: 2, feedback: 'Second terminal: nc 127.0.0.1 12345' },
+    { command: 'ping -c 2 google.com', step: 3, feedback: 'Type exactly: ping -c 2 google.com' },
+    { command: 'ss -t sport = :80', step: 3, feedback: 'Type exactly: ss -t sport = :80' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+let ncListenerActive = false;
+
+const commands = {
+    'ping': (args) => {
+        if (args.includes('-c') && args.includes('127.0.0.1')) {
+            return `PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.\n64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.034 ms\n64 bytes from 127.0.0.1: icmp_seq=2 ttl=64 time=0.042 ms\n64 bytes from 127.0.0.1: icmp_seq=3 ttl=64 time=0.039 ms\n64 bytes from 127.0.0.1: icmp_seq=4 ttl=64 time=0.041 ms\n\n--- 127.0.0.1 ping statistics ---\n4 packets transmitted, 4 received, 0% packet loss, time 3077ms\nrtt min/avg/max/mdev = 0.034/0.039/0.042/0.003 ms`;
+        } else if (args.includes('-c') && args.includes('google.com')) {
+            return `PING google.com (142.250.190.46) 56(84) bytes of data.\n64 bytes from 142.250.190.46: icmp_seq=1 ttl=117 time=11.3 ms\n64 bytes from 142.250.190.46: icmp_seq=2 ttl=117 time=10.9 ms\n\n--- google.com ping statistics ---\n2 packets transmitted, 2 received, 0% packet loss, time 1001ms\nrtt min/avg/max/mdev = 10.943/11.132/11.321/0.189 ms`;
+        }
+        return 'Usage: ping [-c count] destination';
+    },
+    'ss': (args) => {
+        if (args.includes('-tuln')) {
+            return `Netid  State   Recv-Q  Send-Q  Local Address:Port   Peer Address:Port\ntcp    LISTEN 0      128     0.0.0.0:22            0.0.0.0:*\ntcp    LISTEN 0      128     127.0.0.1:631         0.0.0.0:*\nudp    UNCONN 0      0       0.0.0.0:5353          0.0.0.0:*`;
+        } else if (args.includes('-t') && args.includes('sport = :80')) {
+            return `Netid  State   Recv-Q  Send-Q  Local Address:Port   Peer Address:Port\ntcp    ESTAB  0      0       192.168.1.100:45678   142.250.190.46:80`;
+        }
+        return 'Usage: ss [options]';
+    },
+    'nc': (args) => {
+        if (args.includes('-l') && args.includes('12345')) {
+            ncListenerActive = true;
+            return 'Listening on 0.0.0.0 12345';
+        } else if (args.includes('127.0.0.1') && args.includes('12345')) {
+            if (ncListenerActive) {
+                return 'Connection established to 127.0.0.1:12345\n\nType any message and press Enter to test communication.';
+            }
+            return 'Connection refused';
+        }
+        return 'Usage: nc [options] host port';
+    },
+    'help': () => 'Available commands: ping, ss, nc, help',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+                
+                // Special handling for nc steps
+                if (req.command === 'nc -l 12345' || req.command === 'nc 127.0.0.1 12345') {
+                    if (currentStep === 2) {
+                        terminalOutput.innerHTML += `<div class="completion">🏆 Network connection established! Try sending a message.</div>`;
+                    }
+                }
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All network tests executed successfully!</div>`;
+    }
+}
+</script>
+</body>
+</html>

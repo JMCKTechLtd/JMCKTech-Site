@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 2.5 - System Log Files</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .log-entry {
+            color: #AAAAAA;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 0.9em;
+            margin: 2px 0;
+        }
+        .log-date {
+            color: #4CAF50;
+        }
+        .log-host {
+            color: #007ACC;
+        }
+        .log-service {
+            color: #FFD700;
+        }
+        .log-message {
+            color: #FFFFFF;
+        }
+        .log-error {
+            color: #FF5252;
+        }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 2.5: System Log Files (/var/log, journalctl)</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: Exploring /var/log</h3>
+<p class="required-command">Type exactly: <code>ls -l /var/log</code></p>
+
+<div class="concept">
+<h4>Understanding System Log Files</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                System log files stored in /var/log
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Record system events for troubleshooting
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                /var/log directory (requires root for some files)
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Continuously updated by system services
+                            </div>
+</div>
+<p><strong>Key log files:</strong></p>
+<ul>
+<li><code>messages</code>: General system messages</li>
+<li><code>secure</code>: Authentication logs</li>
+<li><code>boot.log</code>: Boot process messages</li>
+<li><code>dmesg</code>: Kernel ring buffer messages</li>
+</ul>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Viewing Log Contents</h3>
+<p class="required-command">Type exactly: <code>sudo tail -20 /var/log/messages</code></p>
+
+<div class="concept">
+<h4>Reading Log Files</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Tools to view log contents
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Monitor and troubleshoot system issues
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Command line with appropriate permissions
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When investigating system behavior
+                            </div>
+</div>
+<p><strong>Common tools:</strong></p>
+<ul>
+<li><code>tail</code>: View end of file (use <code>-n</code> for line count)</li>
+<li><code>head</code>: View beginning of file</li>
+<li><code>less</code>: Interactive file viewer</li>
+<li><code>grep</code>: Filter log entries</li>
+</ul>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Using journalctl</h3>
+<p class="required-command">Type exactly: <code>journalctl -n 10</code></p>
+<p class="required-command">Then type: <code>journalctl --since "1 hour ago"</code></p>
+
+<div class="concept">
+<h4>Understanding journalctl</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Systemd's journal logging system
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Centralized logging with metadata
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Binary logs stored in /var/log/journal
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Modern systems using systemd
+                            </div>
+</div>
+<p><strong>Key features:</strong></p>
+<ul>
+<li>Structured logging with metadata</li>
+<li>Persistent or volatile storage</li>
+<li>Powerful filtering options</li>
+<li>Integrated with systemd services</li>
+</ul>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Filtering Logs</h3>
+<p class="required-command">Type exactly: <code>journalctl -p err</code></p>
+<p class="required-command">Then type: <code>journalctl -u sshd</code></p>
+
+<div class="concept">
+<h4>Advanced Log Filtering</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Filtering logs by priority, service, etc.
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Focus on relevant log entries
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                journalctl with filtering options
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Troubleshooting specific issues
+                            </div>
+</div>
+<p><strong>Common filters:</strong></p>
+<ul>
+<li><code>-p</code>: Priority (emerg, alert, crit, err, warning, notice, info, debug)</li>
+<li><code>-u</code>: Unit/service name</li>
+<li><code>--since</code>/<code>--until</code>: Time ranges</li>
+<li><code>-k</code>: Kernel messages only</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[user@lab ~]$</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 2.5: System Log Files!</span></div>
+<div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+const requiredCommands = [
+    { command: 'ls -l /var/log', step: 0, feedback: 'Type exactly: ls -l /var/log' },
+    { command: 'sudo tail -20 /var/log/messages', step: 1, feedback: 'Type exactly: sudo tail -20 /var/log/messages' },
+    { command: 'journalctl -n 10', step: 2, feedback: 'Type exactly: journalctl -n 10' },
+    { command: 'journalctl --since "1 hour ago"', step: 2, feedback: 'Type exactly: journalctl --since "1 hour ago"' },
+    { command: 'journalctl -p err', step: 3, feedback: 'Type exactly: journalctl -p err' },
+    { command: 'journalctl -u sshd', step: 3, feedback: 'Type exactly: journalctl -u sshd' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+
+function generateLogEntries(count, service) {
+    const services = service ? [service] : ['systemd', 'sshd', 'crond', 'NetworkManager', 'kernel'];
+    const priorities = ['emerg', 'alert', 'crit', 'err', 'warning', 'notice', 'info', 'debug'];
+    const messages = [
+        'System started up',
+        'User login failed',
+        'Disk space low',
+        'Network interface eth0 down',
+        'Service started successfully',
+        'Connection timed out',
+        'Authentication failure',
+        'System shutdown initiated'
+    ];
+    
+    let entries = [];
+    for (let i = 0; i < count; i++) {
+        const timestamp = new Date(Date.now() - Math.random() * 86400000).toISOString().replace('T', ' ').replace(/\.\d+Z/, '');
+        const serviceName = services[Math.floor(Math.random() * services.length)];
+        const priority = priorities[Math.floor(Math.random() * priorities.length)];
+        const message = messages[Math.floor(Math.random() * messages.length)];
+        
+        entries.push(
+            `<div class="log-entry">` +
+            `<span class="log-date">${timestamp}</span> ` +
+            `<span class="log-host">hostname</span> ` +
+            `<span class="log-service">${serviceName}[1234]:</span> ` +
+            `<span class="${priority === 'err' ? 'log-error' : 'log-message'}">${message}</span>` +
+            `</div>`
+        );
+    }
+    return entries.join('');
+}
+
+const commands = {
+    'ls': (args) => {
+        if (args.includes('-l') && args.includes('/var/log')) {
+            return 'total 1024\n' +
+                   '-rw------- 1 root root  12345 Jan 10 10:00 boot.log\n' +
+                   '-rw------- 1 root root  23456 Jan 10 10:00 dmesg\n' +
+                   '-rw-r--r-- 1 root root 345678 Jan 10 10:00 messages\n' +
+                   '-rw------- 1 root root  45678 Jan 10 10:00 secure\n' +
+                   'drwxr-xr-x 2 root root   4096 Jan 10 10:00 httpd';
+        }
+        return 'boot.log\ndmesg\nmessages\nsecure\nhttpd';
+    },
+    'sudo': (args) => {
+        if (args[0] === 'tail' && args[1] === '-20' && args[2] === '/var/log/messages') {
+            return generateLogEntries(20, 'kernel');
+        }
+        return 'Command executed with sudo privileges';
+    },
+    'journalctl': (args) => {
+        if (args.includes('-n') && args[args.indexOf('-n') + 1] === '10') {
+            return generateLogEntries(10);
+        } else if (args.includes('--since') && args.includes('1 hour ago')) {
+            return generateLogEntries(8);
+        } else if (args.includes('-p') && args[args.indexOf('-p') + 1] === 'err') {
+            return generateLogEntries(5).replace(/log-message/g, 'log-error');
+        } else if (args.includes('-u') && args[args.indexOf('-u') + 1] === 'sshd') {
+            return generateLogEntries(6, 'sshd');
+        }
+        return generateLogEntries(15);
+    },
+    'help': () => 'Available commands: ls, sudo, journalctl, help',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div>${output}`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All commands executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

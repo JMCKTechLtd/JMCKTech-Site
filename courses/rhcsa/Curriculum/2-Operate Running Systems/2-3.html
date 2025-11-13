@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 2.3 - Identify CPU/Memory Usage</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .process-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .process-table th {
+            background: #1e1e1e;
+            padding: 5px;
+            text-align: left;
+        }
+        .process-table td {
+            padding: 5px;
+            border-bottom: 1px solid #444;
+        }
+        .process-table tr:nth-child(even) {
+            background: #252525;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 2.3: Identify CPU/Memory Usage</h1>
+        </div>
+        <div class="terminal-container">
+            <div class="guide">
+                <h2>Lab Instructions</h2>
+                <div class="guide-step active-step" id="step1">
+                    <h3>Step 1: View System Processes with top</h3>
+                    <p class="required-command">Type exactly: <code>top</code></p>
+                    <p class="required-command">Press <kbd>q</kbd> to exit top</p>
+
+                    <div class="concept">
+                        <h4>Understanding the top Command</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Real-time system monitoring tool
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Monitor CPU, memory usage, and running processes
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Available on all Linux systems
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When diagnosing performance issues
+                            </div>
+                        </div>
+                        <p><strong>Key information in top:</strong></p>
+                        <ul>
+                            <li>First line: System uptime, users, load averages</li>
+                            <li>Second line: Task statistics</li>
+                            <li>Third line: CPU usage breakdown</li>
+                            <li>Fourth line: Memory usage (RAM)</li>
+                            <li>Fifth line: Swap space usage</li>
+                            <li>Process list: Detailed per-process stats</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="guide-step" id="step2">
+                    <h3>Step 2: Interactive Monitoring with htop</h3>
+                    <p class="required-command">Type exactly: <code>htop</code></p>
+                    <p class="required-command">Press <kbd>F10</kbd> to exit htop</p>
+
+                    <div class="concept">
+                        <h4>Understanding htop</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Enhanced, interactive version of top
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                More user-friendly with color and mouse support
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                May need to install (<code>dnf install htop</code>)
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When you need more detailed process monitoring
+                            </div>
+                        </div>
+                        <p><strong>htop features:</strong></p>
+                        <ul>
+                            <li>Color-coded display</li>
+                            <li>Vertical and horizontal scrolling</li>
+                            <li>Mouse support for process selection</li>
+                            <li>Tree view of processes</li>
+                            <li>Easier process management (kill, renice)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="guide-step" id="step3">
+                    <h3>Step 3: Check Memory Usage with free</h3>
+                    <p class="required-command">Type exactly: <code>free -h</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Memory Usage</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Reports system memory usage
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Check available memory and swap usage
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Available on all Linux systems
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When diagnosing memory-related issues
+                            </div>
+                        </div>
+                        <p><strong>free command output explained:</strong></p>
+                        <table class="process-table">
+                            <tr>
+                                <th>Column</th>
+                                <th>Description</th>
+                            </tr>
+                            <tr>
+                                <td>total</td>
+                                <td>Total installed memory</td>
+                            </tr>
+                            <tr>
+                                <td>used</td>
+                                <td>Memory currently in use</td>
+                            </tr>
+                            <tr>
+                                <td>free</td>
+                                <td>Unused memory</td>
+                            </tr>
+                            <tr>
+                                <td>shared</td>
+                                <td>Memory used by tmpfs</td>
+                            </tr>
+                            <tr>
+                                <td>buff/cache</td>
+                                <td>Memory used by kernel buffers/cache</td>
+                            </tr>
+                            <tr>
+                                <td>available</td>
+                                <td>Memory available for new processes</td>
+                            </tr>
+                        </table>
+                        <p>The <code>-h</code> option shows human-readable sizes (MB, GB).</p>
+                    </div>
+                </div>
+                <div class="guide-step" id="step4">
+                    <h3>Step 4: Process Information with ps</h3>
+                    <p class="required-command">Type exactly: <code>ps aux</code></p>
+                    <p class="required-command">Then type: <code>ps -ef | grep root</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Process Status (ps)</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Snapshot of current processes
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                View detailed process information
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Available on all Linux systems
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When you need specific process details
+                            </div>
+                        </div>
+                        <p><strong>Common ps options:</strong></p>
+                        <ul>
+                            <li><code>ps aux</code>: Show all processes with detailed info</li>
+                            <li><code>ps -ef</code>: Full-format listing</li>
+                            <li><code>ps -e --forest</code>: Show process hierarchy</li>
+                            <li><code>ps -u username</code>: Show processes for a specific user</li>
+                        </ul>
+                        <p><strong>Key columns in ps output:</strong></p>
+                        <table class="process-table">
+                            <tr>
+                                <th>Column</th>
+                                <th>Description</th>
+                            </tr>
+                            <tr>
+                                <td>USER</td>
+                                <td>Process owner</td>
+                            </tr>
+                            <tr>
+                                <td>PID</td>
+                                <td>Process ID</td>
+                            </tr>
+                            <tr>
+                                <td>%CPU</td>
+                                <td>CPU usage percentage</td>
+                            </tr>
+                            <tr>
+                                <td>%MEM</td>
+                                <td>Memory usage percentage</td>
+                            </tr>
+                            <tr>
+                                <td>VSZ</td>
+                                <td>Virtual memory size (KB)</td>
+                            </tr>
+                            <tr>
+                                <td>RSS</td>
+                                <td>Resident set size (physical memory)</td>
+                            </tr>
+                            <tr>
+                                <td>TTY</td>
+                                <td>Terminal associated with process</td>
+                            </tr>
+                            <tr>
+                                <td>STAT</td>
+                                <td>Process state (S=sleeping, R=running, etc.)</td>
+                            </tr>
+                            <tr>
+                                <td>START</td>
+                                <td>Process start time</td>
+                            </tr>
+                            <tr>
+                                <td>TIME</td>
+                                <td>CPU time used</td>
+                            </tr>
+                            <tr>
+                                <td>COMMAND</td>
+                                <td>Command line that started the process</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+            </div>
+            <div class="terminal" id="terminal-output">
+                <div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 2.3: System Monitoring!</span></div>
+                <div>[user@lab ~]$ <span class="prompt">Learn to identify CPU and memory usage with top, htop, free, and ps.</span></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const commandInput = document.getElementById('command-input');
+        const terminalOutput = document.getElementById('terminal-output');
+        const steps = document.querySelectorAll('.guide-step');
+        let currentStep = 0;
+        let commandHistory = [];
+        let historyIndex = -1;
+
+        const requiredCommands = [
+            { command: 'top', step: 0, feedback: 'Type exactly: top (then press q to exit)' },
+            { command: 'htop', step: 1, feedback: 'Type exactly: htop (then press F10 to exit)' },
+            { command: 'free -h', step: 2, feedback: 'Type exactly: free -h' },
+            { command: 'ps aux', step: 3, feedback: 'Type exactly: ps aux' },
+            { command: 'ps -ef | grep root', step: 3, feedback: 'Type exactly: ps -ef | grep root' }
+        ];
+
+        let completedCommands = new Array(requiredCommands.length).fill(false);
+
+        const commands = {
+            'top': () => {
+                return `top - 10:30:45 up 1 day,  2:15,  1 user,  load average: 0.15, 0.10, 0.05
+Tasks: 120 total,   2 running, 118 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  5.3 us,  1.2 sy,  0.0 ni, 93.5 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+MiB Mem :   7856.4 total,   1024.2 free,   3072.0 used,   3760.2 buff/cache
+MiB Swap:   2048.0 total,   2048.0 free,      0.0 used.   4480.4 avail Mem 
+
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+ 1234 root      20   0  300868  45728  12344 R   6.2  0.6   0:01.23 gnome-shell
+ 5678 user      20   0  250000  35000   9876 S   2.5  0.4   0:00.45 gnome-terminal
+ 9101 user      20   0   25000   5000   3000 S   0.5  0.1   0:00.12 top
+
+Press 'q' to exit`;
+            },
+            'htop': () => {
+                return `  CPU[||||||||                    12.5%]   Tasks: 120, 2 thr; 1 running
+  Mem[||||||||||||||||||         500/4000MB]   Load average: 0.15 0.10 0.05
+  Swp[                          0.0/2000MB]   Uptime: 1 day, 02:15:00
+
+  PID USER      PRI  NI  VIRT   RES   SHR S CPU% MEM%   TIME+  Command
+ 1234 root       20   0  300M  45M   12M R  6.2  0.6  0:01.23 gnome-shell
+ 5678 user       20   0  250M  35M  9.8M S  2.5  0.4  0:00.45 gnome-terminal
+ 9101 user       20   0  250M  35M  9.8M S  0.5  0.1  0:00.12 htop
+
+F1Help  F2Setup F3SearchF4FilterF5Tree  F6SortByF7Nice -F8Nice +F9Kill  F10Quit`;
+            },
+            'free': (args) => {
+                if (args.includes('-h')) {
+                    return `              total        used        free      shared  buff/cache   available
+Mem:           7.7G        3.0G        1.0G        123M        3.7G        4.4G
+Swap:          2.0G          0B        2.0G`;
+                }
+                return `              total        used        free      shared  buff/cache   available
+Mem:        8073608     3145728     1048576      126976     3779304     4591624
+Swap:       2097148           0     2097148`;
+            },
+            'ps': (args) => {
+                if (args.includes('aux')) {
+                    return `USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.1 168012  9424 ?        Ss   10:28   0:02 /usr/lib/systemd/systemd
+root         2  0.0  0.0      0     0 ?        S    10:28   0:00 [kthreadd]
+root         3  0.0  0.0      0     0 ?        I<   10:28   0:00 [rcu_gp]
+user      1234  0.5  0.6 300868 45728 ?        Sl   10:29   0:01 /usr/bin/gnome-shell
+user      5678  0.2  0.4 250000 35000 pts/0    Sl   10:30   0:00 /usr/bin/gnome-terminal`;
+                } else if (args.includes('-ef') && args.includes('grep')) {
+                    return `root         1     0  0 10:28 ?        00:00:02 /usr/lib/systemd/systemd
+root         2     0  0 10:28 ?        00:00:00 [kthreadd]
+root         3     2  0 10:28 ?        00:00:00 [rcu_gp]
+root       456     1  0 10:28 ?        00:00:01 /usr/lib/systemd/systemd-journald`;
+                }
+                return `  PID TTY          TIME CMD
+ 5678 pts/0    00:00:00 bash
+ 9101 pts/0    00:00:00 ps`;
+            },
+            'clear': () => {
+                terminalOutput.innerHTML = '<div>[user@lab ~]$ <span class="prompt">Terminal cleared</span></div>';
+                return '';
+            },
+            'help': () => 'Available commands: top, htop, free, ps, clear, help',
+        };
+
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const commandText = commandInput.value.trim();
+                if (commandText) {
+                    commandHistory.push(commandText);
+                    historyIndex = commandHistory.length;
+                    processCommand(commandText);
+                }
+                commandInput.value = '';
+            } else if (e.key === 'ArrowUp') {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    commandInput.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    commandInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    commandInput.value = '';
+                }
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                const partial = commandInput.value.split(' ').pop();
+                const match = Object.keys(commands).find(cmd => cmd.startsWith(partial));
+                if (match) {
+                    commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), match);
+                }
+            }
+        });
+
+        function processCommand(commandText) {
+            const parts = commandText.trim().split(/\s+/);
+            const cmd = parts[0];
+            const args = parts.slice(1);
+
+            let output;
+            if (commands[cmd]) {
+                output = commands[cmd](args);
+                if (output) {
+                    terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+                }
+            } else {
+                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+            }
+
+            let commandMatched = false;
+            requiredCommands.forEach((req, index) => {
+                if (req.step === currentStep && req.command === commandText.trim()) {
+                    commandMatched = true;
+                    if (!completedCommands[index]) {
+                        completedCommands[index] = true;
+                        terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+                    }
+                }
+            });
+
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+            if (isRequiredCommand && !commandMatched) {
+                const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+                terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+            }
+
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            checkStepCompletion();
+        }
+
+        function checkStepCompletion() {
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const allCompleted = currentStepCommands.every(req =>
+                completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+            );
+            if (allCompleted) {
+                setTimeout(() => {
+                    nextStep();
+                }, 1000);
+            }
+        }
+
+        function nextStep() {
+            steps[currentStep].classList.remove('active-step');
+            currentStep++;
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('active-step');
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All commands executed correctly!</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

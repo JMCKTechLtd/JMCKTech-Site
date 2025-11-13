@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RHCSA Lab 4.1 - Permissions</title>
+<style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .permission-bits {
+            font-family: 'Red Hat Mono', monospace;
+            color: #FFD700;
+        }
+        .permission-visual {
+            display: inline-block;
+            width: 100px;
+            height: 20px;
+            background: #333;
+            border: 1px solid #444;
+            position: relative;
+            margin-right: 10px;
+        }
+        .perm-read { background: #4CAF50; width: 33%; height: 100%; position: absolute; left: 0; }
+        .perm-write { background: #FF5252; width: 33%; height: 100%; position: absolute; left: 33%; }
+        .perm-exec { background: #007ACC; width: 34%; height: 100%; position: absolute; left: 66%; }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+<div class="header">
+<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+<h1>RHCSA Lab 4.1: File Permissions & Ownership</h1>
+</div>
+<div class="terminal-container">
+<div class="guide">
+<h2>Lab Instructions</h2>
+<div class="guide-step active-step" id="step1">
+<h3>Step 1: Viewing Permissions</h3>
+<p class="required-command">Type exactly: <code>ls -l /var/tmp/permission_lab/file1.txt</code></p>
+
+<div class="concept">
+<h4>Understanding Permission Bits</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                File mode bits (rwxrwxrwx)
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Controls access to files/directories
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Displayed with <code>ls -l</code>
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Always visible for all files
+                            </div>
+</div>
+<p><strong>How it works:</strong> Permissions are shown as 10 characters (e.g., <code>-rw-r--r--</code>). The first character is file type, followed by three sets of <span class="permission-bits">rwx</span> (owner, group, others).</p>
+<div class="permission-visual">
+    <div class="perm-read" title="Read"></div>
+    <div class="perm-write" title="Write"></div>
+    <div class="perm-exec" title="Execute"></div>
+</div>
+<span>Typical permission visualization</span>
+</div>
+</div>
+<div class="guide-step" id="step2">
+<h3>Step 2: Changing Permissions (chmod)</h3>
+<p class="required-command">Type exactly: <code>chmod 755 /var/tmp/permission_lab/file1.txt</code></p>
+<p class="required-command">Then verify with: <code>ls -l /var/tmp/permission_lab/file1.txt</code></p>
+
+<div class="concept">
+<h4>Understanding chmod</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Change file mode bits
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Modify access permissions
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Applied to files/directories
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When access needs adjustment
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>chmod</code> accepts numeric (octal) or symbolic modes. <code>755</code> means <code>rwxr-xr-x</code> (7=rwx, 5=r-x). Owner gets all, group/others get read+execute.</p>
+<div class="strict-feedback">
+<strong>RHCSA Tip:</strong> You must know both numeric (755) and symbolic (u=rwx,go=rx) formats for the exam.
+</div>
+</div>
+</div>
+<div class="guide-step" id="step3">
+<h3>Step 3: Changing Ownership (chown)</h3>
+<p class="required-command">Type exactly: <code>sudo chown root:root /var/tmp/permission_lab/file2.txt</code></p>
+<p class="required-command">Then verify with: <code>ls -l /var/tmp/permission_lab/file2.txt</code></p>
+
+<div class="concept">
+<h4>Understanding chown</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Change file owner/group
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Transfer ownership or change group
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Applied to files/directories
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                When ownership needs changing
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>chown user:group file</code> changes both owner and group. Requires root privileges. The <code>sudo</code> command elevates privileges temporarily.</p>
+</div>
+</div>
+<div class="guide-step" id="step4">
+<h3>Step 4: Changing Group (chgrp)</h3>
+<p class="required-command">Type exactly: <code>sudo chgrp wheel /var/tmp/permission_lab/file3.txt</code></p>
+<p class="required-command">Then verify with: <code>ls -l /var/tmp/permission_lab/file3.txt</code></p>
+
+<div class="concept">
+<h4>Understanding chgrp</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Change file group only
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                When only group needs changing
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Alternative to chown
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                More specific than chown
+                            </div>
+</div>
+<p><strong>How it works:</strong> <code>chgrp</code> changes only the group ownership. You must be the file owner or root to change the group.</p>
+</div>
+</div>
+<div class="guide-step" id="step5">
+<h3>Step 5: Understanding umask</h3>
+<p class="required-command">Type exactly: <code>umask</code></p>
+<p class="required-command">Then type: <code>umask 0022</code></p>
+
+<div class="concept">
+<h4>Understanding umask</h4>
+<div class="concept-grid">
+<div class="concept-item">
+<strong>What</strong>
+                                Default permission mask
+                            </div>
+<div class="concept-item">
+<strong>Why</strong>
+                                Sets default permissions for new files
+                            </div>
+<div class="concept-item">
+<strong>Where</strong>
+                                Shell environment setting
+                            </div>
+<div class="concept-item">
+<strong>When</strong>
+                                Affects all new file creations
+                            </div>
+</div>
+<p><strong>How it works:</strong> umask subtracts permissions from the default (666 for files, 777 for directories). <code>0022</code> results in 644 (rw-r--r--) for files and 755 (rwxr-xr-x) for directories.</p>
+<div class="strict-feedback">
+<strong>RHCSA Tip:</strong> Know how to calculate permissions using umask (e.g., 666 - 022 = 644).
+</div>
+</div>
+</div>
+</div>
+<div class="command-line">
+<span class="prompt">[user@lab ~]$</span>
+<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+</div>
+<div class="terminal" id="terminal-output">
+<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 4.1: File Permissions!</span></div>
+<div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+</div>
+</div>
+</div>
+<script>const commandInput = document.getElementById('command-input');
+const terminalOutput = document.getElementById('terminal-output');
+const steps = document.querySelectorAll('.guide-step');
+let currentStep = 0;
+let commandHistory = [];
+let historyIndex = -1;
+
+// Sample files with initial permissions
+const labFiles = {
+    '/var/tmp/permission_lab/file1.txt': {
+        permissions: '644',
+        owner: 'user',
+        group: 'user',
+        content: 'Sample file 1 content'
+    },
+    '/var/tmp/permission_lab/file2.txt': {
+        permissions: '640',
+        owner: 'user',
+        group: 'user',
+        content: 'Sample file 2 content'
+    },
+    '/var/tmp/permission_lab/file3.txt': {
+        permissions: '600',
+        owner: 'user',
+        group: 'user',
+        content: 'Sample file 3 content'
+    }
+};
+
+let currentUmask = '0022';
+
+const requiredCommands = [
+    { command: 'ls -l /var/tmp/permission_lab/file1.txt', step: 0, feedback: 'Type exactly: ls -l /var/tmp/permission_lab/file1.txt' },
+    { command: 'chmod 755 /var/tmp/permission_lab/file1.txt', step: 1, feedback: 'Type exactly: chmod 755 /var/tmp/permission_lab/file1.txt' },
+    { command: 'ls -l /var/tmp/permission_lab/file1.txt', step: 1, feedback: 'Type exactly: ls -l /var/tmp/permission_lab/file1.txt' },
+    { command: 'sudo chown root:root /var/tmp/permission_lab/file2.txt', step: 2, feedback: 'Type exactly: sudo chown root:root /var/tmp/permission_lab/file2.txt' },
+    { command: 'ls -l /var/tmp/permission_lab/file2.txt', step: 2, feedback: 'Type exactly: ls -l /var/tmp/permission_lab/file2.txt' },
+    { command: 'sudo chgrp wheel /var/tmp/permission_lab/file3.txt', step: 3, feedback: 'Type exactly: sudo chgrp wheel /var/tmp/permission_lab/file3.txt' },
+    { command: 'ls -l /var/tmp/permission_lab/file3.txt', step: 3, feedback: 'Type exactly: ls -l /var/tmp/permission_lab/file3.txt' },
+    { command: 'umask', step: 4, feedback: 'Type exactly: umask' },
+    { command: 'umask 0022', step: 4, feedback: 'Type exactly: umask 0022' }
+];
+
+let completedCommands = new Array(requiredCommands.length).fill(false);
+
+function permissionStringToSymbolic(perm) {
+    const num = parseInt(perm, 8);
+    let result = '';
+    
+    // Owner permissions
+    result += (num & 0400) ? 'r' : '-';
+    result += (num & 0200) ? 'w' : '-';
+    result += (num & 0100) ? 'x' : '-';
+    
+    // Group permissions
+    result += (num & 0040) ? 'r' : '-';
+    result += (num & 0020) ? 'w' : '-';
+    result += (num & 0010) ? 'x' : '-';
+    
+    // Other permissions
+    result += (num & 0004) ? 'r' : '-';
+    result += (num & 0002) ? 'w' : '-';
+    result += (num & 0001) ? 'x' : '-';
+    
+    return result;
+}
+
+function formatLsOutput(filePath) {
+    const file = labFiles[filePath];
+    if (!file) {
+        return `ls: cannot access '${filePath}': No such file or directory`;
+    }
+    
+    const perms = permissionStringToSymbolic(file.permissions);
+    const size = file.content.length;
+    const date = new Date().toLocaleDateString('en-US', {month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'});
+    
+    return `-${perms} 1 ${file.owner} ${file.group} ${size} ${date} ${filePath.split('/').pop()}`;
+}
+
+const commands = {
+    'ls': (args) => {
+        if (args.includes('-l')) {
+            const filePath = args[args.length - 1];
+            if (filePath.startsWith('/var/tmp/permission_lab/')) {
+                return formatLsOutput(filePath);
+            }
+            return 'total 4\n' + formatLsOutput('/var/tmp/permission_lab/file1.txt') + '\n' + 
+                   formatLsOutput('/var/tmp/permission_lab/file2.txt') + '\n' + 
+                   formatLsOutput('/var/tmp/permission_lab/file3.txt');
+        }
+        return 'file1.txt\nfile2.txt\nfile3.txt';
+    },
+    'chmod': (args) => {
+        const mode = args[0];
+        const filePath = args[1];
+        if (filePath && labFiles[filePath] && /^[0-7]{3,4}$/.test(mode)) {
+            labFiles[filePath].permissions = mode;
+            return '';
+        }
+        return 'chmod: invalid mode or file';
+    },
+    'chown': (args) => {
+        const ownership = args[0];
+        const filePath = args[1];
+        if (filePath && labFiles[filePath] && ownership.includes(':')) {
+            const [user, group] = ownership.split(':');
+            labFiles[filePath].owner = user;
+            labFiles[filePath].group = group;
+            return '';
+        }
+        return 'chown: invalid ownership or file';
+    },
+    'chgrp': (args) => {
+        const group = args[0];
+        const filePath = args[1];
+        if (filePath && labFiles[filePath]) {
+            labFiles[filePath].group = group;
+            return '';
+        }
+        return 'chgrp: invalid group or file';
+    },
+    'umask': (args) => {
+        if (args.length === 0) {
+            return currentUmask;
+        } else if (/^[0-7]{3,4}$/.test(args[0])) {
+            currentUmask = args[0];
+            return '';
+        }
+        return 'umask: invalid mask';
+    },
+    'sudo': (args) => {
+        if (args[0] === 'chown' || args[0] === 'chgrp') {
+            return commands[args[0]](args.slice(1));
+        }
+        return 'sudo: only chown and chgrp are simulated in this lab';
+    },
+    'clear': () => {
+        terminalOutput.innerHTML = '<div>[user@lab ~]$ <span class="prompt">Terminal cleared</span></div>';
+        return '';
+    },
+    'help': () => 'Available commands: ls, chmod, chown, chgrp, umask, sudo, clear, help',
+};
+
+commandInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const commandText = commandInput.value.trim();
+        if (commandText) {
+            commandHistory.push(commandText);
+            historyIndex = commandHistory.length;
+            processCommand(commandText);
+        }
+        commandInput.value = '';
+    } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        }
+    } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = commandHistory.length;
+            commandInput.value = '';
+        }
+    } else if (e.key === 'Tab') {
+        e.preventDefault();
+        // Tab completion not implemented for this lab
+    }
+});
+
+function processCommand(commandText) {
+    const parts = commandText.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    let output;
+    if (commands[cmd]) {
+        output = commands[cmd](args);
+        if (output) {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+        } else {
+            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div>`;
+        }
+    } else {
+        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    }
+
+    let commandMatched = false;
+    requiredCommands.forEach((req, index) => {
+        if (req.step === currentStep && req.command === commandText.trim()) {
+            commandMatched = true;
+            if (!completedCommands[index]) {
+                completedCommands[index] = true;
+                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+            }
+        }
+    });
+
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+    if (isRequiredCommand && !commandMatched) {
+        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+    }
+
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+    const allCompleted = currentStepCommands.every(req =>
+        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+    );
+    if (allCompleted) {
+        setTimeout(() => {
+            nextStep();
+        }, 1000);
+    }
+}
+
+function nextStep() {
+    steps[currentStep].classList.remove('active-step');
+    currentStep++;
+    if (currentStep < steps.length) {
+        steps[currentStep].classList.add('active-step');
+        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+    } else {
+        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All commands executed correctly!</div>`;
+    }
+}</script>
+</body>
+</html>

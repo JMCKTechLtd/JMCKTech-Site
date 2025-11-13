@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 2.4 - Kill Processes</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .process-list {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .process-list div {
+            padding: 3px 0;
+        }
+        .signal-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+        .signal-item {
+            background: #252525;
+            padding: 8px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 0.9em;
+        }
+        .signal-number {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 2.4: Kill Processes (kill, pkill, killall)</h1>
+        </div>
+        <div class="terminal-container">
+            <div class="guide">
+                <h2>Lab Instructions</h2>
+                <div class="guide-step active-step" id="step1">
+                    <h3>Step 1: Listing Processes</h3>
+                    <p class="required-command">Type exactly: <code>ps aux</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Process Management</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Processes are running program instances
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Need to manage system resources and troubleshoot
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Viewable with ps, top, htop commands
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When managing system performance or stopping misbehaving programs
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>ps aux</code> shows all running processes with details. Each process has a unique PID (Process ID) that identifies it.</p>
+                        <div class="process-list">
+                            <div>USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</div>
+                            <div>root         1  0.0  0.1 169316 13128 ?        Ss   10:00   0:01 /usr/lib/systemd/systemd</div>
+                            <div>root       456  0.0  0.0  43008  3664 ?        Ss   10:00   0:00 /usr/sbin/sshd</div>
+                            <div>user      1234  0.1  0.2 212356 18420 ?        Sl   10:05   0:02 /usr/bin/gnome-terminal</div>
+                            <div>user      1235  0.0  0.1 185876  8764 ?        S    10:05   0:00 bash</div>
+                            <div>user      1256  0.0  0.0  51736  3984 ?        S    10:06   0:00 sleep 300</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="guide-step" id="step2">
+                    <h3>Step 2: Killing by PID</h3>
+                    <p class="required-command">Type exactly: <code>kill 1256</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding the kill Command</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Terminates processes by PID
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Precise control over specific processes
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Works on any running process you own (or as root)
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When you know the exact PID to terminate
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>kill</code> sends signal 15 (TERM) by default, asking the process to terminate gracefully. Use <code>kill -9</code> for force termination.</p>
+                        
+                        <h4>Common Signals</h4>
+                        <div class="signal-list">
+                            <div class="signal-item"><span class="signal-number">1 (SIGHUP)</span> - Hangup, reload configuration</div>
+                            <div class="signal-item"><span class="signal-number">2 (SIGINT)</span> - Interrupt (Ctrl+C)</div>
+                            <div class="signal-item"><span class="signal-number">9 (SIGKILL)</span> - Force kill (cannot be ignored)</div>
+                            <div class="signal-item"><span class="signal-number">15 (SIGTERM)</span> - Graceful termination (default)</div>
+                            <div class="signal-item"><span class="signal-number">18 (SIGCONT)</span> - Continue stopped process</div>
+                            <div class="signal-item"><span class="signal-number">19 (SIGSTOP)</span> - Stop/pause process</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="guide-step" id="step3">
+                    <h3>Step 3: Killing by Name (pkill)</h3>
+                    <p class="required-command">Type exactly: <code>pkill sleep</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding pkill</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Kills processes by name pattern
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Convenient when you don't know the PID
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Works on process names or other attributes
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When targeting multiple processes with similar names
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>pkill</code> matches processes by name (or other criteria) and sends them the specified signal (TERM by default). Use <code>pgrep</code> first to see what it would match.</p>
+                        <div class="strict-feedback">
+                            <strong>Warning:</strong> pkill can match more processes than intended! Always verify with pgrep first.
+                        </div>
+                    </div>
+                </div>
+                <div class="guide-step" id="step4">
+                    <h3>Step 4: Killing All Instances (killall)</h3>
+                    <p class="required-command">Type exactly: <code>killall -v bash</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding killall</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Kills all processes matching exact name
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Quick way to terminate all instances of a program
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                Useful for services with multiple workers
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                When you want to stop all copies of a specific program
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>killall</code> matches processes by exact name (unlike pkill which uses patterns). The <code>-v</code> option shows verbose output about what was killed.</p>
+                        <div class="strict-feedback">
+                            <strong>Danger:</strong> killall can be dangerous - on some systems, <code>killall</code> kills ALL processes (like <code>kill -9 -1</code>)!
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+            </div>
+            <div class="terminal" id="terminal-output">
+                <div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 2.4: Killing Processes!</span></div>
+                <div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const commandInput = document.getElementById('command-input');
+        const terminalOutput = document.getElementById('terminal-output');
+        const steps = document.querySelectorAll('.guide-step');
+        let currentStep = 0;
+        let commandHistory = [];
+        let historyIndex = -1;
+
+        const requiredCommands = [
+            { command: 'ps aux', step: 0, feedback: 'Type exactly: ps aux' },
+            { command: 'kill 1256', step: 1, feedback: 'Type exactly: kill 1256' },
+            { command: 'pkill sleep', step: 2, feedback: 'Type exactly: pkill sleep' },
+            { command: 'killall -v bash', step: 3, feedback: 'Type exactly: killall -v bash' }
+        ];
+
+        let completedCommands = new Array(requiredCommands.length).fill(false);
+
+        const processes = [
+            { pid: 1, name: 'systemd', user: 'root', cpu: '0.0', mem: '0.1' },
+            { pid: 456, name: 'sshd', user: 'root', cpu: '0.0', mem: '0.0' },
+            { pid: 1234, name: 'gnome-terminal', user: 'user', cpu: '0.1', mem: '0.2' },
+            { pid: 1235, name: 'bash', user: 'user', cpu: '0.0', mem: '0.1' },
+            { pid: 1256, name: 'sleep', user: 'user', cpu: '0.0', mem: '0.0' }
+        ];
+
+        const commands = {
+            'ps': (args) => {
+                if (args.includes('aux')) {
+                    let output = 'USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\n';
+                    processes.forEach(p => {
+                        output += `${p.user.padEnd(9)} ${p.pid.toString().padEnd(5)} ${p.cpu.padEnd(4)} ${p.mem.padEnd(4)} 169316 13128 ?        Ss   10:00   0:01 /usr/lib/${p.name}\n`;
+                    });
+                    return output;
+                }
+                return 'PID TTY          TIME CMD\n1235 pts/0    00:00:00 bash';
+            },
+            'kill': (args) => {
+                const pid = parseInt(args[0]);
+                const process = processes.find(p => p.pid === pid);
+                if (process) {
+                    return `Terminated process ${pid} (${process.name})`;
+                }
+                return `bash: kill: (${pid}) - No such process`;
+            },
+            'pkill': (args) => {
+                const name = args[0];
+                const killed = processes.filter(p => p.name.includes(name));
+                if (killed.length > 0) {
+                    return `Terminated ${killed.length} processes matching '${name}'`;
+                }
+                return `No processes matched`;
+            },
+            'killall': (args) => {
+                if (args.includes('-v')) {
+                    const name = args[args.indexOf('-v') + 1];
+                    const killed = processes.filter(p => p.name === name);
+                    if (killed.length > 0) {
+                        let output = '';
+                        killed.forEach(p => {
+                            output += `Terminated process ${p.pid} (${p.name})\n`;
+                        });
+                        return output + `Killed ${killed.length} processes`;
+                    }
+                    return `No processes found matching '${name}'`;
+                }
+                return 'Usage: killall [-v] process_name';
+            },
+            'help': () => 'Available commands: ps, kill, pkill, killall, help',
+        };
+
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const commandText = commandInput.value.trim();
+                if (commandText) {
+                    commandHistory.push(commandText);
+                    historyIndex = commandHistory.length;
+                    processCommand(commandText);
+                }
+                commandInput.value = '';
+            } else if (e.key === 'ArrowUp') {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    commandInput.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    commandInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    commandInput.value = '';
+                }
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                // Tab completion could be implemented here
+            }
+        });
+
+        function processCommand(commandText) {
+            const parts = commandText.trim().split(/\s+/);
+            const cmd = parts[0];
+            const args = parts.slice(1);
+
+            let output;
+            if (commands[cmd]) {
+                output = commands[cmd](args);
+                if (output) {
+                    terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+                }
+            } else {
+                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+            }
+
+            let commandMatched = false;
+            requiredCommands.forEach((req, index) => {
+                if (req.step === currentStep && req.command === commandText.trim()) {
+                    commandMatched = true;
+                    if (!completedCommands[index]) {
+                        completedCommands[index] = true;
+                        terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+                    }
+                }
+            });
+
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+            if (isRequiredCommand && !commandMatched) {
+                const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+                terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+            }
+
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            checkStepCompletion();
+        }
+
+        function checkStepCompletion() {
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const allCompleted = currentStepCommands.every(req =>
+                completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+            );
+            if (allCompleted) {
+                setTimeout(() => {
+                    nextStep();
+                }, 1000);
+            }
+        }
+
+        function nextStep() {
+            steps[currentStep].classList.remove('active-step');
+            currentStep++;
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('active-step');
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All commands executed correctly!</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

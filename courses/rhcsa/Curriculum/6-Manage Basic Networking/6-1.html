@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 6.1 - Configure IPv4/IPv6 Networking</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+            display: none;
+        }
+        .active-step {
+            display: block;
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .ipv4 {
+            color: #4CAF50;
+        }
+        .ipv6 {
+            color: #2196F3;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 6.1: Configure IPv4/IPv6 Networking</h1>
+        </div>
+        <div class="terminal-container">
+            <div class="guide">
+                <h2>Lab Instructions</h2>
+                <div class="guide-step active-step" id="step1">
+                    <h3>Step 1: Check Network Interfaces</h3>
+                    <p class="required-command">Type exactly: <code>ip addr show</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Network Interfaces</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Physical and virtual network interfaces
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Identify available interfaces for configuration
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                System-wide network configuration
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                Before configuring network settings
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> The <code>ip addr show</code> command displays all network interfaces with their current IP addresses (both <span class="ipv4">IPv4</span> and <span class="ipv6">IPv6</span>), MAC addresses, and state.</p>
+                    </div>
+                </div>
+                <div class="guide-step" id="step2">
+                    <h3>Step 2: Configure IPv4 Address</h3>
+                    <p class="required-command">Type exactly: <code>sudo nmcli connection modify "Wired connection 1" ipv4.addresses 192.168.1.100/24</code></p>
+                    <p class="required-command">Then type: <code>sudo nmcli connection up "Wired connection 1"</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding IPv4 Configuration</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                <span class="ipv4">IPv4</span> address assignment
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Enable network communication using IPv4
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                NetworkManager connection profiles
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                Setting up static IPv4 addressing
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> <code>nmcli</code> modifies NetworkManager connections. The <code>ipv4.addresses</code> parameter sets a static <span class="ipv4">IPv4</span> address with netmask (CIDR notation). The <code>up</code> command activates the changes.</p>
+                    </div>
+                </div>
+                <div class="guide-step" id="step3">
+                    <h3>Step 3: Configure IPv6 Address</h3>
+                    <p class="required-command">Type exactly: <code>sudo nmcli connection modify "Wired connection 1" ipv6.addresses 2001:db8::100/64</code></p>
+                    <p class="required-command">Then type: <code>sudo nmcli connection up "Wired connection 1"</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding IPv6 Configuration</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                <span class="ipv6">IPv6</span> address assignment
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Enable network communication using IPv6
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                NetworkManager connection profiles
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                Setting up static IPv6 addressing
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> Similar to <span class="ipv4">IPv4</span>, the <code>ipv6.addresses</code> parameter sets a static <span class="ipv6">IPv6</span> address with prefix length. The <code>up</code> command activates the changes.</p>
+                    </div>
+                </div>
+                <div class="guide-step" id="step4">
+                    <h3>Step 4: Set Default Gateway</h3>
+                    <p class="required-command">Type exactly: <code>sudo nmcli connection modify "Wired connection 1" ipv4.gateway 192.168.1.1</code></p>
+                    <p class="required-command">Then type: <code>sudo nmcli connection modify "Wired connection 1" ipv6.gateway 2001:db8::1</code></p>
+                    <p class="required-command">Finally type: <code>sudo nmcli connection up "Wired connection 1"</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding Gateways</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Default route for network traffic
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Allows communication beyond local network
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                NetworkManager connection profiles
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                Configuring routing for networks
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> The gateway parameters (<code>ipv4.gateway</code> and <code>ipv6.gateway</code>) define the default route for each protocol. This is typically your router's address.</p>
+                    </div>
+                </div>
+                <div class="guide-step" id="step5">
+                    <h3>Step 5: Configure DNS</h3>
+                    <p class="required-command">Type exactly: <code>sudo nmcli connection modify "Wired connection 1" ipv4.dns "8.8.8.8 8.8.4.4"</code></p>
+                    <p class="required-command">Then type: <code>sudo nmcli connection modify "Wired connection 1" ipv6.dns "2001:4860:4860::8888 2001:4860:4860::8844"</code></p>
+                    <p class="required-command">Finally type: <code>sudo nmcli connection up "Wired connection 1"</code></p>
+
+                    <div class="concept">
+                        <h4>Understanding DNS Configuration</h4>
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <strong>What</strong>
+                                Domain Name System servers
+                            </div>
+                            <div class="concept-item">
+                                <strong>Why</strong>
+                                Resolve hostnames to IP addresses
+                            </div>
+                            <div class="concept-item">
+                                <strong>Where</strong>
+                                NetworkManager connection profiles
+                            </div>
+                            <div class="concept-item">
+                                <strong>When</strong>
+                                Setting up name resolution
+                            </div>
+                        </div>
+                        <p><strong>How it works:</strong> DNS servers (<code>ipv4.dns</code> and <code>ipv6.dns</code>) are specified as space-separated lists. These are used for hostname resolution.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+            </div>
+            <div class="terminal" id="terminal-output">
+                <div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 6.1: Configure IPv4/IPv6 Networking!</span></div>
+                <div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const commandInput = document.getElementById('command-input');
+        const terminalOutput = document.getElementById('terminal-output');
+        const steps = document.querySelectorAll('.guide-step');
+        let currentStep = 0;
+        let commandHistory = [];
+        let historyIndex = -1;
+
+        const requiredCommands = [
+            { command: 'ip addr show', step: 0, feedback: 'Type exactly: ip addr show' },
+            { command: 'sudo nmcli connection modify "Wired connection 1" ipv4.addresses 192.168.1.100/24', step: 1, feedback: 'Type exactly: sudo nmcli connection modify "Wired connection 1" ipv4.addresses 192.168.1.100/24' },
+            { command: 'sudo nmcli connection up "Wired connection 1"', step: 1, feedback: 'Type exactly: sudo nmcli connection up "Wired connection 1"' },
+            { command: 'sudo nmcli connection modify "Wired connection 1" ipv6.addresses 2001:db8::100/64', step: 2, feedback: 'Type exactly: sudo nmcli connection modify "Wired connection 1" ipv6.addresses 2001:db8::100/64' },
+            { command: 'sudo nmcli connection up "Wired connection 1"', step: 2, feedback: 'Type exactly: sudo nmcli connection up "Wired connection 1"' },
+            { command: 'sudo nmcli connection modify "Wired connection 1" ipv4.gateway 192.168.1.1', step: 3, feedback: 'Type exactly: sudo nmcli connection modify "Wired connection 1" ipv4.gateway 192.168.1.1' },
+            { command: 'sudo nmcli connection modify "Wired connection 1" ipv6.gateway 2001:db8::1', step: 3, feedback: 'Type exactly: sudo nmcli connection modify "Wired connection 1" ipv6.gateway 2001:db8::1' },
+            { command: 'sudo nmcli connection up "Wired connection 1"', step: 3, feedback: 'Type exactly: sudo nmcli connection up "Wired connection 1"' },
+            { command: 'sudo nmcli connection modify "Wired connection 1" ipv4.dns "8.8.8.8 8.8.4.4"', step: 4, feedback: 'Type exactly: sudo nmcli connection modify "Wired connection 1" ipv4.dns "8.8.8.8 8.8.4.4"' },
+            { command: 'sudo nmcli connection modify "Wired connection 1" ipv6.dns "2001:4860:4860::8888 2001:4860:4860::8844"', step: 4, feedback: 'Type exactly: sudo nmcli connection modify "Wired connection 1" ipv6.dns "2001:4860:4860::8888 2001:4860:4860::8844"' },
+            { command: 'sudo nmcli connection up "Wired connection 1"', step: 4, feedback: 'Type exactly: sudo nmcli connection up "Wired connection 1"' }
+        ];
+
+        let completedCommands = new Array(requiredCommands.length).fill(false);
+
+        const commands = {
+            'ip': (args) => {
+                if (args[0] === 'addr' && args[1] === 'show') {
+                    return '1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000\n    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\n    inet 127.0.0.1/8 scope host lo\n       valid_lft forever preferred_lft forever\n    inet6 ::1/128 scope host \n       valid_lft forever preferred_lft forever\n2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000\n    link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff\n    inet 192.168.1.100/24 brd 192.168.1.255 scope global noprefixroute eth0\n       valid_lft forever preferred_lft forever\n    inet6 2001:db8::100/64 scope global noprefixroute \n       valid_lft forever preferred_lft forever\n    inet6 fe80::5054:ff:fe12:3456/64 scope link noprefixroute \n       valid_lft forever preferred_lft forever';
+                }
+                return 'Invalid ip command. Try: ip addr show';
+            },
+            'sudo': (args) => {
+                if (args[0] === 'nmcli') {
+                    if (args[1] === 'connection') {
+                        if (args[2] === 'modify') {
+                            const conn = args[3];
+                            const param = args[4];
+                            const value = args.slice(5).join(' ');
+                            
+                            if (param === 'ipv4.addresses' && value === '192.168.1.100/24') {
+                                return 'Successfully modified connection "Wired connection 1" (IPv4 address set to 192.168.1.100/24)';
+                            }
+                            if (param === 'ipv6.addresses' && value === '2001:db8::100/64') {
+                                return 'Successfully modified connection "Wired connection 1" (IPv6 address set to 2001:db8::100/64)';
+                            }
+                            if (param === 'ipv4.gateway' && value === '192.168.1.1') {
+                                return 'Successfully modified connection "Wired connection 1" (IPv4 gateway set to 192.168.1.1)';
+                            }
+                            if (param === 'ipv6.gateway' && value === '2001:db8::1') {
+                                return 'Successfully modified connection "Wired connection 1" (IPv6 gateway set to 2001:db8::1)';
+                            }
+                            if (param === 'ipv4.dns' && value === '8.8.8.8 8.8.4.4') {
+                                return 'Successfully modified connection "Wired connection 1" (IPv4 DNS set to 8.8.8.8,8.8.4.4)';
+                            }
+                            if (param === 'ipv6.dns' && value === '2001:4860:4860::8888 2001:4860:4860::8844') {
+                                return 'Successfully modified connection "Wired connection 1" (IPv6 DNS set to 2001:4860:4860::8888,2001:4860:4860::8844)';
+                            }
+                        }
+                        if (args[2] === 'up' && args[3] === '"Wired connection 1"') {
+                            return 'Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/1)';
+                        }
+                    }
+                }
+                return 'Invalid sudo command. Try: sudo nmcli connection modify "Wired connection 1" ...';
+            },
+            'help': () => 'Available commands: ip, sudo nmcli, help',
+        };
+
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const commandText = commandInput.value.trim();
+                if (commandText) {
+                    commandHistory.push(commandText);
+                    historyIndex = commandHistory.length;
+                    processCommand(commandText);
+                }
+                commandInput.value = '';
+            } else if (e.key === 'ArrowUp') {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    commandInput.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    commandInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    commandInput.value = '';
+                }
+            }
+        });
+
+        function processCommand(commandText) {
+            const parts = commandText.trim().split(/\s+/);
+            const cmd = parts[0];
+            const args = parts.slice(1);
+
+            let output;
+            if (commands[cmd]) {
+                output = commands[cmd](args);
+                if (output) {
+                    terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+                }
+            } else {
+                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+            }
+
+            let commandMatched = false;
+            requiredCommands.forEach((req, index) => {
+                if (req.step === currentStep && req.command === commandText.trim()) {
+                    commandMatched = true;
+                    if (!completedCommands[index]) {
+                        completedCommands[index] = true;
+                        terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+                    }
+                }
+            });
+
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
+
+            if (isRequiredCommand && !commandMatched) {
+                const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
+                terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
+            }
+
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            checkStepCompletion();
+        }
+
+        function checkStepCompletion() {
+            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
+            const allCompleted = currentStepCommands.every(req =>
+                completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
+            );
+            if (allCompleted) {
+                setTimeout(() => {
+                    nextStep();
+                }, 1000);
+            }
+        }
+
+        function nextStep() {
+            steps[currentStep].classList.remove('active-step');
+            currentStep++;
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('active-step');
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All networking commands executed correctly!</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
