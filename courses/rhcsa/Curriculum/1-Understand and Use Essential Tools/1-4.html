@@ -1,18 +1,26 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>RHCSA Lab 1.4 - Manage Files &amp; Directories</title>
-<style>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 1.4 - Manage Files &amp; Directories</title>
+    <style>
         :root {
             --redhat-red: #cc0000;
             --redhat-dark: #1e1e1e;
             --redhat-light: #f0f0f0;
             --redhat-accent: #4CAF50;
             --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
         }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Red Hat Text', 'Overpass', sans-serif;
             background-color: var(--redhat-dark);
@@ -20,78 +28,256 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-        }
-        .lab-container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: #252525;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            height: 100vh;
             overflow: hidden;
-            border-top: 4px solid var(--redhat-red);
         }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
         .header {
             background: linear-gradient(to right, #1e1e1e, #333);
             padding: 15px 20px;
             color: white;
             display: flex;
             align-items: center;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
+        
         .header img {
             height: 30px;
             margin-right: 15px;
         }
+        
         .header h1 {
             margin: 0;
             font-size: 1.5em;
             font-weight: normal;
         }
-        .terminal-container {
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
             display: flex;
             flex-direction: column;
-            height: 600px;
+            background: var(--panel-bg);
+            position: relative;
         }
-        .guide {
-            padding: 20px;
-            background: #2d2d2d;
-            flex: 1;
-            overflow-y: auto;
-        }
+        
         .guide h2 {
             margin-top: 0;
             color: var(--redhat-accent);
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
         .guide-step {
             margin-bottom: 15px;
             padding: 15px;
             background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
             border-left: 4px solid var(--redhat-accent);
-            display: none;
         }
-        .active-step {
-            display: block;
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
         }
-        .terminal {
-            background: #000;
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
             padding: 15px;
-            height: 250px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
             overflow-y: auto;
             font-family: 'Red Hat Mono', monospace;
-            border-top: 1px solid #444;
         }
-        .prompt {
-            color: var(--redhat-accent);
-        }
+        
         .command-line {
             display: flex;
             align-items: center;
             padding: 15px;
             background: #333;
-            border-top: 1px solid #444;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
         }
+        
         #command-input {
             flex: 1;
             background: transparent;
@@ -102,47 +288,29 @@
             outline: none;
             padding: 8px;
         }
-        .success {
+        
+        .prompt {
             color: var(--redhat-accent);
-            font-weight: bold;
+            white-space: nowrap;
+            margin-right: 5px;
         }
-        .error {
-            color: #FF5252;
-        }
-        .completion {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        .concept {
-            background: #2a2a2a;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            border-left: 4px solid var(--redhat-blue);
-        }
-        .concept h4 {
-            margin-top: 0;
-            color: var(--redhat-blue);
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
-        .concept-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .concept-item {
-            background: #252525;
+        
+        .file-structure {
+            background: #1e1e1e;
             padding: 10px;
-            border-radius: 5px;
-            border-left: 2px solid var(--redhat-red);
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            margin: 10px 0;
         }
-        .concept-item strong {
-            color: var(--redhat-red);
-            display: block;
-            margin-bottom: 5px;
+        
+        .dir {
+            color: #4CAF50;
         }
+        
+        .file {
+            color: #007ACC;
+        }
+        
         code {
             background: #1e1e1e;
             padding: 2px 5px;
@@ -150,508 +318,1037 @@
             color: var(--redhat-accent);
             font-family: 'Red Hat Mono', monospace;
         }
-        kbd {
-            background: #444;
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: white;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        .required-command {
-            background: rgba(76, 175, 80, 0.1);
-            padding: 5px;
-            border-radius: 3px;
-            border-left: 3px solid var(--redhat-accent);
-        }
-        .trophy {
-            display: inline-block;
-            margin-left: 5px;
-        }
-        .syntax-error {
-            color: #FF5252;
+        
+        .success {
+            color: var(--redhat-accent);
             font-weight: bold;
         }
+        
+        .error {
+            color: #FF5252;
+        }
+        
         .warning {
             color: #FFD700;
             font-weight: bold;
         }
-        .strict-feedback {
-            background: rgba(204, 0, 0, 0.1);
-            padding: 10px;
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
             border-radius: 5px;
-            border-left: 3px solid var(--redhat-red);
-            margin-top: 10px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
         }
-        .file-structure {
-            background: #1e1e1e;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: 'Red Hat Mono', monospace;
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
             margin: 10px 0;
+            overflow: hidden;
         }
-        .dir {
-            color: #4CAF50;
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
         }
-        .file {
-            color: #007ACC;
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
         }
     </style>
-<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
 <div class="lab-container">
-<div class="header">
-<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-<h1>RHCSA Lab 1.4: Manage Files &amp; Directories</h1>
-</div>
-<div class="terminal-container">
-<div class="guide">
-<h2>Lab Instructions</h2>
-<div class="guide-step active-step" id="step1">
-<h3>Step 1: Listing Files</h3>
-<p class="required-command">Type exactly: <code>ls -l</code></p>
-<p class="required-command">Then type: <code>ls -a</code></p>
-
-<div class="concept">
-<h4>Understanding ls Command</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Lists directory contents
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                View files and directories
-                            </div>
-<div class="concept-item">
-<strong>Common Options</strong>
-                                <code>-l</code> (long format), <code>-a</code> (show hidden)
-                            </div>
-<div class="concept-item">
-<strong>Output Meaning</strong>
-                                Permissions, owner, size, date
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>ls</code> displays directory contents. <code>-l</code> shows detailed information, <code>-a</code> includes hidden files (starting with .). Combine options like <code>ls -la</code>.</p>
-</div>
-
-<div class="file-structure">
-<div>Initial file structure in your lab environment:</div>
-<div class="dir">./documents/</div>
-<div class="file">./file1.txt</div>
-<div class="file">./file2.txt</div>
-<div class="file">./.hidden_file</div>
-</div>
-</div>
-<div class="guide-step" id="step2">
-<h3>Step 2: Creating and Copying Files</h3>
-<p class="required-command">Type exactly: <code>touch newfile.txt</code></p>
-<p class="required-command">Then type: <code>cp newfile.txt copied_file.txt</code></p>
-<p class="required-command">Then type: <code>cp -r documents documents_backup</code></p>
-
-<div class="concept">
-<h4>Understanding touch and cp Commands</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>touch</strong>
-                                Creates empty files or updates timestamps
-                            </div>
-<div class="concept-item">
-<strong>cp</strong>
-                                Copies files/directories
-                            </div>
-<div class="concept-item">
-<strong>Common Options</strong>
-                                <code>-r</code> (recursive for directories)
-                            </div>
-<div class="concept-item">
-<strong>Paths</strong>
-                                Can use relative or absolute paths
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>touch</code> creates files if they don't exist. <code>cp</code> requires source and destination. For directories, use <code>-r</code> option.</p>
-</div>
-</div>
-<div class="guide-step" id="step3">
-<h3>Step 3: Moving and Renaming Files</h3>
-<p class="required-command">Type exactly: <code>mv copied_file.txt documents/</code></p>
-<p class="required-command">Then type: <code>mv documents/copied_file.txt documents/renamed_file.txt</code></p>
-
-<div class="concept">
-<h4>Understanding mv Command</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Moves or renames files/directories
-                            </div>
-<div class="concept-item">
-<strong>Renaming</strong>
-                                Same command as moving within same directory
-                            </div>
-<div class="concept-item">
-<strong>Caution</strong>
-                                Overwrites existing files without warning
-                            </div>
-<div class="concept-item">
-<strong>Options</strong>
-                                <code>-i</code> (interactive), <code>-n</code> (no overwrite)
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>mv</code> changes file location or name. Syntax is similar to <code>cp</code> but doesn't need <code>-r</code> for directories.</p>
-</div>
-</div>
-<div class="guide-step" id="step4">
-<h3>Step 4: Removing Files and Directories</h3>
-<p class="required-command">Type exactly: <code>rm file1.txt</code></p>
-<p class="required-command">Then type: <code>rm -r documents_backup</code></p>
-
-<div class="concept">
-<h4>Understanding rm Command</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Removes files/directories
-                            </div>
-<div class="concept-item">
-<strong>Danger</strong>
-                                Permanent deletion (no trash bin)
-                            </div>
-<div class="concept-item">
-<strong>Common Options</strong>
-                                <code>-r</code> (recursive), <code>-i</code> (interactive)
-                            </div>
-<div class="concept-item">
-<strong>Safety</strong>
-                                Consider <code>-i</code> or <code>--preserve-root</code>
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>rm</code> deletes files permanently. Use <code>-r</code> for directories. Be extremely careful with wildcards (<code>rm *</code>).</p>
-</div>
-</div>
-<div class="guide-step" id="step5">
-<h3>Step 5: Finding Files</h3>
-<p class="required-command">Type exactly: <code>find . -name "*.txt"</code></p>
-<p class="required-command">Then type: <code>find /etc -type f -name "*.conf"</code></p>
-
-<div class="concept">
-<h4>Understanding find Command</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Searches for files/directories
-                            </div>
-<div class="concept-item">
-<strong>Power</strong>
-                                Can search by name, type, size, time, etc.
-                            </div>
-<div class="concept-item">
-<strong>Common Options</strong>
-                                <code>-name</code>, <code>-type</code>, <code>-size</code>, <code>-exec</code>
-                            </div>
-<div class="concept-item">
-<strong>Performance</strong>
-                                Searches recursively through directories
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>find</code> searches directory trees. Basic syntax: <code>find [path] [criteria] [action]</code>. Can combine multiple tests.</p>
-</div>
-</div>
-</div>
-<div class="command-line">
-<span class="prompt">[user@lab ~]$</span>
-<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
-</div>
-<div class="terminal" id="terminal-output">
-<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 1.4: File Management!</span></div>
-<div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
-</div>
-</div>
-</div>
-<script>const commandInput = document.getElementById('command-input');
-const terminalOutput = document.getElementById('terminal-output');
-const steps = document.querySelectorAll('.guide-step');
-let currentStep = 0;
-let commandHistory = [];
-let historyIndex = -1;
-
-// Initial file system state
-let fileSystem = {
-    'file1.txt': { type: 'file', content: '' },
-    'file2.txt': { type: 'file', content: '' },
-    '.hidden_file': { type: 'file', content: '', hidden: true },
-    'documents': { 
-        type: 'dir', 
-        contents: {
-            'doc1.txt': { type: 'file', content: '' }
-        }
-    }
-};
-
-const requiredCommands = [
-    { command: 'ls -l', step: 0, feedback: 'Type exactly: ls -l' },
-    { command: 'ls -a', step: 0, feedback: 'Type exactly: ls -a' },
-    { command: 'touch newfile.txt', step: 1, feedback: 'Type exactly: touch newfile.txt' },
-    { command: 'cp newfile.txt copied_file.txt', step: 1, feedback: 'Type exactly: cp newfile.txt copied_file.txt' },
-    { command: 'cp -r documents documents_backup', step: 1, feedback: 'Type exactly: cp -r documents documents_backup' },
-    { command: 'mv copied_file.txt documents/', step: 2, feedback: 'Type exactly: mv copied_file.txt documents/' },
-    { command: 'mv documents/copied_file.txt documents/renamed_file.txt', step: 2, feedback: 'Type exactly: mv documents/copied_file.txt documents/renamed_file.txt' },
-    { command: 'rm file1.txt', step: 3, feedback: 'Type exactly: rm file1.txt' },
-    { command: 'rm -r documents_backup', step: 3, feedback: 'Type exactly: rm -r documents_backup' },
-    { command: 'find . -name "*.txt"', step: 4, feedback: 'Type exactly: find . -name "*.txt"' },
-    { command: 'find /etc -type f -name "*.conf"', step: 4, feedback: 'Type exactly: find /etc -type f -name "*.conf"' }
-];
-
-let completedCommands = new Array(requiredCommands.length).fill(false);
-
-const commands = {
-    'ls': (args) => {
-        const showHidden = args.includes('-a');
-        const longFormat = args.includes('-l');
-        let output = '';
-        
-        // Filter hidden files if -a not specified
-        const visibleFiles = Object.keys(fileSystem).filter(name => 
-            !fileSystem[name].hidden || showHidden
-        );
-        
-        if (longFormat) {
-            output = 'total ' + (visibleFiles.length * 4) + '\n';
-            visibleFiles.forEach(file => {
-                const isDir = fileSystem[file].type === 'dir';
-                output += `${isDir ? 'd' : '-'}rw-r--r-- 1 user user ${isDir ? '4096' : '0'} Jan 10 10:00 ${file}\n`;
-            });
-        } else {
-            output = visibleFiles.join('\n');
-        }
-        
-        return output;
-    },
-    'touch': (args) => {
-        const filename = args[0];
-        if (!filename) return 'Usage: touch filename';
-        
-        if (!fileSystem[filename]) {
-            fileSystem[filename] = { type: 'file', content: '' };
-            return `Created file: ${filename}`;
-        } else {
-            return `Updated timestamp for: ${filename}`;
-        }
-    },
-    'cp': (args) => {
-        if (args.length < 2) return 'Usage: cp source destination';
-        
-        const recursive = args.includes('-r');
-        const source = args[args.length - 2];
-        const dest = args[args.length - 1];
-        
-        // Simple file copy
-        if (fileSystem[source] && fileSystem[source].type === 'file') {
-            fileSystem[dest] = JSON.parse(JSON.stringify(fileSystem[source]));
-            return `Copied ${source} to ${dest}`;
-        }
-        // Directory copy (with -r)
-        else if (fileSystem[source] && fileSystem[source].type === 'dir' && recursive) {
-            fileSystem[dest] = JSON.parse(JSON.stringify(fileSystem[source]));
-            return `Copied directory ${source} to ${dest}`;
-        }
-        else if (fileSystem[source] && fileSystem[source].type === 'dir' && !recursive) {
-            return `cp: -r not specified; omitting directory '${source}'`;
-        }
-        else {
-            return `cp: cannot stat '${source}': No such file or directory`;
-        }
-    },
-    'mv': (args) => {
-        if (args.length < 2) return 'Usage: mv source destination';
-        
-        const source = args[args.length - 2];
-        const dest = args[args.length - 1];
-        
-        // Check if source exists
-        if (!fileSystem[source] && !source.includes('/')) {
-            return `mv: cannot stat '${source}': No such file or directory`;
-        }
-        
-        // Simple move/rename
-        if (fileSystem[source]) {
-            fileSystem[dest] = JSON.parse(JSON.stringify(fileSystem[source]));
-            delete fileSystem[source];
-            return `Moved ${source} to ${dest}`;
-        }
-        // Move with path
-        else if (source.includes('/')) {
-            const parts = source.split('/');
-            const filename = parts.pop();
-            let currentDir = fileSystem;
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 1.4: Manage Files &amp; Directories</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
             
-            for (const part of parts) {
-                if (currentDir[part] && currentDir[part].type === 'dir') {
-                    currentDir = currentDir[part].contents;
-                } else {
-                    return `mv: cannot stat '${source}': No such file or directory`;
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Learn essential file and directory management commands in Linux. You will practice listing files, creating and copying files, moving and renaming files, removing files and directories, and finding files.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>File Management Commands to Master</h4>
+                <div class="requirement-item" id="req-ls">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use <code>ls -l</code> and <code>ls -a</code> to list files</span>
+                </div>
+                <div class="requirement-item" id="req-touch-cp">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use <code>touch</code> and <code>cp</code> to create and copy files</span>
+                </div>
+                <div class="requirement-item" id="req-mv">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use <code>mv</code> to move and rename files</span>
+                </div>
+                <div class="requirement-item" id="req-rm">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use <code>rm</code> to remove files and directories</span>
+                </div>
+                <div class="requirement-item" id="req-find">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use <code>find</code> to search for files</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA File Management Lab. In this lab, you will learn essential file and directory management commands in Linux.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Listing Files
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's learn how to list files and directories using the <code>ls</code> command.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ls -l
+                </div>
+                
+                <div class="command-hint">
+                    ls -a
+                </div>
+                
+                <div class="file-structure">
+                    <div>Initial file structure in your lab environment:</div>
+                    <div class="dir">./documents/</div>
+                    <div class="file">./file1.txt</div>
+                    <div class="file">./file2.txt</div>
+                    <div class="file">./.hidden_file</div>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding ls Command</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Lists directory contents
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            View files and directories
+                        </div>
+                        <div class="concept-item">
+                            <strong>Common Options</strong>
+                            <code>-l</code> (long format), <code>-a</code> (show hidden)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Output Meaning</strong>
+                            Permissions, owner, size, date
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>ls</code> displays directory contents. <code>-l</code> shows detailed information, <code>-a</code> includes hidden files (starting with .). Combine options like <code>ls -la</code>.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Creating and Copying Files
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's learn how to create and copy files using <code>touch</code> and <code>cp</code> commands.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    touch newfile.txt
+                </div>
+                
+                <div class="command-hint">
+                    cp newfile.txt copied_file.txt
+                </div>
+                
+                <div class="command-hint">
+                    cp -r documents documents_backup
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding touch and cp Commands</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>touch</strong>
+                            Creates empty files or updates timestamps
+                        </div>
+                        <div class="concept-item">
+                            <strong>cp</strong>
+                            Copies files/directories
+                        </div>
+                        <div class="concept-item">
+                            <strong>Common Options</strong>
+                            <code>-r</code> (recursive for directories)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Paths</strong>
+                            Can use relative or absolute paths
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>touch</code> creates files if they don't exist. <code>cp</code> requires source and destination. For directories, use <code>-r</code> option.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Moving and Renaming Files
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's learn how to move and rename files using the <code>mv</code> command.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    mv copied_file.txt documents/
+                </div>
+                
+                <div class="command-hint">
+                    mv documents/copied_file.txt documents/renamed_file.txt
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding mv Command</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Moves or renames files/directories
+                        </div>
+                        <div class="concept-item">
+                            <strong>Renaming</strong>
+                            Same command as moving within same directory
+                        </div>
+                        <div class="concept-item">
+                            <strong>Caution</strong>
+                            Overwrites existing files without warning
+                        </div>
+                        <div class="concept-item">
+                            <strong>Options</strong>
+                            <code>-i</code> (interactive), <code>-n</code> (no overwrite)
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>mv</code> changes file location or name. Syntax is similar to <code>cp</code> but doesn't need <code>-r</code> for directories.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Removing Files and Directories
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's learn how to remove files and directories using the <code>rm</code> command.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    rm file1.txt
+                </div>
+                
+                <div class="command-hint">
+                    rm -r documents_backup
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding rm Command</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Removes files/directories
+                        </div>
+                        <div class="concept-item">
+                            <strong>Danger</strong>
+                            Permanent deletion (no trash bin)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Common Options</strong>
+                            <code>-r</code> (recursive), <code>-i</code> (interactive)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Safety</strong>
+                            Consider <code>-i</code> or <code>--preserve-root</code>
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>rm</code> deletes files permanently. Use <code>-r</code> for directories. Be extremely careful with wildcards (<code>rm *</code>).</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Finding Files
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's learn how to find files using the <code>find</code> command.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    find . -name "*.txt"
+                </div>
+                
+                <div class="command-hint">
+                    find /etc -type f -name "*.conf"
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding find Command</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Searches for files/directories
+                        </div>
+                        <div class="concept-item">
+                            <strong>Power</strong>
+                            Can search by name, type, size, time, etc.
+                        </div>
+                        <div class="concept-item">
+                            <strong>Common Options</strong>
+                            <code>-name</code>, <code>-type</code>, <code>-size</code>, <code>-exec</code>
+                        </div>
+                        <div class="concept-item">
+                            <strong>Performance</strong>
+                            Searches recursively through directories
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>find</code> searches directory trees. Basic syntax: <code>find [path] [criteria] [action]</code>. Can combine multiple tests.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All file management commands have been mastered.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[user@lab ~]$</span> Welcome to RHCSA Lab 1.4: File Management!</div>
+                <div><span class="prompt">[user@lab ~]$</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[user@lab ~]$</span> You must complete each step in order.</div>
+                <div><span class="prompt">[user@lab ~]$</span> Current step: Listing Files</div>
+                <div><span class="prompt">[user@lab ~]$</span> Type: <code>ls -l</code> and <code>ls -a</code></div>
+                <div><span class="prompt">[user@lab ~]$</span> <span class="success">Tip:</span> Press <code>Tab</code> for command completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'ls', 'touch', 'cp', 'mv', 'rm', 'find', 'clear', 'help'
+    ];
+    
+    // Track command completion state
+    const commandState = {
+        ls: false,
+        touchCp: false,
+        mv: false,
+        rm: false,
+        find: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['ls -l', 'ls -a'],
+        2: ['touch newfile.txt', 'cp newfile.txt copied_file.txt', 'cp -r documents documents_backup'],
+        3: ['mv copied_file.txt documents/', 'mv documents/copied_file.txt documents/renamed_file.txt'],
+        4: ['rm file1.txt', 'rm -r documents_backup'],
+        5: ['find . -name "*.txt"', 'find /etc -type f -name "*.conf"']
+    };
+    
+    // Initial file system state
+    let fileSystem = {
+        'file1.txt': { type: 'file', content: '' },
+        'file2.txt': { type: 'file', content: '' },
+        '.hidden_file': { type: 'file', content: '', hidden: true },
+        'documents': { 
+            type: 'dir', 
+            contents: {
+                'doc1.txt': { type: 'file', content: '' }
+            }
+        }
+    };
+
+    // Helper: resolve a relative path into (directory reference, final name)
+    function resolvePath(path) {
+        const parts = path.split('/').filter(p => p.length > 0);
+        const name = parts.pop();
+        let dirRef = fileSystem;
+
+        if (parts.length === 0) {
+            return { dirRef, name };
+        }
+
+        for (const part of parts) {
+            if (!dirRef[part] || dirRef[part].type !== 'dir') {
+                return { dirRef: null, name: null };
+            }
+            dirRef = dirRef[part].contents;
+        }
+        return { dirRef, name };
+    }
+    
+    const commands = {
+        'ls': (args) => {
+            const showHidden = args.includes('-a');
+            const longFormat = args.includes('-l');
+            let output = '';
+            
+            // Filter hidden files if -a not specified
+            const visibleFiles = Object.keys(fileSystem).filter(name => 
+                !fileSystem[name].hidden || showHidden
+            );
+            
+            if (longFormat) {
+                output = 'total ' + (visibleFiles.length * 4) + '\n';
+                visibleFiles.forEach(file => {
+                    const isDir = fileSystem[file].type === 'dir';
+                    output += `${isDir ? 'd' : '-'}rw-r--r-- 1 user user ${isDir ? '4096' : '0'} Jan 10 10:00 ${file}\n`;
+                });
+            } else {
+                output = visibleFiles.join('\n');
+            }
+            
+            // Check if this completes step 1
+            if (currentStep === 1) {
+                if (args.includes('-l')) {
+                    checkStepCompletion(1, 'ls -l');
+                }
+                if (args.includes('-a')) {
+                    checkStepCompletion(1, 'ls -a');
                 }
             }
             
-            if (currentDir[filename]) {
-                // For simplicity, we'll just say it worked
-                return `Moved ${source} to ${dest}`;
+            return output;
+        },
+        'touch': (args) => {
+            const filename = args[0];
+            if (!filename) return 'Usage: touch filename';
+            
+            if (!fileSystem[filename]) {
+                fileSystem[filename] = { type: 'file', content: '' };
+                
+                // Check if this completes step 2
+                if (currentStep === 2 && filename === 'newfile.txt') {
+                    checkStepCompletion(2, 'touch newfile.txt');
+                }
+                
+                return `Created file: ${filename}`;
             } else {
+                return `Updated timestamp for: ${filename}`;
+            }
+        },
+        'cp': (args) => {
+            if (args.length < 2) return 'Usage: cp source destination';
+            
+            const recursive = args.includes('-r');
+            const source = args[args.length - 2];
+            const dest = args[args.length - 1];
+            
+            // Simple file copy
+            if (fileSystem[source] && fileSystem[source].type === 'file') {
+                fileSystem[dest] = JSON.parse(JSON.stringify(fileSystem[source]));
+                
+                // Check if this completes step 2
+                if (currentStep === 2) {
+                    if (source === 'newfile.txt' && dest === 'copied_file.txt') {
+                        checkStepCompletion(2, 'cp newfile.txt copied_file.txt');
+                    }
+                    if (source === 'documents' && dest === 'documents_backup' && recursive) {
+                        checkStepCompletion(2, 'cp -r documents documents_backup');
+                    }
+                }
+                
+                return `Copied ${source} to ${dest}`;
+            }
+            // Directory copy (with -r)
+            else if (fileSystem[source] && fileSystem[source].type === 'dir' && recursive) {
+                fileSystem[dest] = JSON.parse(JSON.stringify(fileSystem[source]));
+                
+                // Check if this completes step 2
+                if (currentStep === 2 && source === 'documents' && dest === 'documents_backup') {
+                    checkStepCompletion(2, 'cp -r documents documents_backup');
+                }
+                
+                return `Copied directory ${source} to ${dest}`;
+            }
+            else if (fileSystem[source] && fileSystem[source].type === 'dir' && !recursive) {
+                return `cp: -r not specified; omitting directory '${source}'`;
+            }
+            else {
+                return `cp: cannot stat '${source}': No such file or directory`;
+            }
+        },
+        'mv': (args) => {
+            if (args.length < 2) return 'Usage: mv source destination';
+            
+            const source = args[args.length - 2];
+            const dest = args[args.length - 1];
+
+            function markStepIfNeeded(src, dst) {
+                if (currentStep === 3) {
+                    if (src === 'copied_file.txt' && dst === 'documents/') {
+                        checkStepCompletion(3, 'mv copied_file.txt documents/');
+                    }
+                    if (src === 'documents/copied_file.txt' && dst === 'documents/renamed_file.txt') {
+                        checkStepCompletion(3, 'mv documents/copied_file.txt documents/renamed_file.txt');
+                    }
+                }
+            }
+
+            // Case 1: source is at root (no path)
+            if (!source.includes('/')) {
+                if (!fileSystem[source]) {
+                    return `mv: cannot stat '${source}': No such file or directory`;
+                }
+
+                const node = JSON.parse(JSON.stringify(fileSystem[source]));
+                delete fileSystem[source];
+                const fileNameOnly = source.split('/').pop();
+
+                if (dest.endsWith('/')) {
+                    // e.g. mv copied_file.txt documents/
+                    const dirPath = dest.slice(0, -1);
+                    const { dirRef, name: dirName } = resolvePath(dirPath);
+                    if (!dirRef || !dirRef[dirName] || dirRef[dirName].type !== 'dir') {
+                        return `mv: cannot move '${source}' to '${dest}': Not a directory`;
+                    }
+                    dirRef[dirName].contents[fileNameOnly] = node;
+                } else if (fileSystem[dest] && fileSystem[dest].type === 'dir') {
+                    // e.g. mv copied_file.txt documents
+                    fileSystem[dest].contents[fileNameOnly] = node;
+                } else {
+                    // simple rename at root
+                    fileSystem[dest] = node;
+                }
+
+                markStepIfNeeded(source, dest);
+                return `Moved ${source} to ${dest}`;
+            }
+
+            // Case 2: source includes a path (e.g. documents/copied_file.txt)
+            const { dirRef: srcDir, name: srcName } = resolvePath(source);
+            if (!srcDir || !srcDir[srcName]) {
                 return `mv: cannot stat '${source}': No such file or directory`;
             }
+
+            const node = JSON.parse(JSON.stringify(srcDir[srcName]));
+            delete srcDir[srcName];
+
+            if (dest.includes('/')) {
+                // e.g. mv documents/copied_file.txt documents/renamed_file.txt
+                const { dirRef: destDir, name: destName } = resolvePath(dest);
+                if (!destDir) {
+                    return `mv: cannot move '${source}' to '${dest}': No such file or directory`;
+                }
+
+                if (destDir[destName] && destDir[destName].type === 'dir') {
+                    destDir[destName].contents[srcName] = node;
+                } else {
+                    destDir[destName] = node;
+                }
+            } else {
+                // dest at root
+                if (fileSystem[dest] && fileSystem[dest].type === 'dir') {
+                    fileSystem[dest].contents[srcName] = node;
+                } else {
+                    fileSystem[dest] = node;
+                }
+            }
+
+            markStepIfNeeded(source, dest);
+            return `Moved ${source} to ${dest}`;
+        },
+        'rm': (args) => {
+            if (args.length < 1) return 'Usage: rm file';
+            
+            const recursive = args.includes('-r');
+            const filename = args[args.length - 1];
+            
+            // File removal
+            if (fileSystem[filename] && fileSystem[filename].type === 'file') {
+                delete fileSystem[filename];
+                
+                // Check if this completes step 4
+                if (currentStep === 4 && filename === 'file1.txt') {
+                    checkStepCompletion(4, 'rm file1.txt');
+                }
+                
+                return `Removed ${filename}`;
+            }
+            // Directory removal (with -r)
+            else if (fileSystem[filename] && fileSystem[filename].type === 'dir' && recursive) {
+                delete fileSystem[filename];
+                
+                // Check if this completes step 4
+                if (currentStep === 4 && filename === 'documents_backup') {
+                    checkStepCompletion(4, 'rm -r documents_backup');
+                }
+                
+                return `Removed directory ${filename}`;
+            }
+            else if (fileSystem[filename] && fileSystem[filename].type === 'dir' && !recursive) {
+                return `rm: cannot remove '${filename}': Is a directory`;
+            }
+            else {
+                return `rm: cannot remove '${filename}': No such file or directory`;
+            }
+        },
+        'find': (args) => {
+            if (args.length < 3) return 'Usage: find path -name "pattern"';
+            
+            const path = args[0];
+            const type = args[1] === '-type' ? args[2] : null;
+            const namePattern = args.includes('-name') ? 
+                args[args.indexOf('-name') + 1].replace(/"/g, '') : null;
+            
+            // Simple name-based search (root level only for this lab)
+            if (namePattern) {
+                const pattern = new RegExp(namePattern.replace('*', '.*'));
+                const matches = Object.keys(fileSystem).filter(name => 
+                    name.match(pattern) && (!type || 
+                        (type === 'f' && fileSystem[name].type === 'file') ||
+                        (type === 'd' && fileSystem[name].type === 'dir'))
+                );
+                
+                // Check if this completes step 5
+                if (currentStep === 5) {
+                    if (namePattern === "*.txt" && path === ".") {
+                        checkStepCompletion(5, 'find . -name "*.txt"');
+                    }
+                    if (namePattern === "*.conf" && path === "/etc" && type === "f") {
+                        checkStepCompletion(5, 'find /etc -type f -name "*.conf"');
+                    }
+                }
+                
+                if (matches.length > 0) {
+                    return matches.join('\n');
+                } else {
+                    return '';
+                }
+            }
+            
+            return '';
+        },
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        'help': () => 'Available commands: ls, touch, cp, mv, rm, find, clear, help',
+    };
+    
+    // Track completed commands for each step
+    const completedCommands = {
+        1: [],
+        2: [],
+        3: [],
+        4: [],
+        5: []
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        // Update ls requirement
+        if (commandState.ls) {
+            document.getElementById('req-ls').classList.add('completed');
+            document.getElementById('req-ls').querySelector('.requirement-checkbox').textContent = '✓';
         }
-    },
-    'rm': (args) => {
-        if (args.length < 1) return 'Usage: rm file';
         
-        const recursive = args.includes('-r');
-        const filename = args[args.length - 1];
+        // Update touch/cp requirement
+        if (commandState.touchCp) {
+            document.getElementById('req-touch-cp').classList.add('completed');
+            document.getElementById('req-touch-cp').querySelector('.requirement-checkbox').textContent = '✓';
+        }
         
-        // File removal
-        if (fileSystem[filename] && fileSystem[filename].type === 'file') {
-            delete fileSystem[filename];
-            return `Removed ${filename}`;
+        // Update mv requirement
+        if (commandState.mv) {
+            document.getElementById('req-mv').classList.add('completed');
+            document.getElementById('req-mv').querySelector('.requirement-checkbox').textContent = '✓';
         }
-        // Directory removal (with -r)
-        else if (fileSystem[filename] && fileSystem[filename].type === 'dir' && recursive) {
-            delete fileSystem[filename];
-            return `Removed directory ${filename}`;
-        }
-        else if (fileSystem[filename] && fileSystem[filename].type === 'dir' && !recursive) {
-            return `rm: cannot remove '${filename}': Is a directory`;
-        }
-        else {
-            return `rm: cannot remove '${filename}': No such file or directory`;
-        }
-    },
-    'find': (args) => {
-        if (args.length < 3) return 'Usage: find path -name "pattern"';
         
-        const path = args[0];
-        const type = args[1] === '-type' ? args[2] : null;
-        const namePattern = args.includes('-name') ? 
-            args[args.indexOf('-name') + 1].replace(/"/g, '') : null;
+        // Update rm requirement
+        if (commandState.rm) {
+            document.getElementById('req-rm').classList.add('completed');
+            document.getElementById('req-rm').querySelector('.requirement-checkbox').textContent = '✓';
+        }
         
-        // Simple name-based search
-        if (namePattern) {
-            const pattern = new RegExp(namePattern.replace('*', '.*'));
-            const matches = Object.keys(fileSystem).filter(name => 
-                name.match(pattern) && (!type || 
-                    (type === 'f' && fileSystem[name].type === 'file') ||
-                    (type === 'd' && fileSystem[name].type === 'dir'))
+        // Update find requirement
+        if (commandState.find) {
+            document.getElementById('req-find').classList.add('completed');
+            document.getElementById('req-find').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(commandState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(commandState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(commandState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to check if a step is completed
+    function checkStepCompletion(step, command) {
+        if (!completedCommands[step].includes(command)) {
+            completedCommands[step].push(command);
+            
+            // Check if all commands for this step are completed
+            const allCompleted = stepCommands[step].every(cmd => 
+                completedCommands[step].includes(cmd)
             );
             
-            if (matches.length > 0) {
-                return matches.join('\n');
-            } else {
-                return ''; // find returns nothing when no matches
+            if (allCompleted) {
+                // Mark the step requirement as completed
+                if (step === 1) commandState.ls = true;
+                if (step === 2) commandState.touchCp = true;
+                if (step === 3) commandState.mv = true;
+                if (step === 4) commandState.rm = true;
+                if (step === 5) commandState.find = true;
+                
+                updateRequirements();
+                
+                // Move to next step
+                setTimeout(() => {
+                    completeStep(step);
+                }, 1000);
             }
         }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[user@lab ~]$ Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[user@lab ~]$ Next: ${stepCommands[currentStep][0]}`);
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
         
-        return ''; // Simplified for lab purposes
-    },
-    'clear': () => {
-        terminalOutput.innerHTML = '<div>[user@lab ~]$ <span class="prompt">Terminal cleared</span></div>';
-        return '';
-    },
-    'help': () => 'Available commands: ls, touch, cp, mv, rm, find, clear, help',
-};
-
-commandInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const commandText = commandInput.value.trim();
-        if (commandText) {
-            commandHistory.push(commandText);
-            historyIndex = commandHistory.length;
-            processCommand(commandText);
-        }
-        commandInput.value = '';
-    } else if (e.key === 'ArrowUp') {
-        if (historyIndex > 0) {
-            historyIndex--;
-            commandInput.value = commandHistory[historyIndex];
-        }
-    } else if (e.key === 'ArrowDown') {
-        if (historyIndex < commandHistory.length - 1) {
-            historyIndex++;
-            commandInput.value = commandHistory[historyIndex];
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[user@lab ~]$</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
         } else {
-            historyIndex = commandHistory.length;
-            commandInput.value = '';
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
         }
-    } else if (e.key === 'Tab') {
-        e.preventDefault();
-        // Simple tab completion for this lab
-        const partial = commandInput.value.split(' ').pop();
-        const matches = Object.keys(fileSystem).filter(name => 
-            name.startsWith(partial) && !fileSystem[name].hidden
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a file/directory completion
+        const visibleFiles = Object.keys(fileSystem).filter(name => 
+            !fileSystem[name].hidden
         );
         
-        if (matches.length === 1) {
-            commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+        tabCompletionItems = visibleFiles.filter(name => 
+            name.startsWith(lastPart)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
         }
     }
-});
-
-function processCommand(commandText) {
-    const parts = commandText.trim().split(/\s+/);
-    const cmd = parts[0];
-    const args = parts.slice(1);
-
-    let output;
-    if (commands[cmd]) {
-        output = commands[cmd](args);
-        if (output) {
-            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
         }
-    } else {
-        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
     }
-
-    let commandMatched = false;
-    requiredCommands.forEach((req, index) => {
-        if (req.step === currentStep && req.command === commandText.trim()) {
-            commandMatched = true;
-            if (!completedCommands[index]) {
-                completedCommands[index] = true;
-                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // File/directory completion
+            parts[parts.length - 1] = suggestion;
+            commandInput.value = parts.join(' ') + ' ';
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
             }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
         }
     });
-
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
-
-    if (isRequiredCommand && !commandMatched) {
-        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
-        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
-    }
-
-    terminalOutput.scrollTop = terminalOutput.scrollHeight;
-    checkStepCompletion();
-}
-
-function checkStepCompletion() {
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const allCompleted = currentStepCommands.every(req =>
-        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
-    );
-    if (allCompleted) {
-        setTimeout(() => {
-            nextStep();
-        }, 1000);
-    }
-}
-
-function nextStep() {
-    steps[currentStep].classList.remove('active-step');
-    currentStep++;
-    if (currentStep < steps.length) {
-        steps[currentStep].classList.add('active-step');
-        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
-    } else {
-        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All file management commands executed correctly!</div>`;
-    }
-}</script>
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>

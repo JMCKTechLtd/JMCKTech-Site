@@ -1,18 +1,26 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>RHCSA Lab 1.6 - Archive &amp; Compress Files</title>
-<style>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 1.6: Archive & Compress Files</title>
+    <style>
         :root {
             --redhat-red: #cc0000;
             --redhat-dark: #1e1e1e;
             --redhat-light: #f0f0f0;
             --redhat-accent: #4CAF50;
             --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
         }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Red Hat Text', 'Overpass', sans-serif;
             background-color: var(--redhat-dark);
@@ -20,78 +28,256 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-        }
-        .lab-container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: #252525;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            height: 100vh;
             overflow: hidden;
-            border-top: 4px solid var(--redhat-red);
         }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
         .header {
             background: linear-gradient(to right, #1e1e1e, #333);
             padding: 15px 20px;
             color: white;
             display: flex;
             align-items: center;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
+        
         .header img {
             height: 30px;
             margin-right: 15px;
         }
+        
         .header h1 {
             margin: 0;
             font-size: 1.5em;
             font-weight: normal;
         }
-        .terminal-container {
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
             display: flex;
             flex-direction: column;
-            height: 600px;
+            background: var(--panel-bg);
+            position: relative;
         }
-        .guide {
-            padding: 20px;
-            background: #2d2d2d;
-            flex: 1;
-            overflow-y: auto;
-        }
+        
         .guide h2 {
             margin-top: 0;
             color: var(--redhat-accent);
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
         .guide-step {
             margin-bottom: 15px;
             padding: 15px;
             background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
             border-left: 4px solid var(--redhat-accent);
-            display: none;
         }
-        .active-step {
-            display: block;
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
         }
-        .terminal {
-            background: #000;
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
             padding: 15px;
-            height: 250px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
             overflow-y: auto;
             font-family: 'Red Hat Mono', monospace;
-            border-top: 1px solid #444;
         }
-        .prompt {
-            color: var(--redhat-accent);
-        }
+        
         .command-line {
             display: flex;
             align-items: center;
             padding: 15px;
             background: #333;
-            border-top: 1px solid #444;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
         }
+        
         #command-input {
             flex: 1;
             background: transparent;
@@ -102,47 +288,29 @@
             outline: none;
             padding: 8px;
         }
-        .success {
+        
+        .prompt {
             color: var(--redhat-accent);
-            font-weight: bold;
+            white-space: nowrap;
+            margin-right: 5px;
         }
-        .error {
-            color: #FF5252;
-        }
-        .completion {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        .concept {
-            background: #2a2a2a;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            border-left: 4px solid var(--redhat-blue);
-        }
-        .concept h4 {
-            margin-top: 0;
-            color: var(--redhat-blue);
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
-        .concept-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .concept-item {
-            background: #252525;
+        
+        .file-content {
+            background: #1e1e1e;
             padding: 10px;
-            border-radius: 5px;
-            border-left: 2px solid var(--redhat-red);
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
         }
-        .concept-item strong {
-            color: var(--redhat-red);
-            display: block;
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
             margin-bottom: 5px;
         }
+        
         code {
             background: #1e1e1e;
             padding: 2px 5px;
@@ -150,38 +318,53 @@
             color: var(--redhat-accent);
             font-family: 'Red Hat Mono', monospace;
         }
-        kbd {
-            background: #444;
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: white;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        .required-command {
-            background: rgba(76, 175, 80, 0.1);
-            padding: 5px;
-            border-radius: 3px;
-            border-left: 3px solid var(--redhat-accent);
-        }
-        .trophy {
-            display: inline-block;
-            margin-left: 5px;
-        }
-        .syntax-error {
-            color: #FF5252;
+        
+        .success {
+            color: var(--redhat-accent);
             font-weight: bold;
         }
+        
+        .error {
+            color: #FF5252;
+        }
+        
         .warning {
             color: #FFD700;
             font-weight: bold;
         }
-        .strict-feedback {
-            background: rgba(204, 0, 0, 0.1);
-            padding: 10px;
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
             border-radius: 5px;
-            border-left: 3px solid var(--redhat-red);
-            margin-top: 10px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
         }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
         .file-list {
             background: #1e1e1e;
             padding: 10px;
@@ -189,314 +372,912 @@
             font-family: 'Red Hat Mono', monospace;
             margin: 10px 0;
         }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
     </style>
-<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
 <div class="lab-container">
-<div class="header">
-<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-<h1>RHCSA Lab 1.6: Archive &amp; Compress Files</h1>
-</div>
-<div class="terminal-container">
-<div class="guide">
-<h2>Lab Instructions</h2>
-<div class="guide-step active-step" id="step1">
-<h3>Step 1: Create a Tar Archive</h3>
-<p class="required-command">Type exactly: <code>tar -cvf archive.tar file1.txt file2.txt</code></p>
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 1.6: Archive & Compress Files</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Learn to create and manage archive files using tar, and compress them using different compression algorithms (gzip, bzip2, xz).</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
-<div class="concept">
-<h4>Understanding Tar Archives</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Combines multiple files into one archive file
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Easier file management and transfer
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Used for backups and software distribution
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                When you need to bundle files together
-                            </div>
-</div>
-<p><strong>How it works:</strong> The <code>tar</code> command (tape archive) creates (<code>-c</code>), shows verbose output (<code>-v</code>), and specifies the filename (<code>-f</code>). The files <code>file1.txt</code> and <code>file2.txt</code> will be included in the archive.</p>
-</div>
+            <div class="requirements-panel">
+                <h4>Archive & Compression Requirements</h4>
+                <div class="requirement-item" id="req-tar-create">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create tar archive: <code>tar -cvf archive.tar file1.txt file2.txt</code></span>
+                </div>
+                <div class="requirement-item" id="req-tar-list">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">List archive contents: <code>tar -tvf archive.tar</code></span>
+                </div>
+                <div class="requirement-item" id="req-tar-extract">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Extract archive to directory: <code>mkdir extracted</code> then <code>tar -xvf archive.tar -C extracted</code></span>
+                </div>
+                <div class="requirement-item" id="req-gzip">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Compress with gzip: <code>gzip archive.tar</code> then <code>gunzip archive.tar.gz</code></span>
+                </div>
+                <div class="requirement-item" id="req-compressed-tar">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create compressed tar archives: <code>tar -czvf archive.tar.gz</code>, <code>tar -cjvf archive.tar.bz2</code>, <code>tar -cJvf archive.tar.xz</code></span>
+                </div>
+            </div>
 
-<div class="file-list">
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Archive & Compression Lab. In this lab, you will learn to create and manage archive files using tar and various compression tools.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Create a Tar Archive
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's create a tar archive containing two files.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    tar -cvf archive.tar file1.txt file2.txt
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding Tar Archives</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Combines multiple files into one archive file
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Easier file management and transfer
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Used for backups and software distribution
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When you need to bundle files together
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> The <code>tar</code> command (tape archive) creates (<code>-c</code>), shows verbose output (<code>-v</code>), and specifies the filename (<code>-f</code>). The files <code>file1.txt</code> and <code>file2.txt</code> will be included in the archive.</p>
+                </div>
+
+                <div class="file-list">
 file1.txt<br>
 file2.txt<br>
 archive.tar (will be created)
-</div>
-</div>
-<div class="guide-step" id="step2">
-<h3>Step 2: List Archive Contents</h3>
-<p class="required-command">Type exactly: <code>tar -tvf archive.tar</code></p>
+                </div>
+            </div>
 
-<div class="concept">
-<h4>Understanding Archive Inspection</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                View contents without extracting
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Verify archive contents before extraction
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Useful for checking downloaded archives
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                Before extracting any archive
-                            </div>
-</div>
-<p><strong>How it works:</strong> The <code>-t</code> option lists contents, <code>-v</code> shows details, and <code>-f</code> specifies the file. This is a safe way to inspect archives from untrusted sources.</p>
-</div>
-</div>
-<div class="guide-step" id="step3">
-<h3>Step 3: Extract Archive</h3>
-<p class="required-command">Type exactly: <code>mkdir extracted</code></p>
-<p class="required-command">Then type: <code>tar -xvf archive.tar -C extracted</code></p>
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    List Archive Contents
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's verify the contents of our archive without extracting it.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    tar -tvf archive.tar
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding Archive Inspection</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            View contents without extracting
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Verify archive contents before extraction
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Useful for checking downloaded archives
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            Before extracting any archive
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> The <code>-t</code> option lists contents, <code>-v</code> shows details, and <code>-f</code> specifies the file. This is a safe way to inspect archives from untrusted sources.</p>
+                </div>
+            </div>
 
-<div class="concept">
-<h4>Understanding Archive Extraction</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Restores files from archive
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Access original files from archive
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Common in software installation
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                When you need the original files
-                            </div>
-</div>
-<p><strong>How it works:</strong> The <code>-x</code> option extracts, <code>-v</code> shows progress, <code>-f</code> specifies the file, and <code>-C</code> changes to the target directory. Always extract to a specific directory to avoid clutter.</p>
-</div>
-</div>
-<div class="guide-step" id="step4">
-<h3>Step 4: Compress with Gzip</h3>
-<p class="required-command">Type exactly: <code>gzip archive.tar</code></p>
-<p class="required-command">Then type: <code>gunzip archive.tar.gz</code></p>
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Extract Archive
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's extract the archive to a new directory.</p>
+                
+                <div class="hint-box">
+                    <strong>First, create a directory:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    mkdir extracted
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Then extract the archive:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    tar -xvf archive.tar -C extracted
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding Archive Extraction</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Restores files from archive
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Access original files from archive
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Common in software installation
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When you need the original files
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> The <code>-x</code> option extracts, <code>-v</code> shows progress, <code>-f</code> specifies the file, and <code>-C</code> changes to the target directory. Always extract to a specific directory to avoid clutter.</p>
+                </div>
+            </div>
 
-<div class="concept">
-<h4>Understanding Gzip Compression</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Common compression tool (.gz)
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Reduce file size for storage/transfer
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Used for log files, web assets
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                When file size matters more than CPU
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>gzip</code> compresses files (creates .gz), while <code>gunzip</code> decompresses. Gzip is fast but doesn't provide the best compression ratio compared to newer algorithms.</p>
-</div>
-</div>
-<div class="guide-step" id="step5">
-<h3>Step 5: Create Compressed Tar Archives</h3>
-<p class="required-command">Type exactly: <code>tar -czvf archive.tar.gz file1.txt file2.txt</code></p>
-<p class="required-command">Then type: <code>tar -cjvf archive.tar.bz2 file1.txt file2.txt</code></p>
-<p class="required-command">Finally type: <code>tar -cJvf archive.tar.xz file1.txt file2.txt</code></p>
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Compress with Gzip
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's compress our archive using gzip and then decompress it.</p>
+                
+                <div class="hint-box">
+                    <strong>Compress the archive:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    gzip archive.tar
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Decompress the archive:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    gunzip archive.tar.gz
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding Gzip Compression</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Common compression tool (.gz)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Reduce file size for storage/transfer
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Used for log files, web assets
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When file size matters more than CPU
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>gzip</code> compresses files (creates .gz), while <code>gunzip</code> decompresses. Gzip is fast but doesn't provide the best compression ratio compared to newer algorithms.</p>
+                </div>
+            </div>
 
-<div class="concept">
-<h4>Understanding Compression Options</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Different compression algorithms
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Balance between speed and ratio
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Choose based on requirements
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                gzip: fast, bzip2: balanced, xz: best ratio
-                            </div>
-</div>
-<p><strong>How it works:</strong> The <code>-z</code> uses gzip, <code>-j</code> uses bzip2, and <code>-J</code> uses xz. Each has tradeoffs: gzip is fastest, bzip2 balances speed/ratio, xz offers best compression but is slowest.</p>
-</div>
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Create Compressed Tar Archives
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's create compressed tar archives using different compression algorithms.</p>
+                
+                <div class="hint-box">
+                    <strong>Create gzip compressed archive:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    tar -czvf archive.tar.gz file1.txt file2.txt
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Create bzip2 compressed archive:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    tar -cjvf archive.tar.bz2 file1.txt file2.txt
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Create xz compressed archive:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    tar -cJvf archive.tar.xz file1.txt file2.txt
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding Compression Options</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Different compression algorithms
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Balance between speed and ratio
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Choose based on requirements
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            gzip: fast, bzip2: balanced, xz: best ratio
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> The <code>-z</code> uses gzip, <code>-j</code> uses bzip2, and <code>-J</code> uses xz. Each has tradeoffs: gzip is fastest, bzip2 balances speed/ratio, xz offers best compression but is slowest.</p>
+                </div>
 
-<div class="file-list">
+                <div class="file-list">
 gzip: archive.tar.gz<br>
 bzip2: archive.tar.bz2<br>
 xz: archive.tar.xz
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All archive and compression requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[user@lab ~]$</span> Welcome to RHCSA Lab 1.6: Archive & Compress Files</div>
+                <div><span class="prompt">[user@lab ~]$</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[user@lab ~]$</span> You must complete each step in order.</div>
+                <div><span class="prompt">[user@lab ~]$</span> Current step: Create a Tar Archive</div>
+                <div><span class="prompt">[user@lab ~]$</span> Type: <code>tar -cvf archive.tar file1.txt file2.txt</code></div>
+                <div><span class="prompt">[user@lab ~]$</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
 </div>
-</div>
-</div>
-<div class="command-line">
-<span class="prompt">[user@lab ~]$</span>
-<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
-</div>
-<div class="terminal" id="terminal-output">
-<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 1.6!</span></div>
-<div>[user@lab ~]$ <span class="prompt">Practice archiving and compression commands.</span></div>
-<div>[user@lab ~]$ <span class="prompt">Files available: file1.txt, file2.txt</span></div>
-</div>
-</div>
-</div>
-<script>const commandInput = document.getElementById('command-input');
-const terminalOutput = document.getElementById('terminal-output');
-const steps = document.querySelectorAll('.guide-step');
-let currentStep = 0;
-let commandHistory = [];
-let historyIndex = -1;
 
-const requiredCommands = [
-    { command: 'tar -cvf archive.tar file1.txt file2.txt', step: 0, feedback: 'Type exactly: tar -cvf archive.tar file1.txt file2.txt' },
-    { command: 'tar -tvf archive.tar', step: 1, feedback: 'Type exactly: tar -tvf archive.tar' },
-    { command: 'mkdir extracted', step: 2, feedback: 'Type exactly: mkdir extracted' },
-    { command: 'tar -xvf archive.tar -C extracted', step: 2, feedback: 'Type exactly: tar -xvf archive.tar -C extracted' },
-    { command: 'gzip archive.tar', step: 3, feedback: 'Type exactly: gzip archive.tar' },
-    { command: 'gunzip archive.tar.gz', step: 3, feedback: 'Type exactly: gunzip archive.tar.gz' },
-    { command: 'tar -czvf archive.tar.gz file1.txt file2.txt', step: 4, feedback: 'Type exactly: tar -czvf archive.tar.gz file1.txt file2.txt' },
-    { command: 'tar -cjvf archive.tar.bz2 file1.txt file2.txt', step: 4, feedback: 'Type exactly: tar -cjvf archive.tar.bz2 file1.txt file2.txt' },
-    { command: 'tar -cJvf archive.tar.xz file1.txt file2.txt', step: 4, feedback: 'Type exactly: tar -cJvf archive.tar.xz file1.txt file2.txt' }
-];
-
-let completedCommands = new Array(requiredCommands.length).fill(false);
-
-const commands = {
-    'tar': (args) => {
-        if (args.includes('-c')) {
-            if (args.includes('-z')) return 'Creating gzip compressed archive...';
-            if (args.includes('-j')) return 'Creating bzip2 compressed archive...';
-            if (args.includes('-J')) return 'Creating xz compressed archive...';
-            return 'Creating uncompressed archive...';
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'tar', 'mkdir', 'gzip', 'gunzip', 'ls', 'clear', 'help'
+    ];
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/': ['home/', 'etc/', 'tmp/'],
+        '/home/': ['user/'],
+        '/home/user/': ['file1.txt', 'file2.txt', 'archive.tar', 'archive.tar.gz', 'archive.tar.bz2', 'archive.tar.xz', 'extracted/']
+    };
+    
+    // Track configuration state
+    const configState = {
+        tarCreate: false,
+        tarList: false,
+        tarExtract: false,
+        gzip: false,
+        compressedTar: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['tar -cvf archive.tar file1.txt file2.txt'],
+        2: ['tar -tvf archive.tar'],
+        3: ['mkdir extracted', 'tar -xvf archive.tar -C extracted'],
+        4: ['gzip archive.tar', 'gunzip archive.tar.gz'],
+        5: [
+            'tar -czvf archive.tar.gz file1.txt file2.txt', 
+            'tar -cjvf archive.tar.bz2 file1.txt file2.txt', 
+            'tar -cJvf archive.tar.xz file1.txt file2.txt'
+        ]
+    };
+    
+    // Track completed commands for each step
+    const completedCommands = {
+        1: [],
+        2: [],
+        3: [],
+        4: [],
+        5: []
+    };
+    
+    const commands = {
+        'tar': (args) => {
+            const fullCommand = `tar ${args.join(' ')}`;
+            
+            // Collect all option chunks (e.g. -cvf, -xzvf, -t, etc.)
+            const optionArgs = args.filter(a => a.startsWith('-'));
+            const allOptions = optionArgs.join(''); // e.g. "-cvf-tvf"
+            
+            const hasCreate  = allOptions.includes('c');
+            const hasList    = allOptions.includes('t');
+            const hasExtract = allOptions.includes('x');
+            const hasGzip    = allOptions.includes('z');
+            const hasBzip2   = allOptions.includes('j');
+            const hasXz      = allOptions.includes('J');
+            
+            // Handle create operations
+            if (hasCreate) {
+                // Compressed create (step 5)
+                if (hasGzip) {
+                    if (currentStep === 5 || currentStep > 5) {
+                        if (!completedCommands[5].includes(fullCommand)) {
+                            completedCommands[5].push(fullCommand);
+                            checkStepCompletion(5);
+                        }
+                        return "Creating gzip compressed archive archive.tar.gz...\nfile1.txt\nfile2.txt";
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                } else if (hasBzip2) {
+                    if (currentStep === 5 || currentStep > 5) {
+                        if (!completedCommands[5].includes(fullCommand)) {
+                            completedCommands[5].push(fullCommand);
+                            checkStepCompletion(5);
+                        }
+                        return "Creating bzip2 compressed archive archive.tar.bz2...\nfile1.txt\nfile2.txt";
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                } else if (hasXz) {
+                    if (currentStep === 5 || currentStep > 5) {
+                        if (!completedCommands[5].includes(fullCommand)) {
+                            completedCommands[5].push(fullCommand);
+                            checkStepCompletion(5);
+                        }
+                        return "Creating xz compressed archive archive.tar.xz...\nfile1.txt\nfile2.txt";
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                } else {
+                    // Regular tar create command (step 1)
+                    if (currentStep === 1 || currentStep > 1) {
+                        if (!completedCommands[1].includes(fullCommand)) {
+                            completedCommands[1].push(fullCommand);
+                            checkStepCompletion(1);
+                        }
+                        return "Creating archive archive.tar...\nfile1.txt\nfile2.txt";
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                }
+            }
+            
+            // Handle list contents (step 2)
+            if (hasList) {
+                if (currentStep === 2 || currentStep > 2) {
+                    if (!completedCommands[2].includes(fullCommand)) {
+                        completedCommands[2].push(fullCommand);
+                        checkStepCompletion(2);
+                    }
+                    return "-rw-r--r-- user/user 0 2023-01-01 00:00 file1.txt\n-rw-r--r-- user/user 0 2023-01-01 00:00 file2.txt";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            
+            // Handle extract (step 3)
+            if (hasExtract) {
+                if (currentStep === 3 || currentStep > 3) {
+                    if (!completedCommands[3].includes(fullCommand)) {
+                        completedCommands[3].push(fullCommand);
+                        checkStepCompletion(3);
+                    }
+                    return "Extracting files to extracted/...\nfile1.txt\nfile2.txt";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            
+            return "Invalid tar options. Use -c to create, -x to extract, -t to list";
+        },
+        
+        'mkdir': (args) => {
+            const fullCommand = `mkdir ${args.join(' ')}`;
+            
+            if (args[0] === "extracted") {
+                if (currentStep === 3 || currentStep > 3) {
+                    if (!completedCommands[3].includes(fullCommand)) {
+                        completedCommands[3].push(fullCommand);
+                        checkStepCompletion(3);
+                    }
+                    return "Created directory 'extracted'";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `mkdir: cannot create directory '${args[0]}': Invalid argument`;
+        },
+        
+        'gzip': (args) => {
+            const fullCommand = `gzip ${args.join(' ')}`;
+            
+            if (args[0] === "archive.tar") {
+                if (currentStep === 4 || currentStep > 4) {
+                    if (!completedCommands[4].includes(fullCommand)) {
+                        completedCommands[4].push(fullCommand);
+                        checkStepCompletion(4);
+                    }
+                    return "Compressed archive.tar to archive.tar.gz";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `gzip: ${args[0]}: No such file or directory`;
+        },
+        
+        'gunzip': (args) => {
+            const fullCommand = `gunzip ${args.join(' ')}`;
+            
+            if (args[0] === "archive.tar.gz") {
+                if (currentStep === 4 || currentStep > 4) {
+                    if (!completedCommands[4].includes(fullCommand)) {
+                        completedCommands[4].push(fullCommand);
+                        checkStepCompletion(4);
+                    }
+                    return "Decompressed archive.tar.gz to archive.tar";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `gunzip: ${args[0]}: No such file or directory`;
+        },
+        
+        'ls': (args) => {
+            if (args.length === 0) {
+                return "file1.txt  file2.txt  archive.tar  archive.tar.gz  archive.tar.bz2  archive.tar.xz  extracted/";
+            } else if (args[0] === "extracted") {
+                return "file1.txt  file2.txt";
+            }
+            return `ls: cannot access '${args[0]}': No such file or directory`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: tar, mkdir, gzip, gunzip, ls, clear, help";
         }
-        if (args.includes('-t')) {
-            return '-rw-r--r-- user/user 0 2023-01-01 00:00 file1.txt\n-rw-r--r-- user/user 0 2023-01-01 00:00 file2.txt';
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.tarCreate) {
+            document.getElementById('req-tar-create').classList.add('completed');
+            document.getElementById('req-tar-create').querySelector('.requirement-checkbox').textContent = '✓';
         }
-        if (args.includes('-x')) {
-            return 'Extracting files...';
+        
+        if (configState.tarList) {
+            document.getElementById('req-tar-list').classList.add('completed');
+            document.getElementById('req-tar-list').querySelector('.requirement-checkbox').textContent = '✓';
         }
-        return 'Invalid tar options. Use -c to create, -x to extract, -t to list';
-    },
-    'mkdir': (args) => `Created directory ${args[0]}`,
-    'gzip': (args) => `Compressed ${args[0]} to ${args[0]}.gz`,
-    'gunzip': (args) => {
-        if (args[0].endsWith('.gz')) {
-            return `Decompressed ${args[0]} to ${args[0].replace('.gz', '')}`;
+        
+        if (configState.tarExtract) {
+            document.getElementById('req-tar-extract').classList.add('completed');
+            document.getElementById('req-tar-extract').querySelector('.requirement-checkbox').textContent = '✓';
         }
-        return `Error: ${args[0]} doesn't end with .gz`;
-    },
-    'help': () => 'Available commands: tar, mkdir, gzip, gunzip, help',
-};
-
-commandInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const commandText = commandInput.value.trim();
-        if (commandText) {
-            commandHistory.push(commandText);
-            historyIndex = commandHistory.length;
-            processCommand(commandText);
+        
+        if (configState.gzip) {
+            document.getElementById('req-gzip').classList.add('completed');
+            document.getElementById('req-gzip').querySelector('.requirement-checkbox').textContent = '✓';
         }
-        commandInput.value = '';
-    } else if (e.key === 'ArrowUp') {
-        if (historyIndex > 0) {
-            historyIndex--;
-            commandInput.value = commandHistory[historyIndex];
+        
+        if (configState.compressedTar) {
+            document.getElementById('req-compressed-tar').classList.add('completed');
+            document.getElementById('req-compressed-tar').querySelector('.requirement-checkbox').textContent = '✓';
         }
-    } else if (e.key === 'ArrowDown') {
-        if (historyIndex < commandHistory.length - 1) {
-            historyIndex++;
-            commandInput.value = commandHistory[historyIndex];
-        } else {
-            historyIndex = commandHistory.length;
-            commandInput.value = '';
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
         }
     }
-});
-
-function processCommand(commandText) {
-    const parts = commandText.trim().split(/\s+/);
-    const cmd = parts[0];
-    const args = parts.slice(1);
-
-    let output;
-    if (commands[cmd]) {
-        output = commands[cmd](args);
-        if (output) {
-            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
-        }
-    } else {
-        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
-    }
-
-    let commandMatched = false;
-    requiredCommands.forEach((req, index) => {
-        if (req.step === currentStep && req.command === commandText.trim()) {
-            commandMatched = true;
-            if (!completedCommands[index]) {
-                completedCommands[index] = true;
-                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[user@lab ~]$ Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep] && stepCommands[currentStep].length > 0) {
+                    addTerminalOutput(`[user@lab ~]$ Next: ${stepCommands[currentStep][0]}`);
+                }
+            } else {
+                // Lab completed
+                addTerminalOutput(`[user@lab ~]$ <span class="success">Lab completed! All steps finished successfully!</span>`);
             }
         }
+    }
+    
+    // Function to check if all commands for a step are completed
+    function checkStepCompletion(step) {
+        const requiredCommands = stepCommands[step];
+        const completed = completedCommands[step];
+        
+        // Check if all required commands for this step are completed
+        const allCompleted = requiredCommands.every(cmd => completed.includes(cmd));
+        
+        if (allCompleted) {
+            // Update the config state based on the completed step
+            switch(step) {
+                case 1:
+                    configState.tarCreate = true;
+                    break;
+                case 2:
+                    configState.tarList = true;
+                    break;
+                case 3:
+                    configState.tarExtract = true;
+                    break;
+                case 4:
+                    configState.gzip = true;
+                    break;
+                case 5:
+                    configState.compressedTar = true;
+                    break;
+            }
+            
+            updateRequirements();
+            completeStep(step);
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[user@lab ~]$</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
     });
-
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
-
-    if (isRequiredCommand && !commandMatched) {
-        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
-        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
-    }
-
-    terminalOutput.scrollTop = terminalOutput.scrollHeight;
-    checkStepCompletion();
-}
-
-function checkStepCompletion() {
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const allCompleted = currentStepCommands.every(req =>
-        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
-    );
-    if (allCompleted) {
-        setTimeout(() => {
-            nextStep();
-        }, 1000);
-    }
-}
-
-function nextStep() {
-    steps[currentStep].classList.remove('active-step');
-    currentStep++;
-    if (currentStep < steps.length) {
-        steps[currentStep].classList.add('active-step');
-        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
-    } else {
-        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All archiving and compression commands executed correctly!</div>`;
-    }
-}</script>
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>
