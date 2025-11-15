@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 40</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 40: Logical Volume Management</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>Logical Volume Requirements</h4>
+                <div class="requirement-item" id="req-partition">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create 1GB partition on /dev/vda</span>
+                </div>
+                <div class="requirement-item" id="req-pvcreate">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create physical volume on partition</span>
+                </div>
+                <div class="requirement-item" id="req-vgcreate">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create volume group 'datastore' with 16MB PEs</span>
+                </div>
+                <div class="requirement-item" id="req-lvcreate">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create logical volume 'database' (50 PEs) in 'datastore'</span>
+                </div>
+                <div class="requirement-item" id="req-filesystem">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Format with ext3 filesystem</span>
+                </div>
+                <div class="requirement-item" id="req-mount">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Mount at /mnt/database and configure persistent mount</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>LVM Components</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>Physical Volume (PV)</strong>
+                        A physical disk or partition that has been initialized for LVM use with <code>pvcreate</code>
+                    </div>
+                    <div class="concept-item">
+                        <strong>Volume Group (VG)</strong>
+                        A collection of physical volumes that forms a storage pool with <code>vgcreate</code>
+                    </div>
+                    <div class="concept-item">
+                        <strong>Logical Volume (LV)</strong>
+                        A virtual partition created from space in a volume group with <code>lvcreate</code>
+                    </div>
+                    <div class="concept-item">
+                        <strong>Physical Extent (PE)</strong>
+                        The smallest allocatable unit in a volume group (default 4MB)
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Create Partition</h3>
+                
+                <div class="required-command">
+                    <p><strong>Start fdisk utility:</strong></p>
+                    <p>Type: <code>fdisk -cu /dev/vda</code></p>
+                    <p>Follow these steps in fdisk:</p>
+                    <ol>
+                        <li>Press <kbd>n</kbd> to create new partition</li>
+                        <li>Press <kbd>p</kbd> for primary partition</li>
+                        <li>Accept defaults for partition number and first sector</li>
+                        <li>Enter <code>+1G</code> for last sector</li>
+                        <li>Press <kbd>t</kbd> to change type, enter <code>8e</code> for Linux LVM</li>
+                        <li>Press <kbd>w</kbd> to write changes</li>
+                    </ol>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Update kernel partition table:</strong></p>
+                    <p>Type: <code>partx -a /dev/vda</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Partitions</h4>
+                    <p>LVM requires underlying storage devices (partitions or whole disks) to be marked with type code 8e (Linux LVM). The partition should be large enough to hold your logical volumes with room for future expansion.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Create Physical Volume and Volume Group</h3>
+                
+                <div class="required-command">
+                    <p><strong>Create physical volume:</strong></p>
+                    <p>Type: <code>pvcreate /dev/vda1</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Create volume group with 16MB PEs:</strong></p>
+                    <p>Type: <code>vgcreate datastore /dev/vda1 -s 16M</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Physical Extents</h4>
+                    <p>The <code>-s 16M</code> option sets the physical extent size to 16MB. This means your logical volume size will be multiples of 16MB. The default is 4MB, but larger extents can improve performance for larger volumes.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Create Logical Volume</h3>
+                
+                <div class="required-command">
+                    <p><strong>Create logical volume with 50 PEs (800MB):</strong></p>
+                    <p>Type: <code>lvcreate -l 50 -n database datastore</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Format with ext3 filesystem:</strong></p>
+                    <p>Type: <code>mkfs.ext3 /dev/datastore/database</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Logical Volume Sizing</h4>
+                    <p>With 16MB PEs, 50 PEs equals 800MB (16 × 50). You can specify size in PEs (-l) or absolute size (-L). The volume will be accessible at <code>/dev/vgname/lvname</code> or <code>/dev/mapper/vgname-lvname</code>.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>Step 4: Mount and Configure Persistence</h3>
+                
+                <div class="required-command">
+                    <p><strong>Create mount point:</strong></p>
+                    <p>Type: <code>mkdir /mnt/database</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Mount the filesystem:</strong></p>
+                    <p>Type: <code>mount /dev/datastore/database /mnt/database</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Edit /etc/fstab for persistence:</strong></p>
+                    <p>Type: <code>vim /etc/fstab</code></p>
+                    <p>Add this line:</p>
+                    <div class="file-content">/dev/datastore/database /mnt/database ext3 defaults 0 0</div>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Verify mount:</strong></p>
+                    <p>Type: <code>mount -a</code></p>
+                    <p>Type: <code>df -Th</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Persistent Mounts</h4>
+                    <p>The <code>/etc/fstab</code> file controls which filesystems are mounted at boot. Each line contains: device, mount point, filesystem type, options, dump frequency, and fsck order. Always test with <code>mount -a</code> after editing.</p>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 40: Logical Volume Management</span></div>
+            <div>[root@station ~]# <span class="prompt">Create a logical volume named 'database' in volume group 'datastore'</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        partitionCreated: false,
+        pvCreated: false,
+        vgCreated: false,
+        lvCreated: false,
+        filesystemCreated: false,
+        mountConfigured: false
+    };
+    
+    const commands = {
+        'fdisk': (args) => {
+            if (args.includes('-cu') && args.includes('/dev/vda')) {
+                configState.partitionCreated = true;
+                updateRequirements();
+                return "Created a new partition 1 of type 'Linux LVM' and of size 1 GiB";
+            }
+            return "Usage: fdisk [options] <disk>";
+        },
+        'partx': (args) => {
+            if (args.includes('-a') && args.includes('/dev/vda')) {
+                return "";
+            }
+            return "partx: invalid option -- 'a'";
+        },
+        'pvcreate': (args) => {
+            if (args[0] === "/dev/vda1") {
+                configState.pvCreated = true;
+                updateRequirements();
+                return "Physical volume \"/dev/vda1\" successfully created";
+            }
+            return "pvcreate: invalid option -- 'a'";
+        },
+        'vgcreate': (args) => {
+            if (args.includes('datastore') && args.includes('/dev/vda1') && args.includes('-s') && args.includes('16M')) {
+                configState.vgCreated = true;
+                updateRequirements();
+                return "Volume group \"datastore\" successfully created";
+            }
+            return "vgcreate: invalid option -- 's'";
+        },
+        'lvcreate': (args) => {
+            if (args.includes('-l') && args.includes('50') && args.includes('-n') && args.includes('database') && args.includes('datastore')) {
+                configState.lvCreated = true;
+                updateRequirements();
+                return "Logical volume \"database\" created";
+            }
+            return "lvcreate: invalid option -- 'l'";
+        },
+        'mkfs.ext3': (args) => {
+            if (args[0] === "/dev/datastore/database") {
+                configState.filesystemCreated = true;
+                updateRequirements();
+                return "mke2fs 1.42.9 (28-Dec-2013)\nFilesystem label=\nOS type: Linux\nBlock size=4096 (log=2)\nFragment size=4096 (log=2)\nStride=0 blocks, Stripe width=0 blocks\n51200 inodes, 204800 blocks\n10240 blocks (5.00%) reserved for the super user\nFirst data block=0\nMaximum filesystem blocks=209715200\n7 block groups\n32768 blocks per group, 32768 fragments per group\n7328 inodes per group\nSuperblock backups stored on blocks: \n32768, 98304, 163840\n\nAllocating group tables: done                            \nWriting inode tables: done                            \nCreating journal (4096 blocks): done\nWriting superblocks and filesystem accounting information: done";
+            }
+            return "mkfs.ext3: invalid option -- 'a'";
+        },
+        'mkdir': (args) => {
+            if (args[0] === "/mnt/database") {
+                return "";
+            }
+            return "mkdir: cannot create directory '/mnt/database': File exists";
+        },
+        'mount': (args) => {
+            if (args.length === 2 && args[0] === "/dev/datastore/database" && args[1] === "/mnt/database") {
+                return "";
+            } else if (args[0] === "-a") {
+                configState.mountConfigured = true;
+                updateRequirements();
+                return "";
+            }
+            return "mount: /mnt/database: mount point does not exist";
+        },
+        'vim': (args) => {
+            if (args[0] === "/etc/fstab") {
+                return "Editing /etc/fstab";
+            }
+            return "vim: /etc/fstab: No such file or directory";
+        },
+        'df': (args) => {
+            if (args.includes('-Th')) {
+                return "Filesystem                Type      Size  Used Avail Use% Mounted on\n/dev/datastore/database   ext3     790M  1.3M  749M   1% /mnt/database";
+            }
+            return "df: invalid option -- 'T'";
+        },
+        'help': () => 'Available commands: fdisk, partx, pvcreate, vgcreate, lvcreate, mkfs.ext3, mkdir, mount, vim, df, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/dev/vda', '/dev/vda1', '/dev/datastore/database', '/mnt/database', '/etc/fstab']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All LVM requirements completed successfully!</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update partition requirement
+        const partitionItem = document.getElementById('req-partition');
+        if (configState.partitionCreated) {
+            partitionItem.classList.add('completed');
+            partitionItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update PV requirement
+        const pvItem = document.getElementById('req-pvcreate');
+        if (configState.pvCreated) {
+            pvItem.classList.add('completed');
+            pvItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update VG requirement
+        const vgItem = document.getElementById('req-vgcreate');
+        if (configState.vgCreated) {
+            vgItem.classList.add('completed');
+            vgItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update LV requirement
+        const lvItem = document.getElementById('req-lvcreate');
+        if (configState.lvCreated) {
+            lvItem.classList.add('completed');
+            lvItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update filesystem requirement
+        const fsItem = document.getElementById('req-filesystem');
+        if (configState.filesystemCreated) {
+            fsItem.classList.add('completed');
+            fsItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update mount requirement
+        const mountItem = document.getElementById('req-mount');
+        if (configState.mountConfigured) {
+            mountItem.classList.add('completed');
+            mountItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

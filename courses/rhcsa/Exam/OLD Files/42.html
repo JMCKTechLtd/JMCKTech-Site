@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 42</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .partition-table {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin-bottom: 10px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 42</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>Swap Partition Requirements</h4>
+                <div class="requirement-item" id="req-fdisk">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create a 2G partition using <code>fdisk</code></span>
+                </div>
+                <div class="requirement-item" id="req-partition-type">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set partition type to Linux swap (82)</span>
+                </div>
+                <div class="requirement-item" id="req-partx">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Update kernel partition table with <code>partx</code></span>
+                </div>
+                <div class="requirement-item" id="req-mkswap">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Format partition as swap with <code>mkswap</code></span>
+                </div>
+                <div class="requirement-item" id="req-swapon">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Activate swap with <code>swapon</code></span>
+                </div>
+                <div class="requirement-item" id="req-fstab">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Add swap to <code>/etc/fstab</code> for persistence</span>
+                </div>
+                <div class="requirement-item" id="req-verify">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify swap is active and persistent</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>Swap Partition Concepts</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>Purpose</strong>
+                        Swap space acts as virtual memory when physical RAM is full. It's essential for system stability.
+                    </div>
+                    <div class="concept-item">
+                        <strong>Partitioning</strong>
+                        Use <code>fdisk</code> to create partitions. Swap partitions should be type 82 (Linux swap).
+                    </div>
+                    <div class="concept-item">
+                        <strong>Activation</strong>
+                        <code>mkswap</code> formats, <code>swapon</code> activates. Use <code>swapon -s</code> to verify.
+                    </div>
+                    <div class="concept-item">
+                        <strong>Persistence</strong>
+                        Add to <code>/etc/fstab</code> using UUID for automatic activation at boot.
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Create Swap Partition</h3>
+                
+                <div class="required-command">
+                    <p><strong>Launch fdisk on your disk (typically sda):</strong></p>
+                    <p>Type: <code>fdisk /dev/sda</code></p>
+                    <p>Follow these steps in fdisk:</p>
+                    <div class="file-content">n (create new partition)
+p (primary partition)
+8 (partition number)
++2G (size)
+t (change type)
+82 (Linux swap)
+w (write changes)</div>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>View current partition table:</strong></p>
+                    <p>Type: <code>fdisk -l /dev/sda</code></p>
+                    <p>Should show your new partition (sda8) with type 'Linux swap':</p>
+                    <div class="partition-table">Device     Boot   Start      End  Sectors Size Id Type
+/dev/sda8        2099200 6293503 4194304   2G 82 Linux swap</div>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding fdisk</h4>
+                    <p>fdisk is an interactive partition table manipulator. Key commands:</p>
+                    <ul>
+                        <li><code>n</code> - Create new partition</li>
+                        <li><code>p</code> - Print partition table</li>
+                        <li><code>t</code> - Change partition type</li>
+                        <li><code>w</code> - Write changes to disk</li>
+                        <li><code>q</code> - Quit without saving</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Update Kernel Partition Table</h3>
+                
+                <div class="required-command">
+                    <p><strong>Inform kernel about new partition:</strong></p>
+                    <p>Type: <code>partx -a /dev/sda</code></p>
+                    <p>Then: <code>partprobe</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Partition Table Updates</h4>
+                    <p>After modifying partitions, the kernel needs to be informed:</p>
+                    <ul>
+                        <li><code>partx</code> - Tells the kernel about partition table changes</li>
+                        <li><code>partprobe</code> - Another way to inform the kernel about partition changes</li>
+                        <li>Rebooting also works but isn't necessary with these commands</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Format and Activate Swap</h3>
+                
+                <div class="required-command">
+                    <p><strong>Format partition as swap:</strong></p>
+                    <p>Type: <code>mkswap /dev/sda8</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Activate swap partition:</strong></p>
+                    <p>Type: <code>swapon /dev/sda8</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Verify swap is active:</strong></p>
+                    <p>Type: <code>swapon -s</code> or <code>free -h</code></p>
+                    <p>Should show your new swap partition in the list:</p>
+                    <div class="file-content">Filename        Type    Size  Used Priority
+/dev/sda8      partition 2G   0B   -2</div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>Step 4: Make Swap Persistent</h3>
+                
+                <div class="required-command">
+                    <p><strong>Get UUID of swap partition:</strong></p>
+                    <p>Type: <code>blkid /dev/sda8</code></p>
+                    <p>Copy the UUID value (will look like XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)</p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Edit /etc/fstab:</strong></p>
+                    <p>Type: <code>vim /etc/fstab</code></p>
+                    <p>Add this line (replace XXXXX with your UUID):</p>
+                    <div class="file-content">UUID=XXXXX swap swap defaults 0 0</div>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Verify persistence:</strong></p>
+                    <p>Type: <code>swapoff -a</code> then <code>swapon -a</code></p>
+                    <p>Check with <code>swapon -s</code> to ensure swap reactivated</p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding fstab</h4>
+                    <p>The file <code>/etc/fstab</code> controls what filesystems are mounted at boot. Key fields:</p>
+                    <ol>
+                        <li>Device (can use UUID, which is preferred)</li>
+                        <li>Mount point (swap for swap partitions)</li>
+                        <li>Filesystem type (swap)</li>
+                        <li>Mount options (defaults)</li>
+                        <li>Dump flag (0)</li>
+                        <li>Filesystem check order (0 for swap)</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 42: Swap Partition Configuration</span></div>
+            <div>[root@station ~]# <span class="prompt">Create a 2G swap partition that persists across reboots.</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        fdisk: false,
+        partitionType: false,
+        partx: false,
+        mkswap: false,
+        swapon: false,
+        fstab: false,
+        verify: false
+    };
+    
+    // Simulated partition table
+    let partitionTable = `Device     Boot   Start      End  Sectors Size Id Type
+/dev/sda1  *       2048  2099199  2097152   1G 83 Linux
+/dev/sda2       2099200 62935039 60835840  29G 8e Linux LVM`;
+    
+    // Simulated fstab content
+    let fstabContent = `#
+# /etc/fstab
+# Created by anaconda on Mon May 10 12:34:56 2021
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/rhel-root   /                       xfs     defaults        0 0
+UUID=1234-5678          /boot                   ext4    defaults        1 2
+/dev/mapper/rhel-swap   swap                    swap    defaults        0 0`;
+    
+    // Simulated swap status
+    let swapStatus = `Filename        Type    Size  Used Priority
+/dev/dm-1      partition 4G   0B   -1`;
+    
+    const commands = {
+        'fdisk': (args) => {
+            if (args[0] === "/dev/sda") {
+                configState.fdisk = true;
+                configState.partitionType = true;
+                partitionTable += "\n/dev/sda8        2099200 6293503 4194304   2G 82 Linux swap";
+                updateRequirements();
+                return "Created new partition 8 of type 'Linux swap'";
+            } else if (args[0] === "-l" && args[1] === "/dev/sda") {
+                return partitionTable;
+            }
+            return `fdisk: cannot open ${args[0]}: No such file or directory`;
+        },
+        'partx': (args) => {
+            if (args[0] === "-a" && args[1] === "/dev/sda") {
+                configState.partx = true;
+                updateRequirements();
+                return "";
+            }
+            return `partx: invalid option -- '${args[0]}'`;
+        },
+        'partprobe': () => {
+            configState.partx = true;
+            updateRequirements();
+            return "";
+        },
+        'mkswap': (args) => {
+            if (args[0] === "/dev/sda8") {
+                configState.mkswap = true;
+                updateRequirements();
+                return "Setting up swapspace version 1, size = 2 GiB (2147479552 bytes)\nno label, UUID=abcd1234-5678-90ef-ghij-klmnopqrstuv";
+            }
+            return `mkswap: ${args[0]}: No such file or directory`;
+        },
+        'swapon': (args) => {
+            if (args[0] === "/dev/sda8") {
+                configState.swapon = true;
+                swapStatus += "\n/dev/sda8      partition 2G   0B   -2";
+                updateRequirements();
+                return "";
+            } else if (args[0] === "-a") {
+                if (configState.fstab) {
+                    configState.verify = true;
+                    updateRequirements();
+                }
+                return "";
+            } else if (args[0] === "-s") {
+                return swapStatus;
+            }
+            return `swapon: ${args[0]}: No such file or directory`;
+        },
+        'swapoff': (args) => {
+            if (args[0] === "-a") {
+                return "";
+            }
+            return `swapoff: ${args[0]}: No such file or directory`;
+        },
+        'blkid': (args) => {
+            if (args[0] === "/dev/sda8") {
+                return "/dev/sda8: UUID=\"abcd1234-5678-90ef-ghij-klmnopqrstuv\" TYPE=\"swap\"";
+            }
+            return `blkid: ${args[0]}: No such file or directory`;
+        },
+        'vim': (args) => {
+            if (args[0] === "/etc/fstab") {
+                if (fstabContent.includes("UUID=abcd1234-5678-90ef-ghij-klmnopqrstuv swap swap defaults 0 0")) {
+                    configState.fstab = true;
+                    updateRequirements();
+                }
+                return `Editing ${args[0]}`;
+            }
+            return `vim: ${args[0]}: No such file or directory`;
+        },
+        'cat': (args) => {
+            if (args[0] === "/etc/fstab") {
+                return fstabContent;
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        'free': (args) => {
+            if (args[0] === "-h") {
+                return `              total        used        free      shared  buff/cache   available
+Mem:           3.7G        1.2G        1.8G        123M        756M        2.1G
+Swap:          6.0G          0B        6.0G`;
+            }
+            return `free: invalid option -- '${args[0]}'`;
+        },
+        'help': () => 'Available commands: fdisk, partx, partprobe, mkswap, swapon, swapoff, blkid, vim, cat, free, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/dev/sda', '/dev/sda8', '/etc/fstab']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All swap partition requirements completed successfully!</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update fdisk requirement
+        const fdiskItem = document.getElementById('req-fdisk');
+        if (configState.fdisk) {
+            fdiskItem.classList.add('completed');
+            fdiskItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update partition type requirement
+        const partitionTypeItem = document.getElementById('req-partition-type');
+        if (configState.partitionType) {
+            partitionTypeItem.classList.add('completed');
+            partitionTypeItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update partx requirement
+        const partxItem = document.getElementById('req-partx');
+        if (configState.partx) {
+            partxItem.classList.add('completed');
+            partxItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update mkswap requirement
+        const mkswapItem = document.getElementById('req-mkswap');
+        if (configState.mkswap) {
+            mkswapItem.classList.add('completed');
+            mkswapItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update swapon requirement
+        const swaponItem = document.getElementById('req-swapon');
+        if (configState.swapon) {
+            swaponItem.classList.add('completed');
+            swaponItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update fstab requirement
+        const fstabItem = document.getElementById('req-fstab');
+        if (configState.fstab) {
+            fstabItem.classList.add('completed');
+            fstabItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update verify requirement
+        const verifyItem = document.getElementById('req-verify');
+        if (configState.verify) {
+            verifyItem.classList.add('completed');
+            verifyItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 39</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 39: Backup Creation</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>Backup Creation Requirements</h4>
+                <div class="requirement-item" id="req-create-backup">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create backup file <code>/root/backup.tar.bz2</code> containing <code>/usr/local</code> content</span>
+                </div>
+                <div class="requirement-item" id="req-bzip2">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use bzip2 compression with tar</span>
+                </div>
+                <div class="requirement-item" id="req-verify-backup">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify backup by extracting to <code>/test</code> and comparing contents</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>Backup Creation Methods</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>tar Command</strong>
+                        <code>tar [options] [archive-file] [files-to-archive]</code><br>
+                        Common options:<br>
+                        -c: Create archive<br>
+                        -x: Extract archive<br>
+                        -v: Verbose output<br>
+                        -f: Specify filename<br>
+                        -j: Use bzip2 compression<br>
+                        -z: Use gzip compression
+                    </div>
+                    <div class="concept-item">
+                        <strong>Compression Types</strong>
+                        bzip2: Higher compression (slower), uses .bz2 extension<br>
+                        gzip: Faster compression (less efficient), uses .gz extension<br>
+                        xz: Very high compression (slowest), uses .xz extension
+                    </div>
+                    <div class="concept-item">
+                        <strong>Verification</strong>
+                        Always verify backups by:<br>
+                        1. Checking archive integrity (tar -tf)<br>
+                        2. Extracting to test location<br>
+                        3. Comparing with original files
+                    </div>
+                    <div class="concept-item">
+                        <strong>Common Directories</strong>
+                        /usr/local: Locally installed software<br>
+                        /etc: System configuration files<br>
+                        /home: User home directories<br>
+                        /var: Variable data like logs
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Create the Backup</h3>
+                
+                <div class="required-command">
+                    <p><strong>Navigate to /usr/local:</strong></p>
+                    <p>Type: <code>cd /usr/local</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Create compressed backup:</strong></p>
+                    <p>Type: <code>tar -jcvf /root/backup.tar.bz2 .</code></p>
+                    <p>This command will:</p>
+                    <ul>
+                        <li>-j: Use bzip2 compression</li>
+                        <li>-c: Create new archive</li>
+                        <li>-v: Verbose output</li>
+                        <li>-f: Specify filename</li>
+                    </ul>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding tar Options</h4>
+                    <p>The order of options matters in tar commands. The -f option must come immediately before the filename. The dot (.) at the end specifies to archive the current directory contents.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Verify the Backup</h3>
+                
+                <div class="required-command">
+                    <p><strong>Create test directory:</strong></p>
+                    <p>Type: <code>mkdir /test</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Extract backup for verification:</strong></p>
+                    <p>Type: <code>tar -jxvf /root/backup.tar.bz2 -C /test</code></p>
+                    <p>This command will:</p>
+                    <ul>
+                        <li>-j: Use bzip2 decompression</li>
+                        <li>-x: Extract files</li>
+                        <li>-v: Verbose output</li>
+                        <li>-f: Specify filename</li>
+                        <li>-C: Change to directory before extraction</li>
+                    </ul>
+                </div>
+
+                <div class="concept">
+                    <h4>Backup Verification</h4>
+                    <p>After extraction, you should compare the contents of /test with the original /usr/local directory to ensure all files were properly backed up. You can use commands like <code>diff -r /usr/local /test</code> or <code>ls -lR /usr/local > orig.txt; ls -lR /test > test.txt; diff orig.txt test.txt</code></p>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 39: Backup Creation</span></div>
+            <div>[root@station ~]# <span class="prompt">Create a compressed backup of /usr/local and verify its contents.</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        backupCreated: false,
+        bzip2Used: false,
+        backupVerified: false
+    };
+    
+    // Simulated file system state
+    let fileSystem = {
+        '/usr/local': {
+            'bin': ['custom_script1', 'custom_script2'],
+            'etc': ['config1.conf', 'config2.conf'],
+            'lib': ['library1.so', 'library2.so']
+        },
+        '/root': {},
+        '/test': {}
+    };
+    
+    const commands = {
+        'cd': (args) => {
+            if (args[0] === "/usr/local") {
+                return "";
+            } else if (args[0] === "/test") {
+                return "";
+            }
+            return `bash: cd: ${args[0]}: No such file or directory`;
+        },
+        'ls': (args) => {
+            if (args.length === 0) {
+                return "anaconda-ks.cfg\nbackup.tar.bz2";
+            } else if (args[0] === "-l") {
+                return "total 8\n-rw-------. 1 root root 1234 Jun  1 10:00 anaconda-ks.cfg\n-rw-r--r--. 1 root root 5678 Jun  1 10:01 backup.tar.bz2";
+            } else if (args[0] === "/usr/local") {
+                return "bin  etc  lib";
+            } else if (args[0] === "/test") {
+                return configState.backupVerified ? "bin  etc  lib" : "";
+            }
+            return `ls: cannot access '${args[0]}': No such file or directory`;
+        },
+        'tar': (args) => {
+            if (args.includes('-jcvf') && args.includes('/root/backup.tar.bz2') && (args.includes('.') || args.includes('/usr/local'))) {
+                configState.backupCreated = true;
+                configState.bzip2Used = true;
+                fileSystem['/root']['backup.tar.bz2'] = true;
+                updateRequirements();
+                return "bin/\nbin/custom_script1\nbin/custom_script2\netc/\netc/config1.conf\netc/config2.conf\nlib/\nlib/library1.so\nlib/library2.so";
+            } else if (args.includes('-jxvf') && args.includes('/root/backup.tar.bz2') && args.includes('-C') && args.includes('/test')) {
+                if (configState.backupCreated) {
+                    configState.backupVerified = true;
+                    fileSystem['/test'] = JSON.parse(JSON.stringify(fileSystem['/usr/local']));
+                    updateRequirements();
+                    return "bin/\nbin/custom_script1\nbin/custom_script2\netc/\netc/config1.conf\netc/config2.conf\nlib/\nlib/library1.so\nlib/library2.so";
+                } else {
+                    return "tar: /root/backup.tar.bz2: Cannot open: No such file or directory";
+                }
+            }
+            return `tar: invalid option -- '${args[0].charAt(1)}'\nTry 'tar --help' or 'tar --usage' for more information.`;
+        },
+        'mkdir': (args) => {
+            if (args[0] === "/test") {
+                fileSystem['/test'] = {};
+                return "";
+            }
+            return `mkdir: cannot create directory '${args[0]}': File exists`;
+        },
+        'diff': (args) => {
+            if (args.includes('-r') && args.includes('/usr/local') && args.includes('/test')) {
+                return configState.backupVerified ? "" : "Files /usr/local/bin/custom_script1 and /test/bin/custom_script1 differ";
+            }
+            return "diff: missing operand after 'diff'";
+        },
+        'help': () => 'Available commands: cd, ls, tar, mkdir, diff, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/usr/local', '/test', '/root/backup.tar.bz2']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All backup requirements completed successfully!</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update backup creation requirement
+        const backupItem = document.getElementById('req-create-backup');
+        if (configState.backupCreated) {
+            backupItem.classList.add('completed');
+            backupItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update bzip2 requirement
+        const bzip2Item = document.getElementById('req-bzip2');
+        if (configState.bzip2Used) {
+            bzip2Item.classList.add('completed');
+            bzip2Item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update verification requirement
+        const verifyItem = document.getElementById('req-verify-backup');
+        if (configState.backupVerified) {
+            verifyItem.classList.add('completed');
+            verifyItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

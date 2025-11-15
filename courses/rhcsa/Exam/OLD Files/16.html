@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 16</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 16</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>Kernel Upgrade Requirements</h4>
+                <div class="requirement-item" id="req-check-current-kernel">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Check current kernel version</span>
+                </div>
+                <div class="requirement-item" id="req-download-kernel">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Download kernel-2.6.36.7.1.rpm package</span>
+                </div>
+                <div class="requirement-item" id="req-install-kernel">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Install new kernel package</span>
+                </div>
+                <div class="requirement-item" id="req-configure-grub">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Configure GRUB to boot new kernel by default</span>
+                </div>
+                <div class="requirement-item" id="req-verify-kernel">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify new kernel is installed and set as default</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>Kernel Upgrade Concepts</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>Kernel Packages</strong>
+                        Kernel RPM packages contain the Linux kernel and modules. They are installed in /boot and modules in /lib/modules.
+                    </div>
+                    <div class="concept-item">
+                        <strong>GRUB Configuration</strong>
+                        GRUB (Grand Unified Bootloader) reads /boot/grub/grub.conf to determine boot options. The default kernel is specified by the 'default' parameter.
+                    </div>
+                    <div class="concept-item">
+                        <strong>Kernel Installation</strong>
+                        Use rpm -ivh to install new kernels (not -Uvh) to keep old kernels available as fallback.
+                    </div>
+                    <div class="concept-item">
+                        <strong>Verification</strong>
+                        Check /boot for kernel files, uname -r for running kernel, and /etc/grub.conf for boot configuration.
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Check Current Kernel</h3>
+                
+                <div class="required-command">
+                    <p><strong>Check current kernel version:</strong></p>
+                    <p>Type: <code>uname -r</code></p>
+                    <p>This will display the current running kernel version.</p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>View GRUB configuration:</strong></p>
+                    <p>Type: <code>cat /etc/grub.conf</code></p>
+                    <p>This shows the current bootloader configuration including available kernels.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Download New Kernel</h3>
+                
+                <div class="required-command">
+                    <p><strong>Navigate to /boot directory:</strong></p>
+                    <p>Type: <code>cd /boot</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Download kernel package:</strong></p>
+                    <p>Type: <code>lftp it</code></p>
+                    <p>Then in lftp: <code>get dr/dom/kernel-2.6.36.7.1.rpm</code></p>
+                    <p>Exit lftp with: <code>exit</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>About Kernel Packages</h4>
+                    <p>Kernel packages typically follow naming conventions like kernel-version.rpm. The package contains:</p>
+                    <ul>
+                        <li>Kernel image (vmlinuz-version)</li>
+                        <li>Initial RAM disk (initrd-version.img)</li>
+                        <li>Kernel modules in /lib/modules/version/</li>
+                        <li>System.map file for debugging</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Install New Kernel</h3>
+                
+                <div class="required-command">
+                    <p><strong>Install kernel package:</strong></p>
+                    <p>Type: <code>rpm -ivh kernel-2.6.36.7.1.rpm</code></p>
+                    <p>This installs the new kernel while keeping the old one available.</p>
+                </div>
+                
+                <div class="concept">
+                    <h4>Kernel Installation Best Practices</h4>
+                    <p>Always use <code>rpm -ivh</code> (install) rather than <code>-Uvh</code> (upgrade) for kernels:</p>
+                    <ul>
+                        <li>Preserves old kernel as fallback option</li>
+                        <li>Doesn't remove previous kernel files</li>
+                        <li>Maintains boot options for both kernels</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>Step 4: Configure GRUB</h3>
+                
+                <div class="required-command">
+                    <p><strong>Edit GRUB configuration:</strong></p>
+                    <p>Type: <code>vim /etc/grub.conf</code></p>
+                    <p>Set <code>default=0</code> to boot the new kernel by default (usually the first entry).</p>
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding GRUB Configuration</h4>
+                    <p>/etc/grub.conf contains:</p>
+                    <ul>
+                        <li><code>default=N</code> - Which entry to boot by default (0-based index)</li>
+                        <li><code>timeout=X</code> - Seconds to wait for user input</li>
+                        <li>Title entries for each boot option</li>
+                        <li>Kernel and initrd paths for each option</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>Step 5: Verify Installation</h3>
+                
+                <div class="required-command">
+                    <p><strong>Check installed kernels:</strong></p>
+                    <p>Type: <code>rpm -qa | grep kernel</code></p>
+                    <p>Should show both old and new kernel packages.</p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Verify GRUB configuration:</strong></p>
+                    <p>Type: <code>cat /etc/grub.conf</code></p>
+                    <p>Check that default=0 points to the new kernel.</p>
+                </div>
+
+                <div class="concept">
+                    <h4>Post-Installation Checks</h4>
+                    <p>After reboot, verify:</p>
+                    <ul>
+                        <li><code>uname -r</code> shows new kernel version</li>
+                        <li>System boots successfully</li>
+                        <li>All hardware and services work as expected</li>
+                        <li>Old kernel remains available in GRUB menu</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 16: Kernel Upgrade</span></div>
+            <div>[root@station ~]# <span class="prompt">Upgrade kernel to 2.6.36.7.1 and configure GRUB to boot it by default.</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        checkedCurrentKernel: false,
+        downloadedKernel: false,
+        installedKernel: false,
+        configuredGrub: false,
+        verifiedInstallation: false
+    };
+    
+    // Simulated file contents
+    let grubConfContent = `default=1
+timeout=5
+splashimage=(hd0,0)/grub/splash.xpm.gz
+hiddenmenu
+
+title Red Hat Enterprise Linux (2.6.32-754.el6.x86_64)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.32-754.el6.x86_64 ro root=/dev/mapper/vg_station-lv_root rd_NO_LUKS LANG=en_US.UTF-8 rd_NO_MD rd_LVM_LV=vg_station/lv_swap SYSFONT=latarcyrheb-sun16 crashkernel=auto rd_LVM_LV=vg_station/lv_root  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet
+        initrd /initramfs-2.6.32-754.el6.x86_64.img
+
+title Red Hat Enterprise Linux (2.6.32-642.el6.x86_64)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.32-642.el6.x86_64 ro root=/dev/mapper/vg_station-lv_root rd_NO_LUKS LANG=en_US.UTF-8 rd_NO_MD rd_LVM_LV=vg_station/lv_swap SYSFONT=latarcyrheb-sun16 crashkernel=auto rd_LVM_LV=vg_station/lv_root  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet
+        initrd /initramfs-2.6.32-642.el6.x86_64.img`;
+    
+    const commands = {
+        'uname': (args) => {
+            if (args[0] === "-r") {
+                configState.checkedCurrentKernel = true;
+                updateRequirements();
+                return "2.6.32-754.el6.x86_64";
+            }
+            return "Linux station 2.6.32-754.el6.x86_64 #1 SMP Tue Jun 18 14:20:34 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux";
+        },
+        'cd': (args) => {
+            if (args[0] === "/boot") {
+                return "";
+            }
+            return `bash: cd: ${args[0]}: No such file or directory`;
+        },
+        'ls': () => "config-2.6.32-754.el6.x86_64\ninitramfs-2.6.32-754.el6.x86_64.img\nvmlinuz-2.6.32-754.el6.x86_64",
+        'cat': (args) => {
+            if (args[0] === "/etc/grub.conf") {
+                return grubConfContent;
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        'lftp': (args) => {
+            if (args[0] === "it") {
+                return "lftp it:~>";
+            }
+            return `lftp: ${args[0]}: command not found`;
+        },
+        'get': (args) => {
+            if (args[0] === "dr/dom/kernel-2.6.36.7.1.rpm") {
+                configState.downloadedKernel = true;
+                updateRequirements();
+                return "kernel-2.6.36.7.1.rpm downloaded successfully";
+            }
+            return `get: ${args[0]}: No such file or directory`;
+        },
+        'exit': () => {
+            return "Goodbye";
+        },
+        'rpm': (args) => {
+            if (args[0] === "-ivh" && args[1] === "kernel-2.6.36.7.1.rpm") {
+                configState.installedKernel = true;
+                // Update grub.conf to include new kernel
+                grubConfContent = `default=0
+timeout=5
+splashimage=(hd0,0)/grub/splash.xpm.gz
+hiddenmenu
+
+title Red Hat Enterprise Linux (2.6.36.7.1)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.36.7.1 ro root=/dev/mapper/vg_station-lv_root rd_NO_LUKS LANG=en_US.UTF-8 rd_NO_MD rd_LVM_LV=vg_station/lv_swap SYSFONT=latarcyrheb-sun16 crashkernel=auto rd_LVM_LV=vg_station/lv_root  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet
+        initrd /initramfs-2.6.36.7.1.img
+
+title Red Hat Enterprise Linux (2.6.32-754.el6.x86_64)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.32-754.el6.x86_64 ro root=/dev/mapper/vg_station-lv_root rd_NO_LUKS LANG=en_US.UTF-8 rd_NO_MD rd_LVM_LV=vg_station/lv_swap SYSFONT=latarcyrheb-sun16 crashkernel=auto rd_LVM_LV=vg_station/lv_root  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet
+        initrd /initramfs-2.6.32-754.el6.x86_64.img
+
+title Red Hat Enterprise Linux (2.6.32-642.el6.x86_64)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.32-642.el6.x86_64 ro root=/dev/mapper/vg_station-lv_root rd_NO_LUKS LANG=en_US.UTF-8 rd_NO_MD rd_LVM_LV=vg_station/lv_swap SYSFONT=latarcyrheb-sun16 crashkernel=auto rd_LVM_LV=vg_station/lv_root  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet
+        initrd /initramfs-2.6.32-642.el6.x86_64.img`;
+                updateRequirements();
+                return "Preparing...                ########################################### [100%]\n   1:kernel                 ########################################### [100%]";
+            } else if (args[0] === "-qa" && args[1] === "|" && args[2] === "grep" && args[3] === "kernel") {
+                configState.verifiedInstallation = true;
+                updateRequirements();
+                return "kernel-2.6.36.7.1\nkernel-2.6.32-754.el6.x86_64\nkernel-2.6.32-642.el6.x86_64";
+            }
+            return `rpm: unknown option '${args.join(' ')}'`;
+        },
+        'vim': (args) => {
+            if (args[0] === "/etc/grub.conf") {
+                // Check if they set default=0
+                if (grubConfContent.includes("default=0")) {
+                    configState.configuredGrub = true;
+                    updateRequirements();
+                }
+                return `Editing ${args[0]}`;
+            }
+            return `vim: ${args[0]}: No such file or directory`;
+        },
+        'help': () => 'Available commands: uname, cd, ls, cat, lftp, get, exit, rpm, vim, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/etc/grub.conf', '/boot', 'kernel-2.6.36.7.1.rpm']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All kernel upgrade requirements completed successfully!</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update check current kernel requirement
+        const checkKernelItem = document.getElementById('req-check-current-kernel');
+        if (configState.checkedCurrentKernel) {
+            checkKernelItem.classList.add('completed');
+            checkKernelItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update download kernel requirement
+        const downloadKernelItem = document.getElementById('req-download-kernel');
+        if (configState.downloadedKernel) {
+            downloadKernelItem.classList.add('completed');
+            downloadKernelItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update install kernel requirement
+        const installKernelItem = document.getElementById('req-install-kernel');
+        if (configState.installedKernel) {
+            installKernelItem.classList.add('completed');
+            installKernelItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update configure grub requirement
+        const configureGrubItem = document.getElementById('req-configure-grub');
+        if (configState.configuredGrub) {
+            configureGrubItem.classList.add('completed');
+            configureGrubItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update verify installation requirement
+        const verifyItem = document.getElementById('req-verify-kernel');
+        if (configState.verifiedInstallation) {
+            verifyItem.classList.add('completed');
+            verifyItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 13</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 13: Time Synchronization</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>Time Synchronization Requirements</h4>
+                <div class="requirement-item" id="req-chrony-install">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Ensure chrony is installed</span>
+                </div>
+                <div class="requirement-item" id="req-chrony-config">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Configure chrony to sync with 172.24.40.10</span>
+                </div>
+                <div class="requirement-item" id="req-chrony-service">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Enable and start chronyd service</span>
+                </div>
+                <div class="requirement-item" id="req-time-verify">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify time synchronization</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>Time Synchronization Concepts</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>chrony</strong>
+                        The modern time synchronization daemon that replaces ntpd, better suited for systems that are intermittently connected.
+                    </div>
+                    <div class="concept-item">
+                        <strong>NTP Server</strong>
+                        Network Time Protocol servers provide accurate time references. In this lab, we use 172.24.40.10.
+                    </div>
+                    <div class="concept-item">
+                        <strong>Configuration</strong>
+                        The main configuration file is <code>/etc/chrony.conf</code> where NTP servers are specified.
+                    </div>
+                    <div class="concept-item">
+                        <strong>Verification</strong>
+                        Use <code>chronyc sources</code> to check synchronization status and <code>timedatectl</code> for current time settings.
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Install chrony (if needed)</h3>
+                
+                <div class="required-command">
+                    <p><strong>Check if chrony is installed:</strong></p>
+                    <p>Type: <code>rpm -q chrony</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Install chrony if not present:</strong></p>
+                    <p>Type: <code>yum install -y chrony</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>About chrony</h4>
+                    <p>chrony is the default time synchronization service on modern RHEL systems. It's more accurate than ntpd, especially for systems that are not always connected to the network.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Configure chrony</h3>
+                
+                <div class="required-command">
+                    <p><strong>Edit the chrony configuration:</strong></p>
+                    <p>Type: <code>vim /etc/chrony.conf</code></p>
+                    <p>Add or modify the server line:</p>
+                    <div class="file-content">server 172.24.40.10 iburst</div>
+                </div>
+
+                <div class="concept">
+                    <h4>chrony.conf Options</h4>
+                    <p>Key configuration options:</p>
+                    <ul>
+                        <li><code>server</code>: Specifies the NTP server address</li>
+                        <li><code>iburst</code>: Sends a burst of packets initially for faster synchronization</li>
+                        <li><code>allow</code>: Configures which clients can access this server</li>
+                        <li><code>driftfile</code>: Records clock drift rate</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Enable and Start chronyd</h3>
+                
+                <div class="required-command">
+                    <p><strong>Enable chronyd to start at boot:</strong></p>
+                    <p>Type: <code>systemctl enable chronyd</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Start the chronyd service:</strong></p>
+                    <p>Type: <code>systemctl start chronyd</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Restart if already running:</strong></p>
+                    <p>Type: <code>systemctl restart chronyd</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>chronyd Service</h4>
+                    <p>The chronyd daemon runs in the background to continuously adjust the system clock. It needs to be running for time synchronization to work.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>Step 4: Verify Time Synchronization</h3>
+                
+                <div class="required-command">
+                    <p><strong>Check synchronization sources:</strong></p>
+                    <p>Type: <code>chronyc sources</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Check tracking information:</strong></p>
+                    <p>Type: <code>chronyc tracking</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Check current time status:</strong></p>
+                    <p>Type: <code>timedatectl</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Verification Commands</h4>
+                    <p>Key verification commands:</p>
+                    <ul>
+                        <li><code>chronyc sources</code>: Shows NTP servers being used</li>
+                        <li><code>chronyc tracking</code>: Displays detailed synchronization info</li>
+                        <li><code>timedatectl</code>: Shows current time, timezone, and NTP status</li>
+                        <li><code>chronyc makestep</code>: Forces immediate time correction</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 13: Time Synchronization</span></div>
+            <div>[root@station ~]# <span class="prompt">Configure system to synchronize time with 172.24.40.10</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        chronyInstall: false,
+        chronyConfig: false,
+        chronyService: false,
+        timeVerify: false
+    };
+    
+    // Simulated file contents
+    let chronyConfContent = "# Use public servers from the pool.ntp.org project.\n# Please consider joining the pool (http://www.pool.ntp.org/join.html).";
+    
+    const commands = {
+        'rpm': (args) => {
+            if (args[0] === "-q" && args[1] === "chrony") {
+                return "chrony-3.5-1.el8.x86_64";
+            }
+            return `rpm: ${args.join(' ')}: command not found`;
+        },
+        'yum': (args) => {
+            if (args[0] === "install" && args[1] === "-y" && args[2] === "chrony") {
+                configState.chronyInstall = true;
+                updateRequirements();
+                return "Package chrony-3.5-1.el8.x86_64 already installed and latest version\nNothing to do";
+            }
+            return `yum: ${args.join(' ')}: command not found`;
+        },
+        'vim': (args) => {
+            if (args[0] === "/etc/chrony.conf") {
+                if (chronyConfContent.includes("server 172.24.40.10 iburst")) {
+                    configState.chronyConfig = true;
+                    updateRequirements();
+                }
+                return `Editing ${args[0]}`;
+            }
+            return `vim: ${args[0]}: No such file or directory`;
+        },
+        'systemctl': (args) => {
+            if (args[0] === "enable" && args[1] === "chronyd") {
+                configState.chronyService = true;
+                updateRequirements();
+                return "Created symlink /etc/systemd/system/multi-user.target.wants/chronyd.service → /usr/lib/systemd/system/chronyd.service.";
+            } else if ((args[0] === "start" || args[0] === "restart") && args[1] === "chronyd") {
+                configState.chronyService = true;
+                updateRequirements();
+                return "";
+            } else if (args[0] === "status" && args[1] === "chronyd") {
+                return "● chronyd.service - NTP client/server\n   Loaded: loaded (/usr/lib/systemd/system/chronyd.service; enabled; vendor preset: enabled)\n   Active: active (running)";
+            }
+            return `Unknown operation '${args.join(' ')}'`;
+        },
+        'chronyc': (args) => {
+            if (args[0] === "sources") {
+                configState.timeVerify = true;
+                updateRequirements();
+                return "210 Number of sources = 1\nMS Name/IP address         Stratum Poll Reach LastRx Last sample\n===============================================================================\n^* 172.24.40.10                  2   6   377    39   +192us[ +192us] +/-   13ms";
+            } else if (args[0] === "tracking") {
+                return "Reference ID    : C0A82A0A (172.24.40.10)\nStratum         : 3\nRef time (UTC)  : Thu Oct 05 14:28:42 2023\nSystem time     : 0.000123456 seconds fast of NTP time\nLast offset     : +0.000123456 seconds\nRMS offset      : 0.000123456 seconds\nFrequency       : 1.234 ppm fast\nResidual freq   : +0.123 ppm\nSkew            : 0.123 ppm\nRoot delay      : 0.0123456 seconds\nRoot dispersion : 0.0123456 seconds\nUpdate interval : 64.2 seconds\nLeap status     : Normal";
+            }
+            return `chronyc: ${args.join(' ')}: command not found`;
+        },
+        'timedatectl': () => {
+            return "               Local time: Thu 2023-10-05 14:29:01 UTC\n           Universal time: Thu 2023-10-05 14:29:01 UTC\n                 RTC time: Thu 2023-10-05 14:29:01\n                Time zone: UTC (UTC, +0000)\nSystem clock synchronized: yes\n              NTP service: active\n          RTC in local TZ: no";
+        },
+        'cat': (args) => {
+            if (args[0] === "/etc/chrony.conf") {
+                return chronyConfContent;
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        'help': () => 'Available commands: rpm, yum, vim, systemctl, chronyc, timedatectl, cat, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/etc/chrony.conf']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All time synchronization requirements completed successfully!</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update chrony install requirement
+        const chronyInstallItem = document.getElementById('req-chrony-install');
+        if (configState.chronyInstall) {
+            chronyInstallItem.classList.add('completed');
+            chronyInstallItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update chrony config requirement
+        const chronyConfigItem = document.getElementById('req-chrony-config');
+        if (configState.chronyConfig) {
+            chronyConfigItem.classList.add('completed');
+            chronyConfigItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update chrony service requirement
+        const chronyServiceItem = document.getElementById('req-chrony-service');
+        if (configState.chronyService) {
+            chronyServiceItem.classList.add('completed');
+            chronyServiceItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update time verify requirement
+        const timeVerifyItem = document.getElementById('req-time-verify');
+        if (configState.timeVerify) {
+            timeVerifyItem.classList.add('completed');
+            timeVerifyItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

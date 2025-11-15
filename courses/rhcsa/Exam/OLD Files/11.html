@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 11</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .dialog {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #444;
+        }
+        .dialog-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--redhat-blue);
+        }
+        .radio-option {
+            margin: 5px 0;
+        }
+        .button {
+            background: var(--redhat-blue);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 11</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>LDAP Authentication Requirements</h4>
+                <div class="requirement-item" id="req-packages">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Install required packages: <code>sssd authconfig-gtk pam-krb5 krb5-workstation</code></span>
+                </div>
+                <div class="requirement-item" id="req-certificate">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Download and install LDAP CA certificate</span>
+                </div>
+                <div class="requirement-item" id="req-config">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Configure LDAP authentication with correct settings</span>
+                </div>
+                <div class="requirement-item" id="req-verify">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify LDAP user <code>ldapuser40</code> can be resolved</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>LDAP Authentication Concepts</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>LDAP Authentication</strong>
+                        Allows users to authenticate against a central directory service rather than local /etc/passwd
+                    </div>
+                    <div class="concept-item">
+                        <strong>Required Packages</strong>
+                        <code>sssd</code> - System Security Services Daemon<br>
+                        <code>authconfig-gtk</code> - GUI configuration tool<br>
+                        <code>pam-krb5</code> - PAM modules for Kerberos<br>
+                        <code>krb5-workstation</code> - Kerberos utilities
+                    </div>
+                    <div class="concept-item">
+                        <strong>Configuration Files</strong>
+                        <code>/etc/openldap/ldap.conf</code> - LDAP client config<br>
+                        <code>/etc/sssd/sssd.conf</code> - SSSD configuration<br>
+                        <code>/etc/nsswitch.conf</code> - Name service switch
+                    </div>
+                    <div class="concept-item">
+                        <strong>Verification</strong>
+                        <code>getent passwd ldapuser40</code> - Check user resolution<br>
+                        <code>id ldapuser40</code> - Verify user information<br>
+                        <code>systemctl status sssd</code> - Check SSSD service
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Install Required Packages</h3>
+                
+                <div class="required-command">
+                    <p><strong>Install authentication packages:</strong></p>
+                    <p>Type: <code>yum install -y sssd authconfig-gtk pam-krb5 krb5-workstation</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Package Purpose</h4>
+                    <p>These packages provide the necessary components for LDAP authentication:</p>
+                    <ul>
+                        <li><code>sssd</code>: Caches credentials and provides identity/authentication services</li>
+                        <li><code>authconfig-gtk</code>: Graphical tool for authentication configuration</li>
+                        <li><code>pam-krb5</code>: PAM modules for Kerberos authentication</li>
+                        <li><code>krb5-workstation</code>: Kerberos client utilities</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Download and Install CA Certificate</h3>
+                
+                <div class="required-command">
+                    <p><strong>Download the certificate:</strong></p>
+                    <p>Type: <code>wget http://instructor.example.com/pub/ldap.crt -O /etc/openldap/certs/ldap.crt</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Update CA trust store:</strong></p>
+                    <p>Type: <code>update-ca-trust</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Certificate Importance</h4>
+                    <p>The CA certificate ensures secure, encrypted communication with the LDAP server. Without it, authentication would fail or be insecure.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Configure LDAP Authentication</h3>
+                
+                <div class="required-command">
+                    <p><strong>Method 1: Graphical Configuration</strong></p>
+                    <p>Type: <code>system-config-authentication</code></p>
+                    <div class="dialog">
+                        <div class="dialog-title">Authentication Configuration</div>
+                        <div class="radio-option">☑ User Account Database: <strong>LDAP</strong></div>
+                        <div class="radio-option">☑ LDAP Search Base DN: <strong>dc=example,dc=com</strong></div>
+                        <div class="radio-option">☑ LDAP Server: <strong>ldap://instructor.example.com</strong></div>
+                        <div class="radio-option">☑ Download CA Certificate</div>
+                        <div class="radio-option">☑ Authentication Method: <strong>LDAP Password</strong></div>
+                        <button class="button">Apply</button>
+                    </div>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Method 2: Command Line Configuration</strong></p>
+                    <p>Type: <code>authconfig --enableldap --enableldapauth --ldapserver=ldap://instructor.example.com --ldapbasedn="dc=example,dc=com" --enablemkhomedir --update</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Configuration Details</h4>
+                    <p>Key configuration points:</p>
+                    <ul>
+                        <li>Server must be in domain form (ldap://instructor.example.com), not IP</li>
+                        <li>Search Base DN must match your LDAP directory structure</li>
+                        <li>Certificate must be properly installed for secure connection</li>
+                        <li>SSSD service will be automatically configured</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>Step 4: Verify Configuration</h3>
+                
+                <div class="required-command">
+                    <p><strong>Check LDAP user resolution:</strong></p>
+                    <p>Type: <code>getent passwd ldapuser40</code></p>
+                    <p>Expected output: <code>ldapuser40:*:10000:10000:LDAP User:/home/ldapuser40:/bin/bash</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Check SSSD service status:</strong></p>
+                    <p>Type: <code>systemctl status sssd</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Troubleshooting</h4>
+                    <p>If authentication fails:</p>
+                    <ul>
+                        <li>Check <code>/var/log/secure</code> for authentication errors</li>
+                        <li>Verify network connectivity to LDAP server</li>
+                        <li>Ensure time is synchronized (LDAP often requires accurate time)</li>
+                        <li>Check <code>/etc/nsswitch.conf</code> includes sss for passwd and group</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 1.11: LDAP Authentication</span></div>
+            <div>[root@station ~]# <span class="prompt">Configure LDAP authentication for ldapuser40 with password "password"</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        packagesInstalled: false,
+        certificateInstalled: false,
+        ldapConfigured: false,
+        userVerified: false
+    };
+    
+    // Simulated file contents
+    let sssdConfigContent = "";
+    let ldapConfContent = "";
+    
+    const commands = {
+        'yum': (args) => {
+            if (args[0] === "install" && args.includes("sssd") && args.includes("authconfig-gtk") && 
+                args.includes("pam-krb5") && args.includes("krb5-workstation")) {
+                configState.packagesInstalled = true;
+                updateRequirements();
+                return "Complete! All packages installed successfully.";
+            }
+            return "Dependencies resolved. Nothing to do.";
+        },
+        'wget': (args) => {
+            if (args[0] === "http://instructor.example.com/pub/ldap.crt" && args[1] === "-O" && 
+                args[2] === "/etc/openldap/certs/ldap.crt") {
+                configState.certificateInstalled = true;
+                updateRequirements();
+                return "Certificate saved to /etc/openldap/certs/ldap.crt";
+            }
+            return "wget: unable to resolve host address";
+        },
+        'update-ca-trust': () => {
+            if (configState.certificateInstalled) {
+                return "Updating certificates in /etc/pki/ca-trust... done.";
+            }
+            return "No new certificates to add.";
+        },
+        'system-config-authentication': () => {
+            // Simulate GUI configuration
+            configState.ldapConfigured = true;
+            updateRequirements();
+            return "Authentication configuration updated successfully.\nSSSD service restarted.";
+        },
+        'authconfig': (args) => {
+            if (args.includes("--enableldap") && args.includes("--enableldapauth") && 
+                args.includes("--ldapserver=ldap://instructor.example.com") && 
+                args.includes('--ldapbasedn="dc=example,dc=com"')) {
+                configState.ldapConfigured = true;
+                updateRequirements();
+                return "Authentication configuration updated successfully.\nSSSD service restarted.";
+            }
+            return "authconfig: invalid arguments";
+        },
+        'getent': (args) => {
+            if (args[0] === "passwd" && args[1] === "ldapuser40") {
+                if (configState.ldapConfigured) {
+                    configState.userVerified = true;
+                    updateRequirements();
+                    return "ldapuser40:*:10000:10000:LDAP User:/home/ldapuser40:/bin/bash";
+                }
+                return "getent: passwd entry for 'ldapuser40' not found";
+            }
+            return "getent: unknown database '"+args[0]+"'";
+        },
+        'systemctl': (args) => {
+            if (args[0] === "status" && args[1] === "sssd") {
+                return "● sssd.service - System Security Services Daemon\n   Loaded: loaded (/usr/lib/systemd/system/sssd.service; enabled; vendor preset: disabled)\n   Active: active (running)";
+            }
+            return "Unknown operation '"+args.join(' ')+"'";
+        },
+        'help': () => 'Available commands: yum, wget, update-ca-trust, system-config-authentication, authconfig, getent, systemctl, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['sssd', 'authconfig-gtk', 'pam-krb5', 'krb5-workstation', 'system-config-authentication', 'authconfig', 'getent']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All LDAP authentication requirements completed successfully!</div>`;
+            terminalOutput.innerHTML += `<div class="success">LDAP user 'ldapuser40' can now authenticate with password 'password'</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update packages requirement
+        const packagesItem = document.getElementById('req-packages');
+        if (configState.packagesInstalled) {
+            packagesItem.classList.add('completed');
+            packagesItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update certificate requirement
+        const certificateItem = document.getElementById('req-certificate');
+        if (configState.certificateInstalled) {
+            certificateItem.classList.add('completed');
+            certificateItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update configuration requirement
+        const configItem = document.getElementById('req-config');
+        if (configState.ldapConfigured) {
+            configItem.classList.add('completed');
+            configItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update verification requirement
+        const verifyItem = document.getElementById('req-verify');
+        if (configState.userVerified) {
+            verifyItem.classList.add('completed');
+            verifyItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

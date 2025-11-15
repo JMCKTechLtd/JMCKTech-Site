@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 58 - User Management</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 58 - User Management</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>User Configuration Requirements</h4>
+                <div class="requirement-item" id="req-create-user">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create user named "eric"</span>
+                </div>
+                <div class="requirement-item" id="req-set-password">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set password for user "eric"</span>
+                </div>
+                <div class="requirement-item" id="req-restrict-login">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Restrict interactive login for user "eric"</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>User Management Concept</h4>
+                <p>You need to create a user named "eric" and restrict their interactive login capability. This is commonly done for system accounts or service accounts that shouldn't have shell access.</p>
+                <p>The login shell is specified in the last field of the user's entry in <code>/etc/passwd</code>.</p>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Create the User</h3>
+                <p>To create the user "eric":</p>
+                
+                <div class="required-command">
+                    <p>Type: <code>useradd eric</code></p>
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding User Creation</h4>
+                    <p>The <code>useradd</code> command creates a new user with default settings. By default, this includes:</p>
+                    <ul>
+                        <li>A home directory in <code>/home/username</code></li>
+                        <li>Login shell set to <code>/bin/bash</code></li>
+                        <li>A user group with the same name as the user</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Set the Password</h3>
+                <p>To set a password for the user:</p>
+                
+                <div class="required-command">
+                    <p>Type: <code>passwd eric</code></p>
+                    <p>Then enter the password twice when prompted</p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Password Management</h4>
+                    <p>The <code>passwd</code> command allows you to set or change a user's password. As root, you can set any password without knowing the current one.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Restrict Interactive Login</h3>
+                <p>To prevent interactive login for the user:</p>
+                
+                <div class="required-command">
+                    <p><strong>Edit the password file:</strong></p>
+                    <p>Type: <code>vim /etc/passwd</code></p>
+                    <p>Find the line for user "eric" and change the shell to:</p>
+                    <div class="file-content">/sbin/nologin</div>
+                    <p>OR</p>
+                    <div class="file-content">/bin/false</div>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Login Restrictions</h4>
+                    <p>The last field in <code>/etc/passwd</code> specifies the user's login shell. To prevent interactive login:</p>
+                    <ul>
+                        <li><code>/sbin/nologin</code> - Shows a polite message when login attempted</li>
+                        <li><code>/bin/false</code> - Immediately exits with no message</li>
+                    </ul>
+                    <p>Alternatively, you can use: <code>usermod -s /sbin/nologin eric</code></p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>Step 4: Verify Configuration</h3>
+                
+                <div class="required-command">
+                    <p><strong>Check user exists:</strong></p>
+                    <p>Type: <code>id eric</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Check login shell:</strong></p>
+                    <p>Type: <code>grep eric /etc/passwd</code></p>
+                    <p>Should show shell as <code>/sbin/nologin</code> or <code>/bin/false</code></p>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@server ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@server ~]# <span class="prompt">Welcome to RHCSA Lab 58: User Management</span></div>
+            <div>[root@server ~]# <span class="prompt">Create user "eric" and restrict interactive login</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        userCreated: false,
+        passwordSet: false,
+        loginRestricted: false
+    };
+    
+    // Simulated file contents
+    let passwdFileContent = `root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin`;
+    
+    const commands = {
+        'useradd': (args) => {
+            if (args[0] === "eric") {
+                configState.userCreated = true;
+                passwdFileContent += `\neric:x:1001:1001::/home/eric:/bin/bash`;
+                updateRequirements();
+                return "";
+            }
+            return `useradd: invalid user '${args[0]}'`;
+        },
+        'passwd': (args) => {
+            if (args[0] === "eric") {
+                if (configState.userCreated) {
+                    configState.passwordSet = true;
+                    updateRequirements();
+                    return "Changing password for user eric.\nNew password: \nRetype new password: \npasswd: all authentication tokens updated successfully.";
+                }
+                return "passwd: user 'eric' does not exist";
+            }
+            return `passwd: invalid user '${args[0]}'`;
+        },
+        'id': (args) => {
+            if (args[0] === "eric") {
+                if (configState.userCreated) {
+                    return "uid=1001(eric) gid=1001(eric) groups=1001(eric)";
+                }
+                return "id: eric: no such user";
+            }
+            return `id: invalid user '${args[0]}'`;
+        },
+        'grep': (args) => {
+            if (args[0] === "eric" && args[1] === "/etc/passwd") {
+                if (configState.userCreated) {
+                    return passwdFileContent.split('\n').find(line => line.startsWith("eric:"));
+                }
+                return "";
+            }
+            return `grep: ${args.join(' ')}: No such file or directory`;
+        },
+        'vim': (args) => {
+            if (args[0] === "/etc/passwd") {
+                // Check if they changed the shell for eric
+                const ericLine = passwdFileContent.split('\n').find(line => line.startsWith("eric:"));
+                if (ericLine && (ericLine.endsWith("/sbin/nologin") || ericLine.endsWith("/bin/false"))) {
+                    configState.loginRestricted = true;
+                    updateRequirements();
+                }
+                return `Editing ${args[0]}`;
+            }
+            return `vim: ${args[0]}: No such file or directory`;
+        },
+        'usermod': (args) => {
+            if (args[0] === "-s" && (args[1] === "/sbin/nologin" || args[1] === "/bin/false") && args[2] === "eric") {
+                if (configState.userCreated) {
+                    configState.loginRestricted = true;
+                    passwdFileContent = passwdFileContent.replace(
+                        /^eric:.*$/m,
+                        `eric:x:1001:1001::/home/eric:${args[1]}`
+                    );
+                    updateRequirements();
+                    return "";
+                }
+                return "usermod: user 'eric' does not exist";
+            }
+            return `Unknown operation '${args.join(' ')}'`;
+        },
+        'help': () => 'Available commands: useradd, passwd, id, grep, vim, usermod, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/etc/passwd']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@server ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@server ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@server ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All user configuration requirements completed successfully!</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update user creation requirement
+        const createUserItem = document.getElementById('req-create-user');
+        if (configState.userCreated) {
+            createUserItem.classList.add('completed');
+            createUserItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update password requirement
+        const setPasswordItem = document.getElementById('req-set-password');
+        if (configState.passwordSet) {
+            setPasswordItem.classList.add('completed');
+            setPasswordItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update login restriction requirement
+        const restrictLoginItem = document.getElementById('req-restrict-login');
+        if (configState.loginRestricted) {
+            restrictLoginItem.classList.add('completed');
+            restrictLoginItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

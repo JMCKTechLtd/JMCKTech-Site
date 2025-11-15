@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 37</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 37: File Search</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>File Search Requirements</h4>
+                <div class="requirement-item" id="req-mkdir">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create directory <code>/root/findresults</code></span>
+                </div>
+                <div class="requirement-item" id="req-find">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Find all files owned by user <code>jack</code></span>
+                </div>
+                <div class="requirement-item" id="req-copy">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Copy found files to <code>/root/findresults</code> preserving attributes</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>File Search Concepts</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>find command</strong>
+                        Searches directory tree for files matching criteria:<br>
+                        <code>find [path] [options] [actions]</code>
+                    </div>
+                    <div class="concept-item">
+                        <strong>User ownership</strong>
+                        Find files by owner:<br>
+                        <code>-user username</code>
+                    </div>
+                    <div class="concept-item">
+                        <strong>Copy with attributes</strong>
+                        <code>cp -a</code> preserves all attributes:<br>
+                        timestamps, ownership, permissions
+                    </div>
+                    <div class="concept-item">
+                        <strong>Executing commands</strong>
+                        <code>-exec</code> runs command on each found file:<br>
+                        <code>-exec command {} \;</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Create Target Directory</h3>
+                
+                <div class="required-command">
+                    <p><strong>Create the directory to store results:</strong></p>
+                    <p>Type: <code>mkdir /root/findresults</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Directory Creation</h4>
+                    <p>The <code>mkdir</code> command creates new directories. When working in <code>/root</code>, you need root privileges (which you have in this lab environment).</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Find and Copy Files</h3>
+                
+                <div class="required-command">
+                    <p><strong>Find files owned by jack and copy them:</strong></p>
+                    <p>Type: <code>find / -user jack -exec cp -a {} /root/findresults/ \;</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding the Find Command</h4>
+                    <p>This command:</p>
+                    <ol>
+                        <li>Searches from root (<code>/</code>)</li>
+                        <li>Filters for files owned by <code>jack</code></li>
+                        <li>Executes <code>cp -a</code> on each found file</li>
+                        <li>Copies to <code>/root/findresults/</code> with all attributes</li>
+                    </ol>
+                    <p>The <code>{}</code> is replaced by each found file's path, and <code>\;</code> terminates the command.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Verify Results</h3>
+                
+                <div class="required-command">
+                    <p><strong>Check the copied files:</strong></p>
+                    <p>Type: <code>ls -l /root/findresults</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Verification</h4>
+                    <p>You should see:</p>
+                    <ul>
+                        <li>All files owned by <code>jack</code></li>
+                        <li>Original timestamps preserved (<code>-a</code> flag)</li>
+                        <li>Correct permissions maintained</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 37: File Search</span></div>
+            <div>[root@station ~]# <span class="prompt">Find files owned by jack and copy them to /root/findresults</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        directoryCreated: false,
+        filesFound: false,
+        filesCopied: false
+    };
+    
+    // Simulated file system
+    const simulatedFiles = {
+        '/root': { type: 'directory' },
+        '/home/jack/file1.txt': { owner: 'jack', content: 'jack file 1' },
+        '/home/jack/file2.txt': { owner: 'jack', content: 'jack file 2' },
+        '/home/jill/file3.txt': { owner: 'jill', content: 'jill file' },
+        '/etc/config': { owner: 'root', content: 'system config' }
+    };
+    
+    const commands = {
+        'mkdir': (args) => {
+            if (args[0] === '/root/findresults') {
+                simulatedFiles['/root/findresults'] = { type: 'directory' };
+                configState.directoryCreated = true;
+                updateRequirements();
+                return '';
+            }
+            return `mkdir: cannot create directory '${args[0]}': Permission denied`;
+        },
+        'find': (args) => {
+            if (args.includes('-user') && args.includes('jack') && 
+                args.includes('-exec') && args.includes('cp')) {
+                configState.filesFound = true;
+                configState.filesCopied = true;
+                updateRequirements();
+                
+                // Simulate finding and copying files
+                const jackFiles = Object.entries(simulatedFiles)
+                    .filter(([path, file]) => file.owner === 'jack')
+                    .map(([path]) => path);
+                
+                jackFiles.forEach(file => {
+                    const filename = file.split('/').pop();
+                    simulatedFiles[`/root/findresults/${filename}`] = { 
+                        ...simulatedFiles[file] 
+                    };
+                });
+                
+                return jackFiles.join('\n');
+            }
+            return 'find: missing arguments';
+        },
+        'ls': (args) => {
+            if (args[0] === '-l' && args[1] === '/root/findresults') {
+                if (!simulatedFiles['/root/findresults']) {
+                    return `ls: cannot access '/root/findresults': No such file or directory`;
+                }
+                
+                const files = Object.keys(simulatedFiles)
+                    .filter(path => path.startsWith('/root/findresults/'))
+                    .map(path => {
+                        const file = simulatedFiles[path];
+                        return `-rw-r--r-- 1 jack jack ${file.content.length} Jan 1 00:00 ${path.split('/').pop()}`;
+                    });
+                
+                return files.length ? files.join('\n') : '';
+            }
+            return '';
+        },
+        'help': () => 'Available commands: mkdir, find, ls, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/root/findresults', '-user', 'jack', '-exec', 'cp']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All file search requirements completed successfully!</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update directory creation requirement
+        const mkdirItem = document.getElementById('req-mkdir');
+        if (configState.directoryCreated) {
+            mkdirItem.classList.add('completed');
+            mkdirItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update find files requirement
+        const findItem = document.getElementById('req-find');
+        if (configState.filesFound) {
+            findItem.classList.add('completed');
+            findItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update copy files requirement
+        const copyItem = document.getElementById('req-copy');
+        if (configState.filesCopied) {
+            copyItem.classList.add('completed');
+            copyItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 30</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .permission-bits {
+            font-family: 'Red Hat Mono', monospace;
+            color: var(--redhat-accent);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 30: Shared Directory</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>Shared Directory Requirements</h4>
+                <div class="requirement-item" id="req-create-dir">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create directory <code>/home/admins</code></span>
+                </div>
+                <div class="requirement-item" id="req-group-owner">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set group owner to <code>adminuser</code></span>
+                </div>
+                <div class="requirement-item" id="req-group-write">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Enable group write permissions</span>
+                </div>
+                <div class="requirement-item" id="req-setgid">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set SETGID bit to ensure new files inherit group</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>Shared Directory Concepts</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>Directory Permissions</strong>
+                        <code>drwxrwxr-x</code> - Owner and group have full access<br>
+                        <code>drwxr-xr-x</code> - Standard directory permissions
+                    </div>
+                    <div class="concept-item">
+                        <strong>Special Bits</strong>
+                        <code>SETGID (2)</code> - New files inherit directory's group<br>
+                        <code>Sticky (1)</code> - Only owner can delete their files
+                    </div>
+                    <div class="concept-item">
+                        <strong>Key Commands</strong>
+                        <code>mkdir</code> - Create directories<br>
+                        <code>chmod</code> - Change permissions<br>
+                        <code>chgrp</code> - Change group ownership
+                    </div>
+                    <div class="concept-item">
+                        <strong>Verification</strong>
+                        <code>ls -ld</code> - View directory permissions<br>
+                        <code>stat</code> - Detailed file information<br>
+                        <code>getfacl</code> - View ACLs if set
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Create the Directory</h3>
+                
+                <div class="required-command">
+                    <p><strong>Create the shared directory:</strong></p>
+                    <p>Type: <code>mkdir /home/admins</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Directory Creation</h4>
+                    <p>The <code>mkdir</code> command creates new directories. When creating system directories, you typically need root privileges (use <code>sudo</code> or be logged in as root).</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Set Group Ownership</h3>
+                
+                <div class="required-command">
+                    <p><strong>Change the group owner to adminuser:</strong></p>
+                    <p>Type: <code>chgrp adminuser /home/admins</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Group Ownership</h4>
+                    <p>The <code>chgrp</code> command changes group ownership of files/directories. The group must exist in <code>/etc/group</code>. You must have permissions to change the group (typically requires root).</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Configure Permissions</h3>
+                
+                <div class="required-command">
+                    <p><strong>Add group write permissions:</strong></p>
+                    <p>Type: <code>chmod g+w /home/admins</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Set the SETGID bit:</strong></p>
+                    <p>Type: <code>chmod g+s /home/admins</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Special Permissions</h4>
+                    <p>The SETGID bit (g+s) ensures that any files created in the directory will inherit the directory's group (adminuser) rather than the creator's primary group. This is crucial for shared directories.</p>
+                    <p>Final permissions should look like: <span class="permission-bits">drwxrwsr-x</span></p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>Step 4: Verify Configuration</h3>
+                
+                <div class="required-command">
+                    <p><strong>Check directory permissions:</strong></p>
+                    <p>Type: <code>ls -ld /home/admins</code></p>
+                    <p>Should display: <span class="permission-bits">drwxrwsr-x</span></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Verify group ownership:</strong></p>
+                    <p>Type: <code>stat -c "%G" /home/admins</code></p>
+                    <p>Should return: <code>adminuser</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Verification Commands</h4>
+                    <p>After configuration, verify with these commands:</p>
+                    <ul>
+                        <li><code>ls -ld /home/admins</code> - Shows permissions and ownership</li>
+                        <li><code>stat /home/admins</code> - Detailed information including special bits</li>
+                        <li><code>getfacl /home/admins</code> - Shows ACLs if configured</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 30: Shared Directory Configuration</span></div>
+            <div>[root@station ~]# <span class="prompt">Create and configure /home/admins with the specified permissions.</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        dirCreated: false,
+        groupSet: false,
+        groupWrite: false,
+        setgid: false
+    };
+    
+    // Simulated directory state
+    let dirPermissions = "drwxr-xr-x";
+    let dirGroup = "root";
+    let dirExists = false;
+    
+    const commands = {
+        'mkdir': (args) => {
+            if (args[0] === "/home/admins") {
+                dirExists = true;
+                configState.dirCreated = true;
+                updateRequirements();
+                return "";
+            }
+            return `mkdir: cannot create directory '${args[0]}': No such file or directory`;
+        },
+        'chgrp': (args) => {
+            if (args[0] === "adminuser" && args[1] === "/home/admins") {
+                if (!dirExists) return `chgrp: cannot access '/home/admins': No such file or directory`;
+                dirGroup = "adminuser";
+                configState.groupSet = true;
+                updateRequirements();
+                return "";
+            }
+            return `chgrp: invalid group: '${args[0]}'`;
+        },
+        'chmod': (args) => {
+            if (!dirExists) return `chmod: cannot access '/home/admins': No such file or directory`;
+            
+            if (args[0] === "g+w" && args[1] === "/home/admins") {
+                dirPermissions = "drwxrwxr-x";
+                configState.groupWrite = true;
+                updateRequirements();
+                return "";
+            } else if (args[0] === "g+s" && args[1] === "/home/admins") {
+                dirPermissions = "drwxrwsr-x";
+                configState.setgid = true;
+                updateRequirements();
+                return "";
+            }
+            return `chmod: invalid mode: '${args[0]}'`;
+        },
+        'ls': (args) => {
+            if (args[0] === "-ld" && args[1] === "/home/admins") {
+                if (!dirExists) return `ls: cannot access '/home/admins': No such file or directory`;
+                return `${dirPermissions} 2 root ${dirGroup} 4096 Jun 30 10:00 /home/admins`;
+            }
+            return "ifcfg-eth0\nifcfg-lo";
+        },
+        'stat': (args) => {
+            if (args[0] === "-c" && args[1] === "\"%G\"" && args[2] === "/home/admins") {
+                if (!dirExists) return `stat: cannot stat '/home/admins': No such file or directory`;
+                return dirGroup;
+            }
+            return "stat: invalid option -- 'c'";
+        },
+        'help': () => 'Available commands: mkdir, chgrp, chmod, ls, stat, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/home/admins', 'g+w', 'g+s']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All shared directory requirements completed successfully!</div>`;
+            terminalOutput.innerHTML += `<div class="success">Directory /home/admins is now properly configured for group collaboration.</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update directory creation requirement
+        const createDirItem = document.getElementById('req-create-dir');
+        if (configState.dirCreated) {
+            createDirItem.classList.add('completed');
+            createDirItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update group ownership requirement
+        const groupOwnerItem = document.getElementById('req-group-owner');
+        if (configState.groupSet) {
+            groupOwnerItem.classList.add('completed');
+            groupOwnerItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update group write permission requirement
+        const groupWriteItem = document.getElementById('req-group-write');
+        if (configState.groupWrite) {
+            groupWriteItem.classList.add('completed');
+            groupWriteItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update SETGID bit requirement
+        const setgidItem = document.getElementById('req-setgid');
+        if (configState.setgid) {
+            setgidItem.classList.add('completed');
+            setgidItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

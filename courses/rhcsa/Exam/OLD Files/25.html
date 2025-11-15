@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 25</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .package-count {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 25: YUM Repository Configuration</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>YUM Repository Configuration Requirements</h4>
+                <div class="requirement-item" id="req-add-repo">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Add repository using: <code>yum-config-manager --add-repo=http://content.example.com/rhel7.0/x86-64/dvd</code></span>
+                </div>
+                <div class="requirement-item" id="req-gpgcheck">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Ensure <code>gpgcheck=0</code> is set in the repository file</span>
+                </div>
+                <div class="requirement-item" id="req-clean">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Clean YUM cache with <code>yum clean all</code></span>
+                </div>
+                <div class="requirement-item" id="req-repolist">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify repository with <code>yum repolist</code> (should show ~4305 packages)</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>YUM Repository Concepts</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>Repository Files</strong>
+                        Stored in <code>/etc/yum.repos.d/</code><br>
+                        Each .repo file can contain multiple repositories<br>
+                        Standard naming: <code>name.repo</code>
+                    </div>
+                    <div class="concept-item">
+                        <strong>Key Parameters</strong>
+                        <code>baseurl</code>: Repository URL<br>
+                        <code>enabled</code>: 1 for enabled, 0 for disabled<br>
+                        <code>gpgcheck</code>: 1 to verify packages, 0 to disable
+                    </div>
+                    <div class="concept-item">
+                        <strong>yum-config-manager</strong>
+                        Utility to add/remove repositories<br>
+                        <code>--add-repo</code>: Creates new repo file<br>
+                        <code>--enable/--disable</code>: Controls repo state
+                    </div>
+                    <div class="concept-item">
+                        <strong>Verification</strong>
+                        <code>yum repolist</code>: Shows enabled repos<br>
+                        <code>yum list available</code>: Lists packages<br>
+                        <code>yum clean all</code>: Cleans cache
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Add the Repository</h3>
+                
+                <div class="required-command">
+                    <p>Use <code>yum-config-manager</code> to add the repository:</p>
+                    <p>Type: <code>yum-config-manager --add-repo=http://content.example.com/rhel7.0/x86-64/dvd</code></p>
+                    <p>This will create a file named <code>content.example.com_rhel7.0_x86_64_dvd.repo</code> in <code>/etc/yum.repos.d/</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Repository Addition</h4>
+                    <p>The <code>yum-config-manager</code> command simplifies repository management by:</p>
+                    <ul>
+                        <li>Creating the proper .repo file structure</li>
+                        <li>Setting the correct baseurl</li>
+                        <li>Generating a standard repository name</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Configure GPG Check</h3>
+                
+                <div class="required-command">
+                    <p>Edit the repository file to disable GPG checking:</p>
+                    <p>Type: <code>vim /etc/yum.repos.d/content.example.com_rhel7.0_x86_64_dvd.repo</code></p>
+                    <p>Add the following line under the repository section:</p>
+                    <div class="file-content">gpgcheck=0</div>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding GPG Checking</h4>
+                    <p>GPG checking verifies package authenticity but requires proper GPG keys:</p>
+                    <ul>
+                        <li><code>gpgcheck=1</code>: Enables signature verification (default)</li>
+                        <li><code>gpgcheck=0</code>: Disables verification (use with caution)</li>
+                        <li>For production systems, always use proper GPG keys</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Clean and Verify</h3>
+                
+                <div class="required-command">
+                    <p><strong>Clean the YUM cache:</strong></p>
+                    <p>Type: <code>yum clean all</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Verify the repository:</strong></p>
+                    <p>Type: <code>yum repolist</code></p>
+                    <p>You should see approximately <span class="package-count">4305 packages</span> available</p>
+                </div>
+
+                <div class="concept">
+                    <h4>Verification Steps</h4>
+                    <p>After configuring a repository, always verify:</p>
+                    <ul>
+                        <li>The repository appears in <code>yum repolist</code></li>
+                        <li>The correct number of packages are available</li>
+                        <li>You can install packages from the repo</li>
+                    </ul>
+                    <p class="warning">⚠️ Incorrect YUM configuration may cause subsequent labs to fail!</p>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 25: YUM Repository Configuration</span></div>
+            <div>[root@station ~]# <span class="prompt">Configure the default software repository as specified.</span></div>
+            <div>[root@station ~]# <span class="prompt">Note: Existing repository at http://server.domain11.example.com/pub/x86_64/Server is available</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        repoAdded: false,
+        gpgcheckSet: false,
+        cacheCleaned: false,
+        repolistVerified: false
+    };
+    
+    // Simulated file contents
+    let repoFileContent = "";
+    
+    const commands = {
+        'yum-config-manager': (args) => {
+            if (args.includes('--add-repo=http://content.example.com/rhel7.0/x86-64/dvd')) {
+                configState.repoAdded = true;
+                repoFileContent = `[content.example.com_rhel7.0_x86_64_dvd]
+name=content.example.com_rhel7.0_x86_64_dvd
+baseurl=http://content.example.com/rhel7.0/x86-64/dvd
+enabled=1`;
+                updateRequirements();
+                return "Repository 'content.example.com_rhel7.0_x86_64_dvd' added to /etc/yum.repos.d/content.example.com_rhel7.0_x86_64_dvd.repo";
+            }
+            return "Usage: yum-config-manager [options] [repo ...]";
+        },
+        'vim': (args) => {
+            if (args[0] === "/etc/yum.repos.d/content.example.com_rhel7.0_x86_64_dvd.repo") {
+                if (repoFileContent.includes("gpgcheck=0")) {
+                    configState.gpgcheckSet = true;
+                    updateRequirements();
+                }
+                return `Editing ${args[0]}`;
+            }
+            return `vim: ${args[0]}: No such file or directory`;
+        },
+        'cat': (args) => {
+            if (args[0] === "/etc/yum.repos.d/content.example.com_rhel7.0_x86_64_dvd.repo") {
+                return repoFileContent;
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        'yum': (args) => {
+            if (args[0] === "clean" && args[1] === "all") {
+                configState.cacheCleaned = true;
+                updateRequirements();
+                return "Cleaning repos: content.example.com_rhel7.0_x86_64_dvd\nCleaning up everything";
+            } else if (args[0] === "repolist") {
+                if (configState.repoAdded && configState.gpgcheckSet) {
+                    configState.repolistVerified = true;
+                    updateRequirements();
+                    return `repo id                            repo name                                              status
+content.example.com_rhel7.0_x86_64_dvd content.example.com_rhel7.0_x86_64_dvd 4,305
+repolist: 4,305`;
+                } else if (configState.repoAdded) {
+                    return `repo id                            repo name                                              status
+content.example.com_rhel7.0_x86_64_dvd content.example.com_rhel7.0_x86_64_dvd 0
+Error: GPG check failed for this repository`;
+                }
+                return "No enabled repositories.";
+            }
+            return `Usage: yum [options] COMMAND`;
+        },
+        'help': () => 'Available commands: yum-config-manager, vim, cat, yum, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/etc/yum.repos.d/content.example.com_rhel7.0_x86_64_dvd.repo']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All YUM repository configuration requirements completed successfully!</div>`;
+            terminalOutput.innerHTML += `<div class="success">The system now has access to approximately 4,305 packages.</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update add repo requirement
+        const addRepoItem = document.getElementById('req-add-repo');
+        if (configState.repoAdded) {
+            addRepoItem.classList.add('completed');
+            addRepoItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update gpgcheck requirement
+        const gpgcheckItem = document.getElementById('req-gpgcheck');
+        if (configState.gpgcheckSet) {
+            gpgcheckItem.classList.add('completed');
+            gpgcheckItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update clean cache requirement
+        const cleanItem = document.getElementById('req-clean');
+        if (configState.cacheCleaned) {
+            cleanItem.classList.add('completed');
+            cleanItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update repolist requirement
+        const repolistItem = document.getElementById('req-repolist');
+        if (configState.repolistVerified) {
+            repolistItem.classList.add('completed');
+            repolistItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

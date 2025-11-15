@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 28</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .permission-grid {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        .permission-item {
+            padding: 5px;
+            background: #252525;
+            border-radius: 3px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 28</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>File Permission Requirements</h4>
+                <div class="requirement-item" id="req-copy-file">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Copy <code>/etc/fstab</code> to <code>/var/tmp/fstab</code></span>
+                </div>
+                <div class="requirement-item" id="req-owner-group">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Owner and group of <code>/var/tmp/fstab</code> must be root</span>
+                </div>
+                <div class="requirement-item" id="req-no-execute">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">File cannot be executed by any user</span>
+                </div>
+                <div class="requirement-item" id="req-natasha-perms">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">User natasha can read and write the file</span>
+                </div>
+                <div class="requirement-item" id="req-harry-perms">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">User harry cannot read or write the file</span>
+                </div>
+                <div class="requirement-item" id="req-other-perms">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">All other users can read the file</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>Understanding File Permissions</h4>
+                <div class="permission-grid">
+                    <div class="permission-item"><strong>Permission</strong></div>
+                    <div class="permission-item"><strong>Meaning</strong></div>
+                    
+                    <div class="permission-item"><code>rw-</code></div>
+                    <div class="permission-item">Read and write permissions</div>
+                    
+                    <div class="permission-item"><code>r--</code></div>
+                    <div class="permission-item">Read-only permission</div>
+                    
+                    <div class="permission-item"><code>---</code></div>
+                    <div class="permission-item">No permissions</div>
+                    
+                    <div class="permission-item"><code>setfacl</code></div>
+                    <div class="permission-item">Command to set Access Control Lists (ACLs) for specific users</div>
+                    
+                    <div class="permission-item"><code>getfacl</code></div>
+                    <div class="permission-item">Command to view ACL permissions</div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Copy the File</h3>
+                
+                <div class="required-command">
+                    <p><strong>Copy /etc/fstab to /var/tmp/fstab:</strong></p>
+                    <p>Type: <code>cp /etc/fstab /var/tmp/fstab</code></p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Set Owner and Group</h3>
+                
+                <div class="required-command">
+                    <p><strong>Ensure owner and group are root:</strong></p>
+                    <p>Type: <code>chown root:root /var/tmp/fstab</code></p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Remove Execute Permissions</h3>
+                
+                <div class="required-command">
+                    <p><strong>Remove all execute permissions:</strong></p>
+                    <p>Type: <code>chmod a-x /var/tmp/fstab</code></p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>Step 4: Configure User Permissions</h3>
+                
+                <div class="required-command">
+                    <p><strong>Set permissions for natasha:</strong></p>
+                    <p>Type: <code>setfacl -m u:natasha:rw- /var/tmp/fstab</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Set permissions for harry:</strong></p>
+                    <p>Type: <code>setfacl -m u:harry:--- /var/tmp/fstab</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Set permissions for others:</strong></p>
+                    <p>Type: <code>chmod o+r /var/tmp/fstab</code></p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>Step 5: Verify Permissions</h3>
+                
+                <div class="required-command">
+                    <p><strong>Check file permissions:</strong></p>
+                    <p>Type: <code>ls -l /var/tmp/fstab</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>View ACL permissions:</strong></p>
+                    <p>Type: <code>getfacl /var/tmp/fstab</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Expected Output</h4>
+                    <p>The <code>getfacl</code> output should show:</p>
+                    <div class="file-content">user:natasha:rw-
+user:harry:---</div>
+                    <p>The <code>ls -l</code> output should show:</p>
+                    <div class="file-content">-rw-r--r--+ 1 root root [size] [date] /var/tmp/fstab</div>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 28: File Permissions Configuration</span></div>
+            <div>[root@station ~]# <span class="prompt">Configure /var/tmp/fstab permissions as specified.</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        fileCopied: false,
+        ownerGroupSet: false,
+        noExecute: false,
+        natashaPerms: false,
+        harryPerms: false,
+        otherPerms: false
+    };
+    
+    // Simulated file state
+    let fstabCopied = false;
+    let fstabOwner = "root:root";
+    let fstabPermissions = "rw-r--r--";
+    let fstabACLs = {
+        natasha: "---",
+        harry: "---"
+    };
+    
+    const commands = {
+        'cp': (args) => {
+            if (args.length === 2 && args[0] === "/etc/fstab" && args[1] === "/var/tmp/fstab") {
+                fstabCopied = true;
+                configState.fileCopied = true;
+                updateRequirements();
+                return "";
+            }
+            return `cp: missing file operand`;
+        },
+        'chown': (args) => {
+            if (args.length === 2 && args[0] === "root:root" && args[1] === "/var/tmp/fstab") {
+                fstabOwner = "root:root";
+                configState.ownerGroupSet = true;
+                updateRequirements();
+                return "";
+            }
+            return `chown: missing operand`;
+        },
+        'chmod': (args) => {
+            if (args.length === 2 && args[1] === "/var/tmp/fstab") {
+                if (args[0] === "a-x") {
+                    fstabPermissions = "rw-r--r--";
+                    configState.noExecute = true;
+                    updateRequirements();
+                    return "";
+                } else if (args[0] === "o+r") {
+                    fstabPermissions = "rw-r--r--";
+                    configState.otherPerms = true;
+                    updateRequirements();
+                    return "";
+                }
+            }
+            return `chmod: invalid mode`;
+        },
+        'setfacl': (args) => {
+            if (args.length === 3 && args[0] === "-m" && args[2] === "/var/tmp/fstab") {
+                const acl = args[1];
+                if (acl.startsWith("u:natasha:")) {
+                    fstabACLs.natasha = acl.replace("u:natasha:", "");
+                    if (fstabACLs.natasha === "rw-") {
+                        configState.natashaPerms = true;
+                        updateRequirements();
+                    }
+                    return "";
+                } else if (acl.startsWith("u:harry:")) {
+                    fstabACLs.harry = acl.replace("u:harry:", "");
+                    if (fstabACLs.harry === "---") {
+                        configState.harryPerms = true;
+                        updateRequirements();
+                    }
+                    return "";
+                }
+            }
+            return `setfacl: invalid option`;
+        },
+        'ls': (args) => {
+            if (args.length === 2 && args[0] === "-l" && args[1] === "/var/tmp/fstab") {
+                if (!fstabCopied) return `ls: cannot access '/var/tmp/fstab': No such file or directory`;
+                return `-${fstabPermissions}+ 1 ${fstabOwner} 1024 Jan 1 00:00 /var/tmp/fstab`;
+            }
+            return `ls: invalid option`;
+        },
+        'getfacl': (args) => {
+            if (args.length === 1 && args[0] === "/var/tmp/fstab") {
+                if (!fstabCopied) return `getfacl: /var/tmp/fstab: No such file or directory`;
+                let output = `# file: /var/tmp/fstab\n# owner: root\n# group: root\nuser::rw-\n`;
+                output += `user:natasha:${fstabACLs.natasha}\n`;
+                output += `user:harry:${fstabACLs.harry}\n`;
+                output += `group::r--\nmask::r--\nother::r--`;
+                return output;
+            }
+            return `getfacl: invalid option`;
+        },
+        'help': () => 'Available commands: cp, chown, chmod, setfacl, ls, getfacl, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/etc/fstab', '/var/tmp/fstab']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All file permission requirements completed successfully!</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update file copied requirement
+        const copyItem = document.getElementById('req-copy-file');
+        if (configState.fileCopied) {
+            copyItem.classList.add('completed');
+            copyItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update owner/group requirement
+        const ownerItem = document.getElementById('req-owner-group');
+        if (configState.ownerGroupSet) {
+            ownerItem.classList.add('completed');
+            ownerItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update no execute requirement
+        const executeItem = document.getElementById('req-no-execute');
+        if (configState.noExecute) {
+            executeItem.classList.add('completed');
+            executeItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update natasha permissions requirement
+        const natashaItem = document.getElementById('req-natasha-perms');
+        if (configState.natashaPerms) {
+            natashaItem.classList.add('completed');
+            natashaItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update harry permissions requirement
+        const harryItem = document.getElementById('req-harry-perms');
+        if (configState.harryPerms) {
+            harryItem.classList.add('completed');
+            harryItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update other permissions requirement
+        const otherItem = document.getElementById('req-other-perms');
+        if (configState.otherPerms) {
+            otherItem.classList.add('completed');
+            otherItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

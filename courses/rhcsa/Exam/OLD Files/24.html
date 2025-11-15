@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 24</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 24: Cron Job Configuration</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>Cron Job Configuration Requirements</h4>
+                <div class="requirement-item" id="req-method1">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Method 1: Create as administrator using <code>crontab -u natasha -e</code></span>
+                </div>
+                <div class="requirement-item" id="req-method2">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Method 2: Create as natasha using <code>su - natasha</code> then <code>crontab -e</code></span>
+                </div>
+                <div class="requirement-item" id="req-cron-entry">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Correct cron entry: <code>23 14 * * * /bin/echo "file"</code></span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>Cron Job Configuration Methods</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>Method 1: As Administrator</strong>
+                        Use <code>crontab -u username -e</code> to edit another user's crontab. Requires root privileges.
+                    </div>
+                    <div class="concept-item">
+                        <strong>Method 2: As User</strong>
+                        First switch to the user with <code>su - username</code>, then use <code>crontab -e</code> to edit their own crontab.
+                    </div>
+                    <div class="concept-item">
+                        <strong>Cron Syntax</strong>
+                        <code>minute hour day month day-of-week command</code><br>
+                        Example: <code>23 14 * * * /bin/echo "file"</code> runs at 14:23 daily
+                    </div>
+                    <div class="concept-item">
+                        <strong>Cron Locations</strong>
+                        User crontabs are stored in <code>/var/spool/cron/username</code><br>
+                        System crontabs are in <code>/etc/crontab</code> and <code>/etc/cron.d/</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Configure Cron Job as Administrator</h3>
+                
+                <div class="required-command">
+                    <p><strong>Edit natasha's crontab as root:</strong></p>
+                    <p>Type: <code>crontab -u natasha -e</code></p>
+                    <p>Add the following line:</p>
+                    <div class="file-content">23 14 * * * /bin/echo "file"</div>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Administrator Method</h4>
+                    <p>When configuring cron jobs for other users as an administrator:</p>
+                    <ul>
+                        <li>You must have root privileges</li>
+                        <li>The <code>-u</code> flag specifies which user's crontab to edit</li>
+                        <li>The changes take effect immediately after saving</li>
+                        <li>You can verify with <code>crontab -u natasha -l</code></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Configure Cron Job as Natasha</h3>
+                
+                <div class="required-command">
+                    <p><strong>Switch to natasha user:</strong></p>
+                    <p>Type: <code>su - natasha</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Edit natasha's own crontab:</strong></p>
+                    <p>Type: <code>crontab -e</code></p>
+                    <p>Add the following line:</p>
+                    <div class="file-content">23 14 * * * /bin/echo "file"</div>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding User Method</h4>
+                    <p>When configuring your own cron jobs:</p>
+                    <ul>
+                        <li>You must be the target user (use <code>su</code> to switch if needed)</li>
+                        <li>No need for <code>-u</code> flag as you're editing your own crontab</li>
+                        <li>The editor specified in your <code>EDITOR</code> or <code>VISUAL</code> environment variable will be used</li>
+                        <li>Verify with <code>crontab -l</code></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Verify Configuration</h3>
+                
+                <div class="required-command">
+                    <p><strong>View natasha's cron jobs as root:</strong></p>
+                    <p>Type: <code>crontab -u natasha -l</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>View cron jobs as natasha:</strong></p>
+                    <p>Type: <code>su - natasha</code></p>
+                    <p>Then: <code>crontab -l</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Cron Verification</h4>
+                    <p>To confirm your cron job is properly configured:</p>
+                    <ul>
+                        <li>Use <code>crontab -l</code> to list your own jobs</li>
+                        <li>As root, use <code>crontab -u username -l</code> to list another user's jobs</li>
+                        <li>Check system logs with <code>journalctl -u crond</code> for errors</li>
+                        <li>Remember cron jobs run with the user's environment and permissions</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 24: Cron Job Configuration</span></div>
+            <div>[root@station ~]# <span class="prompt">Configure a daily cron job for natasha to run at 14:23 using both methods.</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        method1: false,
+        method2: false,
+        cronEntry: false
+    };
+    
+    // Simulated crontab contents
+    let natashaCrontab = "";
+    let isNatasha = false;
+    
+    const commands = {
+        'crontab': (args) => {
+            if (args[0] === "-u" && args[1] === "natasha" && args[2] === "-e") {
+                // Administrator editing natasha's crontab
+                if (natashaCrontab.includes('23 14 * * * /bin/echo "file"')) {
+                    configState.method1 = true;
+                    configState.cronEntry = true;
+                    updateRequirements();
+                }
+                return "Opening crontab for user natasha in editor...";
+            } else if (args[0] === "-u" && args[1] === "natasha" && args[2] === "-l") {
+                // Administrator viewing natasha's crontab
+                return natashaCrontab || "no crontab for natasha";
+            } else if (args[0] === "-e" && isNatasha) {
+                // Natasha editing her own crontab
+                if (natashaCrontab.includes('23 14 * * * /bin/echo "file"')) {
+                    configState.method2 = true;
+                    configState.cronEntry = true;
+                    updateRequirements();
+                }
+                return "Opening crontab for current user in editor...";
+            } else if (args[0] === "-l" && isNatasha) {
+                // Natasha viewing her own crontab
+                return natashaCrontab || "no crontab for natasha";
+            }
+            return "Invalid crontab command";
+        },
+        'su': (args) => {
+            if (args[0] === "-" && args[1] === "natasha") {
+                isNatasha = true;
+                terminalOutput.innerHTML += `<div>[root@station ~]# su - natasha</div>`;
+                terminalOutput.innerHTML += `<div>[natasha@station ~]$ _</div>`;
+                return "";
+            }
+            return "Usage: su - username";
+        },
+        'exit': () => {
+            if (isNatasha) {
+                isNatasha = false;
+                terminalOutput.innerHTML += `<div>[natasha@station ~]$ exit</div>`;
+                terminalOutput.innerHTML += `<div>[root@station ~]# _</div>`;
+                return "";
+            }
+            return "Not in a subshell";
+        },
+        'help': () => 'Available commands: crontab, su, exit, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                
+                // Simulate adding to crontab if command is "echo"
+                if (commandText === '23 14 * * * /bin/echo "file"') {
+                    natashaCrontab = commandText + "\n";
+                }
+                
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['crontab', 'su', 'exit', 'help']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                const prompt = isNatasha ? "[natasha@station ~]$" : "[root@station ~]#";
+                terminalOutput.innerHTML += `<div>${prompt} ${commandText}</div><div>${output}</div>`;
+            }
+        } else {
+            const prompt = isNatasha ? "[natasha@station ~]$" : "[root@station ~]#";
+            terminalOutput.innerHTML += `<div>${prompt} ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All cron job configuration requirements completed successfully!</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update method1 requirement
+        const method1Item = document.getElementById('req-method1');
+        if (configState.method1) {
+            method1Item.classList.add('completed');
+            method1Item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update method2 requirement
+        const method2Item = document.getElementById('req-method2');
+        if (configState.method2) {
+            method2Item.classList.add('completed');
+            method2Item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update cron entry requirement
+        const cronEntryItem = document.getElementById('req-cron-entry');
+        if (configState.cronEntry) {
+            cronEntryItem.classList.add('completed');
+            cronEntryItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

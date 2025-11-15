@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 10</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 10</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>HTTP Server Configuration Requirements</h4>
+                <div class="requirement-item" id="req-install">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Install HTTP server package (<code>httpd</code>)</span>
+                </div>
+                <div class="requirement-item" id="req-enable">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Enable HTTP service to start at boot</span>
+                </div>
+                <div class="requirement-item" id="req-download">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Download example.html from <code>http://ip/dir/example.html</code></span>
+                </div>
+                <div class="requirement-item" id="req-index">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Copy example.html to index.html</span>
+                </div>
+                <div class="requirement-item" id="req-vhost">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Configure virtual host in <code>/etc/httpd/conf/httpd.conf</code></span>
+                </div>
+                <div class="requirement-item" id="req-restart">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Restart HTTP service</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>HTTP Server Configuration Methods</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>Package Management</strong>
+                        Install packages with <code>yum install httpd</code><br>
+                        Enable services with <code>systemctl enable httpd</code>
+                    </div>
+                    <div class="concept-item">
+                        <strong>Document Root</strong>
+                        Default location: <code>/var/www/html</code><br>
+                        Main page should be named <code>index.html</code>
+                    </div>
+                    <div class="concept-item">
+                        <strong>Virtual Hosts</strong>
+                        Configure in <code>/etc/httpd/conf/httpd.conf</code><br>
+                        Requires ServerName and DocumentRoot directives
+                    </div>
+                    <div class="concept-item">
+                        <strong>Service Management</strong>
+                        Start/stop with <code>systemctl start|stop httpd</code><br>
+                        Check status with <code>systemctl status httpd</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Install HTTP Server</h3>
+                
+                <div class="required-command">
+                    <p><strong>Install the Apache HTTP server package:</strong></p>
+                    <p>Type: <code>yum install -y httpd</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Enable the service to start at boot:</strong></p>
+                    <p>Type: <code>systemctl enable httpd</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Package Installation</h4>
+                    <p>The <code>httpd</code> package provides the Apache web server. The <code>-y</code> flag automatically answers yes to confirmation prompts. Enabling the service ensures it starts automatically when the system boots.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Configure Web Content</h3>
+                
+                <div class="required-command">
+                    <p><strong>Navigate to the web root directory:</strong></p>
+                    <p>Type: <code>cd /var/www/html</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Download the example page:</strong></p>
+                    <p>Type: <code>wget http://ip/dir/example.html</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Create index.html from the example:</strong></p>
+                    <p>Type: <code>cp example.html index.html</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Web Content</h4>
+                    <p>The <code>/var/www/html</code> directory is the default document root for Apache. The <code>index.html</code> file is served when clients access the root URL of your site. You can verify content with <code>ls -l</code> and <code>cat index.html</code>.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Configure Virtual Host</h3>
+                
+                <div class="required-command">
+                    <p><strong>Edit the Apache configuration file:</strong></p>
+                    <p>Type: <code>vim /etc/httpd/conf/httpd.conf</code></p>
+                    <p>Add these directives at the end of the file:</p>
+                    <div class="file-content">NameVirtualHost 172.24.40.40:80
+&lt;VirtualHost 172.24.40.40:80&gt;
+    DocumentRoot /var/www/html
+    ServerName station.domain40.example.com
+&lt;/VirtualHost&gt;</div>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Virtual Hosts</h4>
+                    <p>Virtual hosts allow Apache to serve different content based on the requested hostname or IP address. Key directives:</p>
+                    <ul>
+                        <li><code>NameVirtualHost</code>: Specifies IP address and port for name-based virtual hosts</li>
+                        <li><code>VirtualHost</code>: Container for directives that apply to a specific site</li>
+                        <li><code>DocumentRoot</code>: Defines where the web files are stored</li>
+                        <li><code>ServerName</code>: Specifies the hostname that this virtual host should serve</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>Step 4: Start and Verify Service</h3>
+                
+                <div class="required-command">
+                    <p><strong>Start the HTTP service:</strong></p>
+                    <p>Type: <code>systemctl start httpd</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Restart the HTTP service (after configuration changes):</strong></p>
+                    <p>Type: <code>systemctl restart httpd</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Verify the service is running:</strong></p>
+                    <p>Type: <code>systemctl status httpd</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Service Management</h4>
+                    <p>After making configuration changes, you must restart the service for them to take effect. The status command shows whether the service is running and any recent log messages. You can also test the web server locally with <code>curl http://localhost</code>.</p>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 1.10: HTTP Server Configuration</span></div>
+            <div>[root@station ~]# <span class="prompt">Configure an HTTP server accessible via http://station.domain40.example.com</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        install: false,
+        enable: false,
+        download: false,
+        index: false,
+        vhost: false,
+        restart: false
+    };
+    
+    // Simulated file contents
+    let httpdConfContent = "# Default Apache configuration";
+    let webContent = "";
+    
+    const commands = {
+        'yum': (args) => {
+            if (args[0] === "install" && args[1] === "-y" && args[2] === "httpd") {
+                configState.install = true;
+                updateRequirements();
+                return "Installing httpd...\nComplete!";
+            }
+            return `Usage: yum [options] COMMAND`;
+        },
+        'systemctl': (args) => {
+            if (args[0] === "enable" && args[1] === "httpd") {
+                configState.enable = true;
+                updateRequirements();
+                return "Created symlink...";
+            } else if (args[0] === "start" && args[1] === "httpd") {
+                return "Starting httpd...";
+            } else if (args[0] === "restart" && args[1] === "httpd") {
+                configState.restart = true;
+                updateRequirements();
+                return "Restarting httpd...";
+            } else if (args[0] === "status" && args[1] === "httpd") {
+                return "● httpd.service - The Apache HTTP Server\n   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)\n   Active: active (running)";
+            }
+            return `Unknown operation '${args.join(' ')}'`;
+        },
+        'cd': (args) => {
+            if (args[0] === "/var/www/html") {
+                return "";
+            }
+            return `bash: cd: ${args[0]}: No such file or directory`;
+        },
+        'wget': (args) => {
+            if (args[0] === "http://ip/dir/example.html") {
+                webContent = "<html><body><h1>Example Page</h1></body></html>";
+                configState.download = true;
+                updateRequirements();
+                return "Saving to: 'example.html'";
+            }
+            return `wget: unable to resolve host address '${args[0]}'`;
+        },
+        'cp': (args) => {
+            if (args[0] === "example.html" && args[1] === "index.html") {
+                configState.index = true;
+                updateRequirements();
+                return "";
+            }
+            return `cp: cannot stat '${args[0]}': No such file or directory`;
+        },
+        'ls': () => "example.html\nindex.html",
+        'cat': (args) => {
+            if (args[0] === "/var/www/html/index.html" || args[0] === "/var/www/html/example.html") {
+                return webContent;
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        'vim': (args) => {
+            if (args[0] === "/etc/httpd/conf/httpd.conf") {
+                // Check if virtual host is configured
+                if (httpdConfContent.includes("NameVirtualHost 172.24.40.40:80") && 
+                    httpdConfContent.includes("<VirtualHost 172.24.40.40:80>") &&
+                    httpdConfContent.includes("DocumentRoot /var/www/html") &&
+                    httpdConfContent.includes("ServerName station.domain40.example.com")) {
+                    configState.vhost = true;
+                    updateRequirements();
+                }
+                return `Editing ${args[0]}`;
+            }
+            return `vim: ${args[0]}: No such file or directory`;
+        },
+        'help': () => 'Available commands: yum, systemctl, cd, wget, cp, ls, cat, vim, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/etc/httpd/conf/httpd.conf', '/var/www/html', 'example.html', 'index.html']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All HTTP server configuration requirements completed successfully!</div>`;
+            terminalOutput.innerHTML += `<div class="success">Your web server is now accessible at http://station.domain40.example.com</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update install requirement
+        const installItem = document.getElementById('req-install');
+        if (configState.install) {
+            installItem.classList.add('completed');
+            installItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update enable requirement
+        const enableItem = document.getElementById('req-enable');
+        if (configState.enable) {
+            enableItem.classList.add('completed');
+            enableItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update download requirement
+        const downloadItem = document.getElementById('req-download');
+        if (configState.download) {
+            downloadItem.classList.add('completed');
+            downloadItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update index requirement
+        const indexItem = document.getElementById('req-index');
+        if (configState.index) {
+            indexItem.classList.add('completed');
+            indexItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update vhost requirement
+        const vhostItem = document.getElementById('req-vhost');
+        if (configState.vhost) {
+            vhostItem.classList.add('completed');
+            vhostItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update restart requirement
+        const restartItem = document.getElementById('req-restart');
+        if (configState.restart) {
+            restartItem.classList.add('completed');
+            restartItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

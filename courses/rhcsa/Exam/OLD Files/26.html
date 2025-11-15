@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 26</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .lvm-diagram {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .lvm-diagram pre {
+            margin: 0;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 26: Logical Volume Management</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>Logical Volume Requirements</h4>
+                <div class="requirement-item" id="req-check-current">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Check current size of the <code>vo</code> Logical Volume</span>
+                </div>
+                <div class="requirement-item" id="req-resize-lv">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Resize the <code>vo</code> Logical Volume to approximately 290M</span>
+                </div>
+                <div class="requirement-item" id="req-resize-fs">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Resize the filesystem to match the new LV size</span>
+                </div>
+                <div class="requirement-item" id="req-verify-size">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify the new size is within acceptable range (270M-320M)</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>LVM Concepts</h4>
+                <div class="lvm-diagram">
+                    <pre>
+Physical Volume (PV) → Volume Group (VG) → Logical Volume (LV) → Filesystem
+   /dev/sda1              vg0                 vo                 /home
+                    </pre>
+                </div>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>Checking Sizes</strong>
+                        <code>df -h</code> - Filesystem sizes<br>
+                        <code>lvdisplay</code> - Logical Volume details<br>
+                        <code>vgdisplay</code> - Volume Group details
+                    </div>
+                    <div class="concept-item">
+                        <strong>Extending LV</strong>
+                        <code>lvextend -L +100M /dev/vg0/vo</code><br>
+                        <code>resize2fs /dev/vg0/vo</code> (for ext4)<br>
+                        <code>xfs_growfs /home</code> (for XFS)
+                    </div>
+                    <div class="concept-item">
+                        <strong>Reducing LV</strong>
+                        <code>umount /home</code><br>
+                        <code>e2fsck -f /dev/vg0/vo</code><br>
+                        <code>resize2fs /dev/vg0/vo 100M</code><br>
+                        <code>lvreduce -L 100M /dev/vg0/vo</code><br>
+                        <code>mount /dev/vg0/vo /home</code>
+                    </div>
+                    <div class="concept-item">
+                        <strong>Important Notes</strong>
+                        Always resize filesystem after LV<br>
+                        XFS can only be grown, not reduced<br>
+                        Unmount filesystem before reducing<br>
+                        Backup important data first
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Check Current Configuration</h3>
+                <p>First, check the current size of your Logical Volume and filesystem:</p>
+                
+                <div class="required-command">
+                    <p><strong>Check mounted filesystems:</strong></p>
+                    <p>Type: <code>df -hT /home</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Check Logical Volume details:</strong></p>
+                    <p>Type: <code>lvdisplay /dev/vg0/vo</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding the Output</h4>
+                    <p>The <code>df -hT</code> command shows mounted filesystems with their types and sizes. The <code>lvdisplay</code> command shows detailed information about the Logical Volume including its current size and path.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Resize the Logical Volume</h3>
+                <p>Depending on whether you need to extend or reduce the LV, use the appropriate commands:</p>
+                
+                <div class="required-command">
+                    <p><strong>For extending the LV:</strong></p>
+                    <p>Type: <code>lvextend -L 290M /dev/vg0/vo</code></p>
+                    <p>Or to add space: <code>lvextend -L +100M /dev/vg0/vo</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>For reducing the LV (if needed):</strong></p>
+                    <p>First unmount: <code>umount /home</code></p>
+                    <p>Check filesystem: <code>e2fsck -f /dev/vg0/vo</code></p>
+                    <p>Resize filesystem: <code>resize2fs /dev/vg0/vo 290M</code></p>
+                    <p>Reduce LV: <code>lvreduce -L 290M /dev/vg0/vo</code></p>
+                    <p>Remount: <code>mount /dev/vg0/vo /home</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Resizing Considerations</h4>
+                    <p>When extending, you can specify either the exact size (<code>-L 290M</code>) or add to current size (<code>-L +100M</code>). When reducing, you must first resize the filesystem to be smaller than the new LV size.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Resize the Filesystem</h3>
+                <p>After resizing the LV, you must resize the filesystem to match:</p>
+                
+                <div class="required-command">
+                    <p><strong>For ext2/ext3/ext4 filesystems:</strong></p>
+                    <p>Type: <code>resize2fs /dev/vg0/vo</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>For XFS filesystems:</strong></p>
+                    <p>Type: <code>xfs_growfs /home</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Filesystem Differences</h4>
+                    <p>ext4 filesystems can be grown or reduced (with unmounting). XFS filesystems can only be grown, not reduced. Always check your filesystem type with <code>df -T</code> before resizing.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>Step 4: Verify the Changes</h3>
+                <p>Confirm the new size is within the acceptable range (270M-320M):</p>
+                
+                <div class="required-command">
+                    <p><strong>Check the new size:</strong></p>
+                    <p>Type: <code>df -h /home</code></p>
+                    <p>Type: <code>lvdisplay /dev/vg0/vo</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Verification</h4>
+                    <p>The <code>df -h</code> output should show the filesystem size in the required range. The <code>lvdisplay</code> output should show the exact LV size. Remember that filesystem overhead means these numbers won't match exactly.</p>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 26: Logical Volume Management</span></div>
+            <div>[root@station ~]# <span class="prompt">Resize the vo Logical Volume to approximately 290M</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        checkedCurrent: false,
+        resizedLV: false,
+        resizedFS: false,
+        verifiedSize: false,
+        currentSize: 200 // Initial size in MB
+    };
+    
+    const commands = {
+        'df': (args) => {
+            if (args.includes('-h') && (args.includes('/home') || args.includes('-T'))) {
+                configState.checkedCurrent = true;
+                updateRequirements();
+                
+                const size = configState.resizedLV ? 
+                    (configState.resizedFS ? 290 + Math.floor(Math.random() * 30) - 10 : configState.currentSize) 
+                    : configState.currentSize;
+                
+                return `Filesystem      Type  Size  Used Avail Use% Mounted on\n/dev/vg0/vo     ext4  ${size}M  120M  155M  44% /home`;
+            }
+            return `Filesystem     1K-blocks    Used Available Use% Mounted on\n/dev/vg0/vo      ${configState.currentSize * 1024} 123456  98765   44% /home`;
+        },
+        'lvdisplay': (args) => {
+            if (args.includes('/dev/vg0/vo')) {
+                configState.checkedCurrent = true;
+                updateRequirements();
+                
+                const size = configState.resizedLV ? 290 : 200;
+                return `--- Logical volume ---\nLV Path                /dev/vg0/vo\nLV Size                ${size}.00 MiB\nCurrent LE              ${Math.ceil(size/4)}\nBlock device           253:2`;
+            }
+            return "Invalid LV path specified";
+        },
+        'lvextend': (args) => {
+            if (args.includes('/dev/vg0/vo')) {
+                configState.resizedLV = true;
+                updateRequirements();
+                return "Size of logical volume vg0/vo changed from 200.00 MiB to 290.00 MiB.\nLogical volume vg0/vo successfully resized.";
+            }
+            return "Invalid LV path specified";
+        },
+        'lvreduce': (args) => {
+            if (args.includes('/dev/vg0/vo')) {
+                configState.resizedLV = true;
+                updateRequirements();
+                return "Size of logical volume vg0/vo changed from 350.00 MiB to 290.00 MiB.\nLogical volume vg0/vo successfully resized.";
+            }
+            return "Invalid LV path specified";
+        },
+        'resize2fs': (args) => {
+            if (args.includes('/dev/vg0/vo')) {
+                configState.resizedFS = true;
+                updateRequirements();
+                return "The filesystem on /dev/vg0/vo is now 290000 blocks long.";
+            }
+            return "Invalid device specified";
+        },
+        'xfs_growfs': (args) => {
+            if (args.includes('/home')) {
+                configState.resizedFS = true;
+                updateRequirements();
+                return "meta-data=/dev/vg0/vo      isize=512    agcount=4, agsize=16000 blks\ndata blocks changed from 16000 to 29000";
+            }
+            return "Invalid mount point specified";
+        },
+        'umount': (args) => {
+            if (args.includes('/home')) {
+                return "";
+            }
+            return "umount: /home: not mounted";
+        },
+        'e2fsck': (args) => {
+            if (args.includes('/dev/vg0/vo')) {
+                return "/dev/vg0/vo: 12/50000 files (0.0% non-contiguous), 12000/200000 blocks";
+            }
+            return "Invalid device specified";
+        },
+        'mount': (args) => {
+            if (args.includes('/dev/vg0/vo') && args.includes('/home')) {
+                return "";
+            }
+            return "mount: /home: already mounted on /dev/vg0/vo";
+        },
+        'help': () => 'Available commands: df, lvdisplay, lvextend, lvreduce, resize2fs, xfs_growfs, umount, e2fsck, mount, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/dev/vg0/vo', '/home', 'lvdisplay', 'lvextend', 'lvreduce', 'resize2fs', 'xfs_growfs']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v === true || (typeof v === 'number'))) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All Logical Volume requirements completed successfully!</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update check current requirement
+        const checkCurrentItem = document.getElementById('req-check-current');
+        if (configState.checkedCurrent) {
+            checkCurrentItem.classList.add('completed');
+            checkCurrentItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update resize LV requirement
+        const resizeLVItem = document.getElementById('req-resize-lv');
+        if (configState.resizedLV) {
+            resizeLVItem.classList.add('completed');
+            resizeLVItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update resize FS requirement
+        const resizeFSItem = document.getElementById('req-resize-fs');
+        if (configState.resizedFS) {
+            resizeFSItem.classList.add('completed');
+            resizeFSItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update verify size requirement
+        const verifySizeItem = document.getElementById('req-verify-size');
+        if (configState.checkedCurrent && configState.resizedLV && configState.resizedFS) {
+            verifySizeItem.classList.add('completed');
+            verifySizeItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>

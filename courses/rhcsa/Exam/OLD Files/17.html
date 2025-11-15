@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 17</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+        }
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .lab-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #252525;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border-top: 4px solid var(--redhat-red);
+        }
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .guide {
+            padding: 20px;
+            background: #2d2d2d;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        .terminal {
+            background: #000;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            border-top: 1px solid #444;
+        }
+        .prompt {
+            color: var(--redhat-accent);
+        }
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid #444;
+        }
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        .error {
+            color: #FF5252;
+        }
+        .completion {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        kbd {
+            background: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+        }
+        .requirement-label {
+            flex: 1;
+        }
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 17</h1>
+    </div>
+    <div class="terminal-container">
+        <div class="guide">
+            <h2>Lab Instructions</h2>
+            
+            <div class="requirements-panel">
+                <h4>Partition Creation Requirements</h4>
+                <div class="requirement-item" id="req-create-partition">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create a 512MB partition on /dev/vda</span>
+                </div>
+                <div class="requirement-item" id="req-format-partition">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Format partition as ext4 filesystem</span>
+                </div>
+                <div class="requirement-item" id="req-create-mountpoint">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create mount point /mnt/data</span>
+                </div>
+                <div class="requirement-item" id="req-configure-fstab">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Configure /etc/fstab for automatic mounting</span>
+                </div>
+                <div class="requirement-item" id="req-mount-partition">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Mount partition and verify configuration</span>
+                </div>
+            </div>
+
+            <div class="concept">
+                <h4>Disk Management Concepts</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>Partitioning</strong>
+                        Use fdisk or parted to create partitions. Common steps: n (new), p (primary), set size, w (write).
+                    </div>
+                    <div class="concept-item">
+                        <strong>Filesystems</strong>
+                        ext4 is the default Linux filesystem. Create with mkfs.ext4 or mkfs -t ext4.
+                    </div>
+                    <div class="concept-item">
+                        <strong>Mounting</strong>
+                        Temporary mounts use mount command. Persistent mounts require /etc/fstab entries.
+                    </div>
+                    <div class="concept-item">
+                        <strong>/etc/fstab</strong>
+                        Contains 6 fields: device, mount point, fs type, options, dump, fsck order.
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step1">
+                <h3>Step 1: Create Partition</h3>
+                
+                <div class="required-command">
+                    <p><strong>Start fdisk utility:</strong></p>
+                    <p>Type: <code>fdisk /dev/vda</code></p>
+                    <p>Then follow these steps in fdisk:</p>
+                    <div class="file-content">Command (m for help): n
+Partition type:
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended
+Select (default p): p
+Partition number (1-4, default 1): 5
+First sector (2048-20971519, default 2048): [Enter]
+Last sector, +sectors or +size{K,M,G} (2048-20971519, default 20971519): +512M
+Command (m for help): w</div>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Update kernel partition table:</strong></p>
+                    <p>Type: <code>partprobe /dev/vda</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>About Partition Creation</h4>
+                    <p>Key fdisk commands:</p>
+                    <ul>
+                        <li><code>n</code> - Create new partition</li>
+                        <li><code>p</code> - Create primary partition</li>
+                        <li><code>+512M</code> - Specify partition size</li>
+                        <li><code>w</code> - Write changes to disk</li>
+                        <li><code>q</code> - Quit without saving</li>
+                    </ul>
+                    <p>Always verify with <code>lsblk</code> or <code>fdisk -l</code> after changes.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>Step 2: Format Partition</h3>
+                
+                <div class="required-command">
+                    <p><strong>Create ext4 filesystem:</strong></p>
+                    <p>Type: <code>mkfs -t ext4 /dev/vda5</code></p>
+                </div>
+                
+                <div class="concept">
+                    <h4>About Filesystem Creation</h4>
+                    <p>Common filesystem types:</p>
+                    <ul>
+                        <li><code>ext4</code> - Standard Linux filesystem</li>
+                        <li><code>xfs</code> - High-performance filesystem</li>
+                        <li><code>vfat</code> - Windows-compatible</li>
+                    </ul>
+                    <p>Formatting options:</p>
+                    <ul>
+                        <li><code>-t</code> - Specify filesystem type</li>
+                        <li><code>-L</code> - Set volume label</li>
+                        <li><code>-q</code> - Quiet operation</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>Step 3: Create Mount Point</h3>
+                
+                <div class="required-command">
+                    <p><strong>Create directory for mounting:</strong></p>
+                    <p>Type: <code>mkdir -p /mnt/data</code></p>
+                </div>
+                
+                <div class="concept">
+                    <h4>About Mount Points</h4>
+                    <p>Mount points:</p>
+                    <ul>
+                        <li>Are empty directories where filesystems attach</li>
+                        <li>Should follow FHS conventions (/mnt for temporary, /media for removable)</li>
+                        <li>Must exist before mounting</li>
+                        <li>Should have appropriate permissions (typically 755)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>Step 4: Configure /etc/fstab</h3>
+                
+                <div class="required-command">
+                    <p><strong>Edit fstab file:</strong></p>
+                    <p>Type: <code>vim /etc/fstab</code></p>
+                    <p>Add this line at the end:</p>
+                    <div class="file-content">/dev/vda5 /mnt/data ext4 defaults 0 0</div>
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding /etc/fstab</h4>
+                    <p>fstab fields:</p>
+                    <ol>
+                        <li>Device (can use UUID with UUID=...)</li>
+                        <li>Mount point (must exist)</li>
+                        <li>Filesystem type</li>
+                        <li>Mount options (defaults is typical)</li>
+                        <li>Dump backup flag (0 to disable)</li>
+                        <li>Filesystem check order (0 for no check)</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>Step 5: Mount and Verify</h3>
+                
+                <div class="required-command">
+                    <p><strong>Mount all filesystems:</strong></p>
+                    <p>Type: <code>mount -a</code></p>
+                </div>
+                
+                <div class="required-command">
+                    <p><strong>Verify mounting:</strong></p>
+                    <p>Type: <code>mount | grep /dev/vda5</code></p>
+                    <p>Should show: <code>/dev/vda5 on /mnt/data type ext4 (rw,relatime,seclabel,data=ordered)</code></p>
+                </div>
+
+                <div class="concept">
+                    <h4>Verification Commands</h4>
+                    <p>After configuration, verify with:</p>
+                    <ul>
+                        <li><code>mount</code> - Show mounted filesystems</li>
+                        <li><code>lsblk</code> - List block devices with mount points</li>
+                        <li><code>df -h</code> - Show disk space usage</li>
+                        <li><code>cat /etc/fstab</code> - Verify fstab entry</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="command-line">
+            <span class="prompt">[root@station ~]#</span>
+            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
+        </div>
+        <div class="terminal" id="terminal-output">
+            <div>[root@station ~]# <span class="prompt">Welcome to RHCSA Lab 17: Partition Creation</span></div>
+            <div>[root@station ~]# <span class="prompt">Create a 512MB ext4 partition on /dev/vda and configure automatic mounting at /mnt/data</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    
+    // Track configuration state
+    const configState = {
+        createdPartition: false,
+        formattedPartition: false,
+        createdMountpoint: false,
+        configuredFstab: false,
+        mountedPartition: false
+    };
+    
+    // Simulated file contents
+    let fstabContent = `#
+# /etc/fstab
+# Created by anaconda on Mon May 10 10:20:30 2021
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/vg_station-lv_root /                       ext4    defaults        1 1
+UUID=5c899c0f-3f3a-4d5b-9a5c-5d8f8e5b5c8f /boot                   ext4    defaults        1 2
+/dev/mapper/vg_station-lv_swap swap                    swap    defaults        0 0
+tmpfs                   /dev/shm                tmpfs   defaults        0 0
+devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
+sysfs                   /sys                    sysfs   defaults        0 0
+proc                    /proc                   proc    defaults        0 0`;
+    
+    const commands = {
+        'fdisk': (args) => {
+            if (args[0] === "/dev/vda") {
+                configState.createdPartition = true;
+                updateRequirements();
+                return `Welcome to fdisk (util-linux 2.23.2).
+
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+Command (m for help): n
+Partition type:
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended
+Select (default p): p
+Partition number (1-4, default 1): 5
+First sector (2048-20971519, default 2048): 
+Using default value 2048
+Last sector, +sectors or +size{K,M,G} (2048-20971519, default 20971519): +512M
+Partition 5 of type Linux and of size 512 MiB is set
+
+Command (m for help): w
+The partition table has been altered!
+
+Calling ioctl() to re-read partition table.
+Syncing disks.`;
+            }
+            return `fdisk: invalid option -- '${args[0]}'`;
+        },
+        'partprobe': (args) => {
+            if (args[0] === "/dev/vda") {
+                return "";
+            }
+            return `partprobe: invalid option -- '${args[0]}'`;
+        },
+        'mkfs': (args) => {
+            if (args[0] === "-t" && args[1] === "ext4" && args[2] === "/dev/vda5") {
+                configState.formattedPartition = true;
+                updateRequirements();
+                return `mke2fs 1.42.9 (28-Dec-2013)
+Filesystem label=
+OS type: Linux
+Block size=4096 (log=2)
+Fragment size=4096 (log=2)
+Stride=0 blocks, Stripe width=0 blocks
+32768 inodes, 131072 blocks
+6553 blocks (5.00%) reserved for the super user
+First data block=0
+Maximum filesystem blocks=134217728
+4 block groups
+32768 blocks per group, 32768 fragments per group
+8192 inodes per group
+Superblock backups stored on blocks: 
+        32768, 98304
+
+Allocating group tables: done                            
+Writing inode tables: done                            
+Creating journal (4096 blocks): done
+Writing superblocks and filesystem accounting information: done`;
+            }
+            return `mkfs: invalid option -- '${args[0]}'`;
+        },
+        'mkdir': (args) => {
+            if (args[0] === "-p" && args[1] === "/mnt/data") {
+                configState.createdMountpoint = true;
+                updateRequirements();
+                return "";
+            }
+            return `mkdir: invalid option -- '${args[0]}'`;
+        },
+        'vim': (args) => {
+            if (args[0] === "/etc/fstab") {
+                // Check if they added the correct line
+                if (fstabContent.includes("/dev/vda5 /mnt/data ext4 defaults 0 0")) {
+                    configState.configuredFstab = true;
+                    updateRequirements();
+                }
+                return `Editing ${args[0]}`;
+            }
+            return `vim: ${args[0]}: No such file or directory`;
+        },
+        'mount': (args) => {
+            if (args[0] === "-a") {
+                configState.mountedPartition = true;
+                updateRequirements();
+                return "";
+            } else if (args[0] === "|" && args[1] === "grep" && args[2] === "/dev/vda5") {
+                return configState.mountedPartition ? 
+                    "/dev/vda5 on /mnt/data type ext4 (rw,relatime,seclabel,data=ordered)" :
+                    "";
+            }
+            return `mount: invalid option -- '${args[0]}'`;
+        },
+        'cat': (args) => {
+            if (args[0] === "/etc/fstab") {
+                return fstabContent;
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        'help': () => 'Available commands: fdisk, partprobe, mkfs, mkdir, vim, mount, cat, help',
+    };
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const commandText = commandInput.value.trim();
+            if (commandText) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+                processCommand(commandText);
+            }
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            if (historyIndex > 0) {
+                historyIndex--;
+                commandInput.value = commandHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            const partial = commandInput.value.split(' ').pop();
+            const matches = ['/etc/fstab', '/dev/vda', '/dev/vda5', '/mnt/data']
+                .filter(cmd => cmd.startsWith(partial));
+            if (matches.length === 1) {
+                commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), matches[0]);
+            }
+        }
+    });
+    
+    function processCommand(commandText) {
+        const parts = commandText.trim().split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        let output;
+        if (commands[cmd]) {
+            output = commands[cmd](args);
+            if (output) {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div>${output}</div>`;
+            } else {
+                terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div>`;
+            }
+        } else {
+            terminalOutput.innerHTML += `<div>[root@station ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+        }
+        
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        
+        // Check if all requirements are met
+        if (Object.values(configState).every(v => v)) {
+            terminalOutput.innerHTML += `<div class="success">🎉 All partition creation requirements completed successfully!</div>`;
+        }
+    }
+    
+    function updateRequirements() {
+        // Update create partition requirement
+        const createPartItem = document.getElementById('req-create-partition');
+        if (configState.createdPartition) {
+            createPartItem.classList.add('completed');
+            createPartItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update format partition requirement
+        const formatPartItem = document.getElementById('req-format-partition');
+        if (configState.formattedPartition) {
+            formatPartItem.classList.add('completed');
+            formatPartItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update create mountpoint requirement
+        const mountpointItem = document.getElementById('req-create-mountpoint');
+        if (configState.createdMountpoint) {
+            mountpointItem.classList.add('completed');
+            mountpointItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update configure fstab requirement
+        const fstabItem = document.getElementById('req-configure-fstab');
+        if (configState.configuredFstab) {
+            fstabItem.classList.add('completed');
+            fstabItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update mount partition requirement
+        const mountItem = document.getElementById('req-mount-partition');
+        if (configState.mountedPartition) {
+            mountItem.classList.add('completed');
+            mountItem.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+    }
+</script>
+</body>
+</html>
