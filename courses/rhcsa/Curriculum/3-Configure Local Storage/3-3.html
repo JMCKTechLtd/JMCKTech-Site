@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>RHCSA Lab 3.3 - Create and Configure Filesystems</title>
+    <title>RHCSA Lab 3.3: Create and Configure Filesystems</title>
     <style>
         :root {
             --redhat-red: #cc0000;
@@ -11,7 +11,16 @@
             --redhat-light: #f0f0f0;
             --redhat-accent: #4CAF50;
             --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
         }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Red Hat Text', 'Overpass', sans-serif;
             background-color: var(--redhat-dark);
@@ -19,78 +28,256 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-        }
-        .lab-container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: #252525;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            height: 100vh;
             overflow: hidden;
-            border-top: 4px solid var(--redhat-red);
         }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
         .header {
             background: linear-gradient(to right, #1e1e1e, #333);
             padding: 15px 20px;
             color: white;
             display: flex;
             align-items: center;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
+        
         .header img {
             height: 30px;
             margin-right: 15px;
         }
+        
         .header h1 {
             margin: 0;
             font-size: 1.5em;
             font-weight: normal;
         }
-        .terminal-container {
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
             display: flex;
             flex-direction: column;
-            height: 600px;
+            background: var(--panel-bg);
+            position: relative;
         }
-        .guide {
-            padding: 20px;
-            background: #2d2d2d;
-            flex: 1;
-            overflow-y: auto;
-        }
+        
         .guide h2 {
             margin-top: 0;
             color: var(--redhat-accent);
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
         .guide-step {
             margin-bottom: 15px;
             padding: 15px;
             background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
             border-left: 4px solid var(--redhat-accent);
-            display: none;
         }
-        .active-step {
-            display: block;
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
         }
-        .terminal {
-            background: #000;
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
             padding: 15px;
-            height: 250px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
             overflow-y: auto;
             font-family: 'Red Hat Mono', monospace;
-            border-top: 1px solid #444;
         }
-        .prompt {
-            color: var(--redhat-accent);
-        }
+        
         .command-line {
             display: flex;
             align-items: center;
             padding: 15px;
             background: #333;
-            border-top: 1px solid #444;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
         }
+        
         #command-input {
             flex: 1;
             background: transparent;
@@ -101,47 +288,29 @@
             outline: none;
             padding: 8px;
         }
-        .success {
+        
+        .prompt {
             color: var(--redhat-accent);
-            font-weight: bold;
+            white-space: nowrap;
+            margin-right: 5px;
         }
-        .error {
-            color: #FF5252;
-        }
-        .completion {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        .concept {
-            background: #2a2a2a;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            border-left: 4px solid var(--redhat-blue);
-        }
-        .concept h4 {
-            margin-top: 0;
-            color: var(--redhat-blue);
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
-        .concept-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .concept-item {
-            background: #252525;
+        
+        .file-content {
+            background: #1e1e1e;
             padding: 10px;
-            border-radius: 5px;
-            border-left: 2px solid var(--redhat-red);
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
         }
-        .concept-item strong {
-            color: var(--redhat-red);
-            display: block;
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
             margin-bottom: 5px;
         }
+        
         code {
             background: #1e1e1e;
             padding: 2px 5px;
@@ -149,31 +318,95 @@
             color: var(--redhat-accent);
             font-family: 'Red Hat Mono', monospace;
         }
-        kbd {
-            background: #444;
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: white;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        .required-command {
-            background: rgba(76, 175, 80, 0.1);
-            padding: 5px;
-            border-radius: 3px;
-            border-left: 3px solid var(--redhat-accent);
-        }
-        .trophy {
-            display: inline-block;
-            margin-left: 5px;
-        }
-        .syntax-error {
-            color: #FF5252;
+        
+        .success {
+            color: var(--redhat-accent);
             font-weight: bold;
         }
+        
+        .error {
+            color: #FF5252;
+        }
+        
         .warning {
             color: #FFD700;
             font-weight: bold;
         }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .filesystem-output {
+            color: #00BFFF;
+        }
+        
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        
         .strict-feedback {
             background: rgba(204, 0, 0, 0.1);
             padding: 10px;
@@ -181,303 +414,705 @@
             border-left: 3px solid var(--redhat-red);
             margin-top: 10px;
         }
-        .filesystem-output {
-            color: #00BFFF;
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
-    <div class="lab-container">
-        <div class="header">
-            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-            <h1>RHCSA Lab 3.3: Create and Configure Filesystems (ext4, XFS, vfat)</h1>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 3.3: Create and Configure Filesystems (ext4, XFS, vfat)</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Create and configure three different types of filesystems: ext4, XFS, and vfat on available partitions. You will use the appropriate mkfs commands and verify the filesystem creation.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Filesystem Configuration Requirements</h4>
+                <div class="requirement-item" id="req-lsblk">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">List available block devices using <code>lsblk</code></span>
+                </div>
+                <div class="requirement-item" id="req-ext4">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create ext4 filesystem on <code>/dev/sdb1</code></span>
+                </div>
+                <div class="requirement-item" id="req-xfs">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create XFS filesystem on <code>/dev/sdb2</code></span>
+                </div>
+                <div class="requirement-item" id="req-vfat">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create vfat filesystem on <code>/dev/sdb3</code></span>
+                </div>
+                <div class="requirement-item" id="req-verify">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify filesystem creation using <code>blkid</code> and <code>lsblk -f</code></span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Filesystem Creation Lab. In this lab, you will create and configure three different types of filesystems on available partitions.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    List Available Block Devices
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's identify the available block devices and partitions.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    lsblk
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding Block Devices</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Physical and virtual storage devices
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Identify available storage for filesystems
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Under /dev directory (e.g., /dev/sda, /dev/vdb)
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            Before creating partitions or filesystems
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>lsblk</code> lists all block devices (disks, partitions) in a tree format. Look for devices without partitions or with free space.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Create an ext4 Filesystem
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create an ext4 filesystem on the first partition.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo mkfs.ext4 /dev/sdb1
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding ext4 Filesystems</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Default Linux filesystem (journaling)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Reliable, mature, good general-purpose choice
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Commonly used for root and /home partitions
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            For most Linux system partitions
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>mkfs.ext4</code> creates an ext4 filesystem on the specified partition. You can add options like <code>-L label</code> to set a volume label.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Create an XFS Filesystem
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create an XFS filesystem on the second partition.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo mkfs.xfs /dev/sdb2
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding XFS Filesystems</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            High-performance 64-bit journaling filesystem
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Excellent for large files and high scalability
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Often used for databases and large storage
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When dealing with large files or high throughput
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>mkfs.xfs</code> creates an XFS filesystem. XFS excels at parallel I/O and large file support. Use <code>-f</code> to force creation if needed.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Create a vfat Filesystem
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a vfat filesystem on the third partition.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo mkfs.vfat /dev/sdb3
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding vfat Filesystems</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            FAT32 compatible filesystem
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Compatibility with Windows and other systems
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Used for USB drives and cross-platform sharing
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When interoperability is required
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>mkfs.vfat</code> creates a FAT32 filesystem. Use <code>-n NAME</code> to set a volume label (max 11 chars). Limited to 4GB file sizes.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Verify Filesystem Creation
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's verify that all our filesystems were created correctly.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo blkid /dev/sdb1 /dev/sdb2 /dev/sdb3
+                </div>
+                
+                <p>Then type:</p>
+                
+                <div class="command-hint">
+                    lsblk -f
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding Filesystem Verification</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Tools to inspect filesystem metadata
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Confirm successful creation and type
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Works on any block device
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            After filesystem creation or before mounting
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>blkid</code> shows filesystem UUIDs and types. <code>lsblk -f</code> displays filesystem information in a tree format with types and labels.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All filesystem configuration requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
         </div>
-        <div class="terminal-container">
-            <div class="guide">
-                <h2>Lab Instructions</h2>
-                <div class="guide-step active-step" id="step1">
-                    <h3>Step 1: List Available Block Devices</h3>
-                    <p class="required-command">Type exactly: <code>lsblk</code></p>
-
-                    <div class="concept">
-                        <h4>Understanding Block Devices</h4>
-                        <div class="concept-grid">
-                            <div class="concept-item">
-                                <strong>What</strong>
-                                Physical and virtual storage devices
-                            </div>
-                            <div class="concept-item">
-                                <strong>Why</strong>
-                                Identify available storage for filesystems
-                            </div>
-                            <div class="concept-item">
-                                <strong>Where</strong>
-                                Under /dev directory (e.g., /dev/sda, /dev/vdb)
-                            </div>
-                            <div class="concept-item">
-                                <strong>When</strong>
-                                Before creating partitions or filesystems
-                            </div>
-                        </div>
-                        <p><strong>How it works:</strong> <code>lsblk</code> lists all block devices (disks, partitions) in a tree format. Look for devices without partitions or with free space.</p>
-                    </div>
-                </div>
-                <div class="guide-step" id="step2">
-                    <h3>Step 2: Create an ext4 Filesystem</h3>
-                    <p class="required-command">Type exactly: <code>sudo mkfs.ext4 /dev/sdb1</code></p>
-
-                    <div class="concept">
-                        <h4>Understanding ext4 Filesystems</h4>
-                        <div class="concept-grid">
-                            <div class="concept-item">
-                                <strong>What</strong>
-                                Default Linux filesystem (journaling)
-                            </div>
-                            <div class="concept-item">
-                                <strong>Why</strong>
-                                Reliable, mature, good general-purpose choice
-                            </div>
-                            <div class="concept-item">
-                                <strong>Where</strong>
-                                Commonly used for root and /home partitions
-                            </div>
-                            <div class="concept-item">
-                                <strong>When</strong>
-                                For most Linux system partitions
-                            </div>
-                        </div>
-                        <p><strong>How it works:</strong> <code>mkfs.ext4</code> creates an ext4 filesystem on the specified partition. You can add options like <code>-L label</code> to set a volume label.</p>
-                    </div>
-                </div>
-                <div class="guide-step" id="step3">
-                    <h3>Step 3: Create an XFS Filesystem</h3>
-                    <p class="required-command">Type exactly: <code>sudo mkfs.xfs /dev/sdb2</code></p>
-
-                    <div class="concept">
-                        <h4>Understanding XFS Filesystems</h4>
-                        <div class="concept-grid">
-                            <div class="concept-item">
-                                <strong>What</strong>
-                                High-performance 64-bit journaling filesystem
-                            </div>
-                            <div class="concept-item">
-                                <strong>Why</strong>
-                                Excellent for large files and high scalability
-                            </div>
-                            <div class="concept-item">
-                                <strong>Where</strong>
-                                Often used for databases and large storage
-                            </div>
-                            <div class="concept-item">
-                                <strong>When</strong>
-                                When dealing with large files or high throughput
-                            </div>
-                        </div>
-                        <p><strong>How it works:</strong> <code>mkfs.xfs</code> creates an XFS filesystem. XFS excels at parallel I/O and large file support. Use <code>-f</code> to force creation if needed.</p>
-                    </div>
-                </div>
-                <div class="guide-step" id="step4">
-                    <h3>Step 4: Create a vfat Filesystem</h3>
-                    <p class="required-command">Type exactly: <code>sudo mkfs.vfat /dev/sdb3</code></p>
-
-                    <div class="concept">
-                        <h4>Understanding vfat Filesystems</h4>
-                        <div class="concept-grid">
-                            <div class="concept-item">
-                                <strong>What</strong>
-                                FAT32 compatible filesystem
-                            </div>
-                            <div class="concept-item">
-                                <strong>Why</strong>
-                                Compatibility with Windows and other systems
-                            </div>
-                            <div class="concept-item">
-                                <strong>Where</strong>
-                                Used for USB drives and cross-platform sharing
-                            </div>
-                            <div class="concept-item">
-                                <strong>When</strong>
-                                When interoperability is required
-                            </div>
-                        </div>
-                        <p><strong>How it works:</strong> <code>mkfs.vfat</code> creates a FAT32 filesystem. Use <code>-n NAME</code> to set a volume label (max 11 chars). Limited to 4GB file sizes.</p>
-                    </div>
-                </div>
-                <div class="guide-step" id="step5">
-                    <h3>Step 5: Verify Filesystem Creation</h3>
-                    <p class="required-command">Type exactly: <code>sudo blkid /dev/sdb1 /dev/sdb2 /dev/sdb3</code></p>
-                    <p class="required-command">Then type: <code>lsblk -f</code></p>
-
-                    <div class="concept">
-                        <h4>Understanding Filesystem Verification</h4>
-                        <div class="concept-grid">
-                            <div class="concept-item">
-                                <strong>What</strong>
-                                Tools to inspect filesystem metadata
-                            </div>
-                            <div class="concept-item">
-                                <strong>Why</strong>
-                                Confirm successful creation and type
-                            </div>
-                            <div class="concept-item">
-                                <strong>Where</strong>
-                                Works on any block device
-                            </div>
-                            <div class="concept-item">
-                                <strong>When</strong>
-                                After filesystem creation or before mounting
-                            </div>
-                        </div>
-                        <p><strong>How it works:</strong> <code>blkid</code> shows filesystem UUIDs and types. <code>lsblk -f</code> displays filesystem information in a tree format with types and labels.</p>
-                    </div>
-                </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[user@lab ~]$</span> Welcome to RHCSA Lab 3.3: Filesystems!</div>
+                <div><span class="prompt">[user@lab ~]$</span> You'll create and verify ext4, XFS, and vfat filesystems.</div>
+                <div><span class="prompt">[user@lab ~]$</span> Assume /dev/sdb1, /dev/sdb2, /dev/sdb3 are available partitions.</div>
+                <div><span class="prompt">[user@lab ~]$</span> Current step: List Available Block Devices</div>
+                <div><span class="prompt">[user@lab ~]$</span> Type: <code>lsblk</code></div>
+                <div><span class="prompt">[user@lab ~]$</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
             </div>
             <div class="command-line">
                 <span class="prompt">[user@lab ~]$</span>
-                <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
-            </div>
-            <div class="terminal" id="terminal-output">
-                <div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 3.3: Filesystems!</span></div>
-                <div>[user@lab ~]$ <span class="prompt">You'll create and verify ext4, XFS, and vfat filesystems.</span></div>
-                <div>[user@lab ~]$ <span class="prompt">Assume /dev/sdb1, /dev/sdb2, /dev/sdb3 are available partitions.</span></div>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
             </div>
         </div>
     </div>
-    <script>
-        const commandInput = document.getElementById('command-input');
-        const terminalOutput = document.getElementById('terminal-output');
-        const steps = document.querySelectorAll('.guide-step');
-        let currentStep = 0;
-        let commandHistory = [];
-        let historyIndex = -1;
+</div>
 
-        const requiredCommands = [
-            { command: 'lsblk', step: 0, feedback: 'Type exactly: lsblk' },
-            { command: 'sudo mkfs.ext4 /dev/sdb1', step: 1, feedback: 'Type exactly: sudo mkfs.ext4 /dev/sdb1' },
-            { command: 'sudo mkfs.xfs /dev/sdb2', step: 2, feedback: 'Type exactly: sudo mkfs.xfs /dev/sdb2' },
-            { command: 'sudo mkfs.vfat /dev/sdb3', step: 3, feedback: 'Type exactly: sudo mkfs.vfat /dev/sdb3' },
-            { command: 'sudo blkid /dev/sdb1 /dev/sdb2 /dev/sdb3', step: 4, feedback: 'Type exactly: sudo blkid /dev/sdb1 /dev/sdb2 /dev/sdb3' },
-            { command: 'lsblk -f', step: 4, feedback: 'Type exactly: lsblk -f' }
-        ];
-
-        let completedCommands = new Array(requiredCommands.length).fill(false);
-
-        const commands = {
-            'lsblk': (args) => {
-                if (args.includes('-f')) {
-                    return `NAME   FSTYPE LABEL UUID                                 MOUNTPOINT\nsda\n├─sda1 ext4   root  a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8 /\n├─sda2 swap        b2c3d4e5-f6g7-8901-h2i3-j4k5l6m7n8a1 [SWAP]\nsdb\n├─sdb1 ext4        ${args.includes('/dev/sdb1') ? 'd4e5f6g7-h8i9-0123-j4k5-l6m7n8o9p0q1' : 'not available'}\n├─sdb2 xfs         ${args.includes('/dev/sdb2') ? 'e5f6g7h8-i9j0-1234-k5l6-m7n8o9p0q1r2' : 'not available'}\n└─sdb3 vfat        ${args.includes('/dev/sdb3') ? 'f6g7h8i9-j0k1-2345-l6m7-n8o9p0q1r2s3' : 'not available'}`;
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'lsblk', 'sudo', 'mkfs.ext4', 'mkfs.xfs', 'mkfs.vfat', 'blkid', 'clear', 'help'
+    ];
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/dev/': ['sda', 'sdb', 'sdb1', 'sdb2', 'sdb3']
+    };
+    
+    // Track configuration state
+    const configState = {
+        lsblk: false,
+        ext4: false,
+        xfs: false,
+        vfat: false,
+        verify: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['lsblk'],
+        2: ['sudo mkfs.ext4 /dev/sdb1'],
+        3: ['sudo mkfs.xfs /dev/sdb2'],
+        4: ['sudo mkfs.vfat /dev/sdb3'],
+        5: ['sudo blkid /dev/sdb1 /dev/sdb2 /dev/sdb3', 'lsblk -f']
+    };
+    
+    const commands = {
+        'lsblk': (args) => {
+            if (args.includes('-f')) {
+                if (currentStep === 5 || currentStep > 5) {
+                    configState.verify = true;
+                    updateRequirements();
+                    completeStep(5);
+                    return `NAME   FSTYPE LABEL UUID                                 MOUNTPOINT\nsda\n├─sda1 ext4   root  a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8 /\n├─sda2 swap        b2c3d4e5-f6g7-8901-h2i3-j4k5l6m7n8a1 [SWAP]\nsdb\n├─sdb1 ext4        ${configState.ext4 ? 'd4e5f6g7-h8i9-0123-j4k5-l6m7n8o9p0q1' : 'not available'}\n├─sdb2 xfs         ${configState.xfs ? 'e5f6g7h8-i9j0-1234-k5l6-m7n8o9p0q1r2' : 'not available'}\n└─sdb3 vfat        ${configState.vfat ? 'f6g7h8i9-j0k1-2345-l6m7-n8o9p0q1r2s3' : 'not available'}`;
+                } else {
+                    return "Please complete the previous steps first.";
                 }
-                return `NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT\nsda     8:0    0   20G  0 disk\n├─sda1  8:1    0   18G  0 part /\n└─sda2  8:2    0    2G  0 part [SWAP]\nsdb     8:16   0   10G  0 disk\n├─sdb1  8:17   0    3G  0 part\n├─sdb2  8:18   0    3G  0 part\n└─sdb3  8:19   0    4G  0 part`;
-            },
-            'sudo': (args) => {
-                if (args[0] === 'mkfs.ext4' && args[1] === '/dev/sdb1') {
-                    return `mke2fs 1.45.6 (20-Mar-2020)\nCreating filesystem with 786432 4k blocks and 196608 inodes\nFilesystem UUID: d4e5f6g7-h8i9-0123-j4k5-l6m7n8o9p0q1\nSuperblock backups stored on blocks:\n\t32768, 98304, 163840, 229376, 294912\n\nAllocating group tables: done\nWriting inode tables: done\nCreating journal (16384 blocks): done\nWriting superblocks and filesystem accounting information: done`;
-                } else if (args[0] === 'mkfs.xfs' && args[1] === '/dev/sdb2') {
-                    return `meta-data=/dev/sdb2              isize=512    agcount=4, agsize=196608 blks\n\t         =                       sectsz=512   attr=2, projid32bit=1\n\t         =                       crc=1        finobt=1, sparse=1, rmapbt=0\n\t         =                       reflink=1\ndata     =                       bsize=4096   blocks=786432, imaxpct=25\n\t         =                       sunit=0      swidth=0 blks\nnaming   =version 2              bsize=4096   ascii-ci=0, ftype=1\nlog      =internal log           bsize=4096   blocks=2560, version=2\n\t         =                       sectsz=512   sunit=0 blks, lazy-count=1\nrealtime =none                   extsz=4096   blocks=0, rtextents=0`;
-                } else if (args[0] === 'mkfs.vfat' && args[1] === '/dev/sdb3') {
-                    return `mkfs.fat 4.1 (2017-01-24)\n/dev/sdb3 has 64 heads and 32 sectors per track,\nhidden sectors 0x0000;\nlogical sector size is 512,\nusing 0xf8 media descriptor, with 8388608 sectors;\ndrive number 0x80;\nfilesystem has 2 32-bit FATs and 8 sectors per cluster.\nFAT size is 4096 sectors, and provides 1048544 clusters.\nThere are 32 reserved sectors.\nVolume ID is f6g7h8i9, volume label has no name.`;
-                } else if (args[0] === 'blkid' && args.includes('/dev/sdb1') && args.includes('/dev/sdb2') && args.includes('/dev/sdb3')) {
-                    return `/dev/sdb1: UUID="d4e5f6g7-h8i9-0123-j4k5-l6m7n8o9p0q1" TYPE="ext4"\n/dev/sdb2: UUID="e5f6g7h8-i9j0-1234-k5l6-m7n8o9p0q1r2" TYPE="xfs"\n/dev/sdb3: UUID="F6G7-H8I9" TYPE="vfat"`;
-                }
-                return 'Command executed successfully';
-            },
-            'help': () => 'Available commands: lsblk, sudo, help',
-            'clear': () => {
-                terminalOutput.innerHTML = '<div>[user@lab ~]$ <span class="prompt">Terminal cleared</span></div>';
-                return '';
             }
-        };
-
-        commandInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const commandText = commandInput.value.trim();
-                if (commandText) {
-                    commandHistory.push(commandText);
-                    historyIndex = commandHistory.length;
-                    processCommand(commandText);
+            
+            if (currentStep === 1 || currentStep > 1) {
+                configState.lsblk = true;
+                updateRequirements();
+                completeStep(1);
+                return `NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT\nsda     8:0    0   20G  0 disk\n├─sda1  8:1    0   18G  0 part /\n└─sda2  8:2    0    2G  0 part [SWAP]\nsdb     8:16   0   10G  0 disk\n├─sdb1  8:17   0    3G  0 part\n├─sdb2  8:18   0    3G  0 part\n└─sdb3  8:19   0    4G  0 part`;
+            } else {
+                return "Please complete the previous steps first.";
+            }
+        },
+        
+        'sudo': (args) => {
+            if (args[0] === 'mkfs.ext4' && args[1] === '/dev/sdb1') {
+                if (currentStep === 2 || currentStep > 2) {
+                    configState.ext4 = true;
+                    updateRequirements();
+                    completeStep(2);
+                    return `mke2fs 1.45.6 (20-Mar-2020)\nCreating filesystem with 786432 4k blocks and 196608 inodes\nFilesystem UUID: d4e5f6g7-h8i9-0123-j4k5-l6m7n8o9p0q1\nSuperblock backups stored on blocks:\n\t32768, 98304, 163840, 229376, 294912\n\nAllocating group tables: done\nWriting inode tables: done\nCreating journal (16384 blocks): done\nWriting superblocks and filesystem accounting information: done`;
+                } else {
+                    return "Please complete the previous steps first.";
                 }
-                commandInput.value = '';
-            } else if (e.key === 'ArrowUp') {
+            } else if (args[0] === 'mkfs.xfs' && args[1] === '/dev/sdb2') {
+                if (currentStep === 3 || currentStep > 3) {
+                    configState.xfs = true;
+                    updateRequirements();
+                    completeStep(3);
+                    return `meta-data=/dev/sdb2              isize=512    agcount=4, agsize=196608 blks\n\t         =                       sectsz=512   attr=2, projid32bit=1\n\t         =                       crc=1        finobt=1, sparse=1, rmapbt=0\n\t         =                       reflink=1\ndata     =                       bsize=4096   blocks=786432, imaxpct=25\n\t         =                       sunit=0      swidth=0 blks\nnaming   =version 2              bsize=4096   ascii-ci=0, ftype=1\nlog      =internal log           bsize=4096   blocks=2560, version=2\n\t         =                       sectsz=512   sunit=0 blks, lazy-count=1\nrealtime =none                   extsz=4096   blocks=0, rtextents=0`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === 'mkfs.vfat' && args[1] === '/dev/sdb3') {
+                if (currentStep === 4 || currentStep > 4) {
+                    configState.vfat = true;
+                    updateRequirements();
+                    completeStep(4);
+                    return `mkfs.fat 4.1 (2017-01-24)\n/dev/sdb3 has 64 heads and 32 sectors per track,\nhidden sectors 0x0000;\nlogical sector size is 512,\nusing 0xf8 media descriptor, with 8388608 sectors;\ndrive number 0x80;\nfilesystem has 2 32-bit FATs and 8 sectors per cluster.\nFAT size is 4096 sectors, and provides 1048544 clusters.\nThere are 32 reserved sectors.\nVolume ID is f6g7h8i9, volume label has no name.`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === 'blkid' && args.includes('/dev/sdb1') && args.includes('/dev/sdb2') && args.includes('/dev/sdb3')) {
+                if (currentStep === 5 || currentStep > 5) {
+                    return `/dev/sdb1: UUID="d4e5f6g7-h8i9-0123-j4k5-l6m7n8o9p0q1" TYPE="ext4"\n/dev/sdb2: UUID="e5f6g7h8-i9j0-1234-k5l6-m7n8o9p0q1r2" TYPE="xfs"\n/dev/sdb3: UUID="F6G7-H8I9" TYPE="vfat"`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return 'Command executed successfully';
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: lsblk, sudo, clear, help";
+        }
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.lsblk) {
+            document.getElementById('req-lsblk').classList.add('completed');
+            document.getElementById('req-lsblk').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.ext4) {
+            document.getElementById('req-ext4').classList.add('completed');
+            document.getElementById('req-ext4').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.xfs) {
+            document.getElementById('req-xfs').classList.add('completed');
+            document.getElementById('req-xfs').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.vfat) {
+            document.getElementById('req-vfat').classList.add('completed');
+            document.getElementById('req-vfat').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.verify) {
+            document.getElementById('req-verify').classList.add('completed');
+            document.getElementById('req-verify').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[user@lab ~]$ Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[user@lab ~]$ Next: ${stepCommands[currentStep][0]}`);
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[user@lab ~]$</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(`<div class="filesystem-output">${result}</div>`);
+            }
+        } else {
+            addTerminalOutput(`<div class="error">bash: ${command}: command not found</div>`);
+            addTerminalOutput('<div class="error">Type "help" for available commands</div>');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
                 if (historyIndex > 0) {
                     historyIndex--;
-                    commandInput.value = commandHistory[historyIndex];
                 }
-            } else if (e.key === 'ArrowDown') {
-                if (historyIndex < commandHistory.length - 1) {
-                    historyIndex++;
-                    commandInput.value = commandHistory[historyIndex];
-                } else {
-                    historyIndex = commandHistory.length;
-                    commandInput.value = '';
-                }
-            } else if (e.key === 'Tab') {
-                e.preventDefault();
-                // Tab completion could be implemented here for paths
+                commandInput.value = commandHistory[historyIndex] || '';
             }
-        });
-
-        function processCommand(commandText) {
-            const parts = commandText.trim().split(/\s+/);
-            const cmd = parts[0];
-            const args = parts.slice(1);
-
-            let output;
-            if (commands[cmd]) {
-                output = commands[cmd](args);
-                if (output) {
-                    terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="filesystem-output">${output}</div>`;
-                }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
             } else {
-                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
             }
-
-            let commandMatched = false;
-            requiredCommands.forEach((req, index) => {
-                if (req.step === currentStep && req.command === commandText.trim()) {
-                    commandMatched = true;
-                    if (!completedCommands[index]) {
-                        completedCommands[index] = true;
-                        terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
-                    }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
                 }
-            });
-
-            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-            const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
-
-            if (isRequiredCommand && !commandMatched) {
-                const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
-                terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
-            }
-
-            terminalOutput.scrollTop = terminalOutput.scrollHeight;
-            checkStepCompletion();
+            }, 0);
         }
-
-        function checkStepCompletion() {
-            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-            const allCompleted = currentStepCommands.every(req =>
-                completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
-            );
-            if (allCompleted) {
-                setTimeout(() => {
-                    nextStep();
-                }, 1000);
-            }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
         }
-
-        function nextStep() {
-            steps[currentStep].classList.remove('active-step');
-            currentStep++;
-            if (currentStep < steps.length) {
-                steps[currentStep].classList.add('active-step');
-                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
-            } else {
-                terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All filesystems created successfully!</div>`;
-            }
-        }
-    </script>
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>

@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>RHCSA Lab 3.2 - Manage LVM (PVs, VGs, LVs)</title>
-<style>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 3.2: Manage LVM (PVs, VGs, LVs)</title>
+    <style>
         :root {
             --redhat-red: #cc0000;
             --redhat-dark: #1e1e1e;
             --redhat-light: #f0f0f0;
             --redhat-accent: #4CAF50;
             --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
         }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Red Hat Text', 'Overpass', sans-serif;
             background-color: var(--redhat-dark);
@@ -19,78 +28,256 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-        }
-        .lab-container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: #252525;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            height: 100vh;
             overflow: hidden;
-            border-top: 4px solid var(--redhat-red);
         }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
         .header {
             background: linear-gradient(to right, #1e1e1e, #333);
             padding: 15px 20px;
             color: white;
             display: flex;
             align-items: center;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
+        
         .header img {
             height: 30px;
             margin-right: 15px;
         }
+        
         .header h1 {
             margin: 0;
             font-size: 1.5em;
             font-weight: normal;
         }
-        .terminal-container {
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
             display: flex;
             flex-direction: column;
-            height: 600px;
+            background: var(--panel-bg);
+            position: relative;
         }
-        .guide {
-            padding: 20px;
-            background: #2d2d2d;
-            flex: 1;
-            overflow-y: auto;
-        }
+        
         .guide h2 {
             margin-top: 0;
             color: var(--redhat-accent);
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
         .guide-step {
             margin-bottom: 15px;
             padding: 15px;
             background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
             border-left: 4px solid var(--redhat-accent);
-            display: none;
         }
-        .active-step {
-            display: block;
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
         }
-        .terminal {
-            background: #000;
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
             padding: 15px;
-            height: 250px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
             overflow-y: auto;
             font-family: 'Red Hat Mono', monospace;
-            border-top: 1px solid #444;
         }
-        .prompt {
-            color: var(--redhat-accent);
-        }
+        
         .command-line {
             display: flex;
             align-items: center;
             padding: 15px;
             background: #333;
-            border-top: 1px solid #444;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
         }
+        
         #command-input {
             flex: 1;
             background: transparent;
@@ -101,47 +288,29 @@
             outline: none;
             padding: 8px;
         }
-        .success {
+        
+        .prompt {
             color: var(--redhat-accent);
-            font-weight: bold;
+            white-space: nowrap;
+            margin-right: 5px;
         }
-        .error {
-            color: #FF5252;
-        }
-        .completion {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        .concept {
-            background: #2a2a2a;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            border-left: 4px solid var(--redhat-blue);
-        }
-        .concept h4 {
-            margin-top: 0;
-            color: var(--redhat-blue);
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
-        .concept-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .concept-item {
-            background: #252525;
+        
+        .file-content {
+            background: #1e1e1e;
             padding: 10px;
-            border-radius: 5px;
-            border-left: 2px solid var(--redhat-red);
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
         }
-        .concept-item strong {
-            color: var(--redhat-red);
-            display: block;
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
             margin-bottom: 5px;
         }
+        
         code {
             background: #1e1e1e;
             padding: 2px 5px;
@@ -149,38 +318,81 @@
             color: var(--redhat-accent);
             font-family: 'Red Hat Mono', monospace;
         }
-        kbd {
-            background: #444;
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: white;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        .required-command {
-            background: rgba(76, 175, 80, 0.1);
-            padding: 5px;
-            border-radius: 3px;
-            border-left: 3px solid var(--redhat-accent);
-        }
-        .trophy {
-            display: inline-block;
-            margin-left: 5px;
-        }
-        .syntax-error {
-            color: #FF5252;
+        
+        .success {
+            color: var(--redhat-accent);
             font-weight: bold;
         }
+        
+        .error {
+            color: #FF5252;
+        }
+        
         .warning {
             color: #FFD700;
             font-weight: bold;
         }
-        .strict-feedback {
-            background: rgba(204, 0, 0, 0.1);
-            padding: 10px;
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
             border-radius: 5px;
-            border-left: 3px solid var(--redhat-red);
-            margin-top: 10px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
         }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
         .lvm-diagram {
             background: #1e1e1e;
             padding: 15px;
@@ -188,317 +400,866 @@
             border-radius: 5px;
             text-align: center;
             border: 1px solid #444;
+            font-family: 'Red Hat Mono', monospace;
         }
-        .lvm-diagram img {
-            max-width: 100%;
-            height: auto;
+        
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
         }
     </style>
-<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
 <div class="lab-container">
-<div class="header">
-<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-<h1>RHCSA Lab 3.2: Manage LVM (PVs, VGs, LVs)</h1>
-</div>
-<div class="terminal-container">
-<div class="guide">
-<h2>Lab Instructions</h2>
-<div class="guide-step active-step" id="step1">
-<h3>Step 1: Physical Volumes (PVs)</h3>
-<p class="required-command">Type exactly: <code>sudo pvcreate /dev/sdb</code></p>
-<p class="required-command">Then type: <code>sudo pvdisplay</code></p>
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 3.2: Manage LVM (PVs, VGs, LVs)</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Learn to manage Logical Volume Manager (LVM) by creating physical volumes, volume groups, and logical volumes, then creating filesystems and extending storage.</p>
+                <p><strong>Time Estimate:</strong> 20-25 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
-<div class="concept">
-<h4>Understanding Physical Volumes</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Physical storage devices prepared for LVM
-</div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Foundation for LVM storage management
-</div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Typically disk partitions or whole disks
-</div>
-<div class="concept-item">
-<strong>When</strong>
-                                First step in LVM configuration
-</div>
-</div>
-<p><strong>How it works:</strong> <code>pvcreate</code> initializes a device for LVM. <code>pvdisplay</code> shows PV details including size, free space, and VG membership.</p>
+            <div class="requirements-panel">
+                <h4>LVM Configuration Requirements</h4>
+                <div class="requirement-item" id="req-pvcreate">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create Physical Volume: <code>sudo pvcreate /dev/sdb</code></span>
+                </div>
+                <div class="requirement-item" id="req-pvdisplay">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Display PV information: <code>sudo pvdisplay</code></span>
+                </div>
+                <div class="requirement-item" id="req-vgcreate">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create Volume Group: <code>sudo vgcreate vg_data /dev/sdb</code></span>
+                </div>
+                <div class="requirement-item" id="req-vgdisplay">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Display VG information: <code>sudo vgdisplay vg_data</code></span>
+                </div>
+                <div class="requirement-item" id="req-lvcreate">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create Logical Volume: <code>sudo lvcreate -n lv_app -L 2G vg_data</code></span>
+                </div>
+                <div class="requirement-item" id="req-lvdisplay">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Display LV information: <code>sudo lvdisplay /dev/vg_data/lv_app</code></span>
+                </div>
+                <div class="requirement-item" id="req-mkfs">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create filesystem: <code>sudo mkfs.xfs /dev/vg_data/lv_app</code></span>
+                </div>
+                <div class="requirement-item" id="req-blkid">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify filesystem: <code>sudo blkid /dev/vg_data/lv_app</code></span>
+                </div>
+                <div class="requirement-item" id="req-lvextend">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Extend LV: <code>sudo lvextend -L +1G /dev/vg_data/lv_app</code></span>
+                </div>
+                <div class="requirement-item" id="req-xfs-grow">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Grow filesystem: <code>sudo xfs_growfs /dev/vg_data/lv_app</code></span>
+                </div>
+            </div>
 
-<div class="lvm-diagram">
-<strong>LVM Structure:</strong><br>
-[Physical Disks] → [Physical Volumes] → [Volume Groups] → [Logical Volumes] → [Filesystems]
-</div>
-</div>
-</div>
-<div class="guide-step" id="step2">
-<h3>Step 2: Volume Groups (VGs)</h3>
-<p class="required-command">Type exactly: <code>sudo vgcreate vg_data /dev/sdb</code></p>
-<p class="required-command">Then type: <code>sudo vgdisplay vg_data</code></p>
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA LVM Management Lab. In this lab, you will learn to manage Logical Volume Manager (LVM) by creating physical volumes, volume groups, and logical volumes.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
 
-<div class="concept">
-<h4>Understanding Volume Groups</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Pools of PVs that provide storage for LVs
-</div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Combine multiple PVs into flexible storage pools
-</div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Created from one or more PVs
-</div>
-<div class="concept-item">
-<strong>When</strong>
-                                After PV creation, before LV creation
-</div>
-</div>
-<p><strong>How it works:</strong> <code>vgcreate</code> combines PVs into a VG. <code>vgdisplay</code> shows VG details including size, free space, and PV composition. VGs can be extended by adding more PVs.</p>
-</div>
-</div>
-<div class="guide-step" id="step3">
-<h3>Step 3: Logical Volumes (LVs)</h3>
-<p class="required-command">Type exactly: <code>sudo lvcreate -n lv_app -L 2G vg_data</code></p>
-<p class="required-command">Then type: <code>sudo lvdisplay /dev/vg_data/lv_app</code></p>
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Physical Volumes (PVs)
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's create a physical volume from the disk device.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo pvcreate /dev/sdb
+                </div>
+                
+                <p>Then display the physical volume information:</p>
+                
+                <div class="command-hint">
+                    sudo pvdisplay
+                </div>
 
-<div class="concept">
-<h4>Understanding Logical Volumes</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Virtual partitions carved from VGs
-</div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Flexible, resizable storage units
-</div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Created within VGs
-</div>
-<div class="concept-item">
-<strong>When</strong>
-                                After VG creation, before filesystem creation
-</div>
-</div>
-<p><strong>How it works:</strong> <code>lvcreate</code> allocates space from a VG to create an LV. <code>lvdisplay</code> shows LV details including size, VG source, and device path. LVs can be resized as needed.</p>
-</div>
-</div>
-<div class="guide-step" id="step4">
-<h3>Step 4: Filesystem Creation</h3>
-<p class="required-command">Type exactly: <code>sudo mkfs.xfs /dev/vg_data/lv_app</code></p>
-<p class="required-command">Then type: <code>sudo blkid /dev/vg_data/lv_app</code></p>
+                <div class="concept">
+                    <h4>Understanding Physical Volumes</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Physical storage devices prepared for LVM
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Foundation for LVM storage management
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Typically disk partitions or whole disks
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            First step in LVM configuration
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>pvcreate</code> initializes a device for LVM. <code>pvdisplay</code> shows PV details including size, free space, and VG membership.</p>
 
-<div class="concept">
-<h4>Understanding Filesystems on LVs</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Filesystem creation on LVs
-</div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Make storage usable by the OS
-</div>
-<div class="concept-item">
-<strong>Where</strong>
-                                On top of LVM logical volumes
-</div>
-<div class="concept-item">
-<strong>When</strong>
-                                Final step before mounting
-</div>
-</div>
-<p><strong>How it works:</strong> <code>mkfs.xfs</code> creates an XFS filesystem on the LV. <code>blkid</code> shows filesystem details including UUID. Other filesystems like ext4 can also be used.</p>
-</div>
-</div>
-<div class="guide-step" id="step5">
-<h3>Step 5: Extending LVM</h3>
-<p class="required-command">Type exactly: <code>sudo lvextend -L +1G /dev/vg_data/lv_app</code></p>
-<p class="required-command">Then type: <code>sudo xfs_growfs /dev/vg_data/lv_app</code></p>
+                    <div class="lvm-diagram">
+                        <strong>LVM Structure:</strong><br>
+                        [Physical Disks] → [Physical Volumes] → [Volume Groups] → [Logical Volumes] → [Filesystems]
+                    </div>
+                </div>
+            </div>
 
-<div class="concept">
-<h4>Understanding LVM Extension</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Online storage expansion
-</div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Increase capacity without downtime
-</div>
-<div class="concept-item">
-<strong>Where</strong>
-                                On existing LVs with free space
-</div>
-<div class="concept-item">
-<strong>When</strong>
-                                When more storage is needed
-</div>
-</div>
-<p><strong>How it works:</strong> <code>lvextend</code> increases LV size (requires VG free space). <code>xfs_growfs</code> expands XFS filesystem to use new space. For ext4, use <code>resize2fs</code> instead.</p>
-</div>
-</div>
-</div>
-<div class="command-line">
-<span class="prompt">[root@lab ~]#</span>
-<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
-</div>
-<div class="terminal" id="terminal-output">
-<div>[root@lab ~]# <span class="prompt">Welcome to RHCSA Lab 3.2 - LVM Management!</span></div>
-<div>[root@lab ~]# <span class="prompt">Type commands exactly as shown to proceed.</span></div>
-</div>
-</div>
-</div>
-<script>const commandInput = document.getElementById('command-input');
-const terminalOutput = document.getElementById('terminal-output');
-const steps = document.querySelectorAll('.guide-step');
-let currentStep = 0;
-let commandHistory = [];
-let historyIndex = -1;
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Volume Groups (VGs)
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a volume group from the physical volume.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo vgcreate vg_data /dev/sdb
+                </div>
+                
+                <p>Then display the volume group information:</p>
+                
+                <div class="command-hint">
+                    sudo vgdisplay vg_data
+                </div>
 
-const requiredCommands = [
-    { command: 'sudo pvcreate /dev/sdb', step: 0, feedback: 'Type exactly: sudo pvcreate /dev/sdb' },
-    { command: 'sudo pvdisplay', step: 0, feedback: 'Type exactly: sudo pvdisplay' },
-    { command: 'sudo vgcreate vg_data /dev/sdb', step: 1, feedback: 'Type exactly: sudo vgcreate vg_data /dev/sdb' },
-    { command: 'sudo vgdisplay vg_data', step: 1, feedback: 'Type exactly: sudo vgdisplay vg_data' },
-    { command: 'sudo lvcreate -n lv_app -L 2G vg_data', step: 2, feedback: 'Type exactly: sudo lvcreate -n lv_app -L 2G vg_data' },
-    { command: 'sudo lvdisplay /dev/vg_data/lv_app', step: 2, feedback: 'Type exactly: sudo lvdisplay /dev/vg_data/lv_app' },
-    { command: 'sudo mkfs.xfs /dev/vg_data/lv_app', step: 3, feedback: 'Type exactly: sudo mkfs.xfs /dev/vg_data/lv_app' },
-    { command: 'sudo blkid /dev/vg_data/lv_app', step: 3, feedback: 'Type exactly: sudo blkid /dev/vg_data/lv_app' },
-    { command: 'sudo lvextend -L +1G /dev/vg_data/lv_app', step: 4, feedback: 'Type exactly: sudo lvextend -L +1G /dev/vg_data/lv_app' },
-    { command: 'sudo xfs_growfs /dev/vg_data/lv_app', step: 4, feedback: 'Type exactly: sudo xfs_growfs /dev/vg_data/lv_app' }
-];
+                <div class="concept">
+                    <h4>Understanding Volume Groups</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Pools of PVs that provide storage for LVs
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Combine multiple PVs into flexible storage pools
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Created from one or more PVs
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            After PV creation, before LV creation
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>vgcreate</code> combines PVs into a VG. <code>vgdisplay</code> shows VG details including size, free space, and PV composition. VGs can be extended by adding more PVs.</p>
+                </div>
+            </div>
 
-let completedCommands = new Array(requiredCommands.length).fill(false);
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Logical Volumes (LVs)
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a logical volume from the volume group.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo lvcreate -n lv_app -L 2G vg_data
+                </div>
+                
+                <p>Then display the logical volume information:</p>
+                
+                <div class="command-hint">
+                    sudo lvdisplay /dev/vg_data/lv_app
+                </div>
 
-const commands = {
-    'sudo': (args) => {
-        const cmd = args[0];
-        const cmdArgs = args.slice(1);
+                <div class="concept">
+                    <h4>Understanding Logical Volumes</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Virtual partitions carved from VGs
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Flexible, resizable storage units
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Created within VGs
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            After VG creation, before filesystem creation
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>lvcreate</code> allocates space from a VG to create an LV. <code>lvdisplay</code> shows LV details including size, VG source, and device path. LVs can be resized as needed.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Filesystem Creation
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a filesystem on the logical volume.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo mkfs.xfs /dev/vg_data/lv_app
+                </div>
+                
+                <p>Then verify the filesystem:</p>
+                
+                <div class="command-hint">
+                    sudo blkid /dev/vg_data/lv_app
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Filesystems on LVs</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Filesystem creation on LVs
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Make storage usable by the OS
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            On top of LVM logical volumes
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            Final step before mounting
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>mkfs.xfs</code> creates an XFS filesystem on the LV. <code>blkid</code> shows filesystem details including UUID. Other filesystems like ext4 can also be used.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Extending LVM
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's extend the logical volume and grow the filesystem.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo lvextend -L +1G /dev/vg_data/lv_app
+                </div>
+                
+                <p>Then grow the filesystem to use the new space:</p>
+                
+                <div class="command-hint">
+                    sudo xfs_growfs /dev/vg_data/lv_app
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding LVM Extension</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Online storage expansion
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Increase capacity without downtime
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            On existing LVs with free space
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When more storage is needed
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>lvextend</code> increases LV size (requires VG free space). <code>xfs_growfs</code> expands XFS filesystem to use new space. For ext4, use <code>resize2fs</code> instead.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All LVM management requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
         
-        if (cmd === 'pvcreate') {
-            return `Physical volume "/dev/sdb" successfully created.`;
-        } else if (cmd === 'pvdisplay') {
-            return `/dev/sdb\n  PV Name               /dev/sdb\n  VG Name               vg_data\n  PV Size               10.00 GiB\n  Allocatable           yes\n  PE Size               4.00 MiB\n  Total PE              2559\n  Free PE               2047\n  Allocated PE          512\n  PV UUID               abc123-xyz-456`;
-        } else if (cmd === 'vgcreate') {
-            return `Volume group "vg_data" successfully created`;
-        } else if (cmd === 'vgdisplay') {
-            return `--- Volume group ---\nVG Name               vg_data\nSystem ID\nFormat                lvm2\nVG Size               10.00 GiB\nPE Size               4.00 MiB\nTotal PE              2559\nAlloc PE / Size       512 / 2.00 GiB\nFree  PE / Size      2047 / 8.00 GiB\nVG UUID               def456-uvw-789`;
-        } else if (cmd === 'lvcreate') {
-            return `Logical volume "lv_app" created.`;
-        } else if (cmd === 'lvdisplay') {
-            return `--- Logical volume ---\nLV Path                /dev/vg_data/lv_app\nLV Name                lv_app\nVG Name                vg_data\nLV Size                2.00 GiB\nLV UUID                ghi789-rst-012`;
-        } else if (cmd === 'mkfs.xfs') {
-            return `meta-data=/dev/vg_data/lv_app isize=512    agcount=4, agsize=131072 blks\n=                       sectsz=512   attr=2, projid32bit=1\n=                       crc=1        finobt=1, sparse=1, rmapbt=0\n=                       reflink=1\ndata     =                       bsize=4096   blocks=524288, imaxpct=25\n=                       sunit=0      swidth=0 blks\nnaming   =version 2              bsize=4096   ascii-ci=0, ftype=1\nlog      =internal log           bsize=4096   blocks=2560, version=2\n=                       sectsz=512   sunit=0 blks, lazy-count=1\nrealtime =none                   extsz=4096   blocks=0, rtextents=0`;
-        } else if (cmd === 'blkid') {
-            return `/dev/vg_data/lv_app: UUID="a1b2c3d4-e5f6-7890" TYPE="xfs"`;
-        } else if (cmd === 'lvextend') {
-            return `Size of logical volume vg_data/lv_app changed from 2.00 GiB (512 extents) to 3.00 GiB (768 extents).\nLogical volume vg_data/lv_app successfully resized.`;
-        } else if (cmd === 'xfs_growfs') {
-            return `meta-data=/dev/vg_data/lv_app  isize=512    agcount=4, agsize=131072 blks\n=                       sectsz=512   attr=2, projid32bit=1\n=                       crc=1        finobt=1, sparse=1\ndata     =                       bsize=4096   blocks=524288, imaxpct=25\n=                       sunit=0      swidth=0 blks\nnaming   =version 2              bsize=4096   ascii-ci=0, ftype=1\nlog      =internal               bsize=4096   blocks=2560, version=2\n=                       sectsz=512   sunit=0 blks, lazy-count=1\nrealtime =none                   extsz=4096   blocks=0, rtextents=0\ndata blocks changed from 524288 to 786432`;
-        }
-        return `Command '${cmd}' executed successfully`;
-    },
-    'help': () => 'Available commands: sudo pvcreate, sudo pvdisplay, sudo vgcreate, sudo vgdisplay, sudo lvcreate, sudo lvdisplay, sudo mkfs.xfs, sudo blkid, sudo lvextend, sudo xfs_growfs',
-};
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@lab ~]#</span> Welcome to RHCSA Lab 3.2: LVM Management</div>
+                <div><span class="prompt">[root@lab ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@lab ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@lab ~]#</span> Current step: Physical Volumes (PVs)</div>
+                <div><span class="prompt">[root@lab ~]#</span> Type: <code>sudo pvcreate /dev/sdb</code></div>
+                <div><span class="prompt">[root@lab ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@lab ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
-commandInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const commandText = commandInput.value.trim();
-        if (commandText) {
-            commandHistory.push(commandText);
-            historyIndex = commandHistory.length;
-            processCommand(commandText);
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'sudo', 'pvcreate', 'pvdisplay', 'vgcreate', 'vgdisplay', 'lvcreate', 
+        'lvdisplay', 'mkfs.xfs', 'blkid', 'lvextend', 'xfs_growfs', 'clear', 'help'
+    ];
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/dev/': ['sda', 'sdb', 'sdc', 'vg_data/'],
+        '/dev/vg_data/': ['lv_app']
+    };
+    
+    // Track configuration state
+    const configState = {
+        pvcreate: false,
+        pvdisplay: false,
+        vgcreate: false,
+        vgdisplay: false,
+        lvcreate: false,
+        lvdisplay: false,
+        mkfs: false,
+        blkid: false,
+        lvextend: false,
+        xfsGrow: false
+    };
+    
+    // Expected command strings for each step (used for “Next:” prompt)
+    const stepCommands = {
+        1: ['sudo pvcreate /dev/sdb', 'sudo pvdisplay'],
+        2: ['sudo vgcreate vg_data /dev/sdb', 'sudo vgdisplay vg_data'],
+        3: ['sudo lvcreate -n lv_app -L 2G vg_data', 'sudo lvdisplay /dev/vg_data/lv_app'],
+        4: ['sudo mkfs.xfs /dev/vg_data/lv_app', 'sudo blkid /dev/vg_data/lv_app'],
+        5: ['sudo lvextend -L +1G /dev/vg_data/lv_app', 'sudo xfs_growfs /dev/vg_data/lv_app']
+    };
+    
+    const commands = {
+        'sudo': (args) => {
+            const cmd = args[0];
+            const cmdArgs = args.slice(1);
+            
+            if (cmd === 'pvcreate') {
+                if (currentStep === 1 || currentStep > 1) {
+                    configState.pvcreate = true;
+                    updateRequirements();
+                    checkStepCompletion(1);
+                    return `Physical volume "/dev/sdb" successfully created.`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (cmd === 'pvdisplay') {
+                if (currentStep === 1 || currentStep > 1) {
+                    configState.pvdisplay = true;
+                    updateRequirements();
+                    checkStepCompletion(1);
+                    return `/dev/sdb\n  PV Name               /dev/sdb\n  VG Name               vg_data\n  PV Size               10.00 GiB\n  Allocatable           yes\n  PE Size               4.00 MiB\n  Total PE              2559\n  Free PE               2047\n  Allocated PE          512\n  PV UUID               abc123-xyz-456`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (cmd === 'vgcreate') {
+                if (currentStep === 2 || currentStep > 2) {
+                    configState.vgcreate = true;
+                    updateRequirements();
+                    checkStepCompletion(2);
+                    return `Volume group "vg_data" successfully created`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (cmd === 'vgdisplay') {
+                if (currentStep === 2 || currentStep > 2) {
+                    configState.vgdisplay = true;
+                    updateRequirements();
+                    checkStepCompletion(2);
+                    return `--- Volume group ---\nVG Name               vg_data\nSystem ID\nFormat                lvm2\nVG Size               10.00 GiB\nPE Size               4.00 MiB\nTotal PE              2559\nAlloc PE / Size       512 / 2.00 GiB\nFree  PE / Size      2047 / 8.00 GiB\nVG UUID               def456-uvw-789`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (cmd === 'lvcreate') {
+                if (currentStep === 3 || currentStep > 3) {
+                    configState.lvcreate = true;
+                    updateRequirements();
+                    checkStepCompletion(3);
+                    return `Logical volume "lv_app" created.`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (cmd === 'lvdisplay') {
+                if (currentStep === 3 || currentStep > 3) {
+                    configState.lvdisplay = true;
+                    updateRequirements();
+                    checkStepCompletion(3);
+                    return `--- Logical volume ---\nLV Path                /dev/vg_data/lv_app\nLV Name                lv_app\nVG Name                vg_data\nLV Size                2.00 GiB\nLV UUID                ghi789-rst-012`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (cmd === 'mkfs.xfs') {
+                if (currentStep === 4 || currentStep > 4) {
+                    configState.mkfs = true;
+                    updateRequirements();
+                    checkStepCompletion(4);
+                    return `meta-data=/dev/vg_data/lv_app isize=512    agcount=4, agsize=131072 blks\n=                       sectsz=512   attr=2, projid32bit=1\n=                       crc=1        finobt=1, sparse=1, rmapbt=0\n=                       reflink=1\ndata     =                       bsize=4096   blocks=524288, imaxpct=25\n=                       sunit=0      swidth=0 blks\nnaming   =version 2              bsize=4096   ascii-ci=0, ftype=1\nlog      =internal log           bsize=4096   blocks=2560, version=2\n=                       sectsz=512   sunit=0 blks, lazy-count=1\nrealtime =none                   extsz=4096   blocks=0, rtextents=0`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (cmd === 'blkid') {
+                if (currentStep === 4 || currentStep > 4) {
+                    configState.blkid = true;
+                    updateRequirements();
+                    checkStepCompletion(4);
+                    return `/dev/vg_data/lv_app: UUID="a1b2c3d4-e5f6-7890" TYPE="xfs"`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (cmd === 'lvextend') {
+                if (currentStep === 5 || currentStep > 5) {
+                    configState.lvextend = true;
+                    updateRequirements();
+                    checkStepCompletion(5);
+                    return `Size of logical volume vg_data/lv_app changed from 2.00 GiB (512 extents) to 3.00 GiB (768 extents).\nLogical volume vg_data/lv_app successfully resized.`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (cmd === 'xfs_growfs') {
+                if (currentStep === 5 || currentStep > 5) {
+                    configState.xfsGrow = true;
+                    updateRequirements();
+                    checkStepCompletion(5);
+                    return `meta-data=/dev/vg_data/lv_app  isize=512    agcount=4, agsize=131072 blks\n=                       sectsz=512   attr=2, projid32bit=1\n=                       crc=1        finobt=1, sparse=1\ndata     =                       bsize=4096   blocks=524288, imaxpct=25\n=                       sunit=0      swidth=0 blks\nnaming   =version 2              bsize=4096   ascii-ci=0, ftype=1\nlog      =internal               bsize=4096   blocks=2560, version=2\n=                       sectsz=512   sunit=0 blks, lazy-count=1\nrealtime =none                   extsz=4096   blocks=0, rtextents=0\ndata blocks changed from 524288 to 786432`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `Command '${cmd}' executed successfully`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: sudo pvcreate, sudo pvdisplay, sudo vgcreate, sudo vgdisplay, sudo lvcreate, sudo lvdisplay, sudo mkfs.xfs, sudo blkid, sudo lvextend, sudo xfs_growfs, clear, help";
         }
-        commandInput.value = '';
-    } else if (e.key === 'ArrowUp') {
-        if (historyIndex > 0) {
-            historyIndex--;
-            commandInput.value = commandHistory[historyIndex];
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.pvcreate) {
+            document.getElementById('req-pvcreate').classList.add('completed');
+            document.getElementById('req-pvcreate').querySelector('.requirement-checkbox').textContent = '✓';
         }
-    } else if (e.key === 'ArrowDown') {
-        if (historyIndex < commandHistory.length - 1) {
-            historyIndex++;
-            commandInput.value = commandHistory[historyIndex];
-        } else {
-            historyIndex = commandHistory.length;
-            commandInput.value = '';
+        
+        if (configState.pvdisplay) {
+            document.getElementById('req-pvdisplay').classList.add('completed');
+            document.getElementById('req-pvdisplay').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.vgcreate) {
+            document.getElementById('req-vgcreate').classList.add('completed');
+            document.getElementById('req-vgcreate').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.vgdisplay) {
+            document.getElementById('req-vgdisplay').classList.add('completed');
+            document.getElementById('req-vgdisplay').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.lvcreate) {
+            document.getElementById('req-lvcreate').classList.add('completed');
+            document.getElementById('req-lvcreate').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.lvdisplay) {
+            document.getElementById('req-lvdisplay').classList.add('completed');
+            document.getElementById('req-lvdisplay').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.mkfs) {
+            document.getElementById('req-mkfs').classList.add('completed');
+            document.getElementById('req-mkfs').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.blkid) {
+            document.getElementById('req-blkid').classList.add('completed');
+            document.getElementById('req-blkid').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.lvextend) {
+            document.getElementById('req-lvextend').classList.add('completed');
+            document.getElementById('req-lvextend').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.xfsGrow) {
+            document.getElementById('req-xfs-grow').classList.add('completed');
+            document.getElementById('req-xfs-grow').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
         }
     }
-});
-
-function processCommand(commandText) {
-    const parts = commandText.trim().split(/\s+/);
-    const cmd = parts[0];
-    const args = parts.slice(1);
-
-    let output;
-    if (commands[cmd]) {
-        output = commands[cmd](args);
-        if (output) {
-            terminalOutput.innerHTML += `<div>[root@lab ~]# ${commandText}</div><div>${output}</div>`;
+    
+    // Function to check if a step is completed
+    function checkStepCompletion(step) {
+        const keys = getStepCommands(step);
+        const allCompleted = keys.every(key => configState[key]);
+        
+        if (allCompleted) {
+            completeStep(step);
         }
-    } else {
-        terminalOutput.innerHTML += `<div>[root@lab ~]# ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
     }
-
-    let commandMatched = false;
-    requiredCommands.forEach((req, index) => {
-        if (req.step === currentStep && req.command === commandText.trim()) {
-            commandMatched = true;
-            if (!completedCommands[index]) {
-                completedCommands[index] = true;
-                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+    
+    // Function to get configState keys for a specific step
+    function getStepCommands(step) {
+        switch(step) {
+            case 1: return ['pvcreate', 'pvdisplay'];
+            case 2: return ['vgcreate', 'vgdisplay'];
+            case 3: return ['lvcreate', 'lvdisplay'];
+            case 4: return ['mkfs', 'blkid'];       // mkfs.xfs → mkfs
+            case 5: return ['lvextend', 'xfsGrow']; // xfs_growfs → xfsGrow
+            default: return [];
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[root@lab ~]# Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[root@lab ~]# Next: ${stepCommands[currentStep][0]}`);
+                }
             }
         }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@lab ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
     });
-
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
-
-    if (isRequiredCommand && !commandMatched) {
-        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
-        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
-    }
-
-    terminalOutput.scrollTop = terminalOutput.scrollHeight;
-    checkStepCompletion();
-}
-
-function checkStepCompletion() {
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const allCompleted = currentStepCommands.every(req =>
-        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
-    );
-    if (allCompleted) {
-        setTimeout(() => {
-            nextStep();
-        }, 1000);
-    }
-}
-
-function nextStep() {
-    steps[currentStep].classList.remove('active-step');
-    currentStep++;
-    if (currentStep < steps.length) {
-        steps[currentStep].classList.add('active-step');
-        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
-    } else {
-        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All LVM commands executed correctly!</div>`;
-    }
-}</script>
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>
