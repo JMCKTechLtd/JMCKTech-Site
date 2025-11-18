@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>RHCSA Lab 4.4 - Create & Manage Hard/Soft Links</title>
-<style>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 4.4 - Create & Manage Hard/Soft Links</title>
+    <style>
         :root {
             --redhat-red: #cc0000;
             --redhat-dark: #1e1e1e;
             --redhat-light: #f0f0f0;
             --redhat-accent: #4CAF50;
             --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
         }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Red Hat Text', 'Overpass', sans-serif;
             background-color: var(--redhat-dark);
@@ -19,78 +28,256 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-        }
-        .lab-container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: #252525;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            height: 100vh;
             overflow: hidden;
-            border-top: 4px solid var(--redhat-red);
         }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
         .header {
             background: linear-gradient(to right, #1e1e1e, #333);
             padding: 15px 20px;
             color: white;
             display: flex;
             align-items: center;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
+        
         .header img {
             height: 30px;
             margin-right: 15px;
         }
+        
         .header h1 {
             margin: 0;
             font-size: 1.5em;
             font-weight: normal;
         }
-        .terminal-container {
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
             display: flex;
             flex-direction: column;
-            height: 600px;
+            background: var(--panel-bg);
+            position: relative;
         }
-        .guide {
-            padding: 20px;
-            background: #2d2d2d;
-            flex: 1;
-            overflow-y: auto;
-        }
+        
         .guide h2 {
             margin-top: 0;
             color: var(--redhat-accent);
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
         .guide-step {
             margin-bottom: 15px;
             padding: 15px;
             background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
             border-left: 4px solid var(--redhat-accent);
-            display: none;
         }
-        .active-step {
-            display: block;
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
         }
-        .terminal {
-            background: #000;
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
             padding: 15px;
-            height: 250px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
             overflow-y: auto;
             font-family: 'Red Hat Mono', monospace;
-            border-top: 1px solid #444;
         }
-        .prompt {
-            color: var(--redhat-accent);
-        }
+        
         .command-line {
             display: flex;
             align-items: center;
             padding: 15px;
             background: #333;
-            border-top: 1px solid #444;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
         }
+        
         #command-input {
             flex: 1;
             background: transparent;
@@ -101,47 +288,29 @@
             outline: none;
             padding: 8px;
         }
-        .success {
+        
+        .prompt {
             color: var(--redhat-accent);
-            font-weight: bold;
+            white-space: nowrap;
+            margin-right: 5px;
         }
-        .error {
-            color: #FF5252;
-        }
-        .completion {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        .concept {
-            background: #2a2a2a;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            border-left: 4px solid var(--redhat-blue);
-        }
-        .concept h4 {
-            margin-top: 0;
-            color: var(--redhat-blue);
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
-        .concept-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .concept-item {
-            background: #252525;
+        
+        .file-content {
+            background: #1e1e1e;
             padding: 10px;
-            border-radius: 5px;
-            border-left: 2px solid var(--redhat-red);
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
         }
-        .concept-item strong {
-            color: var(--redhat-red);
-            display: block;
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
             margin-bottom: 5px;
         }
+        
         code {
             background: #1e1e1e;
             padding: 2px 5px;
@@ -149,38 +318,81 @@
             color: var(--redhat-accent);
             font-family: 'Red Hat Mono', monospace;
         }
-        kbd {
-            background: #444;
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: white;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        .required-command {
-            background: rgba(76, 175, 80, 0.1);
-            padding: 5px;
-            border-radius: 3px;
-            border-left: 3px solid var(--redhat-accent);
-        }
-        .trophy {
-            display: inline-block;
-            margin-left: 5px;
-        }
-        .syntax-error {
-            color: #FF5252;
+        
+        .success {
+            color: var(--redhat-accent);
             font-weight: bold;
         }
+        
+        .error {
+            color: #FF5252;
+        }
+        
         .warning {
             color: #FFD700;
             font-weight: bold;
         }
-        .strict-feedback {
-            background: rgba(204, 0, 0, 0.1);
-            padding: 10px;
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
             border-radius: 5px;
-            border-left: 3px solid var(--redhat-red);
-            margin-top: 10px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
         }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
         .file-structure {
             background: #1e1e1e;
             padding: 10px;
@@ -190,287 +402,887 @@
             white-space: pre;
             overflow-x: auto;
         }
+        
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
     </style>
-<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
 <div class="lab-container">
-<div class="header">
-<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-<h1>RHCSA Lab 4.4: Create & Manage Hard/Soft Links</h1>
-</div>
-<div class="terminal-container">
-<div class="guide">
-<h2>Lab Instructions</h2>
-<div class="guide-step active-step" id="step1">
-<h3>Step 1: Create a Sample File</h3>
-<p class="required-command">Type exactly: <code>echo "This is original content" > original_file.txt</code></p>
-<p class="required-command">Then type: <code>ls -l original_file.txt</code></p>
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 4.4: Create & Manage Hard/Soft Links</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Learn to create and manage hard and soft links in Linux. Understand the differences between them and when to use each type.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
-<div class="concept">
-<h4>Understanding Files and Inodes</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Files store data, inodes store metadata
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Need original file before creating links
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Files stored in filesystem with unique inodes
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                Before creating any type of link
-                            </div>
-</div>
-<p><strong>How it works:</strong> The <code>echo</code> command creates a file with content. <code>ls -l</code> shows file details including permissions, size, and modification time.</p>
-</div>
-</div>
-<div class="guide-step" id="step2">
-<h3>Step 2: Create a Hard Link</h3>
-<p class="required-command">Type exactly: <code>ln original_file.txt hard_link.txt</code></p>
-<p class="required-command">Then type: <code>ls -li original_file.txt hard_link.txt</code></p>
+            <div class="requirements-panel">
+                <h4>Lab Requirements</h4>
+                <div class="requirement-item" id="req-original-file">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create original file with content</span>
+                </div>
+                <div class="requirement-item" id="req-hard-link">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create hard link to original file</span>
+                </div>
+                <div class="requirement-item" id="req-soft-link">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create soft link to original file</span>
+                </div>
+                <div class="requirement-item" id="req-compare-links">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Compare behavior after removing original file</span>
+                </div>
+            </div>
 
-<div class="concept">
-<h4>Understanding Hard Links</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Additional name for the same inode
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Multiple access points to same data
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Must be on same filesystem
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                Need multiple names for same file
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>ln</code> creates a hard link. Notice identical inode numbers and link counts in <code>ls -li</code> output. Changes to one affect all links.</p>
-</div>
-</div>
-<div class="guide-step" id="step3">
-<h3>Step 3: Create a Soft Link (Symbolic Link)</h3>
-<p class="required-command">Type exactly: <code>ln -s original_file.txt soft_link.txt</code></p>
-<p class="required-command">Then type: <code>ls -li original_file.txt soft_link.txt</code></p>
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Hard/Soft Links Lab. In this lab, you will learn the differences between hard links and soft (symbolic) links in Linux.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
 
-<div class="concept">
-<h4>Understanding Soft Links</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Pointer to another file path
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Link across filesystems or to directories
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Anywhere in the filesystem
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                Need flexible references
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>ln -s</code> creates a symbolic link. Note different inode numbers. The link shows as <code>soft_link.txt -> original_file.txt</code> in <code>ls -l</code> output.</p>
-</div>
-</div>
-<div class="guide-step" id="step4">
-<h3>Step 4: Compare Link Behavior</h3>
-<p class="required-command">Type exactly: <code>rm original_file.txt</code></p>
-<p class="required-command">Then type: <code>cat hard_link.txt</code></p>
-<p class="required-command">Then type: <code>cat soft_link.txt</code></p>
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Create a Sample File
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's create a sample file that we'll use to create links.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    echo "This is original content" > original_file.txt
+                </div>
+                
+                <p>Then verify the file was created:</p>
+                
+                <div class="command-hint">
+                    ls -l original_file.txt
+                </div>
 
-<div class="concept">
-<h4>Understanding Link Differences</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>Hard Links</strong>
-                                Survive original deletion (same inode)
-                            </div>
-<div class="concept-item">
-<strong>Soft Links</strong>
-                                Break if original deleted (dangling link)
-                            </div>
-<div class="concept-item">
-<strong>Hard Link Limits</strong>
-                                Can't link directories or cross filesystems
-                            </div>
-<div class="concept-item">
-<strong>Soft Link Advantages</strong>
-                                Can link to directories and across filesystems
-                            </div>
-</div>
-<p><strong>Key Differences:</strong> After deleting the original, the hard link still works (same data), while the soft link fails (points to non-existent path).</p>
-</div>
-</div>
-</div>
-<div class="command-line">
-<span class="prompt">[user@lab ~]$</span>
-<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
-</div>
-<div class="terminal" id="terminal-output">
-<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 4.4!</span></div>
-<div>[user@lab ~]$ <span class="prompt">Learn to create and manage hard and soft links.</span></div>
-</div>
-</div>
-</div>
-<script>const commandInput = document.getElementById('command-input');
-const terminalOutput = document.getElementById('terminal-output');
-const steps = document.querySelectorAll('.guide-step');
-let currentStep = 0;
-let commandHistory = [];
-let historyIndex = -1;
+                <div class="concept">
+                    <h4>Understanding Files and Inodes</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Files store data, inodes store metadata
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Need original file before creating links
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Files stored in filesystem with unique inodes
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            Before creating any type of link
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> The <code>echo</code> command creates a file with content. <code>ls -l</code> shows file details including permissions, size, and modification time.</p>
+                </div>
+            </div>
 
-const requiredCommands = [
-    { command: 'echo "This is original content" > original_file.txt', step: 0, feedback: 'Type exactly: echo "This is original content" > original_file.txt' },
-    { command: 'ls -l original_file.txt', step: 0, feedback: 'Type exactly: ls -l original_file.txt' },
-    { command: 'ln original_file.txt hard_link.txt', step: 1, feedback: 'Type exactly: ln original_file.txt hard_link.txt' },
-    { command: 'ls -li original_file.txt hard_link.txt', step: 1, feedback: 'Type exactly: ls -li original_file.txt hard_link.txt' },
-    { command: 'ln -s original_file.txt soft_link.txt', step: 2, feedback: 'Type exactly: ln -s original_file.txt soft_link.txt' },
-    { command: 'ls -li original_file.txt soft_link.txt', step: 2, feedback: 'Type exactly: ls -li original_file.txt soft_link.txt' },
-    { command: 'rm original_file.txt', step: 3, feedback: 'Type exactly: rm original_file.txt' },
-    { command: 'cat hard_link.txt', step: 3, feedback: 'Type exactly: cat hard_link.txt' },
-    { command: 'cat soft_link.txt', step: 3, feedback: 'Type exactly: cat soft_link.txt' }
-];
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Create a Hard Link
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a hard link to the original file.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ln original_file.txt hard_link.txt
+                </div>
+                
+                <p>Then verify the link was created and compare inodes:</p>
+                
+                <div class="command-hint">
+                    ls -li original_file.txt hard_link.txt
+                </div>
 
-let completedCommands = new Array(requiredCommands.length).fill(false);
+                <div class="concept">
+                    <h4>Understanding Hard Links</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Additional name for the same inode
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Multiple access points to same data
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Must be on same filesystem
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            Need multiple names for same file
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>ln</code> creates a hard link. Notice identical inode numbers and link counts in <code>ls -li</code> output. Changes to one affect all links.</p>
+                </div>
+            </div>
 
-const commands = {
-    'echo': (args) => {
-        if (args.includes('>')) {
-            return 'File created successfully';
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Create a Soft Link (Symbolic Link)
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a soft link (symbolic link) to the original file.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ln -s original_file.txt soft_link.txt
+                </div>
+                
+                <p>Then verify the link was created and compare inodes:</p>
+                
+                <div class="command-hint">
+                    ls -li original_file.txt soft_link.txt
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Soft Links</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Pointer to another file path
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Link across filesystems or to directories
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Anywhere in the filesystem
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            Need flexible references
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>ln -s</code> creates a symbolic link. Note different inode numbers. The link shows as <code>soft_link.txt -> original_file.txt</code> in <code>ls -l</code> output.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Compare Link Behavior
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's compare the behavior of hard links and soft links when the original file is removed.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    rm original_file.txt
+                </div>
+                
+                <div class="command-hint">
+                    cat hard_link.txt
+                </div>
+                
+                <div class="command-hint">
+                    cat soft_link.txt
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Link Differences</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>Hard Links</strong>
+                            Survive original deletion (same inode)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Soft Links</strong>
+                            Break if original deleted (dangling link)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Hard Link Limits</strong>
+                            Can't link directories or cross filesystems
+                        </div>
+                        <div class="concept-item">
+                            <strong>Soft Link Advantages</strong>
+                            Can link to directories and across filesystems
+                        </div>
+                    </div>
+                    <p><strong>Key Differences:</strong> After deleting the original, the hard link still works (same data), while the soft link fails (points to non-existent path).</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All link management requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[user@lab ~]$</span> Welcome to RHCSA Lab 4.4: Create & Manage Hard/Soft Links</div>
+                <div><span class="prompt">[user@lab ~]$</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[user@lab ~]$</span> You must complete each step in order.</div>
+                <div><span class="prompt">[user@lab ~]$</span> Current step: Create a Sample File</div>
+                <div><span class="prompt">[user@lab ~]$</span> Type: <code>echo "This is original content" > original_file.txt</code></div>
+                <div><span class="prompt">[user@lab ~]$</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'echo', 'ls', 'ln', 'rm', 'cat', 'clear', 'help'
+    ];
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/': ['home/', 'etc/', 'var/', 'tmp/'],
+        '~/': ['original_file.txt', 'hard_link.txt', 'soft_link.txt']
+    };
+    
+    // Track completion state
+    const completionState = {
+        originalFile: false,
+        hardLink: false,
+        softLink: false,
+        compareLinks: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: [
+            'echo "This is original content" > original_file.txt',
+            'ls -l original_file.txt'
+        ],
+        2: [
+            'ln original_file.txt hard_link.txt',
+            'ls -li original_file.txt hard_link.txt'
+        ],
+        3: [
+            'ln -s original_file.txt soft_link.txt',
+            'ls -li original_file.txt soft_link.txt'
+        ],
+        4: [
+            'rm original_file.txt',
+            'cat hard_link.txt',
+            'cat soft_link.txt'
+        ]
+    };
+    
+    // File system state
+    let fileSystem = {
+        'original_file.txt': {
+            content: '',
+            inode: 123456,
+            links: 1,
+            exists: false
+        },
+        'hard_link.txt': {
+            content: '',
+            inode: 123456,
+            links: 1,
+            exists: false
+        },
+        'soft_link.txt': {
+            target: 'original_file.txt',
+            inode: 789012,
+            exists: false
         }
-        return args.join(' ');
-    },
-    'ls': (args) => {
-        if (args.includes('-li')) {
-            if (args.includes('original_file.txt') && args.includes('hard_link.txt')) {
-                return '123456 -rw-r--r-- 2 user user 25 Jan 10 10:00 original_file.txt\n123456 -rw-r--r-- 2 user user 25 Jan 10 10:00 hard_link.txt';
-            } else if (args.includes('original_file.txt') && args.includes('soft_link.txt')) {
-                return '123456 -rw-r--r-- 1 user user 25 Jan 10 10:00 original_file.txt\n789012 lrwxrwxrwx 1 user user 16 Jan 10 10:00 soft_link.txt -> original_file.txt';
-            } else if (args.includes('original_file.txt')) {
-                return '-rw-r--r-- 1 user user 25 Jan 10 10:00 original_file.txt';
+    };
+    
+    const commands = {
+        'echo': (args) => {
+            if (args.includes('>')) {
+                const contentIndex = args.indexOf('>') - 1;
+                const filenameIndex = args.indexOf('>') + 1;
+                
+                if (contentIndex >= 0 && filenameIndex < args.length) {
+                    const content = args[contentIndex].replace(/"/g, '');
+                    const filename = args[filenameIndex];
+                    
+                    if (filename === 'original_file.txt') {
+                        fileSystem['original_file.txt'].content = content;
+                        fileSystem['original_file.txt'].exists = true;
+                        
+                        if (currentStep === 1 || currentStep > 1) {
+                            completionState.originalFile = true;
+                            updateRequirements();
+                            // checkStepCompletion(1); // now handled globally after each command
+                            return 'File created successfully';
+                        } else {
+                            return "Please complete the previous steps first.";
+                        }
+                    }
+                }
             }
-        } else if (args.includes('-l')) {
-            return '-rw-r--r-- 1 user user 25 Jan 10 10:00 original_file.txt';
+            return args.join(' ');
+        },
+        
+        'ls': (args) => {
+            if (args.includes('-li')) {
+                let output = '';
+                
+                if (args.includes('original_file.txt') && args.includes('hard_link.txt')) {
+                    if (fileSystem['original_file.txt'].exists && fileSystem['hard_link.txt'].exists) {
+                        output = `${fileSystem['original_file.txt'].inode} -rw-r--r-- 2 user user 25 Jan 10:00 original_file.txt\n`;
+                        output += `${fileSystem['hard_link.txt'].inode} -rw-r--r-- 2 user user 25 Jan 10:00 hard_link.txt`;
+                    } else if (fileSystem['original_file.txt'].exists) {
+                        output = `${fileSystem['original_file.txt'].inode} -rw-r--r-- 1 user user 25 Jan 10:00 original_file.txt`;
+                    }
+                } else if (args.includes('original_file.txt') && args.includes('soft_link.txt')) {
+                    if (fileSystem['original_file.txt'].exists && fileSystem['soft_link.txt'].exists) {
+                        output = `${fileSystem['original_file.txt'].inode} -rw-r--r-- 1 user user 25 Jan 10:00 original_file.txt\n`;
+                        output += `${fileSystem['soft_link.txt'].inode} lrwxrwxrwx 1 user user 16 Jan 10:00 soft_link.txt -> original_file.txt`;
+                    } else if (fileSystem['original_file.txt'].exists) {
+                        output = `${fileSystem['original_file.txt'].inode} -rw-r--r-- 1 user user 25 Jan 10:00 original_file.txt`;
+                    }
+                } else if (args.includes('original_file.txt')) {
+                    if (fileSystem['original_file.txt'].exists) {
+                        output = `${fileSystem['original_file.txt'].inode} -rw-r--r-- 1 user user 25 Jan 10:00 original_file.txt`;
+                    } else {
+                        output = `ls: cannot access 'original_file.txt': No such file or directory`;
+                    }
+                } else if (args.length === 0) {
+                    // List all files
+                    output = Object.keys(fileSystem)
+                        .filter(filename => fileSystem[filename].exists)
+                        .join('\n');
+                }
+                
+                return output;
+            } else if (args.includes('-l')) {
+                if (args.includes('original_file.txt') && fileSystem['original_file.txt'].exists) {
+                    return '-rw-r--r-- 1 user user 25 Jan 10:00 original_file.txt';
+                }
+                return `ls: cannot access '${args[0]}': No such file or directory`;
+            } else if (args.length === 0) {
+                // List all files
+                return Object.keys(fileSystem)
+                    .filter(filename => fileSystem[filename].exists)
+                    .join('\n');
+            }
+            return `ls: cannot access '${args[0]}': No such file or directory`;
+        },
+        
+        'ln': (args) => {
+            if (args.includes('-s')) {
+                // Create soft link
+                const targetIndex = args.indexOf('-s') + 1;
+                const linkNameIndex = args.indexOf('-s') + 2;
+                
+                if (targetIndex < args.length && linkNameIndex < args.length) {
+                    const target = args[targetIndex];
+                    const linkName = args[linkNameIndex];
+                    
+                    if (target === 'original_file.txt' && linkName === 'soft_link.txt') {
+                        if (fileSystem['original_file.txt'].exists) {
+                            fileSystem['soft_link.txt'].exists = true;
+                            
+                            if (currentStep === 3 || currentStep > 3) {
+                                completionState.softLink = true;
+                                updateRequirements();
+                                // checkStepCompletion(3); // handled globally
+                                return `Created symbolic link '${linkName}' -> '${target}'`;
+                            } else {
+                                return "Please complete the previous steps first.";
+                            }
+                        } else {
+                            return `ln: failed to create symbolic link '${linkName}': No such file or directory`;
+                        }
+                    }
+                }
+            } else {
+                // Create hard link
+                const targetIndex = 0;
+                const linkNameIndex = 1;
+                
+                if (targetIndex < args.length && linkNameIndex < args.length) {
+                    const target = args[targetIndex];
+                    const linkName = args[linkNameIndex];
+                    
+                    if (target === 'original_file.txt' && linkName === 'hard_link.txt') {
+                        if (fileSystem['original_file.txt'].exists) {
+                            fileSystem['hard_link.txt'].exists = true;
+                            fileSystem['original_file.txt'].links = 2;
+                            fileSystem['hard_link.txt'].links = 2;
+                            
+                            if (currentStep === 2 || currentStep > 2) {
+                                completionState.hardLink = true;
+                                updateRequirements();
+                                // checkStepCompletion(2); // handled globally
+                                return `Created hard link '${linkName}'`;
+                            } else {
+                                return "Please complete the previous steps first.";
+                            }
+                        } else {
+                            return `ln: failed to create hard link '${linkName}': No such file or directory`;
+                        }
+                    }
+                }
+            }
+            return `ln: missing file operand`;
+        },
+        
+        'rm': (args) => {
+            if (args[0] === 'original_file.txt') {
+                if (fileSystem['original_file.txt'].exists) {
+                    fileSystem['original_file.txt'].exists = false;
+                    
+                    if (currentStep === 4 || currentStep > 4) {
+                        // checkStepCompletion(4); // handled globally
+                        return `Removed '${args[0]}'`;
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                } else {
+                    return `rm: cannot remove '${args[0]}': No such file or directory`;
+                }
+            }
+            return `rm: missing operand`;
+        },
+        
+        'cat': (args) => {
+            if (args[0] === 'hard_link.txt') {
+                if (fileSystem['hard_link.txt'].exists) {
+                    // Hard link still shows content even if original is deleted
+                    return fileSystem['original_file.txt'].content;
+                } else {
+                    return `cat: ${args[0]}: No such file or directory`;
+                }
+            } else if (args[0] === 'soft_link.txt') {
+                if (fileSystem['soft_link.txt'].exists) {
+                    if (fileSystem['original_file.txt'].exists) {
+                        return fileSystem['original_file.txt'].content;
+                    } else {
+                        // After original is deleted, soft link breaks
+                        return `cat: ${args[0]}: No such file or directory`;
+                    }
+                } else {
+                    return `cat: ${args[0]}: No such file or directory`;
+                }
+            } else if (args[0] === 'original_file.txt') {
+                if (fileSystem['original_file.txt'].exists) {
+                    return fileSystem['original_file.txt'].content;
+                } else {
+                    return `cat: ${args[0]}: No such file or directory`;
+                }
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: echo, ls, ln, rm, cat, clear, help";
         }
-        return 'original_file.txt\nhard_link.txt\nsoft_link.txt';
-    },
-    'ln': (args) => {
-        if (args.includes('-s')) {
-            return `Created symbolic link '${args[2]}' -> '${args[1]}'`;
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (completionState.originalFile) {
+            document.getElementById('req-original-file').classList.add('completed');
+            document.getElementById('req-original-file').querySelector('.requirement-checkbox').textContent = '✓';
         }
-        return `Created hard link '${args[1]}'`;
-    },
-    'rm': (args) => `Removed '${args[0]}'`,
-    'cat': (args) => {
-        if (args[0] === 'hard_link.txt') {
-            return 'This is original content';
-        } else if (args[0] === 'soft_link.txt') {
-            return 'cat: soft_link.txt: No such file or directory';
+        
+        if (completionState.hardLink) {
+            document.getElementById('req-hard-link').classList.add('completed');
+            document.getElementById('req-hard-link').querySelector('.requirement-checkbox').textContent = '✓';
         }
-        return '';
-    },
-    'help': () => 'Available commands: echo, ls, ln, rm, cat, help',
-};
-
-commandInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const commandText = commandInput.value.trim();
-        if (commandText) {
-            commandHistory.push(commandText);
-            historyIndex = commandHistory.length;
-            processCommand(commandText);
+        
+        if (completionState.softLink) {
+            document.getElementById('req-soft-link').classList.add('completed');
+            document.getElementById('req-soft-link').querySelector('.requirement-checkbox').textContent = '✓';
         }
-        commandInput.value = '';
-    } else if (e.key === 'ArrowUp') {
-        if (historyIndex > 0) {
-            historyIndex--;
-            commandInput.value = commandHistory[historyIndex];
+        
+        if (completionState.compareLinks) {
+            document.getElementById('req-compare-links').classList.add('completed');
+            document.getElementById('req-compare-links').querySelector('.requirement-checkbox').textContent = '✓';
         }
-    } else if (e.key === 'ArrowDown') {
-        if (historyIndex < commandHistory.length - 1) {
-            historyIndex++;
-            commandInput.value = commandHistory[historyIndex];
+        
+        // Update progress
+        const completedCount = Object.values(completionState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(completionState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(completionState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to check if a step is completed
+    function checkStepCompletion(step) {
+        // If no commands defined for this step, do nothing (prevents errors after final step)
+        if (!stepCommands[step]) return;
+        
+        const stepCommandsList = stepCommands[step];
+        let allCompleted = true;
+        
+        // Special handling for step 4
+        if (step === 4) {
+            // Require: original deleted AND both cat commands run
+            const hasRm = commandHistory.includes('rm original_file.txt');
+            const hasCatHard = commandHistory.includes('cat hard_link.txt');
+            const hasCatSoft = commandHistory.includes('cat soft_link.txt');
+            
+            if (!fileSystem['original_file.txt'].exists && hasRm && hasCatHard && hasCatSoft) {
+                completionState.compareLinks = true;
+                updateRequirements();
+                completeStep(step);
+            }
+            return;
+        }
+        
+        // For other steps, check if all commands were executed
+        for (const cmd of stepCommandsList) {
+            if (!commandHistory.includes(cmd)) {
+                allCompleted = false;
+                break;
+            }
+        }
+        
+        if (allCompleted) {
+            completeStep(step);
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[user@lab ~]$ Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep] && stepCommands[currentStep].length > 0) {
+                    addTerminalOutput(`[user@lab ~]$ Next: ${stepCommands[currentStep][0]}`);
+                }
+            } else {
+                addTerminalOutput(`[user@lab ~]$ <span class="success">Lab completed! 🏆 All commands executed correctly!</span>`);
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[user@lab ~]$</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
         } else {
-            historyIndex = commandHistory.length;
-            commandInput.value = '';
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
         }
+        
+        // After executing any command, check if the current step can be completed
+        checkStepCompletion(currentStep);
     }
-});
-
-function processCommand(commandText) {
-    const parts = commandText.trim().split(/\s+/);
-    const cmd = parts[0];
-    const args = parts.slice(1);
-
-    let output;
-    if (commands[cmd]) {
-        output = commands[cmd](args);
-        if (output) {
-            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
         }
-    } else {
-        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
-    }
-
-    let commandMatched = false;
-    requiredCommands.forEach((req, index) => {
-        if (req.step === currentStep && req.command === commandText.trim()) {
-            commandMatched = true;
-            if (!completedCommands[index]) {
-                completedCommands[index] = true;
-                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
             }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '~/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '~/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
         }
     });
-
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
-
-    if (isRequiredCommand && !commandMatched) {
-        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
-        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
-    }
-
-    terminalOutput.scrollTop = terminalOutput.scrollHeight;
-    checkStepCompletion();
-}
-
-function checkStepCompletion() {
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const allCompleted = currentStepCommands.every(req =>
-        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
-    );
-    if (allCompleted) {
-        setTimeout(() => {
-            nextStep();
-        }, 1000);
-    }
-}
-
-function nextStep() {
-    steps[currentStep].classList.remove('active-step');
-    currentStep++;
-    if (currentStep < steps.length) {
-        steps[currentStep].classList.add('active-step');
-        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
-    } else {
-        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All commands executed correctly!</div>`;
-    }
-}</script>
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>

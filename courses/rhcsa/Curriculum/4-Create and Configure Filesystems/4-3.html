@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>RHCSA Lab 4.3 - File Attributes (chattr, lsattr)</title>
+    <title>RHCSA Exam Lab 4.3: File Attributes (chattr, lsattr)</title>
     <style>
         :root {
             --redhat-red: #cc0000;
@@ -11,7 +11,16 @@
             --redhat-light: #f0f0f0;
             --redhat-accent: #4CAF50;
             --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
         }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Red Hat Text', 'Overpass', sans-serif;
             background-color: var(--redhat-dark);
@@ -19,78 +28,256 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-        }
-        .lab-container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: #252525;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            height: 100vh;
             overflow: hidden;
-            border-top: 4px solid var(--redhat-red);
         }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
         .header {
             background: linear-gradient(to right, #1e1e1e, #333);
             padding: 15px 20px;
             color: white;
             display: flex;
             align-items: center;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
+        
         .header img {
             height: 30px;
             margin-right: 15px;
         }
+        
         .header h1 {
             margin: 0;
             font-size: 1.5em;
             font-weight: normal;
         }
-        .terminal-container {
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
             display: flex;
             flex-direction: column;
-            height: 600px;
+            background: var(--panel-bg);
+            position: relative;
         }
-        .guide {
-            padding: 20px;
-            background: #2d2d2d;
-            flex: 1;
-            overflow-y: auto;
-        }
+        
         .guide h2 {
             margin-top: 0;
             color: var(--redhat-accent);
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
         .guide-step {
             margin-bottom: 15px;
             padding: 15px;
             background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
             border-left: 4px solid var(--redhat-accent);
-            display: none;
         }
-        .active-step {
-            display: block;
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
         }
-        .terminal {
-            background: #000;
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
             padding: 15px;
-            height: 250px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
             overflow-y: auto;
             font-family: 'Red Hat Mono', monospace;
-            border-top: 1px solid #444;
         }
-        .prompt {
-            color: var(--redhat-accent);
-        }
+        
         .command-line {
             display: flex;
             align-items: center;
             padding: 15px;
             background: #333;
-            border-top: 1px solid #444;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
         }
+        
         #command-input {
             flex: 1;
             background: transparent;
@@ -101,47 +288,29 @@
             outline: none;
             padding: 8px;
         }
-        .success {
+        
+        .prompt {
             color: var(--redhat-accent);
-            font-weight: bold;
+            white-space: nowrap;
+            margin-right: 5px;
         }
-        .error {
-            color: #FF5252;
-        }
-        .completion {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        .concept {
-            background: #2a2a2a;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            border-left: 4px solid var(--redhat-blue);
-        }
-        .concept h4 {
-            margin-top: 0;
-            color: var(--redhat-blue);
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
-        .concept-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .concept-item {
-            background: #252525;
+        
+        .file-content {
+            background: #1e1e1e;
             padding: 10px;
-            border-radius: 5px;
-            border-left: 2px solid var(--redhat-red);
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
         }
-        .concept-item strong {
-            color: var(--redhat-red);
-            display: block;
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
             margin-bottom: 5px;
         }
+        
         code {
             background: #1e1e1e;
             padding: 2px 5px;
@@ -149,31 +318,102 @@
             color: var(--redhat-accent);
             font-family: 'Red Hat Mono', monospace;
         }
-        kbd {
-            background: #444;
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: white;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        .required-command {
-            background: rgba(76, 175, 80, 0.1);
-            padding: 5px;
-            border-radius: 3px;
-            border-left: 3px solid var(--redhat-accent);
-        }
-        .trophy {
-            display: inline-block;
-            margin-left: 5px;
-        }
-        .syntax-error {
-            color: #FF5252;
+        
+        .success {
+            color: var(--redhat-accent);
             font-weight: bold;
         }
+        
+        .error {
+            color: #FF5252;
+        }
+        
         .warning {
             color: #FFD700;
             font-weight: bold;
         }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .attr-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .attr-table th, .attr-table td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .attr-table th {
+            background-color: #333;
+            color: var(--redhat-accent);
+        }
+        
+        .attr-table tr:nth-child(even) {
+            background-color: #252525;
+        }
+        
         .strict-feedback {
             background: rgba(204, 0, 0, 0.1);
             padding: 10px;
@@ -181,39 +421,97 @@
             border-left: 3px solid var(--redhat-red);
             margin-top: 10px;
         }
-        .attr-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
+        
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
         }
-        .attr-table th, .attr-table td {
-            border: 1px solid #444;
-            padding: 8px;
-            text-align: left;
+        
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
         }
-        .attr-table th {
-            background-color: #333;
-            color: var(--redhat-accent);
-        }
-        .attr-table tr:nth-child(even) {
-            background-color: #252525;
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
 <div class="lab-container">
     <div class="header">
         <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-        <h1>RHCSA Lab 4.3: Work with File Attributes (chattr, lsattr)</h1>
+        <h1>RHCSA Exam Lab 4.3: File Attributes (chattr, lsattr)</h1>
     </div>
-    <div class="terminal-container">
-        <div class="guide">
+    
+    <div class="main-content">
+        <div class="guide-panel">
             <h2>Lab Instructions</h2>
-            <div class="guide-step active-step" id="step1">
-                <h3>Step 1: Understanding File Attributes</h3>
-                <p class="required-command">Type exactly: <code>lsattr /etc/passwd</code></p>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Learn to work with file attributes in Linux using chattr and lsattr commands. You will practice setting and removing attributes like immutable (i) and append-only (a) to control file behavior.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
+            <div class="requirements-panel">
+                <h4>File Attributes Requirements</h4>
+                <div class="requirement-item" id="req-lsattr">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use <code>lsattr</code> to view file attributes</span>
+                </div>
+                <div class="requirement-item" id="req-immutable">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set immutable attribute with <code>chattr +i</code></span>
+                </div>
+                <div class="requirement-item" id="req-append-only">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set append-only attribute with <code>chattr +a</code></span>
+                </div>
+                <div class="requirement-item" id="req-remove-attr">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Remove attributes with <code>chattr -i</code> and <code>chattr -a</code></span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA File Attributes Lab. In this lab, you will learn how to use chattr and lsattr commands to manage file attributes in Linux.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Understanding File Attributes
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's examine file attributes on an existing system file.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    lsattr /etc/passwd
+                </div>
+                
                 <div class="concept">
                     <h4>File Attributes in Linux</h4>
                     <div class="concept-grid">
@@ -260,11 +558,30 @@
                     </table>
                 </div>
             </div>
+
             <div class="guide-step" id="step2">
-                <h3>Step 2: Making a File Immutable</h3>
-                <p class="required-command">Create a test file: <code>touch testfile</code></p>
-                <p class="required-command">Make it immutable: <code>sudo chattr +i testfile</code></p>
-                <p class="required-command">Verify: <code>lsattr testfile</code></p>
+                <h3>
+                    <span class="step-number">2</span>
+                    Making a File Immutable
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a test file and make it immutable.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands in order:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    touch testfile
+                </div>
+                
+                <div class="command-hint">
+                    sudo chattr +i testfile
+                </div>
+                
+                <div class="command-hint">
+                    lsattr testfile
+                </div>
 
                 <div class="concept">
                     <h4>Immutable Files</h4>
@@ -292,11 +609,30 @@
                     </div>
                 </div>
             </div>
+
             <div class="guide-step" id="step3">
-                <h3>Step 3: Append-Only Files</h3>
-                <p class="required-command">Create a log file: <code>touch audit.log</code></p>
-                <p class="required-command">Set append-only: <code>sudo chattr +a audit.log</code></p>
-                <p class="required-command">Verify: <code>lsattr audit.log</code></p>
+                <h3>
+                    <span class="step-number">3</span>
+                    Append-Only Files
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a log file and set it to append-only mode.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands in order:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    touch audit.log
+                </div>
+                
+                <div class="command-hint">
+                    sudo chattr +a audit.log
+                </div>
+                
+                <div class="command-hint">
+                    lsattr audit.log
+                </div>
 
                 <div class="concept">
                     <h4>Append-Only Files</h4>
@@ -321,11 +657,30 @@
                     <p><strong>How it works:</strong> The <code>+a</code> attribute allows data to be appended but prevents modifying existing content. Useful for log files where you want to ensure data isn't altered after writing.</p>
                 </div>
             </div>
+
             <div class="guide-step" id="step4">
-                <h3>Step 4: Removing Attributes</h3>
-                <p class="required-command">Remove immutable: <code>sudo chattr -i testfile</code></p>
-                <p class="required-command">Remove append-only: <code>sudo chattr -a audit.log</code></p>
-                <p class="required-command">Verify: <code>lsattr testfile audit.log</code></p>
+                <h3>
+                    <span class="step-number">4</span>
+                    Removing Attributes
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's remove the attributes we set earlier.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands in order:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo chattr -i testfile
+                </div>
+                
+                <div class="command-hint">
+                    sudo chattr -a audit.log
+                </div>
+                
+                <div class="command-hint">
+                    lsattr testfile audit.log
+                </div>
 
                 <div class="concept">
                     <h4>Managing Attributes</h4>
@@ -353,135 +708,532 @@
                     </div>
                 </div>
             </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All file attributes requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
         </div>
-        <div class="command-line">
-            <span class="prompt">[user@lab ~]$</span>
-            <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
-        </div>
-        <div class="terminal" id="terminal-output">
-            <div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 4.3: File Attributes!</span></div>
-            <div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
-            <div>[user@lab ~]$ <span class="prompt">Note: Some commands require sudo privileges.</span></div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[user@lab ~]$</span> Welcome to RHCSA Lab 4.3: File Attributes!</div>
+                <div><span class="prompt">[user@lab ~]$</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[user@lab ~]$</span> You must complete each step in order.</div>
+                <div><span class="prompt">[user@lab ~]$</span> Current step: Understanding File Attributes</div>
+                <div><span class="prompt">[user@lab ~]$</span> Type: <code>lsattr /etc/passwd</code></div>
+                <div><span class="prompt">[user@lab ~]$</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
         </div>
     </div>
 </div>
+
 <script>
     const commandInput = document.getElementById('command-input');
     const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
     const steps = document.querySelectorAll('.guide-step');
-    let currentStep = 0;
+    const tabCompletion = document.getElementById('tab-completion');
+    
     let commandHistory = [];
     let historyIndex = -1;
-
-    const requiredCommands = [
-        { command: 'lsattr /etc/passwd', step: 0, feedback: 'Type exactly: lsattr /etc/passwd' },
-        { command: 'touch testfile', step: 1, feedback: 'Type exactly: touch testfile' },
-        { command: 'sudo chattr +i testfile', step: 1, feedback: 'Type exactly: sudo chattr +i testfile' },
-        { command: 'lsattr testfile', step: 1, feedback: 'Type exactly: lsattr testfile' },
-        { command: 'touch audit.log', step: 2, feedback: 'Type exactly: touch audit.log' },
-        { command: 'sudo chattr +a audit.log', step: 2, feedback: 'Type exactly: sudo chattr +a audit.log' },
-        { command: 'lsattr audit.log', step: 2, feedback: 'Type exactly: lsattr audit.log' },
-        { command: 'sudo chattr -i testfile', step: 3, feedback: 'Type exactly: sudo chattr -i testfile' },
-        { command: 'sudo chattr -a audit.log', step: 3, feedback: 'Type exactly: sudo chattr -a audit.log' },
-        { command: 'lsattr testfile audit.log', step: 3, feedback: 'Type exactly: lsattr testfile audit.log' }
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'lsattr', 'chattr', 'sudo', 'touch', 'clear', 'help'
     ];
-
-    let completedCommands = new Array(requiredCommands.length).fill(false);
-
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/etc/': ['passwd', 'group', 'shadow'],
+        '/': ['etc/', 'home/', 'var/', 'tmp/']
+    };
+    
+    // Track configuration state
+    const configState = {
+        lsattr: false,
+        immutable: false,
+        appendOnly: false,
+        removeAttr: false
+    };
+    
+    // Track completed commands for each step
+    const stepCommands = {
+        1: ['lsattr /etc/passwd'],
+        2: ['touch testfile', 'sudo chattr +i testfile', 'lsattr testfile'],
+        3: ['touch audit.log', 'sudo chattr +a audit.log', 'lsattr audit.log'],
+        4: ['sudo chattr -i testfile', 'sudo chattr -a audit.log', 'lsattr testfile audit.log']
+    };
+    
+    // Track which commands have been completed
+    const completedCommands = {
+        1: { 'lsattr /etc/passwd': false },
+        2: { 
+            'touch testfile': false,
+            'sudo chattr +i testfile': false,
+            'lsattr testfile': false
+        },
+        3: { 
+            'touch audit.log': false,
+            'sudo chattr +a audit.log': false,
+            'lsattr audit.log': false
+        },
+        4: { 
+            'sudo chattr -i testfile': false,
+            'sudo chattr -a audit.log': false,
+            'lsattr testfile audit.log': false
+        }
+    };
+    
+    // Track file states
+    const fileStates = {
+        testfile: {
+            immutable: false,
+            appendOnly: false
+        },
+        auditLog: {
+            immutable: false,
+            appendOnly: false
+        }
+    };
+    
     const commands = {
         'lsattr': (args) => {
             if (args.length === 0) {
                 return 'lsattr: No such file or directory while trying to stat .';
             }
+            
+            // Check if this is the required command for step 1
             if (args[0] === '/etc/passwd') {
-                return '-------------e-- /etc/passwd';
-            }
-            if (args.includes('testfile')) {
-                if (completedCommands[3]) { // After +i was set
-                    return '----i--------- testfile';
-                } else if (completedCommands[8]) { // After -i was set
-                    return '------------- testfile';
-                }
-                return '------------- testfile';
-            }
-            if (args.includes('audit.log')) {
-                if (completedCommands[6]) { // After +a was set
-                    return '-----a-------- audit.log';
-                } else if (completedCommands[9]) { // After -a was set
-                    return '------------- audit.log';
-                }
-                return '------------- audit.log';
-            }
-            if (args.includes('testfile') && args.includes('audit.log')) {
-                let output = '';
-                if (completedCommands[8]) { // After -i was set
-                    output += '------------- testfile\n';
-                } else if (completedCommands[3]) { // After +i was set
-                    output += '----i--------- testfile\n';
+                if (currentStep === 1) {
+                    completedCommands[1]['lsattr /etc/passwd'] = true;
+                    configState.lsattr = true;
+                    updateRequirements();
+                    checkStepCompletion(1);
+                    return '-------------e-- /etc/passwd';
                 } else {
-                    output += '------------- testfile\n';
+                    return "Please complete the previous steps first.";
+                }
+            }
+
+            // Handle both files first (step 4)
+            if (args.includes('testfile') && args.includes('audit.log')) {
+                let testfileAttr = fileStates.testfile.immutable ? '----i---------' : '-------------';
+                let auditLogAttr = fileStates.auditLog.appendOnly ? '-----a--------' : '-------------';
+                
+                if (currentStep === 4) {
+                    completedCommands[4]['lsattr testfile audit.log'] = true;
+                    configState.removeAttr = true;
+                    updateRequirements();
+                    checkStepCompletion(4);
                 }
                 
-                if (completedCommands[9]) { // After -a was set
-                    output += '------------- audit.log';
-                } else if (completedCommands[6]) { // After +a was set
-                    output += '-----a-------- audit.log';
-                } else {
-                    output += '------------- audit.log';
-                }
-                return output;
+                return `${testfileAttr} testfile\n${auditLogAttr} audit.log`;
             }
+            
+            // Handle testfile (step 2)
+            if (args.length === 1 && args[0] === 'testfile') {
+                if (currentStep === 2) {
+                    completedCommands[2]['lsattr testfile'] = true;
+                    updateRequirements();
+                    checkStepCompletion(2);
+                }
+                
+                if (fileStates.testfile.immutable) {
+                    return '----i--------- testfile';
+                } else {
+                    return '------------- testfile';
+                }
+            }
+            
+            // Handle audit.log (step 3)
+            if (args.length === 1 && args[0] === 'audit.log') {
+                if (currentStep === 3) {
+                    completedCommands[3]['lsattr audit.log'] = true;
+                    updateRequirements();
+                    checkStepCompletion(3);
+                }
+                
+                if (fileStates.auditLog.appendOnly) {
+                    return '-----a-------- audit.log';
+                } else {
+                    return '------------- audit.log';
+                }
+            }
+            
             return `lsattr: No such file or directory while trying to stat ${args[0]}`;
         },
+        
         'chattr': (args) => {
+            // Handle +i for testfile
             if (args.includes('+i') && args.includes('testfile')) {
-                return '';
+                if (currentStep === 2) {
+                    fileStates.testfile.immutable = true;
+                    completedCommands[2]['sudo chattr +i testfile'] = true;
+                    configState.immutable = true;
+                    updateRequirements();
+                    checkStepCompletion(2);
+                    return '';
+                } else {
+                    return "Please complete the previous steps first.";
+                }
             }
+            
+            // Handle +a for audit.log
             if (args.includes('+a') && args.includes('audit.log')) {
-                return '';
+                if (currentStep === 3) {
+                    fileStates.auditLog.appendOnly = true;
+                    completedCommands[3]['sudo chattr +a audit.log'] = true;
+                    configState.appendOnly = true;
+                    updateRequirements();
+                    checkStepCompletion(3);
+                    return '';
+                } else {
+                    return "Please complete the previous steps first.";
+                }
             }
+            
+            // Handle -i for testfile
             if (args.includes('-i') && args.includes('testfile')) {
-                return '';
+                if (currentStep === 4) {
+                    fileStates.testfile.immutable = false;
+                    completedCommands[4]['sudo chattr -i testfile'] = true;
+                    updateRequirements();
+                    checkStepCompletion(4);
+                    return '';
+                } else {
+                    return "Please complete the previous steps first.";
+                }
             }
+            
+            // Handle -a for audit.log
             if (args.includes('-a') && args.includes('audit.log')) {
-                return '';
+                if (currentStep === 4) {
+                    fileStates.auditLog.appendOnly = false;
+                    completedCommands[4]['sudo chattr -a audit.log'] = true;
+                    updateRequirements();
+                    checkStepCompletion(4);
+                    return '';
+                } else {
+                    return "Please complete the previous steps first.";
+                }
             }
+            
             return 'Usage: chattr [-RVf] [-+=aAcCdDeijPsStTu] [-v version] files...';
         },
+        
         'sudo': (args) => {
             if (args[0] === 'chattr') {
                 return commands.chattr(args.slice(1));
             }
             return 'sudo: only chattr commands are simulated in this lab';
         },
+        
         'touch': (args) => {
             if (args.length === 0) {
                 return 'touch: missing file operand';
             }
+            
+            // Check if this is the required command for step 2 or 3
+            if (args[0] === 'testfile' && currentStep === 2) {
+                completedCommands[2]['touch testfile'] = true;
+                updateRequirements();
+                checkStepCompletion(2);
+            } else if (args[0] === 'audit.log' && currentStep === 3) {
+                completedCommands[3]['touch audit.log'] = true;
+                updateRequirements();
+                checkStepCompletion(3);
+            }
+            
             return `Created file: ${args[0]}`;
         },
+        
         'clear': () => {
-            terminalOutput.innerHTML = '<div>[user@lab ~]$ <span class="prompt">Terminal cleared</span></div>';
+            terminalOutput.innerHTML = '';
             return '';
         },
-        'help': () => 'Available commands: lsattr, chattr, sudo, touch, clear, help',
+        
+        'help': () => {
+            return "Available commands: lsattr, chattr, sudo, touch, clear, help";
+        }
     };
-
+    
+    // Function to check if all commands in a step are completed
+    function checkStepCompletion(step) {
+        const stepCmds = stepCommands[step];
+        let allCompleted = true;
+        
+        for (const cmd of stepCmds) {
+            if (!completedCommands[step][cmd]) {
+                allCompleted = false;
+                break;
+            }
+        }
+        
+        if (allCompleted) {
+            completeStep(step);
+        }
+    }
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.lsattr) {
+            document.getElementById('req-lsattr').classList.add('completed');
+            document.getElementById('req-lsattr').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.immutable) {
+            document.getElementById('req-immutable').classList.add('completed');
+            document.getElementById('req-immutable').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.appendOnly) {
+            document.getElementById('req-append-only').classList.add('completed');
+            document.getElementById('req-append-only').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.removeAttr) {
+            document.getElementById('req-remove-attr').classList.add('completed');
+            document.getElementById('req-remove-attr').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[user@lab ~]$ Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[user@lab ~]$ Next: ${stepCommands[currentStep][0]}`);
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[user@lab ~]$</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
     commandInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            const commandText = commandInput.value.trim();
-            if (commandText) {
-                commandHistory.push(commandText);
-                historyIndex = commandHistory.length;
-                processCommand(commandText);
-            }
+            executeCommand(commandInput.value);
             commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
         } else if (e.key === 'ArrowUp') {
-            if (historyIndex > 0) {
-                historyIndex--;
-                commandInput.value = commandHistory[historyIndex];
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
             }
+            hideTabCompletion();
         } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
             if (historyIndex < commandHistory.length - 1) {
                 historyIndex++;
                 commandInput.value = commandHistory[historyIndex];
@@ -489,72 +1241,31 @@
                 historyIndex = commandHistory.length;
                 commandInput.value = '';
             }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
         }
     });
-
-    function processCommand(commandText) {
-        const parts = commandText.trim().split(/\s+/);
-        const cmd = parts[0];
-        const args = parts.slice(1);
-
-        let output;
-        if (commands[cmd]) {
-            output = commands[cmd](args);
-            if (output) {
-                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
-            } else {
-                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div>`;
-            }
-        } else {
-            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
         }
-
-        let commandMatched = false;
-        requiredCommands.forEach((req, index) => {
-            if (req.step === currentStep && req.command === commandText.trim()) {
-                commandMatched = true;
-                if (!completedCommands[index]) {
-                    completedCommands[index] = true;
-                    terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
-                }
-            }
-        });
-
-        const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-        const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
-
-        if (isRequiredCommand && !commandMatched) {
-            const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
-            terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
-        }
-
-        terminalOutput.scrollTop = terminalOutput.scrollHeight;
-        checkStepCompletion();
-    }
-
-    function checkStepCompletion() {
-        const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-        const allCompleted = currentStepCommands.every(req =>
-            completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
-        );
-        if (allCompleted) {
-            setTimeout(() => {
-                nextStep();
-            }, 1000);
-        }
-    }
-
-    function nextStep() {
-        steps[currentStep].classList.remove('active-step');
-        currentStep++;
-        if (currentStep < steps.length) {
-            steps[currentStep].classList.add('active-step');
-            steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
-        } else {
-            terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All commands executed correctly!</div>`;
-        }
-    }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
 </script>
 </body>
 </html>
