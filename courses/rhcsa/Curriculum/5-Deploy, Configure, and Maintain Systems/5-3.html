@@ -1,18 +1,26 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>RHCSA Lab 5.3 - Manage Services (systemctl, service)</title>
-<style>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 5.3: Manage Services (systemctl, service)</title>
+    <style>
         :root {
             --redhat-red: #cc0000;
             --redhat-dark: #1e1e1e;
             --redhat-light: #f0f0f0;
             --redhat-accent: #4CAF50;
             --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
         }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Red Hat Text', 'Overpass', sans-serif;
             background-color: var(--redhat-dark);
@@ -20,78 +28,256 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-        }
-        .lab-container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: #252525;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            height: 100vh;
             overflow: hidden;
-            border-top: 4px solid var(--redhat-red);
         }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
         .header {
             background: linear-gradient(to right, #1e1e1e, #333);
             padding: 15px 20px;
             color: white;
             display: flex;
             align-items: center;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
+        
         .header img {
             height: 30px;
             margin-right: 15px;
         }
+        
         .header h1 {
             margin: 0;
             font-size: 1.5em;
             font-weight: normal;
         }
-        .terminal-container {
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
             display: flex;
             flex-direction: column;
-            height: 600px;
+            background: var(--panel-bg);
+            position: relative;
         }
-        .guide {
-            padding: 20px;
-            background: #2d2d2d;
-            flex: 1;
-            overflow-y: auto;
-        }
+        
         .guide h2 {
             margin-top: 0;
             color: var(--redhat-accent);
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
         .guide-step {
             margin-bottom: 15px;
             padding: 15px;
             background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
             border-left: 4px solid var(--redhat-accent);
-            display: none;
         }
-        .active-step {
-            display: block;
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
         }
-        .terminal {
-            background: #000;
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
             padding: 15px;
-            height: 250px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
             overflow-y: auto;
             font-family: 'Red Hat Mono', monospace;
-            border-top: 1px solid #444;
         }
-        .prompt {
-            color: var(--redhat-accent);
-        }
+        
         .command-line {
             display: flex;
             align-items: center;
             padding: 15px;
             background: #333;
-            border-top: 1px solid #444;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
         }
+        
         #command-input {
             flex: 1;
             background: transparent;
@@ -102,47 +288,29 @@
             outline: none;
             padding: 8px;
         }
-        .success {
+        
+        .prompt {
             color: var(--redhat-accent);
-            font-weight: bold;
+            white-space: nowrap;
+            margin-right: 5px;
         }
-        .error {
-            color: #FF5252;
-        }
-        .completion {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        .concept {
-            background: #2a2a2a;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            border-left: 4px solid var(--redhat-blue);
-        }
-        .concept h4 {
-            margin-top: 0;
-            color: var(--redhat-blue);
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
-        .concept-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .concept-item {
-            background: #252525;
+        
+        .file-content {
+            background: #1e1e1e;
             padding: 10px;
-            border-radius: 5px;
-            border-left: 2px solid var(--redhat-red);
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
         }
-        .concept-item strong {
-            color: var(--redhat-red);
-            display: block;
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
             margin-bottom: 5px;
         }
+        
         code {
             background: #1e1e1e;
             padding: 2px 5px;
@@ -150,31 +318,94 @@
             color: var(--redhat-accent);
             font-family: 'Red Hat Mono', monospace;
         }
-        kbd {
-            background: #444;
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: white;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        .required-command {
-            background: rgba(76, 175, 80, 0.1);
-            padding: 5px;
-            border-radius: 3px;
-            border-left: 3px solid var(--redhat-accent);
-        }
-        .trophy {
-            display: inline-block;
-            margin-left: 5px;
-        }
-        .syntax-error {
-            color: #FF5252;
+        
+        .success {
+            color: var(--redhat-accent);
             font-weight: bold;
         }
+        
+        .error {
+            color: #FF5252;
+        }
+        
         .warning {
             color: #FFD700;
             font-weight: bold;
         }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .service-active {
+            color: var(--redhat-accent);
+        }
+        
+        .service-inactive {
+            color: #FF5252;
+        }
+        
+        .syntax-error {
+            color: #FF5252;
+            font-weight: bold;
+        }
+        
         .strict-feedback {
             background: rgba(204, 0, 0, 0.1);
             padding: 10px;
@@ -182,195 +413,351 @@
             border-left: 3px solid var(--redhat-red);
             margin-top: 10px;
         }
-        .service-active {
-            color: var(--redhat-accent);
-        }
-        .service-inactive {
-            color: #FF5252;
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
         }
     </style>
-<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
 <div class="lab-container">
-<div class="header">
-<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-<h1>RHCSA Lab 5.3: Manage Services (systemctl, service)</h1>
-</div>
-<div class="terminal-container">
-<div class="guide">
-<h2>Lab Instructions</h2>
-<div class="guide-step active-step" id="step1">
-<h3>Step 1: Check Service Status</h3>
-<p class="required-command">Type exactly: <code>systemctl status sshd</code></p>
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 5.3: Manage Services (systemctl, service)</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Learn to manage system services using systemctl and legacy service commands. You will check service status, start and stop services, enable and disable services, and use legacy service commands.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
-<div class="concept">
-<h4>Understanding Service Status</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Current state of a service (running, stopped, etc.)
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Verify if a service is operational
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                On any systemd-managed Linux system
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                Before making changes to services
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>systemctl status</code> shows detailed information about a service including its current state, recent logs, and whether it's enabled to start at boot.</p>
-</div>
-</div>
-<div class="guide-step" id="step2">
-<h3>Step 2: Start and Stop Services</h3>
-<p class="required-command">Type exactly: <code>sudo systemctl stop sshd</code></p>
-<p class="required-command">Then type: <code>systemctl status sshd</code> (verify it's stopped)</p>
-<p class="required-command">Then type: <code>sudo systemctl start sshd</code></p>
+            <div class="requirements-panel">
+                <h4>Service Management Requirements</h4>
+                <div class="requirement-item" id="req-status">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Check SSH service status with <code>systemctl status sshd</code></span>
+                </div>
+                <div class="requirement-item" id="req-stop-start">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Stop and start SSH service with <code>systemctl</code></span>
+                </div>
+                <div class="requirement-item" id="req-enable-disable">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Disable and enable SSH service with <code>systemctl</code></span>
+                </div>
+                <div class="requirement-item" id="req-legacy">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use legacy <code>service</code> commands to manage SSH</span>
+                </div>
+            </div>
 
-<div class="concept">
-<h4>Understanding Service Control</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Starting and stopping system services
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Manage service availability without rebooting
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                On any system with systemd
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                When you need to temporarily enable/disable services
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>systemctl start</code> activates a service immediately, while <code>systemctl stop</code> deactivates it. These changes don't persist across reboots.</p>
-</div>
-</div>
-<div class="guide-step" id="step3">
-<h3>Step 3: Enable and Disable Services</h3>
-<p class="required-command">Type exactly: <code>sudo systemctl disable sshd</code></p>
-<p class="required-command">Then type: <code>systemctl is-enabled sshd</code> (verify it's disabled)</p>
-<p class="required-command">Then type: <code>sudo systemctl enable sshd</code></p>
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Service Management Lab. In this lab, you will learn to manage system services using both modern systemctl commands and legacy service commands.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
 
-<div class="concept">
-<h4>Understanding Service Persistence</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Configuring services to start at boot
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Ensure critical services start automatically
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Managed in /etc/systemd/system/
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                When configuring system services
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>systemctl enable</code> creates symlinks to start the service at boot, while <code>systemctl disable</code> removes them. This doesn't affect the current running state.</p>
-</div>
-</div>
-<div class="guide-step" id="step4">
-<h3>Step 4: Legacy Service Commands</h3>
-<p class="required-command">Type exactly: <code>sudo service sshd restart</code></p>
-<p class="required-command">Then type: <code>service --status-all</code></p>
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Check Service Status
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's check the status of the SSH service.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    systemctl status sshd
+                </div>
 
-<div class="concept">
-<h4>Understanding Legacy Service Management</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Traditional service management commands
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Compatibility with older systems/scripts
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                On systems with SysV init compatibility
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                When working with older systems
-                            </div>
-</div>
-<p><strong>How it works:</strong> The <code>service</code> command provides backward compatibility with SysV init scripts. <code>service sshd restart</code> stops and starts the service, while <code>--status-all</code> shows all services.</p>
-</div>
-</div>
-</div>
-<div class="command-line">
-<span class="prompt">[user@lab ~]$</span>
-<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
-</div>
-<div class="terminal" id="terminal-output">
-<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 5.3: Service Management!</span></div>
-<div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
-</div>
-</div>
-</div>
-<script>const commandInput = document.getElementById('command-input');
-const terminalOutput = document.getElementById('terminal-output');
-const steps = document.querySelectorAll('.guide-step');
-let currentStep = 0;
-let commandHistory = [];
-let historyIndex = -1;
+                <div class="concept">
+                    <h4>Understanding Service Status</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Current state of a service (running, stopped, etc.)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Verify if a service is operational
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            On any systemd-managed Linux system
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            Before making changes to services
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>systemctl status</code> shows detailed information about a service including its current state, recent logs, and whether it's enabled to start at boot.</p>
+                </div>
+            </div>
 
-// Simulated service states
-let serviceStates = {
-    sshd: {
-        active: true,
-        enabled: true
-    },
-    httpd: {
-        active: false,
-        enabled: false
-    }
-};
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Start and Stop Services
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's practice starting and stopping the SSH service.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo systemctl stop sshd
+                </div>
+                <p>Then verify it's stopped:</p>
+                <div class="command-hint">
+                    systemctl status sshd
+                </div>
+                <p>Then start it again:</p>
+                <div class="command-hint">
+                    sudo systemctl start sshd
+                </div>
 
-const requiredCommands = [
-    { command: 'systemctl status sshd', step: 0, feedback: 'Type exactly: systemctl status sshd' },
-    { command: 'sudo systemctl stop sshd', step: 1, feedback: 'Type exactly: sudo systemctl stop sshd' },
-    { command: 'systemctl status sshd', step: 1, feedback: 'Type exactly: systemctl status sshd (verify it\'s stopped)' },
-    { command: 'sudo systemctl start sshd', step: 1, feedback: 'Type exactly: sudo systemctl start sshd' },
-    { command: 'sudo systemctl disable sshd', step: 2, feedback: 'Type exactly: sudo systemctl disable sshd' },
-    { command: 'systemctl is-enabled sshd', step: 2, feedback: 'Type exactly: systemctl is-enabled sshd (verify it\'s disabled)' },
-    { command: 'sudo systemctl enable sshd', step: 2, feedback: 'Type exactly: sudo systemctl enable sshd' },
-    { command: 'sudo service sshd restart', step: 3, feedback: 'Type exactly: sudo service sshd restart' },
-    { command: 'service --status-all', step: 3, feedback: 'Type exactly: service --status-all' }
-];
+                <div class="concept">
+                    <h4>Understanding Service Control</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Starting and stopping system services
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Manage service availability without rebooting
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            On any system with systemd
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When you need to temporarily enable/disable services
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>systemctl start</code> activates a service immediately, while <code>systemctl stop</code> deactivates it. These changes don't persist across reboots.</p>
+                </div>
+            </div>
 
-let completedCommands = new Array(requiredCommands.length).fill(false);
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Enable and Disable Services
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's practice enabling and disabling the SSH service at boot.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo systemctl disable sshd
+                </div>
+                <p>Then verify it's disabled:</p>
+                <div class="command-hint">
+                    systemctl is-enabled sshd
+                </div>
+                <p>Then enable it again:</p>
+                <div class="command-hint">
+                    sudo systemctl enable sshd
+                </div>
 
-const commands = {
-    'systemctl': (args) => {
-        if (args.length < 1) return 'Usage: systemctl [OPTIONS...] COMMAND';
+                <div class="concept">
+                    <h4>Understanding Service Persistence</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Configuring services to start at boot
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Ensure critical services start automatically
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Managed in /etc/systemd/system/
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When configuring system services
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>systemctl enable</code> creates symlinks to start the service at boot, while <code>systemctl disable</code> removes them. This doesn't affect the current running state.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Legacy Service Commands
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's practice using legacy service commands for compatibility.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo service sshd restart
+                </div>
+                <p>Then check all services:</p>
+                <div class="command-hint">
+                    service --status-all
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Legacy Service Management</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Traditional service management commands
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Compatibility with older systems/scripts
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            On systems with SysV init compatibility
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When working with older systems
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> The <code>service</code> command provides backward compatibility with SysV init scripts. <code>service sshd restart</code> stops and starts the service, while <code>--status-all</code> shows all services.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All service management requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
         
-        const action = args[0];
-        const service = args[1];
-        
-        if (!service || service !== 'sshd') {
-            return `Failed to ${action} ${service || 'unit'}: Unit not found.`;
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[user@lab ~]$</span> Welcome to RHCSA Lab 5.3: Service Management!</div>
+                <div><span class="prompt">[user@lab ~]$</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[user@lab ~]$</span> You must complete each step in order.</div>
+                <div><span class="prompt">[user@lab ~]$</span> Current step: Check Service Status</div>
+                <div><span class="prompt">[user@lab ~]$</span> Type: <code>systemctl status sshd</code></div>
+                <div><span class="prompt">[user@lab ~]$</span> <span class="success">Tip:</span> Press <code>Tab</code> for command completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'systemctl', 'service', 'sudo', 'help'
+    ];
+    
+    // Track configuration state
+    const configState = {
+        status: false,
+        stopStart: false,
+        enableDisable: false,
+        legacy: false
+    };
+    
+    // Track completed commands for each step
+    const stepCommands = {
+        1: ['systemctl status sshd'],
+        2: ['sudo systemctl stop sshd', 'systemctl status sshd', 'sudo systemctl start sshd'],
+        3: ['sudo systemctl disable sshd', 'systemctl is-enabled sshd', 'sudo systemctl enable sshd'],
+        4: ['sudo service sshd restart', 'service --status-all']
+    };
+    
+    // Track which commands have been completed
+    const completedCommands = {
+        1: [],
+        2: [],
+        3: [],
+        4: []
+    };
+    
+    // Simulated service states
+    let serviceStates = {
+        sshd: {
+            active: true,
+            enabled: true
+        },
+        httpd: {
+            active: false,
+            enabled: false
         }
-        
-        switch (action) {
-            case 'status':
-                return `● sshd.service - OpenSSH server daemon<br>
+    };
+    
+    const commands = {
+        'systemctl': (args) => {
+            if (args.length < 1) return 'Usage: systemctl [OPTIONS...] COMMAND';
+            
+            const action = args[0];
+            const service = args[1];
+            
+            if (!service || service !== 'sshd') {
+                return `Failed to ${action} ${service || 'unit'}: Unit not found.`;
+            }
+            
+            switch (action) {
+                case 'status':
+                    if (currentStep === 1 || currentStep > 1) {
+                        // FIX: credit the current step, not always step 1
+                        markCommandCompleted(currentStep, 'systemctl status sshd');
+                        return `● sshd.service - OpenSSH server daemon<br>
    Loaded: loaded (/usr/lib/systemd/system/sshd.service; <span class="${serviceStates.sshd.enabled ? 'service-active' : 'service-inactive'}">${serviceStates.sshd.enabled ? 'enabled' : 'disabled'}</span>)<br>
    Active: <span class="${serviceStates.sshd.active ? 'service-active' : 'service-inactive'}">${serviceStates.sshd.active ? 'active (running)' : 'inactive (dead)'}</span> since Tue 2023-01-10 10:00:00 EST; 1h ago<br>
  Main PID: 1234 (sshd)<br>
@@ -378,146 +765,371 @@ const commands = {
    Memory: 5.0M<br>
    CGroup: /system.slice/sshd.service<br>
            └─1234 /usr/sbin/sshd -D`;
-            case 'start':
-                serviceStates.sshd.active = true;
-                return '';
-            case 'stop':
-                serviceStates.sshd.active = false;
-                return '';
-            case 'enable':
-                serviceStates.sshd.enabled = true;
-                return 'Created symlink /etc/systemd/system/multi-user.target.wants/sshd.service → /usr/lib/systemd/system/sshd.service.';
-            case 'disable':
-                serviceStates.sshd.enabled = false;
-                return 'Removed /etc/systemd/system/multi-user.target.wants/sshd.service.';
-            case 'is-enabled':
-                return serviceStates.sshd.enabled ? 'enabled' : 'disabled';
-            default:
-                return `Unknown operation '${action}'.`;
-        }
-    },
-    'service': (args) => {
-        if (args.length < 1) return 'Usage: service <service> [action]';
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                case 'start':
+                    if (currentStep === 2 || currentStep > 2) {
+                        serviceStates.sshd.active = true;
+                        markCommandCompleted(2, 'sudo systemctl start sshd');
+                        return '';
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                case 'stop':
+                    if (currentStep === 2 || currentStep > 2) {
+                        serviceStates.sshd.active = false;
+                        markCommandCompleted(2, 'sudo systemctl stop sshd');
+                        return '';
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                case 'enable':
+                    if (currentStep === 3 || currentStep > 3) {
+                        serviceStates.sshd.enabled = true;
+                        markCommandCompleted(3, 'sudo systemctl enable sshd');
+                        return 'Created symlink /etc/systemd/system/multi-user.target.wants/sshd.service → /usr/lib/systemd/system/sshd.service.';
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                case 'disable':
+                    if (currentStep === 3 || currentStep > 3) {
+                        serviceStates.sshd.enabled = false;
+                        markCommandCompleted(3, 'sudo systemctl disable sshd');
+                        return 'Removed /etc/systemd/system/multi-user.target.wants/sshd.service.';
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                case 'is-enabled':
+                    if (currentStep === 3 || currentStep > 3) {
+                        markCommandCompleted(3, 'systemctl is-enabled sshd');
+                        return serviceStates.sshd.enabled ? 'enabled' : 'disabled';
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                default:
+                    return `Unknown operation '${action}'.`;
+            }
+        },
         
-        if (args[0] === '--status-all') {
-            return `[ <span class="${serviceStates.sshd.active ? 'service-active' : 'service-inactive'}">+</span> ]  sshd<br>
+        'service': (args) => {
+            if (args.length < 1) return 'Usage: service <service> [action]';
+            
+            if (args[0] === '--status-all') {
+                if (currentStep === 4 || currentStep > 4) {
+                    markCommandCompleted(4, 'service --status-all');
+                    return `[ <span class="${serviceStates.sshd.active ? 'service-active' : 'service-inactive'}">+</span> ]  sshd<br>
 [ <span class="service-inactive">-</span> ]  httpd`;
-        }
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            
+            const service = args[0];
+            const action = args[1];
+            
+            if (service !== 'sshd') {
+                return `sshd: unrecognized service`;
+            }
+            
+            switch (action) {
+                case 'restart':
+                    if (currentStep === 4 || currentStep > 4) {
+                        markCommandCompleted(4, 'sudo service sshd restart');
+                        // For simulation purposes, just toggle the state
+                        return 'Stopping sshd: [ OK ]<br>Starting sshd: [ OK ]';
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                default:
+                    return `Usage: service sshd {start|stop|status|restart|condrestart|try-restart|reload|force-reload}`;
+            }
+        },
         
-        const service = args[0];
-        const action = args[1];
+        'sudo': (args) => {
+            if (args.length < 1) return 'Usage: sudo command';
+            const cmd = args[0];
+            const cmdArgs = args.slice(1);
+            if (commands[cmd]) {
+                return commands[cmd](cmdArgs);
+            }
+            return `sudo: ${cmd}: command not found`;
+        },
         
-        if (service !== 'sshd') {
-            return `sshd: unrecognized service`;
+        'help': () => {
+            return "Available commands: systemctl, service, sudo, help";
         }
-        
-        switch (action) {
-            case 'restart':
-                // For simulation purposes, just toggle the state
-                return 'Stopping sshd: [ OK ]<br>Starting sshd: [ OK ]';
-            default:
-                return `Usage: service sshd {start|stop|status|restart|condrestart|try-restart|reload|force-reload}`;
-        }
-    },
-    'sudo': (args) => {
-        if (args.length < 1) return 'Usage: sudo command';
-        const cmd = args[0];
-        const cmdArgs = args.slice(1);
-        if (commands[cmd]) {
-            return commands[cmd](cmdArgs);
-        }
-        return `sudo: ${cmd}: command not found`;
-    },
-    'help': () => 'Available commands: systemctl, service, sudo, help',
-};
-
-commandInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const commandText = commandInput.value.trim();
-        if (commandText) {
-            commandHistory.push(commandText);
-            historyIndex = commandHistory.length;
-            processCommand(commandText);
-        }
-        commandInput.value = '';
-    } else if (e.key === 'ArrowUp') {
-        if (historyIndex > 0) {
-            historyIndex--;
-            commandInput.value = commandHistory[historyIndex];
-        }
-    } else if (e.key === 'ArrowDown') {
-        if (historyIndex < commandHistory.length - 1) {
-            historyIndex++;
-            commandInput.value = commandHistory[historyIndex];
-        } else {
-            historyIndex = commandHistory.length;
-            commandInput.value = '';
-        }
-    }
-});
-
-function processCommand(commandText) {
-    const parts = commandText.trim().split(/\s+/);
-    const cmd = parts[0];
-    const args = parts.slice(1);
-
-    let output;
-    if (commands[cmd]) {
-        output = commands[cmd](args);
-        if (output) {
-            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
-        } else {
-            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div>`;
-        }
-    } else {
-        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
-    }
-
-    let commandMatched = false;
-    requiredCommands.forEach((req, index) => {
-        if (req.step === currentStep && req.command === commandText.trim()) {
-            commandMatched = true;
-            if (!completedCommands[index]) {
-                completedCommands[index] = true;
-                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+    };
+    
+    // Function to mark a command as completed
+    function markCommandCompleted(step, command) {
+        if (!completedCommands[step].includes(command)) {
+            completedCommands[step].push(command);
+            
+            // Check if all commands for this step are completed
+            if (completedCommands[step].length === stepCommands[step].length) {
+                completeStep(step);
             }
         }
+    }
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (completedCommands[1].length > 0) {
+            document.getElementById('req-status').classList.add('completed');
+            document.getElementById('req-status').querySelector('.requirement-checkbox').textContent = '✓';
+            configState.status = true;
+        }
+        
+        if (completedCommands[2].length === stepCommands[2].length) {
+            document.getElementById('req-stop-start').classList.add('completed');
+            document.getElementById('req-stop-start').querySelector('.requirement-checkbox').textContent = '✓';
+            configState.stopStart = true;
+        }
+        
+        if (completedCommands[3].length === stepCommands[3].length) {
+            document.getElementById('req-enable-disable').classList.add('completed');
+            document.getElementById('req-enable-disable').querySelector('.requirement-checkbox').textContent = '✓';
+            configState.enableDisable = true;
+        }
+        
+        if (completedCommands[4].length === stepCommands[4].length) {
+            document.getElementById('req-legacy').classList.add('completed');
+            document.getElementById('req-legacy').querySelector('.requirement-checkbox').textContent = '✓';
+            configState.legacy = true;
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[user@lab ~]$ Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep] && stepCommands[currentStep].length > 0) {
+                    addTerminalOutput(`[user@lab ~]$ Next: ${stepCommands[currentStep][0]}`);
+                }
+            }
+            
+            updateRequirements();
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[user@lab ~]$</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // No path completion for this lab
+        hideTabCompletion();
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // No path completion for this lab
+            parts[parts.length - 1] = suggestion;
+            commandInput.value = parts.join(' ') + ' ';
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
     });
-
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
-
-    if (isRequiredCommand && !commandMatched) {
-        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
-        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
-    }
-
-    terminalOutput.scrollTop = terminalOutput.scrollHeight;
-    checkStepCompletion();
-}
-
-function checkStepCompletion() {
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const allCompleted = currentStepCommands.every(req =>
-        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
-    );
-    if (allCompleted) {
-        setTimeout(() => {
-            nextStep();
-        }, 1000);
-    }
-}
-
-function nextStep() {
-    steps[currentStep].classList.remove('active-step');
-    currentStep++;
-    if (currentStep < steps.length) {
-        steps[currentStep].classList.add('active-step');
-        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
-    } else {
-        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All service management commands executed correctly!</div>`;
-    }
-}</script>
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>
