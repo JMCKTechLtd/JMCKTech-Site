@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>RHCSA Lab 6.3 - Configure Hostname Resolution</title>
-<style>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 6.3: Configure Hostname Resolution</title>
+    <style>
         :root {
             --redhat-red: #cc0000;
             --redhat-dark: #1e1e1e;
             --redhat-light: #f0f0f0;
             --redhat-accent: #4CAF50;
             --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
         }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Red Hat Text', 'Overpass', sans-serif;
             background-color: var(--redhat-dark);
@@ -19,78 +28,256 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-        }
-        .lab-container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: #252525;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            height: 100vh;
             overflow: hidden;
-            border-top: 4px solid var(--redhat-red);
         }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
         .header {
             background: linear-gradient(to right, #1e1e1e, #333);
             padding: 15px 20px;
             color: white;
             display: flex;
             align-items: center;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
+        
         .header img {
             height: 30px;
             margin-right: 15px;
         }
+        
         .header h1 {
             margin: 0;
             font-size: 1.5em;
             font-weight: normal;
         }
-        .terminal-container {
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
             display: flex;
             flex-direction: column;
-            height: 600px;
+            background: var(--panel-bg);
+            position: relative;
         }
-        .guide {
-            padding: 20px;
-            background: #2d2d2d;
-            flex: 1;
-            overflow-y: auto;
-        }
+        
         .guide h2 {
             margin-top: 0;
             color: var(--redhat-accent);
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
         .guide-step {
             margin-bottom: 15px;
             padding: 15px;
             background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
             border-left: 4px solid var(--redhat-accent);
-            display: none;
         }
-        .active-step {
-            display: block;
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
         }
-        .terminal {
-            background: #000;
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
             padding: 15px;
-            height: 250px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
             overflow-y: auto;
             font-family: 'Red Hat Mono', monospace;
-            border-top: 1px solid #444;
         }
-        .prompt {
-            color: var(--redhat-accent);
-        }
+        
         .command-line {
             display: flex;
             align-items: center;
             padding: 15px;
             background: #333;
-            border-top: 1px solid #444;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
         }
+        
         #command-input {
             flex: 1;
             background: transparent;
@@ -101,47 +288,29 @@
             outline: none;
             padding: 8px;
         }
-        .success {
+        
+        .prompt {
             color: var(--redhat-accent);
-            font-weight: bold;
+            white-space: nowrap;
+            margin-right: 5px;
         }
-        .error {
-            color: #FF5252;
-        }
-        .completion {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        .concept {
-            background: #2a2a2a;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            border-left: 4px solid var(--redhat-blue);
-        }
-        .concept h4 {
-            margin-top: 0;
-            color: var(--redhat-blue);
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
-        .concept-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .concept-item {
-            background: #252525;
+        
+        .file-content {
+            background: #1e1e1e;
             padding: 10px;
-            border-radius: 5px;
-            border-left: 2px solid var(--redhat-red);
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
         }
-        .concept-item strong {
-            color: var(--redhat-red);
-            display: block;
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
             margin-bottom: 5px;
         }
+        
         code {
             background: #1e1e1e;
             padding: 2px 5px;
@@ -149,6 +318,7 @@
             color: var(--redhat-accent);
             font-family: 'Red Hat Mono', monospace;
         }
+        
         kbd {
             background: #444;
             padding: 2px 5px;
@@ -156,387 +326,1230 @@
             color: white;
             font-family: 'Red Hat Mono', monospace;
         }
-        .required-command {
-            background: rgba(76, 175, 80, 0.1);
-            padding: 5px;
-            border-radius: 3px;
-            border-left: 3px solid var(--redhat-accent);
-        }
-        .trophy {
-            display: inline-block;
-            margin-left: 5px;
-        }
-        .syntax-error {
-            color: #FF5252;
+        
+        .success {
+            color: var(--redhat-accent);
             font-weight: bold;
         }
+        
+        .error {
+            color: #FF5252;
+        }
+        
         .warning {
             color: #FFD700;
             font-weight: bold;
         }
-        .strict-feedback {
-            background: rgba(204, 0, 0, 0.1);
-            padding: 10px;
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
             border-radius: 5px;
-            border-left: 3px solid var(--redhat-red);
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .nano-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .nano-container {
+            display: flex;
+            width: 90%;
+            height: 80%;
+            gap: 20px;
+        }
+        
+        .nano-instructions {
+            width: 30%;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+        
+        .nano-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .nano-editor {
+            width: 70%;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .nano-header {
+            background: #333;
+            padding: 5px 10px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nano-content {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+            white-space: pre;
+            color: #ccc;
+            position: relative;
+        }
+        
+        .nano-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .nano-status {
+            background: #333;
+            padding: 8px 10px;
+            color: #ccc;
+            font-size: 0.9em;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .nano-help {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .nano-help-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .nano-shortcut {
+            background: #555;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+        
+        .nano-button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 0.9em;
+        }
+        
+        .nano-button:hover {
+            background: #555;
+        }
+        
+        .nano-buttons {
+            display: flex;
+            gap: 10px;
             margin-top: 10px;
         }
-        .file-content {
-            background: #1e1e1e;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: 'Red Hat Mono', monospace;
-            white-space: pre;
-            overflow-x: auto;
+        
+        .nano-close-btn {
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 0 5px;
+        }
+        
+        .nano-close-btn:hover {
+            color: #FF5252;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+            
+            .nano-container {
+                width: 95%;
+                height: 90%;
+                flex-direction: column;
+            }
+            
+            .nano-instructions, .nano-editor {
+                width: 100%;
+            }
+            
+            .nano-instructions {
+                height: 30%;
+            }
+            
+            .nano-editor {
+                height: 70%;
+            }
         }
     </style>
-<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
 <div class="lab-container">
-<div class="header">
-<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-<h1>RHCSA Lab 6.3: Configure Hostname Resolution</h1>
-</div>
-<div class="terminal-container">
-<div class="guide">
-<h2>Lab Instructions</h2>
-<div class="guide-step active-step" id="step1">
-<h3>Step 1: View Current Hostname Resolution</h3>
-<p class="required-command">Type exactly: <code>cat /etc/hosts</code></p>
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 6.3: Configure Hostname Resolution</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Configure hostname resolution on your system by editing the /etc/hosts and /etc/resolv.conf files. You will add static host entries and configure DNS servers.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
-<div class="concept">
-<h4>Understanding /etc/hosts</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Static hostname resolution file
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Maps IP addresses to hostnames locally
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                <code>/etc/hosts</code>
-</div>
-<div class="concept-item">
-<strong>When</strong>
-                                Checked before DNS queries
-                            </div>
-</div>
-<p><strong>Format:</strong> Each line contains an IP address followed by hostnames (primary first, then aliases).</p>
-<div class="file-content">
+            <div class="requirements-panel">
+                <h4>Hostname Resolution Requirements</h4>
+                <div class="requirement-item" id="req-hosts-file">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Add entry to <code>/etc/hosts</code>: <code>192.168.1.100 server1.example.com server1</code></span>
+                </div>
+                <div class="requirement-item" id="req-resolv-file">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Configure DNS in <code>/etc/resolv.conf</code>: <code>nameserver 8.8.8.8</code> and <code>nameserver 8.8.4.4</code></span>
+                </div>
+                <div class="requirement-item" id="req-ping-test">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Test hostname resolution with <code>ping</code> command</span>
+                </div>
+                <div class="requirement-item" id="req-dns-test">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Test DNS resolution with <code>nslookup</code> and <code>dig</code></span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Hostname Resolution Lab. In this lab, you will configure hostname resolution by editing system files and testing the configuration.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    View Current Hostname Resolution
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's view the current hostname resolution configuration.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    cat /etc/hosts
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding /etc/hosts</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Static hostname resolution file
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Maps IP addresses to hostnames locally
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            <code>/etc/hosts</code>
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            Checked before DNS queries
+                        </div>
+                    </div>
+                    <p><strong>Format:</strong> Each line contains an IP address followed by hostnames (primary first, then aliases).</p>
+                    <div class="file-content">
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
-</div>
-</div>
-</div>
-<div class="guide-step" id="step2">
-<h3>Step 2: Add a Host Entry</h3>
-<p class="required-command">Type exactly: <code>sudo nano /etc/hosts</code></p>
-<p class="required-command">Add this line: <code>192.168.1.100 server1.example.com server1</code></p>
-<p class="required-command">Save with <kbd>Ctrl+O</kbd>, then exit with <kbd>Ctrl+X</kbd></p>
-<p class="required-command">Verify with: <code>cat /etc/hosts</code></p>
+                    </div>
+                </div>
+            </div>
 
-<div class="concept">
-<h4>Editing System Files</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                System configuration files
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Need root privileges to modify
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Typically in <code>/etc</code>
-</div>
-<div class="concept-item">
-<strong>When</strong>
-                                When configuring system settings
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>sudo</code> elevates privileges. <code>nano</code> is a simple text editor. After saving, verify changes with <code>cat</code>.</p>
-</div>
-</div>
-<div class="guide-step" id="step3">
-<h3>Step 3: Test Hostname Resolution</h3>
-<p class="required-command">Type exactly: <code>ping -c 3 server1</code></p>
-<p class="required-command">Then type: <code>ping -c 3 server1.example.com</code></p>
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Add a Host Entry
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's add a static host entry to the hosts file.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo nano /etc/hosts
+                </div>
+                
+                <p>Add this line to the file:</p>
+                
+                <div class="file-content">192.168.1.100 server1.example.com server1</div>
+                
+                <p>To save and exit nano:</p>
+                <ol>
+                    <li>Press <kbd>Ctrl+O</kbd> to write the file</li>
+                    <li>Press <kbd>Enter</kbd> to confirm the filename</li>
+                    <li>Press <kbd>Ctrl+X</kbd> to exit</li>
+                </ol>
+                
+                <div class="hint-box">
+                    <strong>Verify your changes:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    cat /etc/hosts
+                </div>
 
-<div class="concept">
-<h4>Testing Resolution</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Verification tools
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Confirm entries work correctly
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Available on all Linux systems
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                After modifying resolution files
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>ping</code> tests network connectivity. The <code>-c 3</code> option sends 3 packets. Both hostname forms should resolve to the same IP.</p>
-</div>
-</div>
-<div class="guide-step" id="step4">
-<h3>Step 4: Configure DNS Resolution</h3>
-<p class="required-command">Type exactly: <code>cat /etc/resolv.conf</code></p>
-<p class="required-command">Then type: <code>sudo nano /etc/resolv.conf</code></p>
-<p class="required-command">Add these lines (press Tab after typing "nameserver"):<br>
-<code>nameserver 8.8.8.8</code><br>
-<code>nameserver 8.8.4.4</code></p>
-<p class="required-command">Save and exit nano (<kbd>Ctrl+O</kbd>, <kbd>Ctrl+X</kbd>)</p>
-<p class="required-command">Verify with: <code>cat /etc/resolv.conf</code></p>
+                <div class="concept">
+                    <h4>Editing System Files</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            System configuration files
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Need root privileges to modify
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Typically in <code>/etc</code>
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When configuring system settings
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>sudo</code> elevates privileges. <code>nano</code> is a simple text editor. After saving, verify changes with <code>cat</code>.</p>
+                </div>
+            </div>
 
-<div class="concept">
-<h4>Understanding /etc/resolv.conf</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                DNS resolver configuration
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Specifies DNS servers to use
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                <code>/etc/resolv.conf</code>
-</div>
-<div class="concept-item">
-<strong>When</strong>
-                                For all DNS queries not in /etc/hosts
-                            </div>
-</div>
-<p><strong>Format:</strong> Each <code>nameserver</code> line specifies a DNS server (max 3). They're queried in order.</p>
-<div class="file-content">
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Test Hostname Resolution
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's test that our hostname resolution is working correctly.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ping -c 3 server1
+                </div>
+                
+                <div class="command-hint">
+                    ping -c 3 server1.example.com
+                </div>
+
+                <div class="concept">
+                    <h4>Testing Resolution</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Verification tools
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Confirm entries work correctly
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Available on all Linux systems
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            After modifying resolution files
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>ping</code> tests network connectivity. The <code>-c 3</code> option sends 3 packets. Both hostname forms should resolve to the same IP.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Configure DNS Resolution
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's configure DNS resolution by editing the resolv.conf file.</p>
+                
+                <div class="hint-box">
+                    <strong>First, view the current configuration:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    cat /etc/resolv.conf
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Then edit the file:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo nano /etc/resolv.conf
+                </div>
+                
+                <p>Add these lines to the file:</p>
+                
+                <div class="file-content">nameserver 8.8.8.8
+nameserver 8.8.4.4</div>
+                
+                <p>To save and exit nano:</p>
+                <ol>
+                    <li>Press <kbd>Ctrl+O</kbd> to write the file</li>
+                    <li>Press <kbd>Enter</kbd> to confirm the filename</li>
+                    <li>Press <kbd>Ctrl+X</kbd> to exit</li>
+                </ol>
+                
+                <div class="hint-box">
+                    <strong>Verify your changes:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    cat /etc/resolv.conf
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding /etc/resolv.conf</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            DNS resolver configuration
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Specifies DNS servers to use
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            <code>/etc/resolv.conf</code>
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            For all DNS queries not in /etc/hosts
+                        </div>
+                    </div>
+                    <p><strong>Format:</strong> Each <code>nameserver</code> line specifies a DNS server (max 3). They're queried in order.</p>
+                    <div class="file-content">
 # Generated by NetworkManager
 search example.com
 nameserver 8.8.8.8
 nameserver 8.8.4.4
-</div>
-</div>
-</div>
-<div class="guide-step" id="step5">
-<h3>Step 5: Test DNS Resolution</h3>
-<p class="required-command">Type exactly: <code>nslookup google.com</code></p>
-<p class="required-command">Then type: <code>dig redhat.com</code></p>
+                    </div>
+                </div>
+            </div>
 
-<div class="concept">
-<h4>DNS Testing Tools</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                DNS diagnostic utilities
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                Verify DNS configuration works
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                May need to install (<code>bind-utils</code>)
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                After changing DNS settings
-                            </div>
-</div>
-<p><strong>How they work:</strong> <code>nslookup</code> provides basic DNS queries. <code>dig</code> gives detailed DNS information including TTL and authoritative servers.</p>
-</div>
-</div>
-</div>
-<div class="command-line">
-<span class="prompt">[user@lab ~]$</span>
-<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
-</div>
-<div class="terminal" id="terminal-output">
-<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 6.3!</span></div>
-<div>[user@lab ~]$ <span class="prompt">Configure hostname resolution by editing system files.</span></div>
-</div>
-</div>
-</div>
-<script>const commandInput = document.getElementById('command-input');
-const terminalOutput = document.getElementById('terminal-output');
-const steps = document.querySelectorAll('.guide-step');
-let currentStep = 0;
-let commandHistory = [];
-let historyIndex = -1;
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Test DNS Resolution
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's test that our DNS configuration is working correctly.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    nslookup google.com
+                </div>
+                
+                <div class="command-hint">
+                    dig redhat.com
+                </div>
 
-const requiredCommands = [
-    { command: 'cat /etc/hosts', step: 0, feedback: 'Type exactly: cat /etc/hosts' },
-    { command: 'sudo nano /etc/hosts', step: 1, feedback: 'Type exactly: sudo nano /etc/hosts' },
-    { command: 'cat /etc/hosts', step: 1, verifyContent: '192.168.1.100 server1.example.com server1', feedback: 'Verify your changes with: cat /etc/hosts' },
-    { command: 'ping -c 3 server1', step: 2, feedback: 'Type exactly: ping -c 3 server1' },
-    { command: 'ping -c 3 server1.example.com', step: 2, feedback: 'Type exactly: ping -c 3 server1.example.com' },
-    { command: 'cat /etc/resolv.conf', step: 3, feedback: 'Type exactly: cat /etc/resolv.conf' },
-    { command: 'sudo nano /etc/resolv.conf', step: 3, feedback: 'Type exactly: sudo nano /etc/resolv.conf' },
-    { command: 'cat /etc/resolv.conf', step: 3, verifyContent: 'nameserver 8.8.8.8', feedback: 'Verify your changes with: cat /etc/resolv.conf' },
-    { command: 'nslookup google.com', step: 4, feedback: 'Type exactly: nslookup google.com' },
-    { command: 'dig redhat.com', step: 4, feedback: 'Type exactly: dig redhat.com' }
-];
+                <div class="concept">
+                    <h4>DNS Testing Tools</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            DNS diagnostic utilities
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Verify DNS configuration works
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            May need to install (<code>bind-utils</code>)
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            After changing DNS settings
+                        </div>
+                    </div>
+                    <p><strong>How they work:</strong> <code>nslookup</code> provides basic DNS queries. <code>dig</code> gives detailed DNS information including TTL and authoritative servers.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All hostname resolution configuration requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[user@lab ~]$</span> Welcome to RHCSA Lab 6.3: Configure Hostname Resolution</div>
+                <div><span class="prompt">[user@lab ~]$</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[user@lab ~]$</span> You must complete each step in order.</div>
+                <div><span class="prompt">[user@lab ~]$</span> Current step: View Current Hostname Resolution</div>
+                <div><span class="prompt">[user@lab ~]$</span> Type: <code>cat /etc/hosts</code></div>
+                <div><span class="prompt">[user@lab ~]$</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
-let completedCommands = new Array(requiredCommands.length).fill(false);
-let tabUsedInCurrentStep = false;
+<!-- Nano Editor Overlay -->
+<div id="nano-overlay" class="nano-overlay" style="display: none;">
+    <div class="nano-container">
+        <div class="nano-instructions" id="nano-instructions">
+            <h3>Nano Editor Instructions</h3>
+            <div id="nano-instructions-content"></div>
+            <div class="nano-buttons">
+                <button class="nano-button" id="nano-save-btn">Save (Ctrl+O)</button>
+                <button class="nano-button" id="nano-exit-btn">Exit (Ctrl+X)</button>
+            </div>
+        </div>
+        
+        <div class="nano-editor">
+            <div class="nano-header">
+                <span id="nano-filename">filename</span>
+                <span class="nano-close-btn" id="nano-close-btn">×</span>
+            </div>
+            <div class="nano-content">
+                <textarea id="nano-textarea" class="nano-textarea" spellcheck="false"></textarea>
+            </div>
+            <!-- Removed the redundant status bar with buttons -->
+        </div>
+    </div>
+</div>
 
-const commands = {
-    'cat': (args) => {
-        if (args[0] === '/etc/hosts') {
-            return `127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n192.168.1.100 server1.example.com server1`;
-        } else if (args[0] === '/etc/resolv.conf') {
-            return `# Generated by NetworkManager\nsearch example.com\nnameserver 8.8.8.8\nnameserver 8.8.4.4`;
-        }
-        return `Contents of ${args[0]}`;
-    },
-    'sudo': (args) => {
-        if (args[0] === 'nano') {
-            return `Editing ${args[1]}... (simulated)`;
-        }
-        return `Executing with elevated privileges: ${args.join(' ')}`;
-    },
-    'ping': (args) => {
-        if (args.includes('-c') && (args.includes('server1') || args.includes('server1.example.com'))) {
-            return `PING server1.example.com (192.168.1.100) 56(84) bytes of data.\n64 bytes from server1.example.com (192.168.1.100): icmp_seq=1 ttl=64 time=0.123 ms\n64 bytes from server1.example.com (192.168.1.100): icmp_seq=2 ttl=64 time=0.456 ms\n64 bytes from server1.example.com (192.168.1.100): icmp_seq=3 ttl=64 time=0.789 ms\n\n--- server1.example.com ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 2000ms`;
-        }
-        return `PING ${args[args.length - 1]}: Unknown host`;
-    },
-    'nslookup': () => `Server:         8.8.8.8\nAddress:        8.8.8.8#53\n\nNon-authoritative answer:\nName:   google.com\nAddress: 172.217.0.46`,
-    'dig': () => `; <<>> DiG 9.11.4-P2-RedHat-9.11.4-26.P2.el8 <<>> redhat.com\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 12345\n\n;; ANSWER SECTION:\nredhat.com.             300     IN      A       209.132.183.105`,
-    'clear': () => {
-        terminalOutput.innerHTML = '<div>[user@lab ~]$ <span class="prompt">Terminal cleared</span></div>';
-        return '';
-    },
-    'help': () => 'Available commands: cat, sudo, ping, nslookup, dig, clear, help',
-};
-
-const paths = ['/etc/hosts', '/etc/resolv.conf'];
-
-commandInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const commandText = commandInput.value.trim();
-        if (commandText) {
-            commandHistory.push(commandText);
-            historyIndex = commandHistory.length;
-            processCommand(commandText);
-        }
-        commandInput.value = '';
-    } else if (e.key === 'ArrowUp') {
-        if (historyIndex > 0) {
-            historyIndex--;
-            commandInput.value = commandHistory[historyIndex];
-        }
-    } else if (e.key === 'ArrowDown') {
-        if (historyIndex < commandHistory.length - 1) {
-            historyIndex++;
-            commandInput.value = commandHistory[historyIndex];
-        } else {
-            historyIndex = commandHistory.length;
-            commandInput.value = '';
-        }
-    } else if (e.key === 'Tab') {
-        e.preventDefault();
-        const partial = commandInput.value.split(' ').pop();
-        const match = paths.find(path => path.startsWith(partial));
-        if (match) {
-            commandInput.value = commandInput.value.replace(new RegExp(partial + '$'), match);
-            tabUsedInCurrentStep = true;
-        }
-    }
-});
-
-function processCommand(commandText) {
-    const parts = commandText.trim().split(/\s+/);
-    const cmd = parts[0];
-    const args = parts.slice(1);
-
-    let output;
-    if (commands[cmd]) {
-        output = commands[cmd](args);
-        if (output) {
-            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
-        }
-    } else {
-        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
-    }
-
-    let commandMatched = false;
-    requiredCommands.forEach((req, index) => {
-        if (req.step === currentStep && req.command === commandText.trim()) {
-            commandMatched = true;
-            if (!completedCommands[index]) {
-                completedCommands[index] = true;
-                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
-                if (req.requiresTab) {
-                    if (tabUsedInCurrentStep) {
-                        terminalOutput.innerHTML += `<div class="completion">🏆 Tab completion used correctly!</div>`;
-                    } else {
-                        terminalOutput.innerHTML += `<div class="error">You must use Tab to autocomplete for: ${req.command}</div>`;
-                        completedCommands[index] = false;
-                        return;
-                    }
-                    tabUsedInCurrentStep = false;
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    // Nano editor elements
+    const nanoOverlay = document.getElementById('nano-overlay');
+    const nanoInstructions = document.getElementById('nano-instructions');
+    const nanoInstructionsContent = document.getElementById('nano-instructions-content');
+    const nanoFilename = document.getElementById('nano-filename');
+    const nanoTextarea = document.getElementById('nano-textarea');
+    const nanoCloseBtn = document.getElementById('nano-close-btn');
+    const nanoSaveBtn = document.getElementById('nano-save-btn');
+    const nanoExitBtn = document.getElementById('nano-exit-btn');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'cat', 'sudo', 'ping', 'nslookup', 'dig', 'clear', 'help'
+    ];
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/etc/': ['hosts', 'resolv.conf']
+    };
+    
+    // Track configuration state
+    const configState = {
+        hostsFile: false,
+        resolvFile: false,
+        pingTest: false,
+        dnsTest: false
+    };
+    
+    // Track completed commands for each step - FIXED: Step 3 now tracks both ping commands, Step 5 tracks both DNS commands
+    const stepCompletedCommands = {
+        1: false,
+        2: false,
+        3: {ping1: false, ping2: false},
+        4: false,
+        5: {nslookup: false, dig: false}
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['cat /etc/hosts'],
+        2: ['sudo nano /etc/hosts', 'cat /etc/hosts'],
+        3: ['ping -c 3 server1', 'ping -c 3 server1.example.com'],
+        4: ['cat /etc/resolv.conf', 'sudo nano /etc/resolv.conf', 'cat /etc/resolv.conf'],
+        5: ['nslookup google.com', 'dig redhat.com']
+    };
+    
+    // Simulated file contents
+    let hostsFileContent = `127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6`;
+    
+    let resolvFileContent = `# Generated by NetworkManager
+search example.com`;
+    
+    // Nano editor state
+    let nanoState = {
+        file: '',
+        originalContent: '',
+        currentContent: '',
+        isModified: false,
+        fileType: ''
+    };
+    
+    const commands = {
+        'cat': (args) => {
+            if (args[0] === '/etc/hosts') {
+                // Check if we're in step 1 and complete it
+                if (currentStep === 1) {
+                    stepCompletedCommands[1] = true;
+                    completeStep(1);
                 }
+                return hostsFileContent;
+            } else if (args[0] === '/etc/resolv.conf') {
+                return resolvFileContent;
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        
+        'sudo': (args) => {
+            if (args[0] === 'nano') {
+                const file = args[1];
+                let content = '';
+                
+                if (file === '/etc/hosts') {
+                    content = hostsFileContent;
+                    if (currentStep === 2 || currentStep > 2) {
+                        const result = openNanoEditor(file, content, 'hosts');
+                        return result;
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                } else if (file === '/etc/resolv.conf') {
+                    content = resolvFileContent;
+                    if (currentStep === 4 || currentStep > 4) {
+                        const result = openNanoEditor(file, content, 'resolv');
+                        return result;
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                }
+                
+                return `nano: cannot open ${file} for writing: No such file or directory`;
+            }
+            return `sudo: ${args.join(' ')}: command not found`;
+        },
+        
+        'ping': (args) => {
+            if (args.includes('-c') && (args.includes('server1') || args.includes('server1.example.com'))) {
+                if (currentStep === 3 || currentStep > 3) {
+                    // FIXED: Track both ping commands separately
+                    if (args.includes('server1') && !args.includes('server1.example.com')) {
+                        stepCompletedCommands[3].ping1 = true;
+                    } else if (args.includes('server1.example.com')) {
+                        stepCompletedCommands[3].ping2 = true;
+                    }
+                    
+                    // Only complete step when both ping commands have been executed
+                    if (stepCompletedCommands[3].ping1 && stepCompletedCommands[3].ping2) {
+                        configState.pingTest = true;
+                        updateRequirements();
+                        completeStep(3);
+                    }
+                    
+                    return `PING server1.example.com (192.168.1.100) 56(84) bytes of data.\n64 bytes from server1.example.com (192.168.1.100): icmp_seq=1 ttl=64 time=0.123 ms\n64 bytes from server1.example.com (192.168.1.100): icmp_seq=2 ttl=64 time=0.456 ms\n64 bytes from server1.example.com (192.168.1.100): icmp_seq=3 ttl=64 time=0.789 ms\n\n--- server1.example.com ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 2000ms`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `ping: ${args[args.length - 1]}: Name or service not known`;
+        },
+        
+        'nslookup': (args) => {
+            if (args[0] === 'google.com') {
+                if (currentStep === 5 || currentStep > 5) {
+                    // FIXED: Track nslookup command completion
+                    stepCompletedCommands[5].nslookup = true;
+                    configState.dnsTest = true;
+                    updateRequirements();
+                    
+                    // Complete step when both DNS commands are done
+                    if (stepCompletedCommands[5].nslookup && stepCompletedCommands[5].dig) {
+                        completeStep(5);
+                    }
+                    
+                    return `Server:         8.8.8.8\nAddress:        8.8.8.8#53\n\nNon-authoritative answer:\nName:   google.com\nAddress: 172.217.0.46`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `;; connection timed out; no servers could be reached`;
+        },
+        
+        'dig': (args) => {
+            if (args[0] === 'redhat.com') {
+                if (currentStep === 5 || currentStep > 5) {
+                    // FIXED: Track dig command completion
+                    stepCompletedCommands[5].dig = true;
+                    configState.dnsTest = true;
+                    updateRequirements();
+                    
+                    // Complete step when both DNS commands are done
+                    if (stepCompletedCommands[5].nslookup && stepCompletedCommands[5].dig) {
+                        completeStep(5);
+                    }
+                    
+                    return `; <<>> DiG 9.11.4-P2-RedHat-9.11.4-26.P2.el8 <<>> redhat.com\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 12345\n\n;; ANSWER SECTION:\nredhat.com.             300     IN      A       209.132.183.105`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `dig: couldn't get address for '${args[0]}': not found`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: cat, sudo, ping, nslookup, dig, clear, help";
+        }
+    };
+    
+    // Function to open the Nano editor
+    function openNanoEditor(filename, content, fileType) {
+        nanoState.file = filename;
+        nanoState.originalContent = content;
+        nanoState.currentContent = content;
+        nanoState.isModified = false;
+        nanoState.fileType = fileType;
+        
+        // Set the filename in the editor
+        nanoFilename.textContent = filename;
+        
+        // Set the content in the textarea
+        nanoTextarea.value = content;
+        
+        // Set up instructions based on file type
+        if (fileType === 'hosts') {
+            nanoInstructionsContent.innerHTML = `
+                <p>Edit the hosts file to add a static host entry.</p>
+                <p>Add this line to the file:</p>
+                <div class="file-content">192.168.1.100 server1.example.com server1</div>
+                <p><strong>Nano Commands:</strong></p>
+                <ul>
+                    <li>Type the required configuration</li>
+                    <li>Press <code>Ctrl+O</code> to write the file</li>
+                    <li>Press <code>Enter</code> to confirm the filename</li>
+                    <li>Press <code>Ctrl+X</code> to exit</li>
+                </ul>
+            `;
+        } else if (fileType === 'resolv') {
+            nanoInstructionsContent.innerHTML = `
+                <p>Edit the resolv.conf file to configure DNS servers.</p>
+                <p>Add these lines to the file:</p>
+                <div class="file-content">nameserver 8.8.8.8
+nameserver 8.8.4.4</div>
+                <p><strong>Nano Commands:</strong></p>
+                <ul>
+                    <li>Type the required configuration</li>
+                    <li>Press <code>Ctrl+O</code> to write the file</li>
+                    <li>Press <code>Enter</code> to confirm the filename</li>
+                    <li>Press <code>Ctrl+X</code> to exit</li>
+                </ul>
+            `;
+        }
+        
+        // Show the Nano overlay
+        nanoOverlay.style.display = 'flex';
+        
+        // Focus the textarea
+        setTimeout(() => {
+            nanoTextarea.focus();
+        }, 100);
+        
+        return `Opening ${filename} in nano editor...`;
+    }
+    
+    // Function to save file in nano
+    function saveNanoFile() {
+        const content = nanoTextarea.value;
+        nanoState.currentContent = content;
+        
+        if (nanoState.file === "/etc/hosts") {
+            hostsFileContent = content;
+            if (content.includes("192.168.1.100 server1.example.com server1")) {
+                configState.hostsFile = true;
+                updateRequirements();
+                stepCompletedCommands[2] = true;
+            }
+        } else if (nanoState.file === "/etc/resolv.conf") {
+            resolvFileContent = content;
+            if (content.includes("nameserver 8.8.8.8") && content.includes("nameserver 8.8.4.4")) {
+                configState.resolvFile = true;
+                updateRequirements();
+                stepCompletedCommands[4] = true;
             }
         }
         
-        // Special verification for commands that need content verification
-        if (req.step === currentStep && req.verifyContent && commandText.trim() === req.command) {
-            const outputDivs = terminalOutput.getElementsByTagName('div');
-            const lastOutput = outputDivs[outputDivs.length - 1].textContent;
-            if (!lastOutput.includes(req.verifyContent)) {
-                terminalOutput.innerHTML += `<div class="error">⚠️ Content verification failed. Make sure you added: ${req.verifyContent}</div>`;
-                completedCommands[index] = false;
-                return;
+        nanoState.isModified = false;
+        
+        return "File saved successfully";
+    }
+    
+    // Function to close the Nano editor
+    function closeNanoEditor() {
+        nanoOverlay.style.display = 'none';
+        commandInput.focus();
+    }
+    
+    // Function to handle nano exit with completion
+    function handleNanoExit() {
+        closeNanoEditor();
+        
+        // Complete the step if file was modified and saved
+        if (nanoState.file === "/etc/hosts" && configState.hostsFile) {
+            completeStep(2);
+        } else if (nanoState.file === "/etc/resolv.conf" && configState.resolvFile) {
+            completeStep(4);
+        }
+    }
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.hostsFile) {
+            document.getElementById('req-hosts-file').classList.add('completed');
+            document.getElementById('req-hosts-file').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.resolvFile) {
+            document.getElementById('req-resolv-file').classList.add('completed');
+            document.getElementById('req-resolv-file').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.pingTest) {
+            document.getElementById('req-ping-test').classList.add('completed');
+            document.getElementById('req-ping-test').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.dnsTest) {
+            document.getElementById('req-dns-test').classList.add('completed');
+            document.getElementById('req-dns-test').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[user@lab ~]$ <span class="success">Step ${step} completed. Moving to step ${currentStep}.</span>`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[user@lab ~]$ Next: <code>${stepCommands[currentStep][0]}</code>`);
+                }
+            } else {
+                addTerminalOutput(`[user@lab ~]$ <span class="success">🎉 Lab completed! All steps finished successfully!</span>`);
             }
         }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[user@lab ~]$</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
     });
-
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
-
-    if (isRequiredCommand && !commandMatched) {
-        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
-        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
-    }
-
-    terminalOutput.scrollTop = terminalOutput.scrollHeight;
-    checkStepCompletion();
-}
-
-function checkStepCompletion() {
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const allCompleted = currentStepCommands.every(req =>
-        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
-    );
-    if (allCompleted) {
-        setTimeout(() => {
-            nextStep();
-        }, 1000);
-    }
-}
-
-function nextStep() {
-    steps[currentStep].classList.remove('active-step');
-    currentStep++;
-    if (currentStep < steps.length) {
-        steps[currentStep].classList.add('active-step');
-        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
-    } else {
-        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All commands executed correctly!</div>`;
-    }
-}</script>
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Nano editor event listeners
+    nanoCloseBtn.addEventListener('click', () => {
+        closeNanoEditor();
+    });
+    
+    nanoSaveBtn.addEventListener('click', () => {
+        const saveResult = saveNanoFile();
+        addTerminalOutput(`[user@lab ~]$ ${saveResult}`);
+    });
+    
+    nanoExitBtn.addEventListener('click', () => {
+        handleNanoExit();
+    });
+    
+    // Handle nano keyboard shortcuts
+    nanoTextarea.addEventListener('keydown', (e) => {
+        // Ctrl+O - Write Out (Save)
+        if (e.ctrlKey && e.key === 'o') {
+            e.preventDefault();
+            const saveResult = saveNanoFile();
+            addTerminalOutput(`[user@lab ~]$ ${saveResult}`);
+        }
+        
+        // Ctrl+X - Exit
+        else if (e.ctrlKey && e.key === 'x') {
+            e.preventDefault();
+            handleNanoExit();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>
