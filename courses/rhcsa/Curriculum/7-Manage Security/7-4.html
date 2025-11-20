@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>RHCSA Lab 7.4 - Configure SSH Key-based Authentication</title>
+    <title>RHCSA Exam Lab 7.4: Configure SSH Key-based Authentication</title>
     <style>
         :root {
             --redhat-red: #cc0000;
@@ -11,7 +11,16 @@
             --redhat-light: #f0f0f0;
             --redhat-accent: #4CAF50;
             --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
         }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Red Hat Text', 'Overpass', sans-serif;
             background-color: var(--redhat-dark);
@@ -19,78 +28,256 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-        }
-        .lab-container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: #252525;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            height: 100vh;
             overflow: hidden;
-            border-top: 4px solid var(--redhat-red);
         }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
         .header {
             background: linear-gradient(to right, #1e1e1e, #333);
             padding: 15px 20px;
             color: white;
             display: flex;
             align-items: center;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
+        
         .header img {
             height: 30px;
             margin-right: 15px;
         }
+        
         .header h1 {
             margin: 0;
             font-size: 1.5em;
             font-weight: normal;
         }
-        .terminal-container {
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
             display: flex;
             flex-direction: column;
-            height: 600px;
+            background: var(--panel-bg);
+            position: relative;
         }
-        .guide {
-            padding: 20px;
-            background: #2d2d2d;
-            flex: 1;
-            overflow-y: auto;
-        }
+        
         .guide h2 {
             margin-top: 0;
             color: var(--redhat-accent);
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
         .guide-step {
             margin-bottom: 15px;
             padding: 15px;
             background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
             border-left: 4px solid var(--redhat-accent);
-            display: none;
         }
-        .active-step {
-            display: block;
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
         }
-        .terminal {
-            background: #000;
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
             padding: 15px;
-            height: 250px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
             overflow-y: auto;
             font-family: 'Red Hat Mono', monospace;
-            border-top: 1px solid #444;
         }
-        .prompt {
-            color: var(--redhat-accent);
-        }
+        
         .command-line {
             display: flex;
             align-items: center;
             padding: 15px;
             background: #333;
-            border-top: 1px solid #444;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
         }
+        
         #command-input {
             flex: 1;
             background: transparent;
@@ -101,47 +288,29 @@
             outline: none;
             padding: 8px;
         }
-        .success {
+        
+        .prompt {
             color: var(--redhat-accent);
-            font-weight: bold;
+            white-space: nowrap;
+            margin-right: 5px;
         }
-        .error {
-            color: #FF5252;
-        }
-        .completion {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        .concept {
-            background: #2a2a2a;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            border-left: 4px solid var(--redhat-blue);
-        }
-        .concept h4 {
-            margin-top: 0;
-            color: var(--redhat-blue);
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
-        .concept-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .concept-item {
-            background: #252525;
+        
+        .file-content {
+            background: #1e1e1e;
             padding: 10px;
-            border-radius: 5px;
-            border-left: 2px solid var(--redhat-red);
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
         }
-        .concept-item strong {
-            color: var(--redhat-red);
-            display: block;
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
             margin-bottom: 5px;
         }
+        
         code {
             background: #1e1e1e;
             padding: 2px 5px;
@@ -149,38 +318,243 @@
             color: var(--redhat-accent);
             font-family: 'Red Hat Mono', monospace;
         }
-        kbd {
-            background: #444;
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: white;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        .required-command {
-            background: rgba(76, 175, 80, 0.1);
-            padding: 5px;
-            border-radius: 3px;
-            border-left: 3px solid var(--redhat-accent);
-        }
-        .trophy {
-            display: inline-block;
-            margin-left: 5px;
-        }
-        .syntax-error {
-            color: #FF5252;
+        
+        .success {
+            color: var(--redhat-accent);
             font-weight: bold;
         }
+        
+        .error {
+            color: #FF5252;
+        }
+        
         .warning {
             color: #FFD700;
             font-weight: bold;
         }
-        .strict-feedback {
-            background: rgba(204, 0, 0, 0.1);
-            padding: 10px;
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
             border-radius: 5px;
-            border-left: 3px solid var(--redhat-red);
-            margin-top: 10px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
         }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .vim-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .vim-container {
+            display: flex;
+            width: 90%;
+            height: 80%;
+            gap: 20px;
+        }
+        
+        .vim-instructions {
+            width: 30%;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+        
+        .vim-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .vim-editor {
+            width: 70%;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .vim-header {
+            background: #333;
+            padding: 5px 10px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .vim-content {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+            white-space: pre;
+            color: #ccc;
+            position: relative;
+        }
+        
+        .vim-command-line {
+            display: flex;
+            background: #333;
+            padding: 5px;
+            border-top: 1px solid #444;
+        }
+        
+        .vim-prompt {
+            color: #4CAF50;
+            padding: 0 5px;
+        }
+        
+        .vim-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+        }
+        
+        .vim-status {
+            background: #333;
+            padding: 3px 10px;
+            color: #ccc;
+            font-size: 0.9em;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .vim-mode-indicator {
+            color: #FFD700;
+        }
+        
+        .vim-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #ccc;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        
+        .vim-esc-button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .vim-esc-button:hover {
+            background: #666;
+        }
+        
+        .vim-command-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .vim-command-button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .vim-command-button:hover {
+            background: #555;
+        }
+        
+        .vim-mode-indicator.command-mode {
+            color: #FFD700;
+        }
+        
+        .vim-mode-indicator.insert-mode {
+            color: #4CAF50;
+        }
+        
+        .vim-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+        
         .file-structure {
             background: #1e1e1e;
             padding: 10px;
@@ -188,330 +562,1156 @@
             font-family: 'Red Hat Mono', monospace;
             margin: 10px 0;
         }
+        
         .file-permissions {
             color: #4CAF50;
         }
+        
         .file-owner {
             color: #007ACC;
         }
+        
+        .strict-feedback {
+            background: rgba(204, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--redhat-red);
+            margin-top: 10px;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+            
+            .vim-container {
+                width: 95%;
+                height: 90%;
+                flex-direction: column;
+            }
+            
+            .vim-instructions, .vim-editor {
+                width: 100%;
+            }
+            
+            .vim-instructions {
+                height: 30%;
+            }
+            
+            .vim-editor {
+                height: 70%;
+            }
+        }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
-    <div class="lab-container">
-        <div class="header">
-            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-            <h1>RHCSA Lab 7.4: Configure SSH Key-based Authentication</h1>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 7.4: Configure SSH Key-based Authentication</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Configure SSH key-based authentication to enable secure passwordless access to remote systems. You will generate an SSH key pair, copy the public key to a remote server, and test the authentication.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>SSH Configuration Requirements</h4>
+                <div class="requirement-item" id="req-keygen">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Generate SSH key pair with <code>ssh-keygen</code></span>
+                </div>
+                <div class="requirement-item" id="req-copy-id">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Copy public key to remote server with <code>ssh-copy-id</code></span>
+                </div>
+                <div class="requirement-item" id="req-ssh-test">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Test SSH key-based authentication</span>
+                </div>
+                <div class="requirement-item" id="req-config">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Configure SSH server for key-only authentication (optional)</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA SSH Key-based Authentication Lab. In this lab, you will configure secure SSH authentication using cryptographic key pairs.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Generate SSH Key Pair
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's generate an SSH key pair using the ssh-keygen command.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+                </div>
+                
+                <p>When prompted:</p>
+                <ul>
+                    <li>Press <code>Enter</code> to accept the default file location</li>
+                    <li>Press <code>Enter</code> twice for an empty passphrase (for this lab)</li>
+                </ul>
+
+                <div class="concept">
+                    <h4>Understanding SSH Key Pairs</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Public-private key pair for authentication
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            More secure than password authentication
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Stored in ~/.ssh/ directory
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            For secure remote access to systems
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>ssh-keygen</code> creates a pair of cryptographic keys. The private key (id_rsa) stays on your machine, while the public key (id_rsa.pub) is placed on remote servers.</p>
+                    <div class="file-structure">
+                        <div>~/.ssh/</div>
+                        <div>├── <span class="file-permissions">-rw-------</span> <span class="file-owner">user user</span> id_rsa <span class="warning">(private key - keep secret!)</span></div>
+                        <div>└── <span class="file-permissions">-rw-r--r--</span> <span class="file-owner">user user</span> id_rsa.pub <span class="success">(public key - share with servers)</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Copy Public Key to Remote Server
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's copy the public key to the remote server using ssh-copy-id.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ssh-copy-id user@remote-server
+                </div>
+                
+                <p>When prompted:</p>
+                <ul>
+                    <li>Type <code>yes</code> to continue connecting</li>
+                    <li>Enter the remote user's password when prompted</li>
+                </ul>
+
+                <div class="concept">
+                    <h4>Understanding SSH Key Deployment</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Copies public key to remote server
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Enables key-based authentication
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Adds key to ~/.ssh/authorized_keys on server
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            First time setting up key authentication
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>ssh-copy-id</code> securely copies your public key to the remote server's authorized_keys file. After this, you can log in without a password (unless you set a passphrase).</p>
+                    <div class="strict-feedback">
+                        <strong>Security Note:</strong> In production, always use a passphrase for your private key. This lab skips it for simplicity.
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Test Key-based Authentication
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's test the key-based authentication by connecting to the remote server.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ssh user@remote-server
+                </div>
+                
+                <p>If everything is configured correctly, you should be logged in without being prompted for a password.</p>
+
+                <div class="concept">
+                    <h4>Understanding Key-based Login</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Passwordless authentication
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            More secure and convenient than passwords
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Works with any SSH-enabled server
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            After deploying public key
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> The SSH client presents your private key, and the server verifies it against the authorized public key. If they match, you're authenticated without a password prompt.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Secure SSH Configuration (Optional)
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>For enhanced security, you can configure the SSH server to only accept key-based authentication.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo vi /etc/ssh/sshd_config
+                </div>
+                
+                <p>Find and uncomment/modify these lines:</p>
+                
+                <div class="file-content">PasswordAuthentication no
+PubkeyAuthentication yes</div>
+                
+                <p>To save and exit vim:</p>
+                <ol>
+                    <li>Press <code>ESC</code> to ensure you're in command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to write and quit</li>
+                </ol>
+                
+                <div class="hint-box">
+                    <strong>Restart SSH service:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo systemctl restart sshd
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding SSH Server Security</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Server-side SSH configuration
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Enforce key-based auth and disable passwords
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            /etc/ssh/sshd_config
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            After verifying key-based auth works
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> These changes disable password authentication (forcing key-based auth only) and ensure public key authentication is enabled. Always test key-based auth before disabling passwords!</p>
+                    <div class="strict-feedback">
+                        <strong>Warning:</strong> Don't disable password authentication until you've confirmed key-based authentication works, or you might lock yourself out!
+                    </div>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All SSH key-based authentication requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
         </div>
-        <div class="terminal-container">
-            <div class="guide">
-                <h2>Lab Instructions</h2>
-                <div class="guide-step active-step" id="step1">
-                    <h3>Step 1: Generate SSH Key Pair</h3>
-                    <p class="required-command">Type exactly: <code>ssh-keygen -t rsa -b 4096 -C "your_email@example.com"</code></p>
-                    <p class="required-command">When prompted, press Enter to accept default file location</p>
-                    <p class="required-command">When prompted for passphrase, press Enter twice (empty passphrase for this lab)</p>
-
-                    <div class="concept">
-                        <h4>Understanding SSH Key Pairs</h4>
-                        <div class="concept-grid">
-                            <div class="concept-item">
-                                <strong>What</strong>
-                                Public-private key pair for authentication
-                            </div>
-                            <div class="concept-item">
-                                <strong>Why</strong>
-                                More secure than password authentication
-                            </div>
-                            <div class="concept-item">
-                                <strong>Where</strong>
-                                Stored in ~/.ssh/ directory
-                            </div>
-                            <div class="concept-item">
-                                <strong>When</strong>
-                                For secure remote access to systems
-                            </div>
-                        </div>
-                        <p><strong>How it works:</strong> <code>ssh-keygen</code> creates a pair of cryptographic keys. The private key (id_rsa) stays on your machine, while the public key (id_rsa.pub) is placed on remote servers.</p>
-                        <div class="file-structure">
-                            <div>~/.ssh/</div>
-                            <div>├── <span class="file-permissions">-rw-------</span> <span class="file-owner">user user</span> id_rsa <span class="warning">(private key - keep secret!)</span></div>
-                            <div>└── <span class="file-permissions">-rw-r--r--</span> <span class="file-owner">user user</span> id_rsa.pub <span class="success">(public key - share with servers)</span></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="guide-step" id="step2">
-                    <h3>Step 2: Copy Public Key to Remote Server</h3>
-                    <p class="required-command">Type exactly: <code>ssh-copy-id user@remote-server</code></p>
-                    <p class="required-command">When prompted, type "yes" to continue connecting</p>
-                    <p class="required-command">When prompted for password, enter the remote user's password</p>
-
-                    <div class="concept">
-                        <h4>Understanding SSH Key Deployment</h4>
-                        <div class="concept-grid">
-                            <div class="concept-item">
-                                <strong>What</strong>
-                                Copies public key to remote server
-                            </div>
-                            <div class="concept-item">
-                                <strong>Why</strong>
-                                Enables key-based authentication
-                            </div>
-                            <div class="concept-item">
-                                <strong>Where</strong>
-                                Adds key to ~/.ssh/authorized_keys on server
-                            </div>
-                            <div class="concept-item">
-                                <strong>When</strong>
-                                First time setting up key authentication
-                            </div>
-                        </div>
-                        <p><strong>How it works:</strong> <code>ssh-copy-id</code> securely copies your public key to the remote server's authorized_keys file. After this, you can log in without a password (unless you set a passphrase).</p>
-                        <div class="strict-feedback">
-                            <strong>Security Note:</strong> In production, always use a passphrase for your private key. This lab skips it for simplicity.
-                        </div>
-                    </div>
-                </div>
-                <div class="guide-step" id="step3">
-                    <h3>Step 3: Test Key-based Authentication</h3>
-                    <p class="required-command">Type exactly: <code>ssh user@remote-server</code></p>
-
-                    <div class="concept">
-                        <h4>Understanding Key-based Login</h4>
-                        <div class="concept-grid">
-                            <div class="concept-item">
-                                <strong>What</strong>
-                                Passwordless authentication
-                            </div>
-                            <div class="concept-item">
-                                <strong>Why</strong>
-                                More secure and convenient than passwords
-                            </div>
-                            <div class="concept-item">
-                                <strong>Where</strong>
-                                Works with any SSH-enabled server
-                            </div>
-                            <div class="concept-item">
-                                <strong>When</strong>
-                                After deploying public key
-                            </div>
-                        </div>
-                        <p><strong>How it works:</strong> The SSH client presents your private key, and the server verifies it against the authorized public key. If they match, you're authenticated without a password prompt.</p>
-                    </div>
-                </div>
-                <div class="guide-step" id="step4">
-                    <h3>Step 4: Secure SSH Configuration (Optional)</h3>
-                    <p class="required-command">Type exactly: <code>sudo vi /etc/ssh/sshd_config</code></p>
-                    <p class="required-command">Find and uncomment/modify these lines:</p>
-                    <p class="required-command"><code>PasswordAuthentication no</code></p>
-                    <p class="required-command"><code>PubkeyAuthentication yes</code></p>
-                    <p class="required-command">Then save and exit (ESC, then <code>:wq</code>)</p>
-                    <p class="required-command">Finally, restart SSH: <code>sudo systemctl restart sshd</code></p>
-
-                    <div class="concept">
-                        <h4>Understanding SSH Server Security</h4>
-                        <div class="concept-grid">
-                            <div class="concept-item">
-                                <strong>What</strong>
-                                Server-side SSH configuration
-                            </div>
-                            <div class="concept-item">
-                                <strong>Why</strong>
-                                Enforce key-based auth and disable passwords
-                            </div>
-                            <div class="concept-item">
-                                <strong>Where</strong>
-                                /etc/ssh/sshd_config
-                            </div>
-                            <div class="concept-item">
-                                <strong>When</strong>
-                                After verifying key-based auth works
-                            </div>
-                        </div>
-                        <p><strong>How it works:</strong> These changes disable password authentication (forcing key-based auth only) and ensure public key authentication is enabled. Always test key-based auth before disabling passwords!</p>
-                        <div class="strict-feedback">
-                            <strong>Warning:</strong> Don't disable password authentication until you've confirmed key-based authentication works, or you might lock yourself out!
-                        </div>
-                    </div>
-                </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[user@lab ~]$</span> Welcome to RHCSA Lab 7.4: SSH Key-based Authentication</div>
+                <div><span class="prompt">[user@lab ~]$</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[user@lab ~]$</span> You must complete each step in order.</div>
+                <div><span class="prompt">[user@lab ~]$</span> Current step: Generate SSH Key Pair</div>
+                <div><span class="prompt">[user@lab ~]$</span> Type: <code>ssh-keygen -t rsa -b 4096 -C "your_email@example.com"</code></div>
+                <div><span class="prompt">[user@lab ~]$</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
             </div>
             <div class="command-line">
                 <span class="prompt">[user@lab ~]$</span>
-                <input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
-            </div>
-            <div class="terminal" id="terminal-output">
-                <div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 7.4!</span></div>
-                <div>[user@lab ~]$ <span class="prompt">Configure SSH key-based authentication step by step.</span></div>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
             </div>
         </div>
     </div>
-    <script>
-        const commandInput = document.getElementById('command-input');
-        const terminalOutput = document.getElementById('terminal-output');
-        const steps = document.querySelectorAll('.guide-step');
-        let currentStep = 0;
-        let commandHistory = [];
-        let historyIndex = -1;
+</div>
 
-        const requiredCommands = [
-            { command: 'ssh-keygen -t rsa -b 4096 -C "your_email@example.com"', step: 0, feedback: 'Type exactly: ssh-keygen -t rsa -b 4096 -C "your_email@example.com"' },
-            { command: 'ssh-copy-id user@remote-server', step: 1, feedback: 'Type exactly: ssh-copy-id user@remote-server' },
-            { command: 'yes', step: 1, isResponse: true, feedback: 'When prompted, type "yes" to continue connecting' },
-            { command: 'password123', step: 1, isResponse: true, feedback: 'When prompted for password, enter the remote user\'s password' },
-            { command: 'ssh user@remote-server', step: 2, feedback: 'Type exactly: ssh user@remote-server' },
-            { command: 'sudo vi /etc/ssh/sshd_config', step: 3, feedback: 'Type exactly: sudo vi /etc/ssh/sshd_config' },
-            { command: ':wq', step: 3, isViCommand: true, feedback: 'Save and exit vi with :wq' },
-            { command: 'sudo systemctl restart sshd', step: 3, feedback: 'Type exactly: sudo systemctl restart sshd' }
-        ];
+<!-- Vim Editor Overlay -->
+<div id="vim-overlay" class="vim-overlay" style="display: none;">
+    <div class="vim-container">
+        <div class="vim-instructions" id="vim-instructions">
+            <h3>Vim Editor Instructions</h3>
+            <div id="vim-instructions-content"></div>
+        </div>
+        
+        <div class="vim-editor">
+            <div class="vim-header">
+                <span id="vim-filename">filename</span>
+                <div class="vim-command-buttons">
+                    <button class="vim-command-button" id="vim-insert-button">i (Insert)</button>
+                    <button class="vim-esc-button" id="vim-esc-button">ESC</button>
+                    <span id="vim-close-btn" style="cursor: pointer; margin-left: 10px;">×</span>
+                </div>
+            </div>
+            <div class="vim-content" id="vim-content">
+                <textarea id="vim-textarea" class="vim-textarea" spellcheck="false"></textarea>
+            </div>
+            <div class="vim-command-line">
+                <input type="text" class="vim-input" id="vim-input" placeholder="Type :wq to save and exit"/>
+            </div>
+            <div class="vim-status">
+                <span class="vim-mode-indicator command-mode" id="vim-mode-indicator">COMMAND MODE</span>
+                <span id="vim-cursor-position">1,1</span>
+            </div>
+        </div>
+    </div>
+</div>
 
-        let completedCommands = new Array(requiredCommands.length).fill(false);
-        let inPasswordPrompt = false;
-        let inViMode = false;
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    // Vim editor elements
+    const vimOverlay = document.getElementById('vim-overlay');
+    const vimInstructions = document.getElementById('vim-instructions');
+    const vimInstructionsContent = document.getElementById('vim-instructions-content');
+    const vimFilename = document.getElementById('vim-filename');
+    const vimContent = document.getElementById('vim-content');
+    const vimTextarea = document.getElementById('vim-textarea');
+    const vimInput = document.getElementById('vim-input');
+    const vimModeIndicator = document.getElementById('vim-mode-indicator');
+    const vimCursorPosition = document.getElementById('vim-cursor-position');
+    const vimCloseBtn = document.getElementById('vim-close-btn');
+    const vimEscButton = document.getElementById('vim-esc-button');
+    const vimInsertButton = document.getElementById('vim-insert-button');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'ssh-keygen', 'ssh-copy-id', 'ssh', 'sudo', 'vi', 'vim', 'systemctl', 'clear', 'help'
+    ];
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/etc/': ['ssh/', 'passwd', 'group'],
+        '/etc/ssh/': ['sshd_config', 'ssh_config'],
+        '~/.ssh/': ['id_rsa', 'id_rsa.pub', 'authorized_keys', 'known_hosts']
+    };
+    
+    // Track configuration state
+    const configState = {
+        keygen: false,
+        copyId: false,
+        sshTest: false,
+        config: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['ssh-keygen -t rsa -b 4096 -C "your_email@example.com"'],
+        2: ['ssh-copy-id user@remote-server'],
+        3: ['ssh user@remote-server'],
+        4: ['sudo vi /etc/ssh/sshd_config', 'sudo vim /etc/ssh/sshd_config']
+    };
+    
+    // Simulated file contents
+    let sshdConfigContent = `# $OpenBSD: sshd_config,v 1.103 2018/04/09 20:41:22 tj Exp $
 
-        const commands = {
-            'ssh-keygen': (args) => {
-                if (args.includes('-t') && args.includes('rsa') && args.includes('-b') && args.includes('4096')) {
-                    return 'Generating public/private rsa key pair.\nEnter file in which to save the key (/home/user/.ssh/id_rsa): \nCreated directory \'/home/user/.ssh\'.\nEnter passphrase (empty for no passphrase): \nEnter same passphrase again: \nYour identification has been saved in /home/user/.ssh/id_rsa.\nYour public key has been saved in /home/user/.ssh/id_rsa.pub.\nThe key fingerprint is:\nSHA256:AbCdEfGhIjKlMnOpQrStUvWxYz1234567890 your_email@example.com';
-                }
-                return 'Usage: ssh-keygen [-q] [-b bits] [-t type] [-N new_passphrase] [-C comment] [-f output_keyfile]';
-            },
-            'ssh-copy-id': (args) => {
-                if (args[0] === 'user@remote-server') {
-                    inPasswordPrompt = true;
+# This is the sshd server system-wide configuration file.  See
+# sshd_config(5) for more information.
+
+# This sshd was compiled with PATH=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
+
+# The strategy used for options in the default sshd_config shipped with
+# OpenSSH is to specify options with their default value where
+# possible, but leave them commented.  Uncommented options override the
+# default value.
+
+#Port 22
+#AddressFamily any
+#ListenAddress 0.0.0.0
+#ListenAddress ::
+
+#HostKey /etc/ssh/ssh_host_rsa_key
+#HostKey /etc/ssh/ssh_host_ecdsa_key
+#HostKey /etc/ssh/ssh_host_ed25519_key
+
+# Ciphers and keying
+#RekeyLimit default none
+
+# Logging
+#SyslogFacility AUTH
+#LogLevel INFO
+
+# Authentication:
+
+#LoginGraceTime 2m
+#PermitRootLogin yes
+#StrictModes yes
+#MaxAuthTries 6
+#MaxSessions 10
+
+#PubkeyAuthentication yes
+
+# The default is to check both .ssh/authorized_keys and .ssh/authorized_keys2
+# but this is overridden so installations will only check .ssh/authorized_keys
+AuthorizedKeysFile	.ssh/authorized_keys
+
+#AuthorizedPrincipalsFile none
+
+#AuthorizedKeysCommand none
+#AuthorizedKeysCommandUser nobody
+
+# For this to work you will also need host keys in /etc/ssh/ssh_known_hosts
+#HostbasedAuthentication no
+# Change to yes if you don't trust ~/.ssh/known_hosts for
+# HostbasedAuthentication
+#IgnoreUserKnownHosts no
+#IgnoreRhosts yes
+
+# To disable tunneled clear text passwords, change to no here!
+#PasswordAuthentication yes
+#PermitEmptyPasswords no
+
+# Change to no to disable s/key passwords
+#ChallengeResponseAuthentication yes
+
+# Kerberos options
+#KerberosAuthentication no
+#KerberosOrLocalPasswd yes
+#KerberosTicketCleanup yes
+#KerberosGetAFSToken no
+
+# GSSAPI options
+#GSSAPIAuthentication no
+#GSSAPICleanupCredentials yes
+#GSSAPIStrictAcceptorCheck yes
+#GSSAPIKeyExchange no
+
+# Set this to 'yes' to enable PAM authentication, account processing,
+# and session processing. If this is enabled, PAM authentication will
+# be allowed through the ChallengeResponseAuthentication and
+# PasswordAuthentication.  Depending on your PAM configuration,
+# PAM authentication via ChallengeResponseAuthentication may bypass
+# the setting of "PermitRootLogin without-password".
+# If you just want the PAM account and session checks to run without
+# PAM authentication, then enable this but set PasswordAuthentication
+# and ChallengeResponseAuthentication to 'no'.
+#UsePAM yes
+
+#AllowAgentForwarding yes
+#AllowTcpForwarding yes
+#GatewayPorts no
+#X11Forwarding yes
+#X11DisplayOffset 10
+#X11UseLocalhost yes
+#PermitTTY yes
+#PrintMotd yes
+#PrintLastLog yes
+#TCPKeepAlive yes
+#PermitUserEnvironment no
+#Compression delayed
+#ClientAliveInterval 0
+#ClientAliveCountMax 3
+#UseDNS no
+#PidFile /var/run/sshd.pid
+#MaxStartups 10:30:100
+#PermitTunnel no
+#ChrootDirectory none
+#VersionAddendum none
+
+# no default banner path
+#Banner none
+
+# Allow client to pass locale environment variables
+#AcceptEnv LANG LC_*
+
+# override default of no subsystems
+Subsystem	sftp	/usr/lib/ssh/sftp-server
+
+# Example of overriding settings on a per-user basis
+#Match User anoncvs
+#	X11Forwarding no
+#	AllowTcpForwarding no
+#	PermitTTY no
+#	ForceCommand cvs server
+`;
+
+    // Vim editor state
+    let vimState = {
+        file: '',
+        content: '',
+        cursorPos: 0,
+        mode: 'command', // 'command' or 'insert'
+        isEditing: false,
+        fileType: ''
+    };
+    
+    // SSH state
+    let sshState = {
+        keyGenerated: false,
+        passwordPrompt: false,
+        viMode: false,
+        inSshSession: false
+    };
+    
+    const commands = {
+        'ssh-keygen': (args) => {
+            if (args.includes('-t') && args.includes('rsa') && args.includes('-b') && args.includes('4096')) {
+                configState.keygen = true;
+                updateRequirements();
+                completeStep(1);
+                return 'Generating public/private rsa key pair.\nEnter file in which to save the key (/home/user/.ssh/id_rsa): \nCreated directory \'/home/user/.ssh\'.\nEnter passphrase (empty for no passphrase): \nEnter same passphrase again: \nYour identification has been saved in /home/user/.ssh/id_rsa.\nYour public key has been saved in /home/user/.ssh/id_rsa.pub.\nThe key fingerprint is:\nSHA256:AbCdEfGhIjKlMnOpQrStUvWxYz1234567890 your_email@example.com';
+            }
+            return 'Usage: ssh-keygen [-q] [-b bits] [-t type] [-N new_passphrase] [-C comment] [-f output_keyfile]';
+        },
+        
+        'ssh-copy-id': (args) => {
+            if (args[0] === 'user@remote-server') {
+                if (configState.keygen) {
+                    sshState.passwordPrompt = true;
                     return '/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed\n/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys\nuser@remote-server\'s password: ';
+                } else {
+                    return 'Error: No SSH keys found. Please generate keys first with ssh-keygen.';
                 }
-                return 'Usage: ssh-copy-id [-i [identity_file]] [user@]machine';
-            },
-            'ssh': (args) => {
-                if (args[0] === 'user@remote-server') {
+            }
+            return 'Usage: ssh-copy-id [-i [identity_file]] [user@]machine';
+        },
+        
+        'ssh': (args) => {
+            if (args[0] === 'user@remote-server') {
+                if (configState.copyId) {
+                    sshState.inSshSession = true;
+                    configState.sshTest = true;
+                    updateRequirements();
+                    completeStep(3);
                     return 'Last login: Mon Jan 10 10:00:00 2022 from 192.168.1.100\n[user@remote-server ~]$ ';
+                } else {
+                    return 'Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).';
                 }
-                return 'Usage: ssh [-46AaCfGgKkMNnqsTtVvXxYy] [-B bind_interface] [-b bind_address] [-c cipher_spec] [-D [bind_address:]port] [-E log_file] [-e escape_char] [-F configfile] [-I pkcs11] [-i identity_file] [-J [user@]host[:port]] [-L address] [-l login_name] [-m mac_spec] [-O ctl_cmd] [-o option] [-p port] [-Q query_option] [-R address] [-S ctl_path] [-W host:port] [-w local_tun[:remote_tun]] [user@]hostname [command]';
-            },
-            'sudo': (args) => {
-                if (args[0] === 'vi' && args[1] === '/etc/ssh/sshd_config') {
-                    inViMode = true;
-                    return 'Editing /etc/ssh/sshd_config. Press ESC then :wq to save and exit.';
+            }
+            return 'Usage: ssh [-46AaCfGgKkMNnqsTtVvXxYy] [-B bind_interface] [-b bind_address] [-c cipher_spec] [-D [bind_address:]port] [-E log_file] [-e escape_char] [-F configfile] [-I pkcs11] [-i identity_file] [-J [user@]host[:port]] [-L address] [-l login_name] [-m mac_spec] [-O ctl_cmd] [-o option] [-p port] [-Q query_option] [-R address] [-S ctl_path] [-W host:port] [-w local_tun[:remote_tun]] [user@]hostname [command]';
+        },
+        
+        'sudo': (args) => {
+            if (args[0] === 'vi' && args[1] === '/etc/ssh/sshd_config') {
+                const result = openVimEditor(args[1], sshdConfigContent, 'sshd_config');
+                return result;
+            }
+            if (args[0] === 'vim' && args[1] === '/etc/ssh/sshd_config') {
+                const result = openVimEditor(args[1], sshdConfigContent, 'sshd_config');
+                return result;
+            }
+            if (args[0] === 'systemctl' && args[1] === 'restart' && args[2] === 'sshd') {
+                if (currentStep === 4 || currentStep > 4) {
+                    configState.config = true;
+                    updateRequirements();
+                    completeStep(4);
+                    return 'SSH service restarted successfully';
+                } else {
+                    return "Please complete the previous steps first.";
                 }
-                if (args[0] === 'systemctl' && args[1] === 'restart' && args[2] === 'sshd') {
-                    return '';
+            }
+            return '[sudo] password for user: ';
+        },
+        
+        'vi': (args) => {
+            if (args[0] === '/etc/ssh/sshd_config') {
+                const result = openVimEditor(args[0], sshdConfigContent, 'sshd_config');
+                return result;
+            }
+            return `vim: cannot open ${args[0]} for writing: No such file or directory`;
+        },
+        
+        'vim': (args) => {
+            if (args[0] === '/etc/ssh/sshd_config') {
+                const result = openVimEditor(args[0], sshdConfigContent, 'sshd_config');
+                return result;
+            }
+            return `vim: cannot open ${args[0]} for writing: No such file or directory`;
+        },
+        
+        'systemctl': (args) => {
+            if (args[0] === 'restart' && args[1] === 'sshd') {
+                if (currentStep === 4 || currentStep > 4) {
+                    configState.config = true;
+                    updateRequirements();
+                    completeStep(4);
+                    return 'SSH service restarted successfully';
+                } else {
+                    return "Please complete the previous steps first.";
                 }
-                return '[sudo] password for user: ';
-            },
-            'help': () => 'Available commands: ssh-keygen, ssh-copy-id, ssh, sudo, help',
-        };
-
-        commandInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const commandText = commandInput.value.trim();
-                if (commandText) {
-                    commandHistory.push(commandText);
-                    historyIndex = commandHistory.length;
-                    processCommand(commandText);
+            }
+            return `Unknown operation '${args[0]}'.`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: ssh-keygen, ssh-copy-id, ssh, sudo, vi, vim, systemctl, clear, help";
+        }
+    };
+    
+    // Function to open the Vim editor
+    function openVimEditor(filename, content, fileType) {
+        vimState.file = filename;
+        vimState.content = content;
+        vimState.fileType = fileType;
+        vimState.mode = 'command';
+        vimState.isEditing = true;
+        
+        // Set the filename in the editor
+        vimFilename.textContent = filename;
+        
+        // Set the content in the textarea
+        vimTextarea.value = content;
+        
+        // Set up instructions based on file type
+        if (fileType === 'sshd_config') {
+            vimInstructionsContent.innerHTML = `
+                <p>Edit the SSH server configuration file to enforce key-based authentication.</p>
+                <p>Find and modify these lines:</p>
+                <div class="file-content">PasswordAuthentication no
+PubkeyAuthentication yes</div>
+                <p><strong>Vim Commands:</strong></p>
+                <ul>
+                    <li>Press <code>i</code> to enter Insert mode</li>
+                    <li>Type the required configuration</li>
+                    <li>Press <code>ESC</code> to return to Command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
+                </ul>
+                <div class="strict-feedback">
+                    <strong>Warning:</strong> Only disable password authentication after confirming key-based authentication works!
+                </div>
+            `;
+        }
+        
+        // Show the Vim overlay
+        vimOverlay.style.display = 'flex';
+        
+        // Start in command mode
+        vimState.mode = 'command';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        
+        // Focus the vim input (command line)
+        setTimeout(() => {
+            vimInput.focus();
+            updateVimCursorPosition();
+        }, 100);
+        
+        return `Opening ${filename} in Vim editor...`;
+    }
+    
+    // Function to handle Vim commands
+    function handleVimCommand(command) {
+        if (command === 'w' || command === 'write') {
+            // Save the file
+            if (vimState.file === "/etc/ssh/sshd_config") {
+                sshdConfigContent = vimTextarea.value;
+                if (sshdConfigContent.includes("PasswordAuthentication no") && 
+                    sshdConfigContent.includes("PubkeyAuthentication yes")) {
+                    // Configuration is correct
                 }
-                commandInput.value = '';
-            } else if (e.key === 'ArrowUp') {
+            }
+            return "File saved";
+        } else if (command === 'q' || command === 'quit') {
+            // Close the editor
+            closeVimEditor();
+            return "";
+        } else if (command === 'wq') {
+            // Save and quit
+            const saveMsg = handleVimCommand('w');
+            closeVimEditor();
+            return saveMsg + " and exiting";
+        } else if (command === 'q!') {
+            // Quit without saving
+            closeVimEditor();
+            return "Exiting without saving";
+        }
+        return `Not an editor command: ${command}`;
+    }
+    
+    // Function to close the Vim editor
+    function closeVimEditor() {
+        vimOverlay.style.display = 'none';
+        vimState.isEditing = false;
+        commandInput.focus();
+    }
+    
+    // Function to update Vim cursor position display
+    function updateVimCursorPosition() {
+        const text = vimTextarea.value;
+        const cursorPos = vimTextarea.selectionStart;
+        const lines = text.substring(0, cursorPos).split('\n');
+        const line = lines.length;
+        const column = lines[lines.length - 1].length + 1;
+        vimCursorPosition.textContent = `${line},${column}`;
+    }
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.keygen) {
+            document.getElementById('req-keygen').classList.add('completed');
+            document.getElementById('req-keygen').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.copyId) {
+            document.getElementById('req-copy-id').classList.add('completed');
+            document.getElementById('req-copy-id').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.sshTest) {
+            document.getElementById('req-ssh-test').classList.add('completed');
+            document.getElementById('req-ssh-test').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.config) {
+            document.getElementById('req-config').classList.add('completed');
+            document.getElementById('req-config').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[user@lab ~]$ Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[user@lab ~]$ Next: ${stepCommands[currentStep][0]}`);
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[user@lab ~]$</span> ${trimmedInput}`);
+        
+        // Handle password prompt for ssh-copy-id
+        if (sshState.passwordPrompt) {
+            const lower = trimmedInput.toLowerCase();
+            if (lower === 'yes') {
+                addTerminalOutput(
+                    'Are you sure you want to continue connecting (yes/no)? yes\n' +
+                    'Warning: Permanently added \'remote-server\' (RSA) to the list of known hosts.\n' +
+                    'user@remote-server\'s password: '
+                );
+            } else if (trimmedInput.length > 0) {
+                // Accept any non-empty password as success
+                sshState.passwordPrompt = false;
+                configState.copyId = true;
+                updateRequirements();
+                completeStep(2);
+                addTerminalOutput(
+                    'Number of key(s) added: 1\n\n' +
+                    'Now try logging into the machine, with: "ssh \'user@remote-server\'" and check to make sure that only the key(s) you wanted were added.'
+                );
+            } else {
+                addTerminalOutput('Permission denied, please try again.\nuser@remote-server\'s password: ');
+            }
+            return;
+        }
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
                 if (historyIndex > 0) {
                     historyIndex--;
-                    commandInput.value = commandHistory[historyIndex];
                 }
-            } else if (e.key === 'ArrowDown') {
-                if (historyIndex < commandHistory.length - 1) {
-                    historyIndex++;
-                    commandInput.value = commandHistory[historyIndex];
-                } else {
-                    historyIndex = commandHistory.length;
-                    commandInput.value = '';
-                }
+                commandInput.value = commandHistory[historyIndex] || '';
             }
-        });
-
-        function processCommand(commandText) {
-            const parts = commandText.trim().split(/\s+/);
-            const cmd = parts[0];
-            const args = parts.slice(1);
-
-            let output;
-            if (inPasswordPrompt) {
-                if (commandText === 'yes') {
-                    output = 'Are you sure you want to continue connecting (yes/no)? yes\nWarning: Permanently added \'remote-server\' (RSA) to the list of known hosts.';
-                    inPasswordPrompt = false;
-                } else if (commandText === 'password123') {
-                    output = 'Number of key(s) added: 1\n\nNow try logging into the machine, with: "ssh \'user@remote-server\'" and check to make sure that only the key(s) you wanted were added.';
-                    inPasswordPrompt = false;
-                } else {
-                    output = 'Permission denied, please try again.\nuser@remote-server\'s password: ';
-                }
-            } else if (inViMode) {
-                if (commandText === ':wq') {
-                    output = '';
-                    inViMode = false;
-                } else {
-                    output = '-- INSERT -- (Press ESC then :wq to save and exit)';
-                }
-            } else if (commands[cmd]) {
-                output = commands[cmd](args);
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
             } else {
-                output = `Command not found: ${cmd}. Type 'help' for available commands.`;
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
             }
-
-            if (output) {
-                terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
-            }
-
-            let commandMatched = false;
-            requiredCommands.forEach((req, index) => {
-                if (req.step === currentStep) {
-                    if ((!req.isResponse && !req.isViCommand && req.command === commandText.trim()) || 
-                        (req.isResponse && inPasswordPrompt && req.command === commandText.trim()) ||
-                        (req.isViCommand && inViMode && req.command === commandText.trim())) {
-                        commandMatched = true;
-                        if (!completedCommands[index]) {
-                            completedCommands[index] = true;
-                            terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
-                        }
-                    }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
                 }
-            });
-
-            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-            const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
-
-            if (isRequiredCommand && !commandMatched && !inPasswordPrompt && !inViMode) {
-                const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
-                terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
-            }
-
-            terminalOutput.scrollTop = terminalOutput.scrollHeight;
-            checkStepCompletion();
+            }, 0);
         }
-
-        function checkStepCompletion() {
-            const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-            const allCompleted = currentStepCommands.every(req =>
-                completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
-            );
-            if (allCompleted) {
-                setTimeout(() => {
-                    nextStep();
-                }, 1000);
-            }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
         }
-
-        function nextStep() {
-            steps[currentStep].classList.remove('active-step');
-            currentStep++;
-            if (currentStep < steps.length) {
-                steps[currentStep].classList.add('active-step');
-                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
-                // Reset state for new step
-                inPasswordPrompt = false;
-                inViMode = false;
-            } else {
-                terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 SSH key-based authentication configured successfully!</div>`;
-            }
+    });
+    
+    // Vim editor event listeners
+    vimCloseBtn.addEventListener('click', () => {
+        closeVimEditor();
+    });
+    
+    vimEscButton.addEventListener('click', () => {
+        vimState.mode = 'command';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        vimTextarea.blur();
+        vimInput.focus();
+        updateVimCursorPosition();
+    });
+    
+    vimInsertButton.addEventListener('click', () => {
+        vimState.mode = 'insert';
+        vimModeIndicator.textContent = 'INSERT MODE';
+        vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+        vimInput.blur();
+        vimTextarea.focus();
+        updateVimCursorPosition();
+    });
+    
+    // Handle vim mode switching with keyboard
+    vimTextarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            vimState.mode = 'command';
+            vimModeIndicator.textContent = 'COMMAND MODE';
+            vimModeIndicator.className = 'vim-mode-indicator command-mode';
+            vimTextarea.blur();
+            vimInput.focus();
         }
-    </script>
+        updateVimCursorPosition();
+    });
+    
+    // Handle vim command input
+    vimInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const command = vimInput.value.trim();
+            if (command === 'i') {
+                // Switch to insert mode
+                vimState.mode = 'insert';
+                vimModeIndicator.textContent = 'INSERT MODE';
+                vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+                vimInput.blur();
+                vimTextarea.focus();
+                vimInput.value = '';
+            } else if (command.startsWith(':')) {
+                // Handle colon commands
+                const actualCommand = command.substring(1);
+                const result = handleVimCommand(actualCommand);
+                if (result) {
+                    addTerminalOutput(result);
+                }
+                vimInput.value = '';
+            } else if (command) {
+                // Other vim commands
+                vimInput.value = '';
+            }
+        } else if (e.key === 'i' && vimInput.value === '' && vimState.mode === 'command') {
+            // Quick insert mode switch
+            e.preventDefault();
+            vimState.mode = 'insert';
+            vimModeIndicator.textContent = 'INSERT MODE';
+            vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+            vimInput.blur();
+            vimTextarea.focus();
+        }
+    });
+    
+    vimTextarea.addEventListener('click', () => {
+        if (vimState.mode === 'command') {
+            // In command mode, clicking textarea should focus command input instead
+            vimInput.focus();
+        } else {
+            updateVimCursorPosition();
+        }
+    });
+    
+    vimTextarea.addEventListener('keyup', () => {
+        if (vimState.mode === 'insert') {
+            updateVimCursorPosition();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>

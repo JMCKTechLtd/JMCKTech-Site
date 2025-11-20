@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>RHCSA Lab 7.2 - Manage SELinux Settings</title>
-<style>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 7.2: Manage SELinux Settings</title>
+    <style>
         :root {
             --redhat-red: #cc0000;
             --redhat-dark: #1e1e1e;
             --redhat-light: #f0f0f0;
             --redhat-accent: #4CAF50;
             --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
         }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Red Hat Text', 'Overpass', sans-serif;
             background-color: var(--redhat-dark);
@@ -19,78 +28,256 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-        }
-        .lab-container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: #252525;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            height: 100vh;
             overflow: hidden;
-            border-top: 4px solid var(--redhat-red);
         }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
         .header {
             background: linear-gradient(to right, #1e1e1e, #333);
             padding: 15px 20px;
             color: white;
             display: flex;
             align-items: center;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
+        
         .header img {
             height: 30px;
             margin-right: 15px;
         }
+        
         .header h1 {
             margin: 0;
             font-size: 1.5em;
             font-weight: normal;
         }
-        .terminal-container {
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
             display: flex;
             flex-direction: column;
-            height: 600px;
+            background: var(--panel-bg);
+            position: relative;
         }
-        .guide {
-            padding: 20px;
-            background: #2d2d2d;
-            flex: 1;
-            overflow-y: auto;
-        }
+        
         .guide h2 {
             margin-top: 0;
             color: var(--redhat-accent);
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
         }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
         .guide-step {
             margin-bottom: 15px;
             padding: 15px;
             background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
             border-left: 4px solid var(--redhat-accent);
-            display: none;
         }
-        .active-step {
-            display: block;
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
         }
-        .terminal {
-            background: #000;
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
             padding: 15px;
-            height: 250px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
             overflow-y: auto;
             font-family: 'Red Hat Mono', monospace;
-            border-top: 1px solid #444;
         }
-        .prompt {
-            color: var(--redhat-accent);
-        }
+        
         .command-line {
             display: flex;
             align-items: center;
             padding: 15px;
             background: #333;
-            border-top: 1px solid #444;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
         }
+        
         #command-input {
             flex: 1;
             background: transparent;
@@ -101,47 +288,29 @@
             outline: none;
             padding: 8px;
         }
-        .success {
+        
+        .prompt {
             color: var(--redhat-accent);
-            font-weight: bold;
+            white-space: nowrap;
+            margin-right: 5px;
         }
-        .error {
-            color: #FF5252;
-        }
-        .completion {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        .concept {
-            background: #2a2a2a;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            border-left: 4px solid var(--redhat-blue);
-        }
-        .concept h4 {
-            margin-top: 0;
-            color: var(--redhat-blue);
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
-        .concept-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .concept-item {
-            background: #252525;
+        
+        .file-content {
+            background: #1e1e1e;
             padding: 10px;
-            border-radius: 5px;
-            border-left: 2px solid var(--redhat-red);
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
         }
-        .concept-item strong {
-            color: var(--redhat-red);
-            display: block;
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
             margin-bottom: 5px;
         }
+        
         code {
             background: #1e1e1e;
             padding: 2px 5px;
@@ -149,315 +318,1047 @@
             color: var(--redhat-accent);
             font-family: 'Red Hat Mono', monospace;
         }
-        kbd {
-            background: #444;
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: white;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        .required-command {
-            background: rgba(76, 175, 80, 0.1);
-            padding: 5px;
-            border-radius: 3px;
-            border-left: 3px solid var(--redhat-accent);
-        }
-        .trophy {
-            display: inline-block;
-            margin-left: 5px;
-        }
-        .syntax-error {
-            color: #FF5252;
+        
+        .success {
+            color: var(--redhat-accent);
             font-weight: bold;
         }
+        
+        .error {
+            color: #FF5252;
+        }
+        
         .warning {
             color: #FFD700;
             font-weight: bold;
         }
-        .strict-feedback {
-            background: rgba(204, 0, 0, 0.1);
-            padding: 10px;
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
             border-radius: 5px;
-            border-left: 3px solid var(--redhat-red);
-            margin-top: 10px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .vim-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .vim-container {
+            display: flex;
+            width: 90%;
+            height: 80%;
+            gap: 20px;
+        }
+        
+        .vim-instructions {
+            width: 30%;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+        
+        .vim-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .vim-editor {
+            width: 70%;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .vim-header {
+            background: #333;
+            padding: 5px 10px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .vim-content {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+            white-space: pre;
+            color: #ccc;
+            position: relative;
+        }
+        
+        .vim-command-line {
+            display: flex;
+            background: #333;
+            padding: 5px;
+            border-top: 1px solid #444;
+        }
+        
+        .vim-prompt {
+            color: #4CAF50;
+            padding: 0 5px;
+        }
+        
+        .vim-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+        }
+        
+        .vim-status {
+            background: #333;
+            padding: 3px 10px;
+            color: #ccc;
+            font-size: 0.9em;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .vim-mode-indicator {
+            color: #FFD700;
+        }
+        
+        .vim-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #ccc;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        
+        .vim-esc-button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .vim-esc-button:hover {
+            background: #666;
+        }
+        
+        .vim-command-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .vim-command-button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .vim-command-button:hover {
+            background: #555;
+        }
+        
+        .vim-mode-indicator.command-mode {
+            color: #FFD700;
+        }
+        
+        .vim-mode-indicator.insert-mode {
+            color: #4CAF50;
+        }
+        
+        .vim-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+            
+            .vim-container {
+                width: 95%;
+                height: 90%;
+                flex-direction: column;
+            }
+            
+            .vim-instructions, .vim-editor {
+                width: 100%;
+            }
+            
+            .vim-instructions {
+                height: 30%;
+            }
+            
+            .vim-editor {
+                height: 70%;
+            }
         }
     </style>
-<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&amp;family=Red+Hat+Mono&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
 <div class="lab-container">
-<div class="header">
-<img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-<h1>RHCSA Lab 7.2: Manage SELinux Settings</h1>
-</div>
-<div class="terminal-container">
-<div class="guide">
-<h2>Lab Instructions</h2>
-<div class="guide-step active-step" id="step1">
-<h3>Step 1: Check SELinux Status</h3>
-<p class="required-command">Type exactly: <code>getenforce</code></p>
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 7.2: Manage SELinux Settings</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Learn to manage SELinux settings including checking status, changing modes, viewing contexts, and modifying file contexts.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
-<div class="concept">
-<h4>Understanding SELinux States</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>Enforcing</strong>
-                                SELinux is active and enforcing policies
-                            </div>
-<div class="concept-item">
-<strong>Permissive</strong>
-                                SELinux logs violations but doesn't enforce
-                            </div>
-<div class="concept-item">
-<strong>Disabled</strong>
-                                SELinux is completely turned off
-                            </div>
-<div class="concept-item">
-<strong>getenforce</strong>
-                                Shows the current SELinux mode
-                            </div>
-</div>
-<p><strong>How it works:</strong> SELinux provides mandatory access control (MAC) for Linux systems. <code>getenforce</code> returns the current operational mode (Enforcing, Permissive, or Disabled).</p>
-</div>
-</div>
-<div class="guide-step" id="step2">
-<h3>Step 2: Change SELinux Mode Temporarily</h3>
-<p class="required-command">Type exactly: <code>setenforce 0</code> (switch to Permissive)</p>
-<p class="required-command">Then verify with: <code>getenforce</code></p>
-<p class="required-command">Then type: <code>setenforce 1</code> (switch back to Enforcing)</p>
+            <div class="requirements-panel">
+                <h4>SELinux Configuration Requirements</h4>
+                <div class="requirement-item" id="req-getenforce">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Check SELinux status with <code>getenforce</code></span>
+                </div>
+                <div class="requirement-item" id="req-setenforce">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Change SELinux mode temporarily with <code>setenforce</code></span>
+                </div>
+                <div class="requirement-item" id="req-contexts">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">View SELinux contexts with <code>ls -Z</code> and <code>ps -Z</code></span>
+                </div>
+                <div class="requirement-item" id="req-file-context">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Change file context with <code>semanage</code> and <code>restorecon</code></span>
+                </div>
+            </div>
 
-<div class="concept">
-<h4>Understanding setenforce</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Changes SELinux mode temporarily
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                For troubleshooting without reboot
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Only works between Enforcing/Permissive
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                When testing policy changes
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>setenforce 0</code> switches to Permissive mode, <code>setenforce 1</code> returns to Enforcing. Changes don't persist after reboot.</p>
-</div>
-</div>
-<div class="guide-step" id="step3">
-<h3>Step 3: View SELinux Contexts</h3>
-<p class="required-command">Type exactly: <code>ls -Z /etc/passwd</code></p>
-<p class="required-command">Then type: <code>ps -Z</code></p>
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA SELinux Management Lab. In this lab, you will learn to manage SELinux settings on a Red Hat Enterprise Linux system.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
 
-<div class="concept">
-<h4>Understanding SELinux Contexts</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>Files</strong>
-                                Have security contexts (user:role:type:level)
-                            </div>
-<div class="concept-item">
-<strong>Processes</strong>
-                                Also have security contexts
-                            </div>
-<div class="concept-item">
-<strong>-Z option</strong>
-                                Shows SELinux contexts
-                            </div>
-<div class="concept-item">
-<strong>semanage</strong>
-                                Manages policy settings
-                            </div>
-</div>
-<p><strong>How it works:</strong> The <code>-Z</code> flag shows SELinux contexts. File contexts determine access rules, process contexts determine permissions.</p>
-</div>
-</div>
-<div class="guide-step" id="step4">
-<h3>Step 4: Change File Context</h3>
-<p class="required-command">Type exactly: <code>semanage fcontext -a -t httpd_sys_content_t "/custom(/.*)?"</code></p>
-<p class="required-command">Then type: <code>restorecon -Rv /custom</code></p>
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Check SELinux Status
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's check the current SELinux status using the <code>getenforce</code> command.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    getenforce
+                </div>
 
-<div class="concept">
-<h4>Understanding semanage</h4>
-<div class="concept-grid">
-<div class="concept-item">
-<strong>What</strong>
-                                Policy management tool
-                            </div>
-<div class="concept-item">
-<strong>Why</strong>
-                                To modify SELinux settings persistently
-                            </div>
-<div class="concept-item">
-<strong>Where</strong>
-                                Changes stored in policy
-                            </div>
-<div class="concept-item">
-<strong>When</strong>
-                                When default contexts need adjustment
-                            </div>
-</div>
-<p><strong>How it works:</strong> <code>semanage fcontext</code> adds file context rules. <code>restorecon</code> applies the new context. This is persistent across reboots.</p>
-</div>
-</div>
-</div>
-<div class="command-line">
-<span class="prompt">[user@lab ~]$</span>
-<input autofocus="" id="command-input" placeholder="Type a command..." type="text"/>
-</div>
-<div class="terminal" id="terminal-output">
-<div>[user@lab ~]$ <span class="prompt">Welcome to RHCSA Lab 7.2 - SELinux Management!</span></div>
-<div>[user@lab ~]$ <span class="prompt">Type commands exactly as shown to proceed.</span></div>
-</div>
-</div>
-</div>
-<script>const commandInput = document.getElementById('command-input');
-const terminalOutput = document.getElementById('terminal-output');
-const steps = document.querySelectorAll('.guide-step');
-let currentStep = 0;
-let commandHistory = [];
-let historyIndex = -1;
+                <div class="concept">
+                    <h4>Understanding SELinux States</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>Enforcing</strong>
+                            SELinux is active and enforcing policies
+                        </div>
+                        <div class="concept-item">
+                            <strong>Permissive</strong>
+                            SELinux logs violations but doesn't enforce
+                        </div>
+                        <div class="concept-item">
+                            <strong>Disabled</strong>
+                            SELinux is completely turned off
+                        </div>
+                        <div class="concept-item">
+                            <strong>getenforce</strong>
+                            Shows the current SELinux mode
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> SELinux provides mandatory access control (MAC) for Linux systems. <code>getenforce</code> returns the current operational mode (Enforcing, Permissive, or Disabled).</p>
+                </div>
+            </div>
 
-const requiredCommands = [
-    { command: 'getenforce', step: 0, feedback: 'Type exactly: getenforce' },
-    { command: 'setenforce 0', step: 1, feedback: 'Type exactly: setenforce 0' },
-    { command: 'getenforce', step: 1, feedback: 'Type exactly: getenforce' },
-    { command: 'setenforce 1', step: 1, feedback: 'Type exactly: setenforce 1' },
-    { command: 'ls -Z /etc/passwd', step: 2, feedback: 'Type exactly: ls -Z /etc/passwd' },
-    { command: 'ps -Z', step: 2, feedback: 'Type exactly: ps -Z' },
-    { command: 'semanage fcontext -a -t httpd_sys_content_t "/custom(/.*)?"', step: 3, feedback: 'Type exactly: semanage fcontext -a -t httpd_sys_content_t "/custom(/.*)?"' },
-    { command: 'restorecon -Rv /custom', step: 3, feedback: 'Type exactly: restorecon -Rv /custom' }
-];
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Change SELinux Mode Temporarily
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's change the SELinux mode temporarily using the <code>setenforce</code> command.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands in order:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    setenforce 0
+                </div>
+                <p>Switches SELinux to Permissive mode</p>
+                
+                <div class="command-hint">
+                    getenforce
+                </div>
+                <p>Verifies the mode change</p>
+                
+                <div class="command-hint">
+                    setenforce 1
+                </div>
+                <p>Switches SELinux back to Enforcing mode</p>
 
-let completedCommands = new Array(requiredCommands.length).fill(false);
+                <div class="concept">
+                    <h4>Understanding setenforce</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Changes SELinux mode temporarily
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            For troubleshooting without reboot
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Only works between Enforcing/Permissive
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When testing policy changes
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>setenforce 0</code> switches to Permissive mode, <code>setenforce 1</code> returns to Enforcing. Changes don't persist after reboot.</p>
+                </div>
+            </div>
 
-const commands = {
-    'getenforce': () => 'Enforcing',
-    'setenforce': (args) => {
-        if (args[0] === '0') return 'Switched to Permissive mode';
-        if (args[0] === '1') return 'Switched to Enforcing mode';
-        return 'Usage: setenforce [0|1] (0=Permissive, 1=Enforcing)';
-    },
-    'ls': (args) => {
-        if (args.includes('-Z') {
-            if (args.includes('/etc/passwd')) {
-                return '-rw-r--r--. root root system_u:object_r:passwd_file_t:s0 /etc/passwd';
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    View SELinux Contexts
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's view SELinux contexts for files and processes.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands in order:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ls -Z /etc/passwd
+                </div>
+                <p>Shows SELinux context for the passwd file</p>
+                
+                <div class="command-hint">
+                    ps -Z
+                </div>
+                <p>Shows SELinux contexts for running processes</p>
+
+                <div class="concept">
+                    <h4>Understanding SELinux Contexts</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>Files</strong>
+                            Have security contexts (user:role:type:level)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Processes</strong>
+                            Also have security contexts
+                        </div>
+                        <div class="concept-item">
+                            <strong>-Z option</strong>
+                            Shows SELinux contexts
+                        </div>
+                        <div class="concept-item">
+                            <strong>semanage</strong>
+                            Manages policy settings
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> The <code>-Z</code> flag shows SELinux contexts. File contexts determine access rules, process contexts determine permissions.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Change File Context
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's change a file context using <code>semanage</code> and apply it with <code>restorecon</code>.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands in order:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    semanage fcontext -a -t httpd_sys_content_t "/custom(/.*)?"
+                </div>
+                <p>Adds a new file context rule for the /custom directory</p>
+                
+                <div class="command-hint">
+                    restorecon -Rv /custom
+                </div>
+                <p>Applies the new context recursively and verbosely</p>
+
+                <div class="concept">
+                    <h4>Understanding semanage</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Policy management tool
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            To modify SELinux settings persistently
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Changes stored in policy
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When default contexts need adjustment
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>semanage fcontext</code> adds file context rules. <code>restorecon</code> applies the new context. This is persistent across reboots.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All SELinux configuration requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[user@lab ~]$</span> Welcome to RHCSA Lab 7.2: SELinux Management</div>
+                <div><span class="prompt">[user@lab ~]$</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[user@lab ~]$</span> You must complete each step in order.</div>
+                <div><span class="prompt">[user@lab ~]$</span> Current step: Check SELinux Status</div>
+                <div><span class="prompt">[user@lab ~]$</span> Type: <code>getenforce</code></div>
+                <div><span class="prompt">[user@lab ~]$</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[user@lab ~]$</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Track step completion status
+    const stepCompletion = {
+        1: false,
+        2: false,
+        3: false,
+        4: false
+    };
+    
+    // Track commands executed in each step
+    const stepCommandsExecuted = {
+        1: [],
+        2: [],
+        3: [],
+        4: []
+    };
+    
+    // Required commands for each step
+    const stepRequiredCommands = {
+        1: ['getenforce'],
+        2: ['setenforce 0', 'getenforce', 'setenforce 1'],
+        3: ['ls -Z /etc/passwd', 'ps -Z'],
+        4: ['semanage fcontext -a -t httpd_sys_content_t "/custom(/.*)?"', 'restorecon -Rv /custom']
+    };
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'getenforce', 'setenforce', 'ls', 'ps', 'semanage', 'restorecon', 'clear', 'help'
+    ];
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/': ['etc/', 'home/', 'custom/'],
+        '/etc/': ['passwd', 'group', 'shadow'],
+        '/custom/': ['file1', 'file2']
+    };
+    
+    // Track configuration state
+    const configState = {
+        getenforce: false,
+        setenforce: false,
+        contexts: false,
+        fileContext: false
+    };
+    
+    // Helpers to keep requirement state in sync with executed commands
+    function updateContextsRequirement() {
+        if (stepCommandsExecuted[3].includes('ls -Z /etc/passwd') &&
+            stepCommandsExecuted[3].includes('ps -Z')) {
+            if (!configState.contexts) {
+                configState.contexts = true;
+                updateRequirements();
             }
-            return 'drwxr-xr-x. root root system_u:object_r:default_t:s0 documents\n-rw-r--r--. root root system_u:object_r:default_t:s0 file1.txt';
         }
-        return 'documents\nfile1.txt\nfile2.txt';
-    },
-    'ps': (args) => {
-        if (args.includes('-Z')) {
-            return 'LABEL                             PID TTY          TIME CMD\nsystem_u:system_r:init_t:s0      1 ?        00:00:01 systemd';
+    }
+    
+    function updateFileContextRequirement() {
+        if (stepCommandsExecuted[4].includes('semanage fcontext -a -t httpd_sys_content_t "/custom(/.*)?"') &&
+            stepCommandsExecuted[4].includes('restorecon -Rv /custom')) {
+            if (!configState.fileContext) {
+                configState.fileContext = true;
+                updateRequirements();
+            }
         }
-        return 'PID TTY          TIME CMD\n1 ?        00:00:01 systemd';
-    },
-    'semanage': (args) => {
-        if (args.includes('fcontext')) {
-            return 'Added file context for /custom(/.*)?';
-        }
-        return 'SELinux policy management tool';
-    },
-    'restorecon': (args) => {
-        if (args.includes('-Rv')) {
-            return 'Relabeled /custom from default_t to httpd_sys_content_t';
-        }
-        return 'Reset security contexts';
-    },
-    'help': () => 'Available commands: getenforce, setenforce, ls, ps, semanage, restorecon, help',
-};
+    }
+    
+    
+    const commands = {
+        'getenforce': (args) => {
+            if (currentStep === 1 || currentStep > 1) {
+                // Record getenforce against the appropriate step
+                // Step 1: initial status check
+                // Step 2: verification after setenforce 0/1
+                const stepIndex = (currentStep === 2) ? 2 : 1;
 
-commandInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const commandText = commandInput.value.trim();
-        if (commandText) {
-            commandHistory.push(commandText);
-            historyIndex = commandHistory.length;
-            processCommand(commandText);
+                if (!stepCommandsExecuted[stepIndex].includes('getenforce')) {
+                    stepCommandsExecuted[stepIndex].push('getenforce');
+                    checkStepCompletion(stepIndex);
+                }
+
+                // Requirement: run getenforce at least once
+                configState.getenforce = true;
+                updateRequirements();
+
+                return "Enforcing";
+            } else {
+                return "Please complete the previous steps first.";
+            }
+        },
+        
+        'setenforce': (args) => {
+            if (args.length === 0) {
+                return "Usage: setenforce [0|1] (0=Permissive, 1=Enforcing)";
+            }
+            
+            if (currentStep === 2 || currentStep > 2) {
+                const fullCommand = `setenforce ${args[0]}`;
+                if (!stepCommandsExecuted[2].includes(fullCommand)) {
+                    stepCommandsExecuted[2].push(fullCommand);
+                    
+                    // Mark setenforce requirement as complete when we've executed both commands
+                    if (stepCommandsExecuted[2].includes('setenforce 0') && 
+                        stepCommandsExecuted[2].includes('setenforce 1')) {
+                        configState.setenforce = true;
+                        updateRequirements();
+                    }
+                    
+                    checkStepCompletion(2);
+                }
+                
+                if (args[0] === '0') {
+                    return "Switched to Permissive mode";
+                } else if (args[0] === '1') {
+                    return "Switched to Enforcing mode";
+                } else {
+                    return "Usage: setenforce [0|1] (0=Permissive, 1=Enforcing)";
+                }
+            } else {
+                return "Please complete the previous steps first.";
+            }
+        },
+        
+        'ls': (args) => {
+            if (args.includes('-Z') && args.includes('/etc/passwd')) {
+                if (currentStep === 3 || currentStep > 3) {
+                    if (!stepCommandsExecuted[3].includes('ls -Z /etc/passwd')) {
+                        stepCommandsExecuted[3].push('ls -Z /etc/passwd');
+                        checkStepCompletion(3);
+                    }
+                    // Only mark the requirement complete once both ls -Z and ps -Z have been run
+                    updateContextsRequirement();
+                    return "-rw-r--r--. root root system_u:object_r:passwd_file_t:s0 /etc/passwd";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return "file1.txt\nfile2.txt\ndocuments/";
+        },
+        
+        'ps': (args) => {
+            if (args.includes('-Z')) {
+                if (currentStep === 3 || currentStep > 3) {
+                    if (!stepCommandsExecuted[3].includes('ps -Z')) {
+                        stepCommandsExecuted[3].push('ps -Z');
+                        checkStepCompletion(3);
+                        // Only mark the requirement complete once both ls -Z and ps -Z have been run
+                        updateContextsRequirement();
+                    }
+                    return "LABEL                             PID TTY          TIME CMD\nsystem_u:system_r:init_t:s0      1 ?        00:00:01 systemd\nsystem_u:system_r:kernel_t:s0    2 ?        00:00:00 kthreadd";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return "PID TTY          TIME CMD\n1 ?        00:00:01 systemd\n2 ?        00:00:00 kthreadd";
+        },
+        
+        'semanage': (args) => {
+            if (args.includes('fcontext') && args.includes('-a') && args.includes('-t') && 
+                args.includes('httpd_sys_content_t') && args.includes('"/custom(/.*)?"')) {
+                if (currentStep === 4 || currentStep > 4) {
+                    if (!stepCommandsExecuted[4].includes('semanage fcontext -a -t httpd_sys_content_t "/custom(/.*)?"')) {
+                        stepCommandsExecuted[4].push('semanage fcontext -a -t httpd_sys_content_t "/custom(/.*)?"');
+                        checkStepCompletion(4);
+                        updateFileContextRequirement();
+                    }
+                    return "Added file context for /custom(/.*)?";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return "SELinux policy management tool";
+        },
+        
+        'restorecon': (args) => {
+            if (args.includes('-Rv') && args.includes('/custom')) {
+                if (currentStep === 4 || currentStep > 4) {
+                    if (!stepCommandsExecuted[4].includes('restorecon -Rv /custom')) {
+                        stepCommandsExecuted[4].push('restorecon -Rv /custom');
+                        checkStepCompletion(4);
+                    }
+                    updateFileContextRequirement();
+                    return "Relabeled /custom from default_t to httpd_sys_content_t";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return "Reset security contexts";
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: getenforce, setenforce, ls, ps, semanage, restorecon, clear, help";
         }
-        commandInput.value = '';
-    } else if (e.key === 'ArrowUp') {
-        if (historyIndex > 0) {
-            historyIndex--;
-            commandInput.value = commandHistory[historyIndex];
+    };
+    
+    // Function to check if a step is completed
+    function checkStepCompletion(step) {
+        const requiredCommands = stepRequiredCommands[step];
+        const executedCommands = stepCommandsExecuted[step];
+        
+        // Check if all required commands have been executed
+        const allCommandsExecuted = requiredCommands.every(cmd => 
+            executedCommands.includes(cmd)
+        );
+        
+        if (allCommandsExecuted && !stepCompletion[step]) {
+            stepCompletion[step] = true;
+            completeStep(step);
         }
-    } else if (e.key === 'ArrowDown') {
-        if (historyIndex < commandHistory.length - 1) {
-            historyIndex++;
-            commandInput.value = commandHistory[historyIndex];
+    }
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.getenforce) {
+            document.getElementById('req-getenforce').classList.add('completed');
+            document.getElementById('req-getenforce').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.setenforce) {
+            document.getElementById('req-setenforce').classList.add('completed');
+            document.getElementById('req-setenforce').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.contexts) {
+            document.getElementById('req-contexts').classList.add('completed');
+            document.getElementById('req-contexts').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.fileContext) {
+            document.getElementById('req-file-context').classList.add('completed');
+            document.getElementById('req-file-context').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[user@lab ~]$ Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepRequiredCommands[currentStep]) {
+                    addTerminalOutput(`[user@lab ~]$ Next: ${stepRequiredCommands[currentStep][0]}`);
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[user@lab ~]$</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
         } else {
-            historyIndex = commandHistory.length;
-            commandInput.value = '';
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
         }
     }
-});
-
-function processCommand(commandText) {
-    const parts = commandText.trim().split(/\s+/);
-    const cmd = parts[0];
-    const args = parts.slice(1);
-
-    let output;
-    if (commands[cmd]) {
-        output = commands[cmd](args);
-        if (output) {
-            terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div>${output}</div>`;
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
         }
-    } else {
-        terminalOutput.innerHTML += `<div>[user@lab ~]$ ${commandText}</div><div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
-    }
-
-    let commandMatched = false;
-    requiredCommands.forEach((req, index) => {
-        if (req.step === currentStep && req.command === commandText.trim()) {
-            commandMatched = true;
-            if (!completedCommands[index]) {
-                completedCommands[index] = true;
-                terminalOutput.innerHTML += `<div class="completion">✅ Correct syntax! Command mastered: ${req.command}</div>`;
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
             }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
         }
     });
-
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const isRequiredCommand = currentStepCommands.some(req => req.command.split(' ')[0] === cmd);
-
-    if (isRequiredCommand && !commandMatched) {
-        const reqCmd = currentStepCommands.find(req => req.command.split(' ')[0] === cmd);
-        terminalOutput.innerHTML += `<div class="syntax-error">⚠️ Incorrect syntax: ${reqCmd.feedback}</div>`;
-    }
-
-    terminalOutput.scrollTop = terminalOutput.scrollHeight;
-    checkStepCompletion();
-}
-
-function checkStepCompletion() {
-    const currentStepCommands = requiredCommands.filter(req => req.step === currentStep);
-    const allCompleted = currentStepCommands.every(req =>
-        completedCommands[requiredCommands.findIndex(c => c.command === req.command)]
-    );
-    if (allCompleted) {
-        setTimeout(() => {
-            nextStep();
-        }, 1000);
-    }
-}
-
-function nextStep() {
-    steps[currentStep].classList.remove('active-step');
-    currentStep++;
-    if (currentStep < steps.length) {
-        steps[currentStep].classList.add('active-step');
-        steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        terminalOutput.innerHTML += `<div class="success">Moving to next step...</div>`;
-    } else {
-        terminalOutput.innerHTML += `<div class="success">Lab completed! 🏆 All SELinux commands executed correctly!</div>`;
-    }
-}</script>
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>
