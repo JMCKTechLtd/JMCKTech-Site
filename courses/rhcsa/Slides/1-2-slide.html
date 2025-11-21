@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 1.2 - I/O Redirection • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px); /* Fixed height calculation */
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+  .error { color:#ff5252; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .concept {
+    background:#1a1a1a;
+    padding:15px;
+    border-radius:8px;
+    margin:15px 0;
+    border-left:4px solid var(--rh-blue);
+  }
+  .concept h4 {
+    margin-top:0;
+    color:var(--rh-blue);
+    border-bottom:1px solid #333;
+    padding-bottom:5px;
+  }
+  .concept-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:10px 0;
+  }
+  .concept-item {
+    background:#252525;
+    padding:10px;
+    border-radius:5px;
+    border-left:3px solid var(--rh-red);
+  }
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+  
+  .io-table {
+    width:100%;
+    border-collapse:collapse;
+    margin:10px 0;
+  }
+  .io-table th, .io-table td {
+    border:1px solid #444;
+    padding:8px;
+    text-align:left;
+  }
+  .io-table th {
+    background:#333;
+    color:var(--rh-green);
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 1.2 – I/O Redirection</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Master I/O redirection techniques in Linux. Learn how to redirect standard output, standard input, standard error, and use pipes to connect commands.<br><br>
+          <strong>Time Estimate:</strong> 10–15 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">I/O Redirection Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Output redirection using <code>></code> operator
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Input redirection using <code><</code> operator
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Pipe commands using <code>|</code> operator
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Error redirection using <code>2></code> operator
+        </div>
+
+        <div class="step current">
+          <h3>1 Output Redirection <span class="badge current">Current Step</span></h3>
+          <p>First, let's learn output redirection using the <code>></code> operator.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">echo "Hello RHCSA" > hello.txt</pre>
+          <p>Then verify the file was created:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">cat hello.txt</pre>
+          
+          <div class="concept">
+            <h4>Understanding Output Redirection</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Sends command output to a file instead of screen
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                To save output for later use or logging
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Works with most commands that produce output
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When you need to capture command output
+              </div>
+            </div>
+            <p><strong>How it works:</strong> The <code>></code> operator creates/overwrites a file. <code>echo</code> writes to the file instead of the terminal. <code>cat</code> displays file contents.</p>
+            
+            <table class="io-table">
+              <tr>
+                <th>Operator</th>
+                <th>Description</th>
+                <th>Example</th>
+              </tr>
+              <tr>
+                <td><code>></code></td>
+                <td>Overwrite file</td>
+                <td><code>ls > files.txt</code></td>
+              </tr>
+              <tr>
+                <td><code>>></code></td>
+                <td>Append to file</td>
+                <td><code>date >> log.txt</code></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 1.2: I/O Redirection</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Output Redirection</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>echo "Hello RHCSA" > hello.txt</code>
+<span class="prompt">[user@lab ~]$</span> Then: <code>cat hello.txt</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:25%"></div>
+        </div>
+        <strong>25% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">I/O Redirection Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Output redirection using <code>></code> operator
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Input redirection using <code><</code> operator
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Pipe commands using <code>|</code> operator
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Error redirection using <code>2></code> operator
+        </div>
+
+        <div class="step done">
+          <h3>1 Output Redirection <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Input Redirection <span class="badge current">Current Step</span></h3>
+          <p>Now let's learn input redirection using the <code><</code> operator.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">wc -l < hello.txt</pre>
+          
+          <div class="concept">
+            <h4>Understanding Input Redirection</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Uses file contents as command input
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                To process files without typing content
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Works with commands expecting stdin
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When feeding files to commands
+              </div>
+            </div>
+            <p><strong>How it works:</strong> The <code><</code> operator makes the command read from the file instead of keyboard input. <code>wc -l</code> counts lines from the redirected input.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">echo "Hello RHCSA" > hello.txt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">cat hello.txt</span>
+<span class="out">Hello RHCSA</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>wc -l < hello.txt</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:50%"></div>
+        </div>
+        <strong>50% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">I/O Redirection Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Output redirection using <code>></code> operator
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Input redirection using <code><</code> operator
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Pipe commands using <code>|</code> operator
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Error redirection using <code>2></code> operator
+        </div>
+
+        <div class="step done">
+          <h3>1 Output Redirection <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Input Redirection <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Pipes <span class="badge current">Current Step</span></h3>
+          <p>Now let's learn how to use pipes to connect commands.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">cat hello.txt | grep "RHCSA"</pre>
+          
+          <div class="concept">
+            <h4>Understanding Pipes</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Connects command output to another's input
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                To chain commands together
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Between any commands producing/consuming text
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Creating processing pipelines
+              </div>
+            </div>
+            <p><strong>How it works:</strong> The <code>|</code> takes <code>cat</code>'s output and feeds it to <code>grep</code>, which filters for lines containing "RHCSA".</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">wc -l < hello.txt</span>
+<span class="out">1 hello.txt</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>cat hello.txt | grep "RHCSA"</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:75%"></div>
+        </div>
+        <strong>75% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">I/O Redirection Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Output redirection using <code>></code> operator
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Input redirection using <code><</code> operator
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Pipe commands using <code>|</code> operator
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Error redirection using <code>2></code> operator
+        </div>
+
+        <div class="step done">
+          <h3>2 Input Redirection <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Pipes <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Error Redirection <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's learn error redirection using the <code>2></code> operator.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ls /nonexistent 2> error.log</pre>
+          <p>Then check the error log:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">cat error.log</pre>
+          
+          <div class="concept">
+            <h4>Understanding Error Redirection</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Redirects error messages separately
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                To handle errors differently than normal output
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                When commands may produce errors
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Debugging or logging errors
+              </div>
+            </div>
+            <p><strong>How it works:</strong> File descriptor <code>2</code> (stderr) is redirected to a file. Normal output would still appear on screen unless also redirected.</p>
+            
+            <table class="io-table">
+              <tr>
+                <th>Descriptor</th>
+                <th>Stream</th>
+                <th>Example</th>
+              </tr>
+              <tr>
+                <td><code>0</code></td>
+                <td>stdin (input)</td>
+                <td><code>< input.txt</code></td>
+              </tr>
+              <tr>
+                <td><code>1</code></td>
+                <td>stdout (output)</td>
+                <td><code>> output.txt</code></td>
+              </tr>
+              <tr>
+                <td><code>2</code></td>
+                <td>stderr (errors)</td>
+                <td><code>2> errors.txt</code></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">cat hello.txt | grep "RHCSA"</span>
+<span class="out">Hello RHCSA</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>ls /nonexistent 2> error.log</code>
+<span class="prompt">[user@lab ~]$</span> Then: <code>cat error.log</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All I/O redirection requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Output redirection using <code>></code> operator</li>
+            <li>Input redirection using <code><</code> operator</li>
+            <li>Piping commands using <code>|</code> operator</li>
+            <li>Error redirection using <code>2></code> operator</li>
+            <li>File descriptors (stdin, stdout, stderr)</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>All I/O redirection tasks completed.</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>
