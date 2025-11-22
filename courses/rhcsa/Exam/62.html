@@ -1,10 +1,1264 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Lab 62</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 62: Root Password Recovery</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .grub-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .grub-container {
+            width: 80%;
+            height: 70%;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .grub-header {
+            background: #333;
+            padding: 10px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+        
+        .grub-content {
+            flex: 1;
+            padding: 15px;
+            overflow: auto;
+            color: #ccc;
+            position: relative;
+        }
+        
+        .grub-menu {
+            background: #2a2a2a;
+            border: 1px solid #555;
+            margin: 10px 0;
+        }
+        
+        .grub-menu-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #444;
+        }
+        
+        .grub-menu-item:hover, .grub-menu-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .grub-menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        .grub-command-line {
+            display: flex;
+            background: #333;
+            padding: 8px;
+            border-top: 1px solid #444;
+        }
+        
+        .grub-prompt {
+            color: #4CAF50;
+            padding: 0 5px;
+            white-space: nowrap;
+        }
+        
+        .grub-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+        }
+        
+        .grub-close-btn {
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 1.2em;
+        }
+        
+        .emergency-mode {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #FF5252;
+        }
+        
+        .emergency-mode h4 {
+            margin-top: 0;
+            color: #FF5252;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+            
+            .grub-container {
+                width: 95%;
+                height: 90%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 62: Root Password Recovery</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Recover access to a system where you don't know the root password by booting into single-user mode and resetting the password.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
+            <div class="requirements-panel">
+                <h4>Password Recovery Requirements</h4>
+                <div class="requirement-item" id="req-reboot">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Reboot the system and interrupt the boot process</span>
+                </div>
+                <div class="requirement-item" id="req-edit-kernel">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Edit kernel parameters to boot into emergency mode</span>
+                </div>
+                <div class="requirement-item" id="req-remount">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Remount root filesystem with write permissions</span>
+                </div>
+                <div class="requirement-item" id="req-chroot">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Change root to the system filesystem</span>
+                </div>
+                <div class="requirement-item" id="req-passwd">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Change root password to "redhat"</span>
+                </div>
+                <div class="requirement-item" id="req-selinux">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Relabel filesystem for SELinux</span>
+                </div>
+                <div class="requirement-item" id="req-reboot-normal">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Reboot into normal mode and verify login</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Root Password Recovery Lab. In this lab, you'll learn how to regain access to a system when you've forgotten the root password.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Reboot the System
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, we need to reboot the system to access the GRUB boot menu.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    reboot
+                </div>
+                
+                <p>This will restart the system and bring up the GRUB boot menu where we can modify boot parameters.</p>
+
+                <div class="concept">
+                    <h4>Understanding the Boot Process</h4>
+                    <p>When a Linux system boots, it loads the GRUB bootloader which allows you to modify kernel parameters before the system fully starts. This is key to password recovery.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Interrupt Boot and Edit Kernel Parameters
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>When the GRUB menu appears, we need to interrupt the normal boot process and edit the kernel parameters.</p>
+                
+                <div class="hint-box">
+                    <strong>Follow these steps in the GRUB menu:</strong>
+                </div>
+                
+                <ol>
+                    <li>Press <code>e</code> to edit the current boot entry</li>
+                    <li>Navigate to the line starting with <code>linux</code></li>
+                    <li>Go to the end of this line</li>
+                    <li>Add <code>rd.break</code> to the end of the line</li>
+                    <li>Press <code>Ctrl+X</code> to boot with these parameters</li>
+                </ol>
+                
+                <p class="warning">Note: The <code>rd.break</code> parameter interrupts the boot process early and drops you into an emergency shell.</p>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Remount Root Filesystem with Write Permissions
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>In the emergency shell, the root filesystem is mounted as read-only. We need to remount it with write permissions.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    mount -o remount,rw /sysroot
+                </div>
+                
+                <p>This command remounts the system root filesystem with read-write permissions, allowing us to make changes.</p>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Change Root to System Filesystem
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now we need to change our root directory to the actual system filesystem.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    chroot /sysroot
+                </div>
+                
+                <p>This changes our working environment to the actual system root, allowing us to run system commands like <code>passwd</code>.</p>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Change Root Password
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now we can change the root password to "redhat".</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    echo "redhat" | passwd --stdin root
+                </div>
+                
+                <p>This sets the root password to "redhat" without requiring interactive input.</p>
+
+                <div class="concept">
+                    <h4>Password Security</h4>
+                    <p>In a real-world scenario, you should choose a strong, unique password. For this lab exercise, we're using "redhat" for simplicity.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step6">
+                <h3>
+                    <span class="step-number">6</span>
+                    Relabel Filesystem for SELinux
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>If SELinux is enabled (which it typically is on RHEL systems), we need to trigger a filesystem relabel to ensure proper security contexts.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    touch /.autorelabel
+                </div>
+                
+                <p>This creates a file that tells the system to relabel all files on the next boot, ensuring SELinux contexts are correct.</p>
+                
+                <p class="warning">Note: The next boot will take longer as SELinux relabels all files.</p>
+            </div>
+
+            <div class="guide-step" id="step7">
+                <h3>
+                    <span class="step-number">7</span>
+                    Exit and Reboot
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now we need to exit the chroot environment and reboot the system normally.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    exit
+                </div>
+                
+                <div class="command-hint">
+                    reboot
+                </div>
+                
+                <p>The first <code>exit</code> command exits the chroot environment, and the second <code>reboot</code> command restarts the system normally.</p>
+            </div>
+
+            <div class="guide-step" id="step8">
+                <h3>
+                    <span class="step-number">8</span>
+                    Verify Login with New Password
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>After the system reboots, verify that you can log in as root with the new password "redhat".</p>
+                
+                <div class="hint-box">
+                    <strong>After reboot completes:</strong>
+                </div>
+                
+                <ol>
+                    <li>At the login prompt, enter <code>root</code> as the username</li>
+                    <li>Enter <code>redhat</code> as the password</li>
+                    <li>You should successfully log into the system</li>
+                </ol>
+
+                <div class="concept">
+                    <h4>Password Recovery Complete</h4>
+                    <p>You have successfully recovered access to a system where the root password was unknown. This is a critical skill for system administrators.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All password recovery requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 62: Root Password Recovery</div>
+                <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Reboot the System</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>reboot</code></div>
+                <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@station ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GRUB Boot Menu Overlay -->
+<div id="grub-overlay" class="grub-overlay" style="display: none;">
+    <div class="grub-container">
+        <div class="grub-header">
+            <span>GNU GRUB Version 2.02</span>
+            <span class="grub-close-btn" id="grub-close-btn">×</span>
+        </div>
+        <div class="grub-content">
+            <p>Welcome to GRUB!</p>
+            
+            <div class="grub-menu">
+                <div class="grub-menu-item selected" id="grub-default">Red Hat Enterprise Linux Server (3.10.0-1160.el7.x86_64) 7.9 (Maipo)</div>
+                <div class="grub-menu-item">Red Hat Enterprise Linux Server (3.10.0-1127.el7.x86_64) 7.8 (Maipo)</div>
+                <div class="grub-menu-item">Red Hat Enterprise Linux Server (0-rescue) 7.9 (Maipo)</div>
+            </div>
+            
+            <p>The highlighted entry will be executed automatically in 4 seconds.</p>
+            <p>Use the ↑ and ↓ keys to select which entry is highlighted.</p>
+            <p>Press 'e' to edit the selected commands before booting.</p>
+            <p>Press 'c' for a command-line.</p>
+            
+            <div class="emergency-mode" id="grub-edit-mode" style="display: none;">
+                <h4>GRUB Edit Mode</h4>
+                <p>You are in GRUB edit mode. You can modify the kernel parameters before booting.</p>
+                <div class="file-content">setparams 'Red Hat Enterprise Linux Server (3.10.0-1160.el7.x86_64) 7.9'
+
+  linuxefi /vmlinuz-3.10.0-1160.el7.x86_64 root=/dev/mapper/rhel-root ro crashkernel=auto resume=/dev/mapper/rhel-swap rd.lvm.lv=rhel/root rd.lvm.lv=rhel/swap rhgb quiet
+  initrdefi /initramfs-3.10.0-1160.el7.x86_64.img</div>
+                <p>Navigate to the line starting with "linuxefi" and add <code>rd.break</code> to the end of the line.</p>
+                <p>Press <code>Ctrl+X</code> to boot with these parameters.</p>
+            </div>
+            
+            <div class="emergency-mode" id="emergency-shell" style="display: none;">
+                <h4>Emergency Mode</h4>
+                <p>You have entered emergency mode. The root filesystem is mounted as read-only.</p>
+                <p>Type the commands shown in the lab instructions to continue.</p>
+                <div class="command-line">
+                    <span class="prompt">switch_root:/#</span>
+                    <input id="emergency-input" type="text" placeholder="Type commands here..." style="flex: 1; background: transparent; border: none; color: white; font-family: 'Red Hat Mono', monospace; outline: none;"/>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    // GRUB overlay elements
+    const grubOverlay = document.getElementById('grub-overlay');
+    const grubCloseBtn = document.getElementById('grub-close-btn');
+    const grubEditMode = document.getElementById('grub-edit-mode');
+    const grubDefaultItem = document.getElementById('grub-default');
+    const emergencyShell = document.getElementById('emergency-shell');
+    const emergencyInput = document.getElementById('emergency-input');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'reboot', 'mount', 'chroot', 'passwd', 'touch', 'exit', 'help'
+    ];
+    
+    // Track configuration state
+    const configState = {
+        reboot: false,
+        editKernel: false,
+        remount: false,
+        chroot: false,
+        passwd: false,
+        selinux: false,
+        rebootNormal: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['reboot'],
+        3: ['mount -o remount,rw /sysroot'],
+        4: ['chroot /sysroot'],
+        5: ['echo "redhat" | passwd --stdin root'],
+        6: ['touch /.autorelabel'],
+        7: ['exit', 'reboot']
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.reboot) {
+            document.getElementById('req-reboot').classList.add('completed');
+            document.getElementById('req-reboot').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.editKernel) {
+            document.getElementById('req-edit-kernel').classList.add('completed');
+            document.getElementById('req-edit-kernel').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.remount) {
+            document.getElementById('req-remount').classList.add('completed');
+            document.getElementById('req-remount').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.chroot) {
+            document.getElementById('req-chroot').classList.add('completed');
+            document.getElementById('req-chroot').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.passwd) {
+            document.getElementById('req-passwd').classList.add('completed');
+            document.getElementById('req-passwd').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.selinux) {
+            document.getElementById('req-selinux').classList.add('completed');
+            document.getElementById('req-selinux').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.rebootNormal) {
+            document.getElementById('req-reboot-normal').classList.add('completed');
+            document.getElementById('req-reboot-normal').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[root@station ~]# Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    if (currentStep === 2) {
+                        addTerminalOutput(`[root@station ~]# Next: Interrupt boot process and edit kernel parameters`);
+                    } else {
+                        addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep][0]}`);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command based on current step
+        if (currentStep === 1 && command === 'reboot') {
+            addTerminalOutput("System is going down for reboot NOW!");
+            setTimeout(() => {
+                configState.reboot = true;
+                updateRequirements();
+                completeStep(1);
+                
+                // Show GRUB overlay
+                grubOverlay.style.display = 'flex';
+                addTerminalOutput("[root@station ~]# System rebooted. GRUB menu is now displayed.");
+                addTerminalOutput("[root@station ~]# Press 'e' to edit kernel parameters.");
+            }, 1000);
+        } else if (currentStep === 3 && trimmedInput === 'mount -o remount,rw /sysroot') {
+            configState.remount = true;
+            updateRequirements();
+            completeStep(3);
+            addTerminalOutput("switch_root:/# Root filesystem remounted with write permissions.");
+        } else if (currentStep === 4 && command === 'chroot' && args[0] === '/sysroot') {
+            configState.chroot = true;
+            updateRequirements();
+            completeStep(4);
+            addTerminalOutput("switch_root:/# Changed root to /sysroot successfully.");
+        } else if (currentStep === 5 && trimmedInput === 'echo "redhat" | passwd --stdin root') {
+            configState.passwd = true;
+            updateRequirements();
+            completeStep(5);
+            addTerminalOutput("Changing password for user root.");
+            addTerminalOutput("passwd: all authentication tokens updated successfully.");
+        } else if (currentStep === 6 && command === 'touch' && args[0] === '/.autorelabel') {
+            configState.selinux = true;
+            updateRequirements();
+            completeStep(6);
+            addTerminalOutput("switch_root:/# SELinux relabel file created.");
+        } else if (currentStep === 7 && command === 'exit') {
+            addTerminalOutput("switch_root:/# Exited chroot environment.");
+            addTerminalOutput("switch_root:/# Type 'reboot' to restart the system normally.");
+        } else if (currentStep === 7 && command === 'reboot') {
+            configState.rebootNormal = true;
+            updateRequirements();
+            completeStep(7);
+            addTerminalOutput("switch_root:/# System is going down for reboot NOW!");
+            setTimeout(() => {
+                addTerminalOutput("[root@station ~]# System rebooted successfully.");
+                addTerminalOutput("[root@station ~]# You can now log in with username 'root' and password 'redhat'.");
+                completeStep(8);
+            }, 2000);
+        } else if (command === 'help') {
+            addTerminalOutput("Available commands: reboot, mount, chroot, passwd, touch, exit, help");
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found or incorrect for current step`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // GRUB overlay event handlers
+    grubCloseBtn.addEventListener('click', () => {
+        grubOverlay.style.display = 'none';
+        commandInput.focus();
+    });
+    
+    // Handle key events in GRUB overlay
+    document.addEventListener('keydown', (e) => {
+        if (grubOverlay.style.display === 'flex') {
+            if (e.key === 'e') {
+                e.preventDefault();
+                grubEditMode.style.display = 'block';
+                addTerminalOutput("[root@station ~]# GRUB edit mode activated.");
+                addTerminalOutput("[root@station ~]# Navigate to the 'linuxefi' line and add 'rd.break' at the end.");
+            } else if (e.key === 'x' && e.ctrlKey && grubEditMode.style.display === 'block') {
+                e.preventDefault();
+                grubEditMode.style.display = 'none';
+                emergencyShell.style.display = 'block';
+                configState.editKernel = true;
+                updateRequirements();
+                completeStep(2);
+                addTerminalOutput("[root@station ~]# Booting with rd.break parameter...");
+                addTerminalOutput("[root@station ~]# Entered emergency mode.");
+                addTerminalOutput("switch_root:/# Type: mount -o remount,rw /sysroot");
+                emergencyInput.focus();
+            }
+        }
+    });
+    
+    // Handle emergency shell commands
+    emergencyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const command = emergencyInput.value.trim();
+            if (command === 'mount -o remount,rw /sysroot') {
+                configState.remount = true;
+                updateRequirements();
+                completeStep(3);
+                addTerminalOutput("switch_root:/# Root filesystem remounted with write permissions.");
+                addTerminalOutput("switch_root:/# Type: chroot /sysroot");
+            } else if (command === 'chroot /sysroot') {
+                configState.chroot = true;
+                updateRequirements();
+                completeStep(4);
+                addTerminalOutput("switch_root:/# Changed root to /sysroot successfully.");
+                addTerminalOutput("switch_root:/# Type: echo \"redhat\" | passwd --stdin root");
+            } else if (command === 'echo "redhat" | passwd --stdin root') {
+                configState.passwd = true;
+                updateRequirements();
+                completeStep(5);
+                addTerminalOutput("Changing password for user root.");
+                addTerminalOutput("passwd: all authentication tokens updated successfully.");
+                addTerminalOutput("switch_root:/# Type: touch /.autorelabel");
+            } else if (command === 'touch /.autorelabel') {
+                configState.selinux = true;
+                updateRequirements();
+                completeStep(6);
+                addTerminalOutput("switch_root:/# SELinux relabel file created.");
+                addTerminalOutput("switch_root:/# Type: exit");
+            } else if (command === 'exit') {
+                addTerminalOutput("switch_root:/# Exited chroot environment.");
+                addTerminalOutput("switch_root:/# Type: reboot");
+            } else if (command === 'reboot') {
+                configState.rebootNormal = true;
+                updateRequirements();
+                completeStep(7);
+                addTerminalOutput("switch_root:/# System is going down for reboot NOW!");
+                grubOverlay.style.display = 'none';
+                setTimeout(() => {
+                    addTerminalOutput("[root@station ~]# System rebooted successfully.");
+                    addTerminalOutput("[root@station ~]# You can now log in with username 'root' and password 'redhat'.");
+                    completeStep(8);
+                }, 2000);
+            } else if (command) {
+                addTerminalOutput(`bash: ${command}: command not found`);
+            }
+            emergencyInput.value = '';
+        }
+    });
+    
+    // Event listeners for command input
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>
