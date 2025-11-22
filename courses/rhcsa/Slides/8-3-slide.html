@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 8.3 - Container Storage & Networking • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --rh-orange: #ff8c00;
+    --rh-light-blue: #00bfff;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px);
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+  .container-network { color:var(--rh-light-blue); }
+  .container-storage { color:var(--rh-orange); }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+
+  .concept-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:10px 0;
+  }
+  .concept-item {
+    background:#111;
+    padding:10px;
+    border-radius:5px;
+    border-left:3px solid var(--rh-blue);
+  }
+  .concept-item strong {
+    color:var(--rh-blue);
+    display:block;
+    margin-bottom:5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 8.3 – Container Storage & Networking</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">8</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn how to manage container storage and networking using Podman.<br><br>
+          <strong>Time Estimate:</strong> 15–20 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Container Storage & Networking Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Create volume mount: <code>podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify volume mount: <code>ls -l /tmp/container-data</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create named volume: <code>podman volume create myvol</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Run container with port mapping: <code>podman run -d --name web -p 8080:80 nginx</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify network access: <code>curl http://localhost:8080</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Inspect container network: <code>podman inspect web --format "{{.NetworkSettings.IPAddress}}"</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> List container networks: <code>podman network ls</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 Lab Introduction <span class="badge current">Current Step</span></h3>
+          <p>Welcome to the RHCSA Container Storage & Networking Lab. In this lab, you will learn how to manage container storage using volume mounts and named volumes, and configure container networking with port mapping.</p>
+          <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 8.3: Container Storage & Networking</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Lab Introduction</span>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> This lab focuses on container storage and networking concepts.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:14%"></div>
+        </div>
+        <strong>14% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Container Storage & Networking Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Create volume mount: <code>podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify volume mount: <code>ls -l /tmp/container-data</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create named volume: <code>podman volume create myvol</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Run container with port mapping: <code>podman run -d --name web -p 8080:80 nginx</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify network access: <code>curl http://localhost:8080</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Inspect container network: <code>podman inspect web --format "{{.NetworkSettings.IPAddress}}"</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> List container networks: <code>podman network ls</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Lab Introduction <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Container Storage Basics <span class="badge current">Current Step</span></h3>
+          <p>First, let's create a container with a volume mount to persist data beyond the container lifecycle.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Persistent storage for containers
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              Preserve data beyond container lifecycle
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Host directories or volumes
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              When data persistence is needed
+            </div>
+          </div>
+          <p><strong>How it works:</strong> The <code>-v</code> flag mounts a host directory (<code>/tmp/container-data</code>) into the container (<code>/data</code>). The <code>:Z</code> option applies proper SELinux context. This command creates a test file in the mounted directory.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>Step 1 completed. Moving to step 2.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Container Storage Basics</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> The -v flag creates a volume mount between host and container.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:29%"></div>
+        </div>
+        <strong>29% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Container Storage & Networking Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Create volume mount: <code>podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify volume mount: <code>ls -l /tmp/container-data</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create named volume: <code>podman volume create myvol</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Run container with port mapping: <code>podman run -d --name web -p 8080:80 nginx</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify network access: <code>curl http://localhost:8080</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Inspect container network: <code>podman inspect web --format "{{.NetworkSettings.IPAddress}}"</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> List container networks: <code>podman network ls</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Lab Introduction <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Container Storage Basics <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Verify Volume Mount <span class="badge current">Current Step</span></h3>
+          <p>Now let's verify that the volume mount worked correctly and create a named volume.</p>
+          <p>Type the commands shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ls -l /tmp/container-data</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">podman volume create myvol</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Host-container file sharing
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              Persistent, shared, or configuration data
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Any directory accessible to host and container
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              For databases, configs, or shared data
+            </div>
+          </div>
+          <p><strong>How it works:</strong> The <code>ls</code> command verifies the file created by the container exists on the host. <code>podman volume create</code> makes a managed volume (stored in <code>/var/lib/containers/storage/volumes/</code>).</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile</span>
+<span class="out">Creating container with volume mount...</span>
+<span class="out">Container executed successfully</span>
+<span class="success">Step 2 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next commands:
+<span class="prompt">[user@lab ~]$</span> <code>ls -l /tmp/container-data</code>
+<span class="prompt">[user@lab ~]$</span> <code>podman volume create myvol</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:43%"></div>
+        </div>
+        <strong>43% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Container Storage & Networking Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Create volume mount: <code>podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Verify volume mount: <code>ls -l /tmp/container-data</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Create named volume: <code>podman volume create myvol</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Run container with port mapping: <code>podman run -d --name web -p 8080:80 nginx</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify network access: <code>curl http://localhost:8080</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Inspect container network: <code>podman inspect web --format "{{.NetworkSettings.IPAddress}}"</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> List container networks: <code>podman network ls</code>
+        </div>
+
+        <div class="step done">
+          <h3>2 Container Storage Basics <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Verify Volume Mount <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Container Networking Basics <span class="badge current">Current Step</span></h3>
+          <p>Now let's explore container networking by running a web server container with port mapping.</p>
+          <p>Type the commands shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">podman run -d --name web -p 8080:80 nginx</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">curl http://localhost:8080</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Network isolation and port mapping
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              Secure communication between containers/host
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Virtual networks and port mappings
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              For multi-container apps or external access
+            </div>
+          </div>
+          <p><strong>How it works:</strong> The <code>-p</code> flag maps host port 8080 to container port 80. <code>-d</code> runs in detached mode. <code>curl</code> verifies the nginx web server is accessible.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ls -l /tmp/container-data</span>
+<span class="out">total 0</span>
+<span class="out">-rw-r--r--. 1 root root 0 Jan 10 10:00 testfile</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">podman volume create myvol</span>
+<span class="out">myvol</span>
+<span class="success">Step 3 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next commands:
+<span class="prompt">[user@lab ~]$</span> <code>podman run -d --name web -p 8080:80 nginx</code>
+<span class="prompt">[user@lab ~]$</span> <code>curl http://localhost:8080</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:57%"></div>
+        </div>
+        <strong>57% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Container Storage & Networking Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Create volume mount: <code>podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Verify volume mount: <code>ls -l /tmp/container-data</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Create named volume: <code>podman volume create myvol</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Run container with port mapping: <code>podman run -d --name web -p 8080:80 nginx</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Verify network access: <code>curl http://localhost:8080</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Inspect container network: <code>podman inspect web --format "{{.NetworkSettings.IPAddress}}"</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> List container networks: <code>podman network ls</code>
+        </div>
+
+        <div class="step done">
+          <h3>3 Verify Volume Mount <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Container Networking Basics <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Network Inspection <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's inspect the container's network configuration and list available networks.</p>
+          <p>Type the commands shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">podman inspect web --format "{{.NetworkSettings.IPAddress}}"</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">podman network ls</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Virtual networks for containers
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              Isolate and connect container communications
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Managed by Podman/container runtime
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              For multi-container applications
+            </div>
+          </div>
+          <p><strong>How it works:</strong> <code>podman inspect</code> shows the container's network details. <code>podman network ls</code> lists available networks. By default, containers use a bridge network with NAT.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">podman run -d --name web -p 8080:80 nginx</span>
+<span class="out">Running nginx container in detached mode...</span>
+<span class="out">Container started successfully</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">curl http://localhost:8080</span>
+<span class="out">&lt;!DOCTYPE html&gt;</span>
+<span class="out">&lt;html&gt;</span>
+<span class="out">&lt;head&gt;</span>
+<span class="out">&lt;title&gt;Welcome to nginx!&lt;/title&gt;</span>
+<span class="out">&lt;/head&gt;</span>
+<span class="out">&lt;body&gt;</span>
+<span class="out">&lt;h1&gt;Welcome to nginx!&lt;/h1&gt;</span>
+<span class="out">&lt;/body&gt;</span>
+<span class="out">&lt;/html&gt;</span>
+<span class="success">Step 4 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next commands:
+<span class="prompt">[user@lab ~]$</span> <code>podman inspect web --format "{{.NetworkSettings.IPAddress}}"</code>
+<span class="prompt">[user@lab ~]$</span> <code>podman network ls</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:71%"></div>
+        </div>
+        <strong>71% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Container Storage & Networking Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Create volume mount: <code>podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Verify volume mount: <code>ls -l /tmp/container-data</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Create named volume: <code>podman volume create myvol</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Run container with port mapping: <code>podman run -d --name web -p 8080:80 nginx</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Verify network access: <code>curl http://localhost:8080</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Inspect container network: <code>podman inspect web --format "{{.NetworkSettings.IPAddress}}"</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> List container networks: <code>podman network ls</code>
+        </div>
+
+        <div class="step done">
+          <h3>4 Container Networking Basics <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>6 Network Inspection <span class="badge current">Current Step</span></h3>
+          <p>Notice how the container's network information is displayed when using the inspect command.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">podman inspect web --format "{{.NetworkSettings.IPAddress}}"</span>
+<span class="out">10.88.0.2</span>
+<span class="tip">The inspect command shows detailed container information including network settings.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:86%"></div>
+        </div>
+        <strong>86% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Container Storage & Networking Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Create volume mount: <code>podman run -v /tmp/container-data:/data:Z alpine touch /data/testfile</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Verify volume mount: <code>ls -l /tmp/container-data</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Create named volume: <code>podman volume create myvol</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Run container with port mapping: <code>podman run -d --name web -p 8080:80 nginx</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Verify network access: <code>curl http://localhost:8080</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Inspect container network: <code>podman inspect web --format "{{.NetworkSettings.IPAddress}}"</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          List container networks: <code>podman network ls</code>
+        </div>
+
+        <div class="step done">
+          <h3>5 Network Inspection <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>7 Listing Networks <span class="badge current">Current Step</span></h3>
+          <p>Notice how Podman lists the available container networks.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">podman network ls</span>
+<span class="out">NETWORK ID    NAME        DRIVER</span>
+<span class="out">2f259bab93aa  podman      bridge</span>
+<span class="tip">The network ls command shows all available container networks.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 8 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All container storage and networking requirements have been met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Container storage with volume mounts</li>
+            <li>Named volumes for persistent data</li>
+            <li>Container networking and port mapping</li>
+            <li>Network inspection and management</li>
+            <li>Verifying container connectivity</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>All container storage and networking tasks completed.</div>
+            <div style="margin-top:20px; font-size:3rem;">🎉</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

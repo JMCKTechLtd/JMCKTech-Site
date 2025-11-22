@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 7.4 - SSH Key-based Authentication • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px); /* Fixed height calculation */
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .file-structure {
+    background:#1e1e1e;
+    padding:10px;
+    border-radius:5px;
+    font-family:'Red Hat Mono', monospace;
+    margin:10px 0;
+  }
+  
+  .file-permissions {
+    color:#4CAF50;
+  }
+  
+  .file-owner {
+    color:#007ACC;
+  }
+  
+  .hint-box {
+    background:rgba(255, 215, 0, 0.1);
+    border-left:4px solid #FFD700;
+    padding:10px;
+    margin:10px 0;
+    border-radius:3px;
+  }
+  
+  .strict-feedback {
+    background:rgba(204, 0, 0, 0.1);
+    padding:10px;
+    border-radius:5px;
+    border-left:3px solid var(--rh-red);
+    margin-top:10px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 7.4 – SSH Key-based Authentication</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Configure SSH key-based authentication to enable secure passwordless access to remote systems.<br><br>
+          <strong>Time Estimate:</strong> 15-20 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SSH Configuration Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Generate SSH key pair with <code>ssh-keygen</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Copy public key to remote server with <code>ssh-copy-id</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test SSH key-based authentication
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Configure SSH server for key-only authentication (optional)
+        </div>
+
+        <div class="step current">
+          <h3>1 Lab Introduction <span class="badge current">Current Step</span></h3>
+          <p>Welcome to the RHCSA SSH Key-based Authentication Lab. In this lab, you will configure secure SSH authentication using cryptographic key pairs.</p>
+          <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 7.4: SSH Key-based Authentication</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Lab Introduction</span>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> SSH key-based authentication is more secure than password authentication.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:14%"></div>
+        </div>
+        <strong>14% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SSH Configuration Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Generate SSH key pair with <code>ssh-keygen</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Copy public key to remote server with <code>ssh-copy-id</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test SSH key-based authentication
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Configure SSH server for key-only authentication (optional)
+        </div>
+
+        <div class="step done">
+          <h3>1 Lab Introduction <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Generate SSH Key Pair <span class="badge current">Current Step</span></h3>
+          <p>First, let's generate an SSH key pair using the ssh-keygen command.</p>
+          
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          
+          <pre style="background:#111; padding:12px; border-radius:6px;">ssh-keygen -t rsa -b 4096 -C "your_email@example.com"</pre>
+          
+          <p>When prompted:</p>
+          <ul>
+            <li>Press <code>Enter</code> to accept the default file location</li>
+            <li>Press <code>Enter</code> twice for an empty passphrase (for this lab)</li>
+          </ul>
+          
+          <div class="file-structure">
+            <div>~/.ssh/</div>
+            <div>├── <span class="file-permissions">-rw-------</span> <span class="file-owner">user user</span> id_rsa <span class="note">(private key - keep secret!)</span></div>
+            <div>└── <span class="file-permissions">-rw-r--r--</span> <span class="file-owner">user user</span> id_rsa.pub <span class="success">(public key - share with servers)</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>ssh-keygen -t rsa -b 4096 -C "your_email@example.com"</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> The private key stays on your machine, while the public key is placed on remote servers.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:29%"></div>
+        </div>
+        <strong>29% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SSH Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Generate SSH key pair with <code>ssh-keygen</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Copy public key to remote server with <code>ssh-copy-id</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test SSH key-based authentication
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Configure SSH server for key-only authentication (optional)
+        </div>
+
+        <div class="step done">
+          <h3>1 Lab Introduction <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Generate SSH Key Pair <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Copy Public Key to Remote Server <span class="badge current">Current Step</span></h3>
+          <p>Now let's copy the public key to the remote server using ssh-copy-id.</p>
+          
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          
+          <pre style="background:#111; padding:12px; border-radius:6px;">ssh-copy-id user@remote-server</pre>
+          
+          <p>When prompted:</p>
+          <ul>
+            <li>Type <code>yes</code> to continue connecting</li>
+            <li>Enter the remote user's password when prompted</li>
+          </ul>
+          
+          <div class="strict-feedback">
+            <strong>Security Note:</strong> In production, always use a passphrase for your private key. This lab skips it for simplicity.
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ssh-keygen -t rsa -b 4096 -C "your_email@example.com"</span>
+<span class="out">Generating public/private rsa key pair.</span>
+<span class="out">Enter file in which to save the key (/home/user/.ssh/id_rsa):</span>
+<span class="out">Created directory '/home/user/.ssh'.</span>
+<span class="out">Enter passphrase (empty for no passphrase):</span>
+<span class="out">Enter same passphrase again:</span>
+<span class="out">Your identification has been saved in /home/user/.ssh/id_rsa.</span>
+<span class="out">Your public key has been saved in /home/user/.ssh/id_rsa.pub.</span>
+<span class="success">Step 2 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>ssh-copy-id user@remote-server</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:43%"></div>
+        </div>
+        <strong>43% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SSH Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Generate SSH key pair with <code>ssh-keygen</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Copy public key to remote server with <code>ssh-copy-id</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test SSH key-based authentication
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Configure SSH server for key-only authentication (optional)
+        </div>
+
+        <div class="step done">
+          <h3>2 Generate SSH Key Pair <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Copy Public Key to Remote Server <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Test Key-based Authentication <span class="badge current">Current Step</span></h3>
+          <p>Now let's test the key-based authentication by connecting to the remote server.</p>
+          
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          
+          <pre style="background:#111; padding:12px; border-radius:6px;">ssh user@remote-server</pre>
+          
+          <p>If everything is configured correctly, you should be logged in without being prompted for a password.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ssh-copy-id user@remote-server</span>
+<span class="out">/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s)</span>
+<span class="out">/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed</span>
+<span class="out">user@remote-server's password:</span>
+<span class="out">Number of key(s) added: 1</span>
+<span class="success">Step 3 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>ssh user@remote-server</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:57%"></div>
+        </div>
+        <strong>57% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SSH Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Generate SSH key pair with <code>ssh-keygen</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Copy public key to remote server with <code>ssh-copy-id</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Test SSH key-based authentication
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Configure SSH server for key-only authentication (optional)
+        </div>
+
+        <div class="step done">
+          <h3>3 Copy Public Key to Remote Server <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Test Key-based Authentication <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Secure SSH Configuration (Optional) <span class="badge current">Current Step</span></h3>
+          <p>For enhanced security, you can configure the SSH server to only accept key-based authentication.</p>
+          
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo vi /etc/ssh/sshd_config</pre>
+          
+          <p>Find and uncomment/modify these lines:</p>
+          
+          <pre style="background:#111; padding:12px; border-radius:6px;">PasswordAuthentication no
+PubkeyAuthentication yes</pre>
+          
+          <p>To save and exit vim:</p>
+          <ol>
+            <li>Press <code>ESC</code> to ensure you're in command mode</li>
+            <li>Type <code>:wq</code> and press <code>Enter</code> to write and quit</li>
+          </ol>
+          
+          <div class="hint-box">
+            <strong>Restart SSH service:</strong>
+          </div>
+          
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo systemctl restart sshd</pre>
+          
+          <div class="strict-feedback">
+            <strong>Warning:</strong> Don't disable password authentication until you've confirmed key-based authentication works, or you might lock yourself out!
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ssh user@remote-server</span>
+<span class="out">Last login: Mon Jan 10 10:00:00 2022 from 192.168.1.100</span>
+<span class="success">Step 4 completed successfully.</span>
+<span class="success">You are now logged in via SSH key authentication!</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>sudo vi /etc/ssh/sshd_config</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:71%"></div>
+        </div>
+        <strong>71% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SSH Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Generate SSH key pair with <code>ssh-keygen</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Copy public key to remote server with <code>ssh-copy-id</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Test SSH key-based authentication
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Configure SSH server for key-only authentication (optional)
+        </div>
+
+        <div class="step done">
+          <h3>4 Test Key-based Authentication <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>5 Secure SSH Configuration (Optional) <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>6 SSH Key Authentication Complete <span class="badge current">Current Step</span></h3>
+          <p>You have successfully configured SSH key-based authentication!</p>
+          <p>Key-based authentication is now working correctly. You can log in to the remote server without a password.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo vi /etc/ssh/sshd_config</span>
+<span class="out"># Editing the SSH server configuration file</span>
+<span class="out"># Modified PasswordAuthentication and PubkeyAuthentication lines</span>
+<span class="success">Configuration file updated successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo systemctl restart sshd</span>
+<span class="success">SSH service restarted successfully.</span>
+<span class="success">Step 5 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> <span class="success">All SSH key-based authentication requirements have been met.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All SSH key-based authentication requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>SSH key pair generation with ssh-keygen</li>
+            <li>Copying public keys to remote servers with ssh-copy-id</li>
+            <li>Testing key-based authentication</li>
+            <li>Configuring SSH server for enhanced security</li>
+            <li>How public-private key cryptography works for SSH</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>SSH Key Authentication Configured</div>
+            <div style="margin-top:20px; font-size:3rem;">🔑</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

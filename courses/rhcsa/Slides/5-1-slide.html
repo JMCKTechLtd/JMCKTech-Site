@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 5.1 - Schedule Tasks (cron, at) • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px); /* Fixed height calculation */
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .cron-example {
+    background:#111;
+    padding:12px;
+    border-radius:6px;
+    margin:10px 0;
+    font-family:'Red Hat Mono', monospace;
+    font-size:0.9rem;
+  }
+  
+  .concept-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:10px 0;
+  }
+  
+  .concept-item {
+    background:#111;
+    padding:10px;
+    border-radius:6px;
+    border-left:3px solid var(--rh-blue);
+  }
+  
+  .concept-item strong {
+    color:var(--rh-blue);
+    display:block;
+    margin-bottom:5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 5.1 – Schedule Tasks (cron, at)</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn to schedule tasks using cron and at commands. You will create cron jobs for recurring tasks and schedule one-time tasks using the at command.<br><br>
+          <strong>Time Estimate:</strong> 15–20 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Task Scheduling Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> List current cron jobs with <code>crontab -l</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Edit crontab and add a job with <code>crontab -e</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify cron job with <code>crontab -l</code> and check log file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Schedule a one-time task with <code>at</code> command
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove scheduled at job with <code>atrm</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 Understanding cron <span class="badge current">Current Step</span></h3>
+          <p>First, let's explore the cron system by listing any existing cron jobs.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">crontab -l</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              A time-based job scheduler in Unix-like systems
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              Automate repetitive tasks at specific times
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              System-wide (/etc/crontab) or per-user (crontab -e)
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              For recurring tasks (daily, weekly, etc.)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 5.1: Schedule Tasks (cron, at)</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Understanding cron</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>crontab -l</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> crontab -l lists your current cron jobs.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:17%"></div>
+        </div>
+        <strong>17% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Task Scheduling Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          List current cron jobs with <code>crontab -l</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Edit crontab and add a job with <code>crontab -e</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify cron job with <code>crontab -l</code> and check log file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Schedule a one-time task with <code>at</code> command
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove scheduled at job with <code>atrm</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Understanding cron <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Creating a cron job <span class="badge current">Current Step</span></h3>
+          <p>Now let's create a cron job by editing the crontab.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">crontab -e</pre>
+          <p>Once in the editor, add this line exactly:</p>
+          <div class="cron-example">* * * * * echo "Cron test" >> ~/cron_test.log</div>
+          <p>To save and exit vim:</p>
+          <ol>
+            <li>Press <code>ESC</code> to ensure you're in command mode</li>
+            <li>Type <code>:wq</code> and press <code>Enter</code> to write and quit</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">crontab -l</span>
+<span class="out">no crontab for user</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>crontab -e</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip">This will open the vim editor. Add the cron job as shown in the left panel.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:33%"></div>
+        </div>
+        <strong>33% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Task Scheduling Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> List current cron jobs with <code>crontab -l</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Edit crontab and add a job with <code>crontab -e</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify cron job with <code>crontab -l</code> and check log file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Schedule a one-time task with <code>at</code> command
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove scheduled at job with <code>atrm</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Understanding cron <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Creating a cron job <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Verifying cron jobs <span class="badge current">Current Step</span></h3>
+          <p>Now let's verify that our cron job was added correctly.</p>
+          <p>Type the commands shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">crontab -l</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ls ~/cron_test.log</pre>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">crontab -e</span>
+<span class="out">Opening crontab in vim editor...</span>
+<span class="out">File saved and exiting</span>
+<span class="success">Step 2 completed. Cron job added successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Now verify the cron job:
+<span class="prompt">[user@lab ~]$</span> <code>crontab -l</code>
+<span class="prompt">[user@lab ~]$</span> <code>ls ~/cron_test.log</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:50%"></div>
+        </div>
+        <strong>50% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Task Scheduling Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> List current cron jobs with <code>crontab -l</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Edit crontab and add a job with <code>crontab -e</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Verify cron job with <code>crontab -l</code> and check log file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Schedule a one-time task with <code>at</code> command
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove scheduled at job with <code>atrm</code>
+        </div>
+
+        <div class="step done">
+          <h3>2 Creating a cron job <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Verifying cron jobs <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Using the at command <span class="badge current">Current Step</span></h3>
+          <p>Now let's schedule a one-time task using the at command.</p>
+          <p>Type the commands shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">echo "echo 'AT test' >> ~/at_test.log" | at now + 1 minute</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">atq</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              One-time task scheduler
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              Run a command once at a specific time
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Jobs stored in /var/spool/at/
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              For non-recurring future tasks
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">crontab -l</span>
+<span class="out">* * * * * echo "Cron test" >> ~/cron_test.log</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ls ~/cron_test.log</span>
+<span class="out">/home/user/cron_test.log</span>
+<span class="success">Step 3 completed. Cron job verified successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Now schedule a one-time task with at:
+<span class="prompt">[user@lab ~]$</span> <code>echo "echo 'AT test' >> ~/at_test.log" | at now + 1 minute</code>
+<span class="prompt">[user@lab ~]$</span> <code>atq</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:67%"></div>
+        </div>
+        <strong>67% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Task Scheduling Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> List current cron jobs with <code>crontab -l</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Edit crontab and add a job with <code>crontab -e</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Verify cron job with <code>crontab -l</code> and check log file
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Schedule a one-time task with <code>at</code> command
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove scheduled at job with <code>atrm</code>
+        </div>
+
+        <div class="step done">
+          <h3>3 Verifying cron jobs <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Using the at command <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Managing at jobs <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's remove the scheduled at job.</p>
+          <p>Type the commands shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">atrm 1</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">atq</pre>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">echo "echo 'AT test' >> ~/at_test.log" | at now + 1 minute</span>
+<span class="out">job 1 at 2023-01-01 00:01</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">atq</span>
+<span class="out">1	2023-01-01 00:01 a user</span>
+<span class="success">Step 4 completed. AT job scheduled successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Now remove the scheduled at job:
+<span class="prompt">[user@lab ~]$</span> <code>atrm 1</code>
+<span class="prompt">[user@lab ~]$</span> <code>atq</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:83%"></div>
+        </div>
+        <strong>83% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Task Scheduling Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> List current cron jobs with <code>crontab -l</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Edit crontab and add a job with <code>crontab -e</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Verify cron job with <code>crontab -l</code> and check log file
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Schedule a one-time task with <code>at</code> command
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Remove scheduled at job with <code>atrm</code>
+        </div>
+
+        <div class="step current">
+          <h3>6 Using atrm <span class="badge current">Current Step</span></h3>
+          <p>Notice how the scheduled at job is removed after using atrm.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">atrm 1</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">atq</span>
+<span class="out"></span>
+<span class="success">Step 5 completed. AT job removed successfully.</span>
+<span class="tip">The atq command shows no jobs, confirming the scheduled job was removed.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Using cron for recurring task scheduling</li>
+            <li>Editing crontab with crontab -e</li>
+            <li>Listing cron jobs with crontab -l</li>
+            <li>Scheduling one-time tasks with at</li>
+            <li>Managing at jobs with atq and atrm</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>All task scheduling requirements completed.</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 5.4 - Configure Networking • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px);
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+
+  .concept {
+    background:#2a2a2a;
+    padding:15px;
+    margin:15px 0;
+    border-radius:5px;
+    border-left:4px solid var(--rh-blue);
+  }
+  .concept h4 {
+    margin-top:0;
+    color:var(--rh-blue);
+    border-bottom:1px solid #444;
+    padding-bottom:5px;
+  }
+  .concept-grid {
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .concept-item {
+    background:#252525;
+    padding:10px;
+    border-radius:5px;
+    border-left:2px solid var(--rh-red);
+  }
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+  .network-interface {
+    color:#00BFFF;
+  }
+  .ip-address {
+    color:#FFA500;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 5.4 – Configure Networking (nmcli, ip, hostnamectl)</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn to configure networking on a Red Hat Enterprise Linux system using essential command-line tools: ip, nmcli, and hostnamectl.<br><br>
+          <strong>Time Estimate:</strong> 10–15 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Networking Configuration Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Display network interface information with <code>ip addr show</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Show NetworkManager connections with <code>nmcli connection show</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Configure static IP address for "Wired connection 1"
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set hostname to <code>rhcsa-lab</code> and verify
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test connectivity with <code>ping -c 4 8.8.8.8</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 Network Interface Information <span class="badge current">Current Step</span></h3>
+          <p>First, let's examine the current network interface configuration using the <code>ip</code> command.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ip addr show</pre>
+          
+          <div class="concept">
+            <h4>Understanding Network Interfaces</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Physical and virtual network interfaces
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Identify available network connections
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                System-wide network configuration
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Initial setup or troubleshooting
+              </div>
+            </div>
+            <p><strong>How it works:</strong> The <code>ip</code> command shows detailed network information. Common interfaces include <span class="network-interface">eth0</span> (Ethernet) and <span class="network-interface">wlan0</span> (Wi-Fi). Look for <span class="ip-address">inet</span> addresses (IPv4) and state (UP/DOWN).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 5.4: Configure Networking</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Network Interface Information</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>ip addr show</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> The ip command shows detailed network information.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:20%"></div>
+        </div>
+        <strong>20% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Networking Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Display network interface information with <code>ip addr show</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Show NetworkManager connections with <code>nmcli connection show</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Configure static IP address for "Wired connection 1"
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set hostname to <code>rhcsa-lab</code> and verify
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test connectivity with <code>ping -c 4 8.8.8.8</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Network Interface Information <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 NetworkManager Control <span class="badge current">Current Step</span></h3>
+          <p>Now let's examine NetworkManager connections using the <code>nmcli</code> command.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">nmcli connection show</pre>
+          
+          <div class="concept">
+            <h4>Understanding NetworkManager</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                NetworkManager service (nmcli)
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Manage network connections consistently
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                System service controlling all interfaces
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Configuring or modifying network settings
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>nmcli</code> is the command-line interface to NetworkManager. It shows connection profiles with their names, UUIDs, devices, and types (ethernet, wifi, etc.).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ip addr show</span>
+<span class="out">1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000</span>
+<span class="out">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span>
+<span class="out">    inet 127.0.0.1/8 scope host lo</span>
+<span class="out">       valid_lft forever preferred_lft forever</span>
+<span class="out">2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000</span>
+<span class="out">    link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff</span>
+<span class="out">    inet 192.168.1.100/24 brd 192.168.1.255 scope global dynamic noprefixroute eth0</span>
+<span class="out">       valid_lft 86388sec preferred_lft 86388sec</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>nmcli connection show</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:40%"></div>
+        </div>
+        <strong>40% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Networking Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display network interface information with <code>ip addr show</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Show NetworkManager connections with <code>nmcli connection show</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Configure static IP address for "Wired connection 1"
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set hostname to <code>rhcsa-lab</code> and verify
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test connectivity with <code>ping -c 4 8.8.8.8</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Network Interface Information <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 NetworkManager Control <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Configure Static IP <span class="badge current">Current Step</span></h3>
+          <p>Now let's configure a static IP address for the "Wired connection 1" connection.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">nmcli connection modify "Wired connection 1" ipv4.addresses 192.168.1.100/24</pre>
+          <p>Then activate the connection:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">nmcli connection up "Wired connection 1"</pre>
+          
+          <div class="concept">
+            <h4>Understanding Static IP Configuration</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Manual IP address assignment
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Consistent addressing for servers
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Connection profile settings
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Setting up servers or network devices
+              </div>
+            </div>
+            <p><strong>How it works:</strong> The <code>modify</code> subcommand changes connection properties. <code>ipv4.addresses</code> sets the static IP (192.168.1.100) with netmask (/24). <code>connection up</code> activates the changes.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">nmcli connection show</span>
+<span class="out">NAME                UUID                                  TYPE      DEVICE</span>
+<span class="out">Wired connection 1  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  ethernet  eth0</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>nmcli connection modify "Wired connection 1" ipv4.addresses 192.168.1.100/24</code>
+<span class="prompt">[user@lab ~]$</span> Then: <code>nmcli connection up "Wired connection 1"</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:60%"></div>
+        </div>
+        <strong>60% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Networking Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display network interface information with <code>ip addr show</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Show NetworkManager connections with <code>nmcli connection show</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Configure static IP address for "Wired connection 1"
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set hostname to <code>rhcsa-lab</code> and verify
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test connectivity with <code>ping -c 4 8.8.8.8</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Network Interface Information <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 NetworkManager Control <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Configure Static IP <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Hostname Management <span class="badge current">Current Step</span></h3>
+          <p>Now let's set and verify the system hostname.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">hostnamectl set-hostname rhcsa-lab</pre>
+          <p>Then verify the change:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">hostnamectl status</pre>
+          
+          <div class="concept">
+            <h4>Understanding Hostname Control</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                System hostname configuration
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Identify system on the network
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                System-wide setting
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Initial setup or renaming
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>hostnamectl</code> manages the system hostname. Changes are persistent across reboots. The status shows static (configured), transient (DHCP), and pretty (formatted) hostnames.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">nmcli connection modify "Wired connection 1" ipv4.addresses 192.168.1.100/24</span>
+<span class="out">Connection 'Wired connection 1' (5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03) successfully modified.</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">nmcli connection up "Wired connection 1"</span>
+<span class="out">Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/4)</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>hostnamectl set-hostname rhcsa-lab</code>
+<span class="prompt">[user@lab ~]$</span> Then: <code>hostnamectl status</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:80%"></div>
+        </div>
+        <strong>80% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Networking Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display network interface information with <code>ip addr show</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Show NetworkManager connections with <code>nmcli connection show</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Configure static IP address for "Wired connection 1"
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set hostname to <code>rhcsa-lab</code> and verify
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test connectivity with <code>ping -c 4 8.8.8.8</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Network Interface Information <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 NetworkManager Control <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Configure Static IP <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Hostname Management <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Connectivity Testing <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's test network connectivity to verify our configuration.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ping -c 4 8.8.8.8</pre>
+          
+          <div class="concept">
+            <h4>Understanding Network Testing</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Basic connectivity verification
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Confirm network functionality
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Any system with network access
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                After configuration changes
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>ping</code> sends ICMP packets to test reachability. <code>-c 4</code> sends exactly 4 packets. Success shows response times; failure may indicate configuration issues.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">hostnamectl set-hostname rhcsa-lab</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">hostnamectl status</span>
+<span class="out">Static hostname: rhcsa-lab</span>
+<span class="out">Icon name: computer-vm</span>
+<span class="out">Chassis: vm</span>
+<span class="out">Machine ID: 2a1b3c4d5e6f7g8h9i0j1k2l3m4n5o6p</span>
+<span class="out">Boot ID: 1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p</span>
+<span class="out">Virtualization: kvm</span>
+<span class="out">Operating System: Red Hat Enterprise Linux 9.0 (Plow)</span>
+<span class="out">CPE OS Name: cpe:/o:redhat:enterprise_linux:9::baseos</span>
+<span class="out">Kernel: Linux 5.14.0-70.13.1.el9_0.x86_64</span>
+<span class="out">Architecture: x86-64</span>
+<span class="success">Step 4 completed. Moving to step 5.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>ping -c 4 8.8.8.8</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Networking Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display network interface information with <code>ip addr show</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Show NetworkManager connections with <code>nmcli connection show</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Configure static IP address for "Wired connection 1"
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set hostname to <code>rhcsa-lab</code> and verify
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Test connectivity with <code>ping -c 4 8.8.8.8</code>
+        </div>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All networking configuration requirements have been met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Network interface information with <code>ip addr show</code></li>
+            <li>NetworkManager control with <code>nmcli</code></li>
+            <li>Static IP configuration</li>
+            <li>Hostname management with <code>hostnamectl</code></li>
+            <li>Connectivity testing with <code>ping</code></li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ping -c 4 8.8.8.8</span>
+<span class="out">PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.</span>
+<span class="out">64 bytes from 8.8.8.8: icmp_seq=1 ttl=117 time=12.3 ms</span>
+<span class="out">64 bytes from 8.8.8.8: icmp_seq=2 ttl=117 time=11.8 ms</span>
+<span class="out">64 bytes from 8.8.8.8: icmp_seq=3 ttl=117 time=12.1 ms</span>
+<span class="out">64 bytes from 8.8.8.8: icmp_seq=4 ttl=117 time=12.5 ms</span>
+<span class="out"></span>
+<span class="out">--- 8.8.8.8 ping statistics ---</span>
+<span class="out">4 packets transmitted, 4 received, 0% packet loss, time 3005ms</span>
+<span class="out">rtt min/avg/max/mdev = 11.800/12.175/12.500/0.258 ms</span>
+<span class="success">Step 5 completed. All networking commands executed correctly!</span>
+<span class="success">Lab completed! 🏆</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

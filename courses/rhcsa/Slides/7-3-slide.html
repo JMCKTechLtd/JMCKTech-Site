@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 7.3 - SELinux File Contexts & Booleans • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px);
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+  .selinux-context { color:#00BCD4; font-weight:bold; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .concept {
+    background:#2a2a2a;
+    padding:15px;
+    margin:15px 0;
+    border-radius:5px;
+    border-left:4px solid var(--rh-blue);
+  }
+  .concept h4 {
+    margin-top:0;
+    color:var(--rh-blue);
+    border-bottom:1px solid #444;
+    padding-bottom:5px;
+  }
+  .concept-grid {
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .concept-item {
+    background:#252525;
+    padding:10px;
+    border-radius:5px;
+    border-left:2px solid var(--rh-red);
+  }
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 7.3 – SELinux File Contexts & Booleans</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Configure SELinux file contexts and booleans to meet the specified requirements.<br><br>
+          <strong>Time Estimate:</strong> 15–20 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SELinux Configuration Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> View SELinux contexts with <code>ls -Z /var/www/html</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Temporarily change context with <code>chcon</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Restore default context with <code>restorecon</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set permanent context with <code>semanage fcontext</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View and modify SELinux booleans
+        </div>
+
+        <div class="step current">
+          <h3>1 View SELinux File Contexts <span class="badge current">Current Step</span></h3>
+          <p>First, let's view the SELinux contexts of files in the web directory.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ls -Z /var/www/html</pre>
+          
+          <div class="concept">
+            <h4>Understanding SELinux Contexts</h4>
+            <p>SELinux contexts are security labels applied to files and processes that define access controls. Contexts follow the format: <code>user:role:type:level</code>. The most important part is the <span class="selinux-context">type</span> which defines access rules.</p>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Security labels applied to files and processes
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Defines access controls for SELinux
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Applied to all files, directories, and processes
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Viewed/modified during security configuration
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span>Welcome to RHCSA Lab 7.3: SELinux File Contexts & Booleans</span>
+<span class="prompt">[root@lab ~]#</span> <span>This is a guided lab. Follow the instructions on the left.</span>
+<span class="prompt">[root@lab ~]#</span> <span>You must complete each step in order.</span>
+<span class="prompt">[root@lab ~]#</span> <span>Current step: View SELinux File Contexts</span>
+<span class="prompt">[root@lab ~]#</span> Type: <code>ls -Z /var/www/html</code>
+<span class="prompt">[root@lab ~]#</span> <span class="tip"><strong>Tip:</strong> SELinux contexts define access controls for files and processes.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:20%"></div>
+        </div>
+        <strong>20% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SELinux Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          View SELinux contexts with <code>ls -Z /var/www/html</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Temporarily change context with <code>chcon</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Restore default context with <code>restorecon</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set permanent context with <code>semanage fcontext</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View and modify SELinux booleans
+        </div>
+
+        <div class="step done">
+          <h3>1 View SELinux File Contexts <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Change File Context Temporarily <span class="badge current">Current Step</span></h3>
+          <p>Now let's temporarily change the SELinux context of a file using chcon.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">chcon -t httpd_sys_content_t /mydata/web_file.txt</pre>
+          <p>Then verify the change with:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ls -Z /mydata/web_file.txt</pre>
+          
+          <div class="concept">
+            <h4>Understanding chcon</h4>
+            <p>The <code>chcon</code> command changes the SELinux context directly on the file. Changes made with <code>chcon</code> may be lost if the file system is relabeled or if <code>restorecon</code> is run.</p>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Changes file context directly
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Quick context changes for testing
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                On files needing temporary context changes
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Before establishing permanent policy
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">ls -Z /var/www/html</span>
+<span class="out">system_u:object_r:httpd_sys_content_t:s0 index.html</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[root@lab ~]#</span> Next command:
+<span class="prompt">[root@lab ~]#</span> <code>chcon -t httpd_sys_content_t /mydata/web_file.txt</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:40%"></div>
+        </div>
+        <strong>40% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SELinux Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View SELinux contexts with <code>ls -Z /var/www/html</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Temporarily change context with <code>chcon</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Restore default context with <code>restorecon</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set permanent context with <code>semanage fcontext</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View and modify SELinux booleans
+        </div>
+
+        <div class="step done">
+          <h3>1 View SELinux File Contexts <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Change File Context Temporarily <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Restore Default File Contexts <span class="badge current">Current Step</span></h3>
+          <p>Now let's restore the default SELinux context using restorecon.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">restorecon -v /mydata/web_file.txt</pre>
+          
+          <div class="concept">
+            <h4>Understanding restorecon</h4>
+            <p>The <code>restorecon</code> command resets the SELinux context based on the system policy. The <code>-v</code> option shows verbose output. This is the preferred way to set contexts as it uses the policy database.</p>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Restores default SELinux contexts
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Ensures proper security labeling
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                On files with incorrect contexts
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                After system changes or policy updates
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">chcon -t httpd_sys_content_t /mydata/web_file.txt</span>
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">ls -Z /mydata/web_file.txt</span>
+<span class="out">system_u:object_r:httpd_sys_content_t:s0 /mydata/web_file.txt</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[root@lab ~]#</span> Type <code>restorecon -v /mydata/web_file.txt</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:60%"></div>
+        </div>
+        <strong>60% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SELinux Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View SELinux contexts with <code>ls -Z /var/www/html</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Temporarily change context with <code>chcon</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Restore default context with <code>restorecon</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set permanent context with <code>semanage fcontext</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View and modify SELinux booleans
+        </div>
+
+        <div class="step done">
+          <h3>2 Change File Context Temporarily <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Restore Default File Contexts <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Set Permanent File Context <span class="badge current">Current Step</span></h3>
+          <p>Now let's set a permanent SELinux context using semanage fcontext.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">semanage fcontext -a -t httpd_sys_content_t "/mydata(/.*)?"</pre>
+          <p>Then apply the new policy with:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">restorecon -Rv /mydata</pre>
+          
+          <div class="concept">
+            <h4>Understanding semanage fcontext</h4>
+            <p>The <code>semanage fcontext</code> command adds a rule to the policy. The <code>-a</code> adds, <code>-t</code> specifies type, and the regex pattern <code>"/mydata(/.*)?"</code> matches the directory and all contents. <code>restorecon -R</code> recursively applies the new policy.</p>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Manages SELinux policy rules
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Creates persistent context changes
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                In policy for custom file locations
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Setting up services with non-standard paths
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">restorecon -v /mydata/web_file.txt</span>
+<span class="out">restorecon reset /mydata/web_file.txt context system_u:object_r:default_t:s0->system_u:object_r:httpd_sys_content_t:s0</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[root@lab ~]#</span> Type <code>semanage fcontext -a -t httpd_sys_content_t "/mydata(/.*)?"</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:80%"></div>
+        </div>
+        <strong>80% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SELinux Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View SELinux contexts with <code>ls -Z /var/www/html</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Temporarily change context with <code>chcon</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Restore default context with <code>restorecon</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set permanent context with <code>semanage fcontext</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View and modify SELinux booleans
+        </div>
+
+        <div class="step done">
+          <h3>3 Restore Default File Contexts <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Set Permanent File Context <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Modify SELinux Booleans <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's work with SELinux booleans to adjust policy behavior.</p>
+          <p>First, view HTTP-related booleans:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">getsebool -a | grep httpd</pre>
+          <p>Then set a boolean permanently:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">setsebool -P httpd_can_network_connect_db on</pre>
+          
+          <div class="concept">
+            <h4>Understanding SELinux Booleans</h4>
+            <p>Booleans are toggle switches for SELinux policies that allow runtime policy adjustments without custom rules. <code>getsebool</code> shows current values. <code>setsebool</code> with <code>-P</code> makes changes persistent across reboots.</p>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Toggle switches for SELinux policies
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Adjust policy behavior without custom rules
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                System-wide policy settings
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Enabling/disabling specific features
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">semanage fcontext -a -t httpd_sys_content_t "/mydata(/.*)?"</span>
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">restorecon -Rv /mydata</span>
+<span class="out">restorecon reset /mydata/web_file.txt context</span>
+<span class="out">restorecon reset /mydata/other_file.txt context</span>
+<span class="success">Step 4 completed. Moving to step 5.</span>
+
+<span class="prompt">[root@lab ~]#</span> Type <code>getsebool -a | grep httpd</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SELinux Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View SELinux contexts with <code>ls -Z /var/www/html</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Temporarily change context with <code>chcon</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Restore default context with <code>restorecon</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set permanent context with <code>semanage fcontext</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View and modify SELinux booleans
+        </div>
+
+        <div class="step done">
+          <h3>4 Set Permanent File Context <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>5 Modify SELinux Booleans <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>6 SELinux Boolean Configuration <span class="badge current">Current Step</span></h3>
+          <p>Notice how the boolean settings are now permanently configured.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">getsebool -a | grep httpd</span>
+<span class="out">httpd_can_network_connect --> off</span>
+<span class="out">httpd_can_network_connect_db --> off</span>
+<span class="out">httpd_can_network_relay --> off</span>
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">setsebool -P httpd_can_network_connect_db on</span>
+<span class="tip">The boolean is now permanently enabled.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All SELinux configuration requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>SELinux contexts and how to view them</li>
+            <li>Temporary context changes with chcon</li>
+            <li>Restoring default contexts with restorecon</li>
+            <li>Setting permanent contexts with semanage fcontext</li>
+            <li>Managing SELinux booleans with getsebool/setsebool</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>SELinux configuration completed.</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

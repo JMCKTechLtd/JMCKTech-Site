@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 4.3 - File Attributes (chattr, lsattr) • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px); /* Fixed height calculation */
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+
+  .attr-table {
+    width:100%;
+    border-collapse:collapse;
+    margin:15px 0;
+    font-size:0.9rem;
+  }
+  .attr-table th, .attr-table td {
+    border:1px solid #444;
+    padding:8px;
+    text-align:left;
+  }
+  .attr-table th {
+    background-color:#333;
+    color:var(--rh-green);
+  }
+  .attr-table tr:nth-child(even) {
+    background-color:#252525;
+  }
+  
+  .concept-grid {
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .concept-item {
+    background:#252525;
+    padding:10px;
+    border-radius:5px;
+    border-left:2px solid var(--rh-red);
+  }
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 4.3 – File Attributes (chattr, lsattr)</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn to work with file attributes in Linux using chattr and lsattr commands.<br><br>
+          <strong>Time Estimate:</strong> 10–15 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Use <code>lsattr</code> to view file attributes
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set immutable attribute with <code>chattr +i</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set append-only attribute with <code>chattr +a</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove attributes with <code>chattr -i</code> and <code>chattr -a</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 Understanding File Attributes <span class="badge current">Current Step</span></h3>
+          <p>First, let's examine file attributes on an existing system file.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">lsattr /etc/passwd</pre>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 4.3: File Attributes (chattr, lsattr)</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Understanding File Attributes</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>lsattr /etc/passwd</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> File attributes provide additional security and behavior control.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:25%"></div>
+        </div>
+        <strong>25% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Use <code>lsattr</code> to view file attributes
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set immutable attribute with <code>chattr +i</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set append-only attribute with <code>chattr +a</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove attributes with <code>chattr -i</code> and <code>chattr -a</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Understanding File Attributes <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Making a File Immutable <span class="badge current">Current Step</span></h3>
+          <p>Now let's create a test file and make it immutable.</p>
+          <p>Type these commands in order:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">touch testfile
+sudo chattr +i testfile
+lsattr testfile</pre>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">lsattr /etc/passwd</span>
+<span class="out">-------------e-- /etc/passwd</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next commands:
+<span class="prompt">[user@lab ~]$</span> <code>touch testfile</code>
+<span class="prompt">[user@lab ~]$</span> <code>sudo chattr +i testfile</code>
+<span class="prompt">[user@lab ~]$</span> <code>lsattr testfile</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:50%"></div>
+        </div>
+        <strong>50% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>lsattr</code> to view file attributes
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set immutable attribute with <code>chattr +i</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set append-only attribute with <code>chattr +a</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove attributes with <code>chattr -i</code> and <code>chattr -a</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Understanding File Attributes <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Making a File Immutable <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Append-Only Files <span class="badge current">Current Step</span></h3>
+          <p>Now let's create a log file and set it to append-only mode.</p>
+          <p>Type these commands in order:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">touch audit.log
+sudo chattr +a audit.log
+lsattr audit.log</pre>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">touch testfile</span>
+<span class="out">Created file: testfile</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo chattr +i testfile</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">lsattr testfile</span>
+<span class="out">----i--------- testfile</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next commands:
+<span class="prompt">[user@lab ~]$</span> <code>touch audit.log</code>
+<span class="prompt">[user@lab ~]$</span> <code>sudo chattr +a audit.log</code>
+<span class="prompt">[user@lab ~]$</span> <code>lsattr audit.log</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:75%"></div>
+        </div>
+        <strong>75% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>lsattr</code> to view file attributes
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set immutable attribute with <code>chattr +i</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set append-only attribute with <code>chattr +a</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove attributes with <code>chattr -i</code> and <code>chattr -a</code>
+        </div>
+
+        <div class="step done">
+          <h3>2 Making a File Immutable <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Append-Only Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Removing Attributes <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's remove the attributes we set earlier.</p>
+          <p>Type these commands in order:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo chattr -i testfile
+sudo chattr -a audit.log
+lsattr testfile audit.log</pre>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">touch audit.log</span>
+<span class="out">Created file: audit.log</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo chattr +a audit.log</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">lsattr audit.log</span>
+<span class="out">-----a-------- audit.log</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next commands:
+<span class="prompt">[user@lab ~]$</span> <code>sudo chattr -i testfile</code>
+<span class="prompt">[user@lab ~]$</span> <code>sudo chattr -a audit.log</code>
+<span class="prompt">[user@lab ~]$</span> <code>lsattr testfile audit.log</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>lsattr</code> to view file attributes
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set immutable attribute with <code>chattr +i</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set append-only attribute with <code>chattr +a</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Remove attributes with <code>chattr -i</code> and <code>chattr -a</code>
+        </div>
+
+        <div class="step done">
+          <h3>3 Append-Only Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Removing Attributes <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>How to view file attributes with <code>lsattr</code></li>
+            <li>Setting immutable attribute with <code>chattr +i</code></li>
+            <li>Setting append-only attribute with <code>chattr +a</code></li>
+            <li>Removing attributes with <code>chattr -i</code> and <code>chattr -a</code></li>
+            <li>Practical uses for file attributes in system administration</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo chattr -i testfile</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo chattr -a audit.log</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">lsattr testfile audit.log</span>
+<span class="out">------------- testfile</span>
+<span class="out">------------- audit.log</span>
+<span class="success">All attributes successfully removed.</span>
+<span class="success">Step 4 completed. All requirements met!</span>
+
+<span class="prompt">[user@lab ~]$</span> <span class="tip">Congratulations! You've completed the File Attributes lab.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 - File Attributes Reference -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">File Attributes Reference</h2>
+        
+        <div class="step">
+          <h3>Common File Attributes</h3>
+          <table class="attr-table">
+            <tr>
+              <th>Attribute</th>
+              <th>Description</th>
+            </tr>
+            <tr>
+              <td>a (append only)</td>
+              <td>File can only be opened in append mode for writing</td>
+            </tr>
+            <tr>
+              <td>i (immutable)</td>
+              <td>File cannot be modified, deleted, or renamed</td>
+            </tr>
+            <tr>
+              <td>A (no atime updates)</td>
+              <td>Access time is not modified when file is read</td>
+            </tr>
+            <tr>
+              <td>c (compressed)</td>
+              <td>File is compressed on disk (transparently)</td>
+            </tr>
+            <tr>
+              <td>d (no dump)</td>
+              <td>File is not backed up by dump command</td>
+            </tr>
+            <tr>
+              <td>e (extent format)</td>
+              <td>File uses extents for mapping blocks</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="step">
+          <h3>Practical Uses</h3>
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>Immutable Files</strong>
+              Protect critical configuration files from accidental changes
+            </div>
+            <div class="concept-item">
+              <strong>Append-Only</strong>
+              Secure log files from tampering while allowing new entries
+            </div>
+            <div class="concept-item">
+              <strong>No ATIME</strong>
+              Improve performance by reducing disk writes
+            </div>
+            <div class="concept-item">
+              <strong>Compression</strong>
+              Save disk space for rarely accessed files
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="tip">File Attributes Reference</span>
+<span class="prompt">[user@lab ~]$</span> 
+<span class="prompt">[user@lab ~]$</span> <span class="success">Common chattr commands:</span>
+<span class="prompt">[user@lab ~]$</span> 
+<span class="prompt">[user@lab ~]$</span> <span class="cmd"># Make file immutable</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo chattr +i filename</span>
+<span class="prompt">[user@lab ~]$</span> 
+<span class="prompt">[user@lab ~]$</span> <span class="cmd"># Make file append-only</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo chattr +a filename</span>
+<span class="prompt">[user@lab ~]$</span> 
+<span class="prompt">[user@lab ~]$</span> <span class="cmd"># Remove attributes</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo chattr -i filename</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo chattr -a filename</span>
+<span class="prompt">[user@lab ~]$</span> 
+<span class="prompt">[user@lab ~]$</span> <span class="cmd"># View attributes</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">lsattr filename</span>
+<span class="prompt">[user@lab ~]$</span> 
+<span class="prompt">[user@lab ~]$</span> <span class="cmd"># Recursive operations</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo chattr -R +i directory/</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 - Security Considerations -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Security Considerations</h2>
+        
+        <div class="step">
+          <h3>Important Notes</h3>
+          <div style="background:#1a0000; padding:15px; border-left:4px solid var(--rh-red); border-radius:6px;">
+            <strong>Security Limitations</strong>
+            <p>File attributes provide protection against accidental changes but aren't a security feature. A user with root access can remove the attributes.</p>
+          </div>
+          
+          <div style="background:#002200; padding:15px; border-left:4px solid var(--rh-green); border-radius:6px; margin-top:15px;">
+            <strong>Best Practices</strong>
+            <ul>
+              <li>Use attributes to protect against accidental deletion/modification</li>
+              <li>Combine with proper file permissions for layered security</li>
+              <li>Document which files have special attributes</li>
+              <li>Regularly audit file attributes on critical systems</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step">
+          <h3>Common Use Cases</h3>
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>/etc/passwd, /etc/shadow</strong>
+              Often made immutable on production systems
+            </div>
+            <div class="concept-item">
+              <strong>Log files</strong>
+              Append-only to prevent tampering with existing entries
+            </div>
+            <div class="concept-item">
+              <strong>System binaries</strong>
+              Immutable to prevent malware modification
+            </div>
+            <div class="concept-item">
+              <strong>Configuration files</strong>
+              Immutable after initial setup to prevent drift
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="tip">Security Considerations</span>
+<span class="prompt">[user@lab ~]$</span> 
+<span class="prompt">[user@lab ~]$</span> <span class="note">Warning: File attributes are not a security feature!</span>
+<span class="prompt">[user@lab ~]$</span> <span class="note">Root can always remove attributes with chattr.</span>
+<span class="prompt">[user@lab ~]$</span> 
+<span class="prompt">[user@lab ~]$</span> <span class="success">Use attributes for:</span>
+<span class="prompt">[user@lab ~]$</span> <span class="out">- Accident prevention</span>
+<span class="prompt">[user@lab ~]$</span> <span class="out">- Administrative control</span>
+<span class="prompt">[user@lab ~]$</span> <span class="out">- Audit trail protection</span>
+<span class="prompt">[user@lab ~]$</span> 
+<span class="prompt">[user@lab ~]$</span> <span class="success">Do NOT rely on attributes for:</span>
+<span class="prompt">[user@lab ~]$</span> <span class="out">- Security against malicious root users</span>
+<span class="prompt">[user@lab ~]$</span> <span class="out">- Protection from skilled attackers</span>
+<span class="prompt">[user@lab ~]$</span> 
+<span class="prompt">[user@lab ~]$</span> <span class="tip">Combine with SELinux for comprehensive protection.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

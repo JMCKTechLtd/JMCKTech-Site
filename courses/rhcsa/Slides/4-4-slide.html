@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 4.4 - Create & Manage Hard/Soft Links • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px); /* Fixed height calculation */
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+
+  .concept {
+    background:#2a2a2a;
+    padding:15px;
+    margin:15px 0;
+    border-radius:5px;
+    border-left:4px solid var(--rh-blue);
+  }
+  .concept h4 {
+    margin-top:0;
+    color:var(--rh-blue);
+    border-bottom:1px solid #444;
+    padding-bottom:5px;
+  }
+  .concept-grid {
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .concept-item {
+    background:#252525;
+    padding:10px;
+    border-radius:5px;
+    border-left:2px solid var(--rh-red);
+  }
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 4.4 – Create & Manage Hard/Soft Links</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn to create and manage hard and soft links in Linux. Understand the differences between them and when to use each type.<br><br>
+          <strong>Time Estimate:</strong> 10–15 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Create original file with content
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create hard link to original file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create soft link to original file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Compare behavior after removing original file
+        </div>
+
+        <div class="step current">
+          <h3>1 Create a Sample File <span class="badge current">Current Step</span></h3>
+          <p>First, let's create a sample file that we'll use to create links.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">echo "This is original content" > original_file.txt</pre>
+          <p>Then verify the file was created:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ls -l original_file.txt</pre>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 4.4: Create & Manage Hard/Soft Links</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Create a Sample File</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>echo "This is original content" > original_file.txt</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> Then verify with <code>ls -l original_file.txt</code></span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:25%"></div>
+        </div>
+        <strong>25% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Create original file with content
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create hard link to original file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create soft link to original file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Compare behavior after removing original file
+        </div>
+
+        <div class="step done">
+          <h3>1 Create a Sample File <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Create a Hard Link <span class="badge current">Current Step</span></h3>
+          <p>Now let's create a hard link to the original file.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ln original_file.txt hard_link.txt</pre>
+          <p>Then verify the link was created and compare inodes:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ls -li original_file.txt hard_link.txt</pre>
+          
+          <div class="concept">
+            <h4>Understanding Hard Links</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Additional name for the same inode
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Multiple access points to same data
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Must be on same filesystem
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Need multiple names for same file
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">echo "This is original content" > original_file.txt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ls -l original_file.txt</span>
+<span class="out">-rw-r--r-- 1 user user 25 Jan 10:00 original_file.txt</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>ln original_file.txt hard_link.txt</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:50%"></div>
+        </div>
+        <strong>50% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create original file with content
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create hard link to original file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create soft link to original file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Compare behavior after removing original file
+        </div>
+
+        <div class="step done">
+          <h3>1 Create a Sample File <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Create a Hard Link <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Create a Soft Link <span class="badge current">Current Step</span></h3>
+          <p>Now let's create a soft link (symbolic link) to the original file.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ln -s original_file.txt soft_link.txt</pre>
+          <p>Then verify the link was created and compare inodes:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ls -li original_file.txt soft_link.txt</pre>
+          
+          <div class="concept">
+            <h4>Understanding Soft Links</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Pointer to another file path
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Link across filesystems or to directories
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Anywhere in the filesystem
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Need flexible references
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ln original_file.txt hard_link.txt</span>
+<span class="out">Created hard link 'hard_link.txt'</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ls -li original_file.txt hard_link.txt</span>
+<span class="out">123456 -rw-r--r-- 2 user user 25 Jan 10:00 original_file.txt</span>
+<span class="out">123456 -rw-r--r-- 2 user user 25 Jan 10:00 hard_link.txt</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>ln -s original_file.txt soft_link.txt</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:75%"></div>
+        </div>
+        <strong>75% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create original file with content
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create hard link to original file
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create soft link to original file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Compare behavior after removing original file
+        </div>
+
+        <div class="step done">
+          <h3>2 Create a Hard Link <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Create a Soft Link <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Compare Link Behavior <span class="badge current">Current Step</span></h3>
+          <p>Now let's compare the behavior of hard links and soft links when the original file is removed.</p>
+          <p>Type these commands one by one:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">rm original_file.txt</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">cat hard_link.txt</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">cat soft_link.txt</pre>
+          
+          <div class="concept">
+            <h4>Understanding Link Differences</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>Hard Links</strong>
+                Survive original deletion (same inode)
+              </div>
+              <div class="concept-item">
+                <strong>Soft Links</strong>
+                Break if original deleted (dangling link)
+              </div>
+              <div class="concept-item">
+                <strong>Hard Link Limits</strong>
+                Can't link directories or cross filesystems
+              </div>
+              <div class="concept-item">
+                <strong>Soft Link Advantages</strong>
+                Can link to directories and across filesystems
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ln -s original_file.txt soft_link.txt</span>
+<span class="out">Created symbolic link 'soft_link.txt' -> 'original_file.txt'</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ls -li original_file.txt soft_link.txt</span>
+<span class="out">123456 -rw-r--r-- 1 user user 25 Jan 10:00 original_file.txt</span>
+<span class="out">789012 lrwxrwxrwx 1 user user 16 Jan 10:00 soft_link.txt -> original_file.txt</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next: <code>rm original_file.txt</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>How to create hard and soft links</li>
+            <li>The differences between hard and soft links</li>
+            <li>When to use each type of link</li>
+            <li>How links behave when the original file is removed</li>
+            <li>The concept of inodes and link counts</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">rm original_file.txt</span>
+<span class="out">Removed 'original_file.txt'</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">cat hard_link.txt</span>
+<span class="out">This is original content</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">cat soft_link.txt</span>
+<span class="out">cat: soft_link.txt: No such file or directory</span>
+<span class="success">Step 4 completed successfully.</span>
+<span class="success">All lab requirements completed!</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 5.3 - Manage Services (systemctl, service) • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px); /* Fixed height calculation */
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .concept {
+    background:#2a2a2a;
+    padding:15px;
+    margin:15px 0;
+    border-radius:5px;
+    border-left:4px solid var(--rh-blue);
+  }
+  
+  .concept h4 {
+    margin-top:0;
+    color:var(--rh-blue);
+    border-bottom:1px solid #444;
+    padding-bottom:5px;
+  }
+  
+  .concept-grid {
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+    margin-bottom:10px;
+  }
+  
+  .concept-item {
+    background:#252525;
+    padding:10px;
+    border-radius:5px;
+    border-left:2px solid var(--rh-red);
+  }
+  
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 5.3 – Manage Services (systemctl, service)</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn to manage system services using systemctl and legacy service commands.<br><br>
+          <strong>Time Estimate:</strong> 10–15 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Service Management Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Check SSH service status with <code>systemctl status sshd</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Stop and start SSH service with <code>systemctl</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Disable and enable SSH service with <code>systemctl</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use legacy <code>service</code> commands to manage SSH
+        </div>
+
+        <div class="step current">
+          <h3>1 Lab Introduction <span class="badge current">Current Step</span></h3>
+          <p>Welcome to the RHCSA Service Management Lab. In this lab, you will learn to manage system services using both modern systemctl commands and legacy service commands.</p>
+          <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 5.3: Service Management</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Lab Introduction</span>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> Use Tab completion and the ↑ key for history.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:25%"></div>
+        </div>
+        <strong>25% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Service Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Check SSH service status with <code>systemctl status sshd</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Stop and start SSH service with <code>systemctl</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Disable and enable SSH service with <code>systemctl</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use legacy <code>service</code> commands to manage SSH
+        </div>
+
+        <div class="step done">
+          <h3>1 Lab Introduction <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Check Service Status <span class="badge current">Current Step</span></h3>
+          <p>First, let's check the status of the SSH service.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">systemctl status sshd</pre>
+          
+          <div class="concept">
+            <h4>Understanding Service Status</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Current state of a service (running, stopped, etc.)
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Verify if a service is operational
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                On any systemd-managed Linux system
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Before making changes to services
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>systemctl status</code> shows detailed information about a service including its current state, recent logs, and whether it's enabled to start at boot.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">systemctl status sshd</span>
+<span class="out">● sshd.service - OpenSSH server daemon</span>
+<span class="out">   Loaded: loaded (/usr/lib/systemd/system/sshd.service; enabled)</span>
+<span class="out">   Active: active (running) since Tue 2023-01-10 10:00:00 EST; 1h ago</span>
+<span class="out"> Main PID: 1234 (sshd)</span>
+<span class="out">    Tasks: 1 (limit: 4915)</span>
+<span class="out">   Memory: 5.0M</span>
+<span class="out">   CGroup: /system.slice/sshd.service</span>
+<span class="out">           └─1234 /usr/sbin/sshd -D</span>
+<span class="success">Step 2 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next step: Start and Stop Services
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:50%"></div>
+        </div>
+        <strong>50% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Service Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check SSH service status with <code>systemctl status sshd</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Stop and start SSH service with <code>systemctl</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Disable and enable SSH service with <code>systemctl</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use legacy <code>service</code> commands to manage SSH
+        </div>
+
+        <div class="step done">
+          <h3>2 Check Service Status <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Start and Stop Services <span class="badge current">Current Step</span></h3>
+          <p>Now let's practice starting and stopping the SSH service.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo systemctl stop sshd</pre>
+          <p>Then verify it's stopped:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">systemctl status sshd</pre>
+          <p>Then start it again:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo systemctl start sshd</pre>
+          
+          <div class="concept">
+            <h4>Understanding Service Control</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Starting and stopping system services
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Manage service availability without rebooting
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                On any system with systemd
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When you need to temporarily enable/disable services
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>systemctl start</code> activates a service immediately, while <code>systemctl stop</code> deactivates it. These changes don't persist across reboots.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo systemctl stop sshd</span>
+<span class="out">[sudo] password for user:</span>
+<span class="success">SSH service stopped.</span>
+
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">systemctl status sshd</span>
+<span class="out">● sshd.service - OpenSSH server daemon</span>
+<span class="out">   Loaded: loaded (/usr/lib/systemd/system/sshd.service; enabled)</span>
+<span class="out">   Active: inactive (dead) since Tue 2023-01-10 11:05:00 EST; 5s ago</span>
+
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo systemctl start sshd</span>
+<span class="success">SSH service started.</span>
+<span class="success">Step 3 completed successfully.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:75%"></div>
+        </div>
+        <strong>75% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Service Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check SSH service status with <code>systemctl status sshd</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Stop and start SSH service with <code>systemctl</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Disable and enable SSH service with <code>systemctl</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use legacy <code>service</code> commands to manage SSH
+        </div>
+
+        <div class="step done">
+          <h3>3 Start and Stop Services <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Enable and Disable Services <span class="badge current">Current Step</span></h3>
+          <p>Now let's practice enabling and disabling the SSH service at boot.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo systemctl disable sshd</pre>
+          <p>Then verify it's disabled:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">systemctl is-enabled sshd</pre>
+          <p>Then enable it again:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo systemctl enable sshd</pre>
+          
+          <div class="concept">
+            <h4>Understanding Service Persistence</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Configuring services to start at boot
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Ensure critical services start automatically
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Managed in /etc/systemd/system/
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When configuring system services
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>systemctl enable</code> creates symlinks to start the service at boot, while <code>systemctl disable</code> removes them. This doesn't affect the current running state.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo systemctl disable sshd</span>
+<span class="out">Removed /etc/systemd/system/multi-user.target.wants/sshd.service.</span>
+
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">systemctl is-enabled sshd</span>
+<span class="out">disabled</span>
+
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo systemctl enable sshd</span>
+<span class="out">Created symlink /etc/systemd/system/multi-user.target.wants/sshd.service → /usr/lib/systemd/system/sshd.service.</span>
+<span class="success">Step 4 completed successfully.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Service Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check SSH service status with <code>systemctl status sshd</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Stop and start SSH service with <code>systemctl</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Disable and enable SSH service with <code>systemctl</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use legacy <code>service</code> commands to manage SSH
+        </div>
+
+        <div class="step done">
+          <h3>4 Enable and Disable Services <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Legacy Service Commands <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's practice using legacy service commands for compatibility.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo service sshd restart</pre>
+          <p>Then check all services:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">service --status-all</pre>
+          
+          <div class="concept">
+            <h4>Understanding Legacy Service Management</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Traditional service management commands
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Compatibility with older systems/scripts
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                On systems with SysV init compatibility
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When working with older systems
+              </div>
+            </div>
+            <p><strong>How it works:</strong> The <code>service</code> command provides backward compatibility with SysV init scripts. <code>service sshd restart</code> stops and starts the service, while <code>--status-all</code> shows all services.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo service sshd restart</span>
+<span class="out">Stopping sshd: [ OK ]</span>
+<span class="out">Starting sshd: [ OK ]</span>
+
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">service --status-all</span>
+<span class="out">[ + ]  sshd</span>
+<span class="out">[ - ]  httpd</span>
+<span class="out">[ - ]  postfix</span>
+<span class="out">[ + ]  crond</span>
+<span class="success">Step 5 completed successfully.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All service management requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Checking service status with systemctl</li>
+            <li>Starting and stopping services</li>
+            <li>Enabling and disabling services at boot</li>
+            <li>Using legacy service commands for compatibility</li>
+            <li>Understanding service states and persistence</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>All services properly configured.</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

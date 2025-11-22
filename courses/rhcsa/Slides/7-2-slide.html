@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 7.2 - Manage SELinux Settings • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px);
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .concept-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 10px 0;
+  }
+  
+  .concept-item {
+    background: #252525;
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 2px solid var(--rh-red);
+    font-size: 0.9rem;
+  }
+  
+  .concept-item strong {
+    color: var(--rh-red);
+    display: block;
+    margin-bottom: 5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 7.2 – Manage SELinux Settings</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn to manage SELinux settings including checking status, changing modes, viewing contexts, and modifying file contexts.<br><br>
+          <strong>Time Estimate:</strong> 15–20 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SELinux Configuration Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Check SELinux status with <code>getenforce</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Change SELinux mode temporarily with <code>setenforce</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View SELinux contexts with <code>ls -Z</code> and <code>ps -Z</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Change file context with <code>semanage</code> and <code>restorecon</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 Check SELinux Status <span class="badge current">Current Step</span></h3>
+          <p>First, let's check the current SELinux status using the <code>getenforce</code> command.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">getenforce</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>Enforcing</strong>
+              SELinux is active and enforcing policies
+            </div>
+            <div class="concept-item">
+              <strong>Permissive</strong>
+              SELinux logs violations but doesn't enforce
+            </div>
+            <div class="concept-item">
+              <strong>Disabled</strong>
+              SELinux is completely turned off
+            </div>
+            <div class="concept-item">
+              <strong>getenforce</strong>
+              Shows the current SELinux mode
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 7.2: Manage SELinux Settings</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Check SELinux Status</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>getenforce</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> SELinux provides mandatory access control (MAC) for Linux systems.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:17%"></div>
+        </div>
+        <strong>17% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SELinux Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Check SELinux status with <code>getenforce</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Change SELinux mode temporarily with <code>setenforce</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View SELinux contexts with <code>ls -Z</code> and <code>ps -Z</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Change file context with <code>semanage</code> and <code>restorecon</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Check SELinux Status <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Change SELinux Mode Temporarily <span class="badge current">Current Step</span></h3>
+          <p>Now let's change the SELinux mode temporarily using the <code>setenforce</code> command.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">setenforce 0</pre>
+          <p>Switches SELinux to Permissive mode</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">getenforce</pre>
+          <p>Verifies the mode change</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">setenforce 1</pre>
+          <p>Switches SELinux back to Enforcing mode</p>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Changes SELinux mode temporarily
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              For troubleshooting without reboot
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Only works between Enforcing/Permissive
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              When testing policy changes
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">getenforce</span>
+<span class="out">Enforcing</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next commands:
+<span class="prompt">[user@lab ~]$</span> <code>setenforce 0</code> (Permissive mode)
+<span class="prompt">[user@lab ~]$</span> <code>getenforce</code> (Verify change)
+<span class="prompt">[user@lab ~]$</span> <code>setenforce 1</code> (Enforcing mode)
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:33%"></div>
+        </div>
+        <strong>33% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SELinux Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check SELinux status with <code>getenforce</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change SELinux mode temporarily with <code>setenforce</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View SELinux contexts with <code>ls -Z</code> and <code>ps -Z</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Change file context with <code>semanage</code> and <code>restorecon</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Check SELinux Status <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Change SELinux Mode Temporarily <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 View SELinux Contexts <span class="badge current">Current Step</span></h3>
+          <p>Now let's view SELinux contexts for files and processes.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ls -Z /etc/passwd</pre>
+          <p>Shows SELinux context for the passwd file</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ps -Z</pre>
+          <p>Shows SELinux contexts for running processes</p>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>Files</strong>
+              Have security contexts (user:role:type:level)
+            </div>
+            <div class="concept-item">
+              <strong>Processes</strong>
+              Also have security contexts
+            </div>
+            <div class="concept-item">
+              <strong>-Z option</strong>
+              Shows SELinux contexts
+            </div>
+            <div class="concept-item">
+              <strong>semanage</strong>
+              Manages policy settings
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">setenforce 0</span>
+<span class="out">Switched to Permissive mode</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">getenforce</span>
+<span class="out">Permissive</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">setenforce 1</span>
+<span class="out">Switched to Enforcing mode</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type <code>ls -Z /etc/passwd</code> and <code>ps -Z</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:50%"></div>
+        </div>
+        <strong>50% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SELinux Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check SELinux status with <code>getenforce</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change SELinux mode temporarily with <code>setenforce</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View SELinux contexts with <code>ls -Z</code> and <code>ps -Z</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Change file context with <code>semanage</code> and <code>restorecon</code>
+        </div>
+
+        <div class="step done">
+          <h3>3 View SELinux Contexts <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Change File Context <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's change a file context using <code>semanage</code> and apply it with <code>restorecon</code>.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">semanage fcontext -a -t httpd_sys_content_t "/custom(/.*)?"</pre>
+          <p>Adds a new file context rule for the /custom directory</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">restorecon -Rv /custom</pre>
+          <p>Applies the new context recursively and verbosely</p>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Policy management tool
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              To modify SELinux settings persistently
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Changes stored in policy
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              When default contexts need adjustment
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ls -Z /etc/passwd</span>
+<span class="out">-rw-r--r--. root root system_u:object_r:passwd_file_t:s0 /etc/passwd</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ps -Z</span>
+<span class="out">LABEL                             PID TTY          TIME CMD</span>
+<span class="out">system_u:system_r:init_t:s0      1 ?        00:00:01 systemd</span>
+<span class="out">system_u:system_r:kernel_t:s0    2 ?        00:00:00 kthreadd</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type <code>semanage fcontext -a -t httpd_sys_content_t "/custom(/.*)?"</code>
+<span class="prompt">[user@lab ~]$</span> Then <code>restorecon -Rv /custom</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:67%"></div>
+        </div>
+        <strong>67% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SELinux Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check SELinux status with <code>getenforce</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change SELinux mode temporarily with <code>setenforce</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View SELinux contexts with <code>ls -Z</code> and <code>ps -Z</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change file context with <code>semanage</code> and <code>restorecon</code>
+        </div>
+
+        <div class="step done">
+          <h3>4 Change File Context <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 SELinux Contexts Explained <span class="badge current">Current Step</span></h3>
+          <p>Let's understand the SELinux context format:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">system_u:object_r:passwd_file_t:s0</pre>
+          <p>This context has four components:</p>
+          <ul>
+            <li><strong>User:</strong> system_u (system user)</li>
+            <li><strong>Role:</strong> object_r (object role)</li>
+            <li><strong>Type:</strong> passwd_file_t (file type)</li>
+            <li><strong>Level:</strong> s0 (sensitivity level)</li>
+          </ul>
+          <p>SELinux uses these contexts to enforce access control policies.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">semanage fcontext -a -t httpd_sys_content_t "/custom(/.*)?"</span>
+<span class="out">Added file context for /custom(/.*)?</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">restorecon -Rv /custom</span>
+<span class="out">Relabeled /custom from default_t to httpd_sys_content_t</span>
+<span class="success">Step 4 completed. All requirements met.</span>
+
+<span class="prompt">[user@lab ~]$</span> SELinux context format:
+<span class="prompt">[user@lab ~]$</span> <code>user:role:type:level</code>
+<span class="prompt">[user@lab ~]$</span> Example: <code>system_u:object_r:passwd_file_t:s0</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:83%"></div>
+        </div>
+        <strong>83% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">SELinux Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check SELinux status with <code>getenforce</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change SELinux mode temporarily with <code>setenforce</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View SELinux contexts with <code>ls -Z</code> and <code>ps -Z</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change file context with <code>semanage</code> and <code>restorecon</code>
+        </div>
+
+        <div class="step current">
+          <h3>6 SELinux Best Practices <span class="badge current">Current Step</span></h3>
+          <p>Important SELinux management tips:</p>
+          <ul>
+            <li>Use <code>setenforce</code> for temporary changes during troubleshooting</li>
+            <li>Use <code>semanage</code> for persistent policy changes</li>
+            <li>Always verify changes with <code>getenforce</code> and <code>ls -Z</code></li>
+            <li>Use Permissive mode to test new configurations before enforcing</li>
+            <li>Check SELinux logs in <code>/var/log/audit/audit.log</code> for issues</li>
+          </ul>
+          <p>Remember: SELinux provides an additional layer of security beyond standard Linux permissions.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="success">All SELinux requirements completed!</span>
+<span class="prompt">[user@lab ~]$</span> 
+<span class="prompt">[user@lab ~]$</span> <span class="tip">Best Practices:</span>
+<span class="prompt">[user@lab ~]$</span> - Use Permissive mode for troubleshooting
+<span class="prompt">[user@lab ~]$</span> - Use semanage for persistent changes
+<span class="prompt">[user@lab ~]$</span> - Check logs in /var/log/audit/audit.log
+<span class="prompt">[user@lab ~]$</span> - Verify changes with getenforce and ls -Z
+<span class="prompt">[user@lab ~]$</span> 
+<span class="prompt">[user@lab ~]$</span> SELinux adds mandatory access control to Linux.
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All SELinux requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Checking SELinux status with <code>getenforce</code></li>
+            <li>Changing modes temporarily with <code>setenforce</code></li>
+            <li>Viewing contexts with <code>ls -Z</code> and <code>ps -Z</code></li>
+            <li>Modifying file contexts with <code>semanage</code> and <code>restorecon</code></li>
+            <li>SELinux context format and best practices</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>SELinux Lab Complete</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+            <div style="margin-top:20px; font-size:1rem;">All requirements successfully completed</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

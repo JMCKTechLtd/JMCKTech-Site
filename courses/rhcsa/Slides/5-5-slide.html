@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 5.5 - Manage Users & Groups • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px); /* Fixed height calculation */
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .concept {
+    background:#2a2a2a;
+    padding:15px;
+    margin:15px 0;
+    border-radius:5px;
+    border-left:4px solid var(--rh-blue);
+  }
+  
+  .concept h4 {
+    margin-top:0;
+    color:var(--rh-blue);
+    border-bottom:1px solid #444;
+    padding-bottom:5px;
+  }
+  
+  .concept-grid {
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+    margin-bottom:10px;
+  }
+  
+  .concept-item {
+    background:#252525;
+    padding:10px;
+    border-radius:5px;
+    border-left:2px solid var(--rh-red);
+  }
+  
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 5.5 – Manage Users & Groups</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn how to manage users and groups on a Red Hat Enterprise Linux system.<br><br>
+          <strong>Time Estimate:</strong> 10–15 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">User & Group Management Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Create user <code>rhcsa_user</code> with <code>useradd</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set password for <code>rhcsa_user</code> to "redhat"
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create group <code>rhcsa_group</code> with <code>groupadd</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Add <code>rhcsa_user</code> to <code>rhcsa_group</code> with <code>usermod</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify with <code>id rhcsa_user</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify with <code>groups rhcsa_user</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 Create a New User <span class="badge current">Current Step</span></h3>
+          <p>First, let's create a new user account named <code>rhcsa_user</code>.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo useradd -m -s /bin/bash rhcsa_user</pre>
+          <p>Then set the password for the new user:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo passwd rhcsa_user</pre>
+          <p>When prompted, enter "redhat" as the password (twice).</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span>This is RHCSA Lab 5.5: Manage Users & Groups</span>
+<span class="prompt">[root@lab ~]#</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[root@lab ~]#</span> <span>You must complete each step in order.</span>
+<span class="prompt">[root@lab ~]#</span> <span>Current step: Create a New User</span>
+<span class="prompt">[root@lab ~]#</span> Type: <code>sudo useradd -m -s /bin/bash rhcsa_user</code>
+<span class="prompt">[root@lab ~]#</span> Then: <code>sudo passwd rhcsa_user</code>
+<span class="prompt">[root@lab ~]#</span> <span class="tip"><strong>Tip:</strong> Use Tab completion for faster typing.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:17%"></div>
+        </div>
+        <strong>17% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">User & Group Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Create user <code>rhcsa_user</code> with <code>useradd</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Set password for <code>rhcsa_user</code> to "redhat"
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create group <code>rhcsa_group</code> with <code>groupadd</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Add <code>rhcsa_user</code> to <code>rhcsa_group</code> with <code>usermod</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify with <code>id rhcsa_user</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify with <code>groups rhcsa_user</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Create a New User <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Create a New Group <span class="badge current">Current Step</span></h3>
+          <p>Now let's create a new group named <code>rhcsa_group</code>.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo groupadd rhcsa_group</pre>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo useradd -m -s /bin/bash rhcsa_user</span>
+<span class="out">User rhcsa_user created successfully</span>
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo passwd rhcsa_user</span>
+<span class="out">Changing password for user rhcsa_user.</span>
+<span class="out">New password: redhat</span>
+<span class="out">Retype new password: redhat</span>
+<span class="out">passwd: all authentication tokens updated successfully.</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[root@lab ~]#</span> Next command:
+<span class="prompt">[root@lab ~]#</span> <code>sudo groupadd rhcsa_group</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:33%"></div>
+        </div>
+        <strong>33% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">User & Group Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create user <code>rhcsa_user</code> with <code>useradd</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set password for <code>rhcsa_user</code> to "redhat"
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create group <code>rhcsa_group</code> with <code>groupadd</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Add <code>rhcsa_user</code> to <code>rhcsa_group</code> with <code>usermod</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify with <code>id rhcsa_user</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify with <code>groups rhcsa_user</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Create a New User <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Create a New Group <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Add User to Group <span class="badge current">Current Step</span></h3>
+          <p>Now let's add the user <code>rhcsa_user</code> to the group <code>rhcsa_group</code>.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo usermod -aG rhcsa_group rhcsa_user</pre>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo groupadd rhcsa_group</span>
+<span class="out">Group rhcsa_group created successfully</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[root@lab ~]#</span> Type <code>sudo usermod -aG rhcsa_group rhcsa_user</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:50%"></div>
+        </div>
+        <strong>50% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">User & Group Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create user <code>rhcsa_user</code> with <code>useradd</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set password for <code>rhcsa_user</code> to "redhat"
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create group <code>rhcsa_group</code> with <code>groupadd</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Add <code>rhcsa_user</code> to <code>rhcsa_group</code> with <code>usermod</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify with <code>id rhcsa_user</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify with <code>groups rhcsa_user</code>
+        </div>
+
+        <div class="step done">
+          <h3>2 Create a New Group <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Add User to Group <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Verify User and Group <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's verify that our user and group configurations are correct.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">id rhcsa_user</pre>
+          <p>Should show user ID and group memberships</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">groups rhcsa_user</pre>
+          <p>Should show: <code>rhcsa_user rhcsa_group</code></p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo usermod -aG rhcsa_group rhcsa_user</span>
+<span class="out">User rhcsa_user added to group rhcsa_group</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[root@lab ~]#</span> Type <code>id rhcsa_user</code> then <code>groups rhcsa_user</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:67%"></div>
+        </div>
+        <strong>67% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">User & Group Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create user <code>rhcsa_user</code> with <code>useradd</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set password for <code>rhcsa_user</code> to "redhat"
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create group <code>rhcsa_group</code> with <code>groupadd</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Add <code>rhcsa_user</code> to <code>rhcsa_group</code> with <code>usermod</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Verify with <code>id rhcsa_user</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify with <code>groups rhcsa_user</code>
+        </div>
+
+        <div class="step done">
+          <h3>3 Add User to Group <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Verify User and Group <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Final Verification <span class="badge current">Current Step</span></h3>
+          <p>Complete the verification by running the final command.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">groups rhcsa_user</pre>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">id rhcsa_user</span>
+<span class="out">uid=1000(rhcsa_user) gid=1000(rhcsa_user) groups=1000(rhcsa_user),1001(rhcsa_group)</span>
+<span class="success">User verification successful.</span>
+
+<span class="prompt">[root@lab ~]#</span> Type <code>groups rhcsa_user</code> to complete verification.
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:83%"></div>
+        </div>
+        <strong>83% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">User & Group Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create user <code>rhcsa_user</code> with <code>useradd</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set password for <code>rhcsa_user</code> to "redhat"
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create group <code>rhcsa_group</code> with <code>groupadd</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Add <code>rhcsa_user</code> to <code>rhcsa_group</code> with <code>usermod</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Verify with <code>id rhcsa_user</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Verify with <code>groups rhcsa_user</code>
+        </div>
+
+        <div class="step current">
+          <h3>6 All Requirements Met <span class="badge current">Current Step</span></h3>
+          <p>All user and group management requirements have been completed successfully.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">groups rhcsa_user</span>
+<span class="out">rhcsa_user : rhcsa_user rhcsa_group</span>
+<span class="success">Groups verification successful.</span>
+<span class="success">All user and group management tasks completed correctly!</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Creating users with <code>useradd</code></li>
+            <li>Setting passwords with <code>passwd</code></li>
+            <li>Creating groups with <code>groupadd</code></li>
+            <li>Adding users to groups with <code>usermod</code></li>
+            <li>Verifying configurations with <code>id</code> and <code>groups</code></li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>All user and group management tasks completed!</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

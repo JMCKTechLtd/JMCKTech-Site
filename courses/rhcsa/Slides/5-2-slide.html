@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 5.2 - Install/update/remove software • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px);
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .concept {
+    background:#2a2a2a;
+    padding:15px;
+    margin:15px 0;
+    border-radius:5px;
+    border-left:4px solid var(--rh-blue);
+  }
+  .concept h4 {
+    margin-top:0;
+    color:var(--rh-blue);
+    border-bottom:1px solid #444;
+    padding-bottom:5px;
+  }
+  .concept-grid {
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .concept-item {
+    background:#252525;
+    padding:10px;
+    border-radius:5px;
+    border-left:2px solid var(--rh-red);
+  }
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 5.2 – Install/update/remove software (dnf, yum, rpm)</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn to manage software packages using rpm, dnf, and yum commands.<br><br>
+          <strong>Time Estimate:</strong> 15–20 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Package Management Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Query packages with <code>rpm -qa | grep bash</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Search packages with <code>dnf search nano</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Install package with <code>sudo dnf install -y nano</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove package with <code>sudo dnf remove -y nano</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Update system with <code>sudo dnf update -y</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 Querying Packages with rpm <span class="badge current">Current Step</span></h3>
+          <p>First, let's query installed packages using the rpm command.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">rpm -qa | grep bash</pre>
+          
+          <div class="concept">
+            <h4>Understanding rpm</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Low-level package manager (RPM Package Manager)
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Install, query, verify, update, and remove packages
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Works with local .rpm files
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When you need direct package manipulation
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>rpm -qa</code> lists all installed packages. Piping to <code>grep</code> filters results.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 5.2: Package Management</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Querying Packages with rpm</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>rpm -qa | grep bash</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> This will list all installed packages containing "bash" in their name.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:20%"></div>
+        </div>
+        <strong>20% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Package Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Query packages with <code>rpm -qa | grep bash</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Search packages with <code>dnf search nano</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Install package with <code>sudo dnf install -y nano</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove package with <code>sudo dnf remove -y nano</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Update system with <code>sudo dnf update -y</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Querying Packages with rpm <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Searching Packages with dnf <span class="badge current">Current Step</span></h3>
+          <p>Now let's search for packages in repositories using the dnf command.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">dnf search nano</pre>
+          
+          <div class="concept">
+            <h4>Understanding dnf</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Next-generation package manager (Dandified YUM)
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Resolves dependencies automatically
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Works with repositories
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Preferred for package management in RHEL 8+
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>dnf search</code> finds packages in repositories. Other common commands: <code>install</code>, <code>remove</code>, <code>update</code>, <code>info</code>, <code>list</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">rpm -qa | grep bash</span>
+<span class="out">bash-5.1.8-2.el8.x86_64</span>
+<span class="out">bash-completion-2.7-5.el8.noarch</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>dnf search nano</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:40%"></div>
+        </div>
+        <strong>40% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Package Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Query packages with <code>rpm -qa | grep bash</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Search packages with <code>dnf search nano</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Install package with <code>sudo dnf install -y nano</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove package with <code>sudo dnf remove -y nano</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Update system with <code>sudo dnf update -y</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Querying Packages with rpm <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Searching Packages with dnf <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Installing a Package <span class="badge current">Current Step</span></h3>
+          <p>Now let's install a package using dnf.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo dnf install -y nano</pre>
+          
+          <div class="concept">
+            <h4>Understanding Package Installation</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Adding software to the system
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                To make new software available
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                From configured repositories
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When you need new functionality
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>sudo</code> elevates privileges. <code>-y</code> automatically answers yes to prompts. DNF resolves and installs dependencies automatically.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">dnf search nano</span>
+<span class="out">Last metadata expiration check: 0:01:23 ago on Mon Jan 10 10:00:00 2022.</span>
+<span class="out">================================ Name & Summary Matched: nano ================================</span>
+<span class="out">nano.x86_64 : A small text editor</span>
+<span class="out">nano-tiny.x86_64 : A tiny version of nano</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>sudo dnf install -y nano</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:60%"></div>
+        </div>
+        <strong>60% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Package Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Query packages with <code>rpm -qa | grep bash</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Search packages with <code>dnf search nano</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Install package with <code>sudo dnf install -y nano</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Remove package with <code>sudo dnf remove -y nano</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Update system with <code>sudo dnf update -y</code>
+        </div>
+
+        <div class="step done">
+          <h3>2 Searching Packages with dnf <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Installing a Package <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Removing a Package <span class="badge current">Current Step</span></h3>
+          <p>Now let's remove a package using dnf.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo dnf remove -y nano</pre>
+          
+          <div class="concept">
+            <h4>Understanding Package Removal</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Uninstalling software from the system
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                To free space or remove unneeded software
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                From installed packages
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When software is no longer needed
+              </div>
+            </div>
+            <p><strong>How it works:</strong> DNF removes the specified package and any dependencies that are no longer needed. The <code>-y</code> flag confirms the action automatically.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo dnf install -y nano</span>
+<span class="out">Dependencies resolved.</span>
+<span class="out">==============================================================================================</span>
+<span class="out"> Package         Architecture    Version             Repository                          Size</span>
+<span class="out">==============================================================================================</span>
+<span class="out">Installing:</span>
+<span class="out"> nano            x86_64          2.9.8-1.el8        rhel-8-for-x86_64-appstream-rpms   590 k</span>
+<span class="out">Transaction Summary</span>
+<span class="out">==============================================================================================</span>
+<span class="out">Install  1 Package</span>
+<span class="out">Total download size: 590 k</span>
+<span class="out">Installed size: 2.2 M</span>
+<span class="out">Downloading Packages:</span>
+<span class="out">nano-2.9.8-1.el8.x86_64.rpm                                 590 kB/s | 590 kB     00:01</span>
+<span class="out">----------------------------------------------------------------------------------------------</span>
+<span class="out">Running transaction check</span>
+<span class="out">Transaction check succeeded.</span>
+<span class="out">Running transaction test</span>
+<span class="out">Transaction test succeeded.</span>
+<span class="out">Running transaction</span>
+<span class="out">  Preparing        :                                                                   1/1</span>
+<span class="out">  Installing       : nano-2.9.8-1.el8.x86_64                                          1/1</span>
+<span class="out">  Running scriptlet: nano-2.9.8-1.el8.x86_64                                          1/1</span>
+<span class="out">  Verifying        : nano-2.9.8-1.el8.x86_64                                          1/1</span>
+<span class="out">Installed:</span>
+<span class="out">  nano-2.9.8-1.el8.x86_64</span>
+<span class="out">Complete!</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>sudo dnf remove -y nano</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:80%"></div>
+        </div>
+        <strong>80% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Package Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Query packages with <code>rpm -qa | grep bash</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Search packages with <code>dnf search nano</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Install package with <code>sudo dnf install -y nano</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Remove package with <code>sudo dnf remove -y nano</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Update system with <code>sudo dnf update -y</code>
+        </div>
+
+        <div class="step done">
+          <h3>3 Installing a Package <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Removing a Package <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Updating Packages <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's update the system packages using dnf.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo dnf update -y</pre>
+          
+          <div class="concept">
+            <h4>Understanding System Updates</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Applying available updates
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Security patches and bug fixes
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                From configured repositories
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Regularly for security and stability
+              </div>
+            </div>
+            <p><strong>How it works:</strong> DNF checks repositories for newer versions of installed packages. The <code>update</code> command upgrades all packages with available updates.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo dnf remove -y nano</span>
+<span class="out">Dependencies resolved.</span>
+<span class="out">==============================================================================================</span>
+<span class="out"> Package         Architecture    Version             Repository                          Size</span>
+<span class="out">==============================================================================================</span>
+<span class="out">Removing:</span>
+<span class="out"> nano            x86_64          2.9.8-1.el8        @rhel-8-for-x86_64-appstream-rpms   2.2 M</span>
+<span class="out">Transaction Summary</span>
+<span class="out">==============================================================================================</span>
+<span class="out">Remove  1 Package</span>
+<span class="out">Freed space: 2.2 M</span>
+<span class="out">Running transaction check</span>
+<span class="out">Transaction check succeeded.</span>
+<span class="out">Running transaction test</span>
+<span class="out">Transaction test succeeded.</span>
+<span class="out">Running transaction</span>
+<span class="out">  Preparing        :                                                                   1/1</span>
+<span class="out">  Erasing          : nano-2.9.8-1.el8.x86_64                                          1/1</span>
+<span class="out">  Running scriptlet: nano-2.9.8-1.el8.x86_64                                          1/1</span>
+<span class="out">  Verifying        : nano-2.9.8-1.el8.x86_64                                          1/1</span>
+<span class="out">Removed:</span>
+<span class="out">  nano-2.9.8-1.el8.x86_64</span>
+<span class="out">Complete!</span>
+<span class="success">Step 4 completed. Moving to step 5.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>sudo dnf update -y</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Package Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Query packages with <code>rpm -qa | grep bash</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Search packages with <code>dnf search nano</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Install package with <code>sudo dnf install -y nano</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Remove package with <code>sudo dnf remove -y nano</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Update system with <code>sudo dnf update -y</code>
+        </div>
+
+        <div class="step done">
+          <h3>4 Removing a Package <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>5 Updating Packages <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>6 Lab Summary <span class="badge current">Current Step</span></h3>
+          <p>All package management requirements have been completed successfully.</p>
+          <p>You've learned to use rpm, dnf, and yum commands to manage software packages on a Red Hat Enterprise Linux system.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo dnf update -y</span>
+<span class="out">Last metadata expiration check: 0:01:23 ago on Mon Jan 10 10:00:00 2022.</span>
+<span class="out">Dependencies resolved.</span>
+<span class="out">Nothing to do.</span>
+<span class="out">Complete!</span>
+<span class="success">Step 5 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> All package management requirements completed.
+<span class="prompt">[user@lab ~]$</span> Lab finished successfully!
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All package management requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Querying packages with rpm</li>
+            <li>Searching repositories with dnf</li>
+            <li>Installing packages with dnf</li>
+            <li>Removing packages with dnf</li>
+            <li>Updating system packages</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>Package management lab completed.</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>
