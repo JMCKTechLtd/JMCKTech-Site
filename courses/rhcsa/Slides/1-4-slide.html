@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 1.4 - Manage Files & Directories • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px);
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .file-structure {
+    background:#1e1e1e;
+    padding:10px;
+    border-radius:3px;
+    font-family:'Red Hat Mono', monospace;
+    margin:10px 0;
+  }
+  
+  .dir {
+    color:#4CAF50;
+  }
+  
+  .file {
+    color:#007ACC;
+  }
+  
+  .hint-box {
+    background:rgba(255, 215, 0, 0.1);
+    border-left:4px solid #FFD700;
+    padding:10px;
+    margin:10px 0;
+    border-radius:3px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 1.4 – Manage Files & Directories</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">8</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn essential file and directory management commands in Linux.<br><br>
+          <strong>Time Estimate:</strong> 15-20 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Use <code>ls -l</code> and <code>ls -a</code> to list files
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>touch</code> and <code>cp</code> to create and copy files
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>mv</code> to move and rename files
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>rm</code> to remove files and directories
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>find</code> to search for files
+        </div>
+
+        <div class="step current">
+          <h3>1 Lab Introduction <span class="badge current">Current Step</span></h3>
+          <p>Welcome to the RHCSA File Management Lab. In this lab, you will learn essential file and directory management commands in Linux.</p>
+          <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 1.4: Manage Files & Directories</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Lab Introduction</span>
+<span class="prompt">[user@lab ~]$</span> <span>Initial file structure:</span>
+<span class="prompt">[user@lab ~]$</span> <span class="dir">./documents/</span>
+<span class="prompt">[user@lab ~]$</span> <span class="file">./file1.txt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="file">./file2.txt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="file">./.hidden_file</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:12.5%"></div>
+        </div>
+        <strong>12.5% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Use <code>ls -l</code> and <code>ls -a</code> to list files
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>touch</code> and <code>cp</code> to create and copy files
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>mv</code> to move and rename files
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>rm</code> to remove files and directories
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>find</code> to search for files
+        </div>
+
+        <div class="step done">
+          <h3>1 Lab Introduction <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Listing Files <span class="badge current">Current Step</span></h3>
+          <p>First, let's learn how to list files and directories using the <code>ls</code> command.</p>
+          
+          <div class="hint-box">
+            <strong>Type these commands exactly:</strong>
+          </div>
+          
+          <pre style="background:#111; padding:12px; border-radius:6px;">ls -l</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ls -a</pre>
+          
+          <div class="file-structure">
+            <div>Initial file structure in your lab environment:</div>
+            <div class="dir">./documents/</div>
+            <div class="file">./file1.txt</div>
+            <div class="file">./file2.txt</div>
+            <div class="file">./.hidden_file</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>Step 1 completed. Moving to step 2.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Listing Files</span>
+<span class="prompt">[user@lab ~]$</span> <span>Type: <code>ls -l</code> and <code>ls -a</code></span>
+<span class="prompt">[user@lab ~]$</span> <span class="tip">Understanding ls Command:</span>
+<span class="prompt">[user@lab ~]$</span> <span>- <code>ls</code> displays directory contents</span>
+<span class="prompt">[user@lab ~]$</span> <span>- <code>-l</code> shows detailed information</span>
+<span class="prompt">[user@lab ~]$</span> <span>- <code>-a</code> includes hidden files (starting with .)</span>
+<span class="prompt">[user@lab ~]$</span> <span>- Combine options like <code>ls -la</code></span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:25%"></div>
+        </div>
+        <strong>25% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>ls -l</code> and <code>ls -a</code> to list files
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>touch</code> and <code>cp</code> to create and copy files
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>mv</code> to move and rename files
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>rm</code> to remove files and directories
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>find</code> to search for files
+        </div>
+
+        <div class="step done">
+          <h3>1 Lab Introduction <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Listing Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Creating and Copying Files <span class="badge current">Current Step</span></h3>
+          <p>Now let's learn how to create and copy files using <code>touch</code> and <code>cp</code> commands.</p>
+          
+          <div class="hint-box">
+            <strong>Type these commands exactly:</strong>
+          </div>
+          
+          <pre style="background:#111; padding:12px; border-radius:6px;">touch newfile.txt</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">cp newfile.txt copied_file.txt</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">cp -r documents documents_backup</pre>
+          
+          <div class="hint-box">
+            <strong>Understanding touch and cp Commands:</strong>
+            <ul>
+              <li><code>touch</code> creates empty files or updates timestamps</li>
+              <li><code>cp</code> copies files/directories</li>
+              <li>Use <code>-r</code> option for directories</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ls -l</span>
+<span class="out">total 4</span>
+<span class="out">drwxr-xr-x 2 user user 4096 Jan 10 documents</span>
+<span class="out">-rw-r--r-- 1 user user    0 Jan 10 file1.txt</span>
+<span class="out">-rw-r--r-- 1 user user    0 Jan 10 file2.txt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ls -a</span>
+<span class="out">.  ..  .hidden_file  documents  file1.txt  file2.txt</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Type: <code>touch newfile.txt</code></span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:37.5%"></div>
+        </div>
+        <strong>37.5% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>ls -l</code> and <code>ls -a</code> to list files
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>touch</code> and <code>cp</code> to create and copy files
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>mv</code> to move and rename files
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>rm</code> to remove files and directories
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>find</code> to search for files
+        </div>
+
+        <div class="step done">
+          <h3>1 Lab Introduction <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Listing Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Creating and Copying Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Moving and Renaming Files <span class="badge current">Current Step</span></h3>
+          <p>Now let's learn how to move and rename files using the <code>mv</code> command.</p>
+          
+          <div class="hint-box">
+            <strong>Type these commands exactly:</strong>
+          </div>
+          
+          <pre style="background:#111; padding:12px; border-radius:6px;">mv copied_file.txt documents/</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">mv documents/copied_file.txt documents/renamed_file.txt</pre>
+          
+          <div class="hint-box">
+            <strong>Understanding mv Command:</strong>
+            <ul>
+              <li><code>mv</code> moves or renames files/directories</li>
+              <li>Same command as moving within same directory</li>
+              <li>Overwrites existing files without warning</li>
+              <li>Use <code>-i</code> for interactive mode</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">touch newfile.txt</span>
+<span class="out">Created file: newfile.txt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">cp newfile.txt copied_file.txt</span>
+<span class="out">Copied newfile.txt to copied_file.txt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">cp -r documents documents_backup</span>
+<span class="out">Copied directory documents to documents_backup</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Type: <code>mv copied_file.txt documents/</code></span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:50%"></div>
+        </div>
+        <strong>50% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>ls -l</code> and <code>ls -a</code> to list files
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>touch</code> and <code>cp</code> to create and copy files
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>mv</code> to move and rename files
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>rm</code> to remove files and directories
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>find</code> to search for files
+        </div>
+
+        <div class="step done">
+          <h3>1 Lab Introduction <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Listing Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Creating and Copying Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Moving and Renaming Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Removing Files and Directories <span class="badge current">Current Step</span></h3>
+          <p>Now let's learn how to remove files and directories using the <code>rm</code> command.</p>
+          
+          <div class="hint-box">
+            <strong>Type these commands exactly:</strong>
+          </div>
+          
+          <pre style="background:#111; padding:12px; border-radius:6px;">rm file1.txt</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">rm -r documents_backup</pre>
+          
+          <div class="hint-box">
+            <strong>Understanding rm Command:</strong>
+            <ul>
+              <li><code>rm</code> removes files/directories</li>
+              <li>Permanent deletion (no trash bin)</li>
+              <li>Use <code>-r</code> for directories</li>
+              <li>Use <code>-i</code> for interactive mode</li>
+              <li>Be careful with wildcards (<code>rm *</code>)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">mv copied_file.txt documents/</span>
+<span class="out">Moved copied_file.txt to documents/</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">mv documents/copied_file.txt documents/renamed_file.txt</span>
+<span class="out">Moved documents/copied_file.txt to documents/renamed_file.txt</span>
+<span class="success">Step 4 completed. Moving to step 5.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Type: <code>rm file1.txt</code></span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:62.5%"></div>
+        </div>
+        <strong>62.5% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>ls -l</code> and <code>ls -a</code> to list files
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>touch</code> and <code>cp</code> to create and copy files
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>mv</code> to move and rename files
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>rm</code> to remove files and directories
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>find</code> to search for files
+        </div>
+
+        <div class="step done">
+          <h3>1 Lab Introduction <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Listing Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Creating and Copying Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Moving and Renaming Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>5 Removing Files and Directories <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>6 Finding Files <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's learn how to find files using the <code>find</code> command.</p>
+          
+          <div class="hint-box">
+            <strong>Type these commands exactly:</strong>
+          </div>
+          
+          <pre style="background:#111; padding:12px; border-radius:6px;">find . -name "*.txt"</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">find /etc -type f -name "*.conf"</pre>
+          
+          <div class="hint-box">
+            <strong>Understanding find Command:</strong>
+            <ul>
+              <li><code>find</code> searches for files/directories</li>
+              <li>Can search by name, type, size, time, etc.</li>
+              <li>Basic syntax: <code>find [path] [criteria] [action]</code></li>
+              <li>Searches recursively through directories</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">rm file1.txt</span>
+<span class="out">Removed file1.txt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">rm -r documents_backup</span>
+<span class="out">Removed directory documents_backup</span>
+<span class="success">Step 5 completed. Moving to step 6.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Type: <code>find . -name "*.txt"</code></span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:75%"></div>
+        </div>
+        <strong>75% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Command Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>ls -l</code> and <code>ls -a</code> to list files
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>touch</code> and <code>cp</code> to create and copy files
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>mv</code> to move and rename files
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>rm</code> to remove files and directories
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>find</code> to search for files
+        </div>
+
+        <div class="step done">
+          <h3>1 Lab Introduction <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Listing Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Creating and Copying Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Moving and Renaming Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>5 Removing Files and Directories <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>6 Finding Files <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>7 Lab Summary <span class="badge current">Current Step</span></h3>
+          <p>All file management commands have been mastered.</p>
+          <p>You can now proceed to the next lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">find . -name "*.txt"</span>
+<span class="out">./file2.txt</span>
+<span class="out">./newfile.txt</span>
+<span class="out">./documents/doc1.txt</span>
+<span class="out">./documents/renamed_file.txt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">find /etc -type f -name "*.conf"</span>
+<span class="out">/etc/resolv.conf</span>
+<span class="success">Step 6 completed. All requirements met.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Final file structure:</span>
+<span class="prompt">[user@lab ~]$</span> <span class="dir">./documents/</span>
+<span class="prompt">[user@lab ~]$</span> <span class="file">./file2.txt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="file">./newfile.txt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="file">./.hidden_file</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 8 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Listing files with <code>ls -l</code> and <code>ls -a</code></li>
+            <li>Creating files with <code>touch</code></li>
+            <li>Copying files and directories with <code>cp</code></li>
+            <li>Moving and renaming files with <code>mv</code></li>
+            <li>Removing files and directories with <code>rm</code></li>
+            <li>Finding files with <code>find</code></li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>Lab completed successfully!</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+            <div style="margin-top:10px;">All file management commands mastered</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

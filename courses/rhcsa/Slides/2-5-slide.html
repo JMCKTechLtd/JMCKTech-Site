@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 2.5 - System Log Files • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px);
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .concept-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .concept-item {
+    background: #252525;
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 2px solid var(--rh-red);
+  }
+  
+  .concept-item strong {
+    color: var(--rh-red);
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  .log-entry {
+    color: #AAAAAA;
+    font-family: 'Red Hat Mono', monospace;
+    font-size: 0.9em;
+    margin: 2px 0;
+  }
+  
+  .log-date {
+    color: #4CAF50;
+  }
+  
+  .log-host {
+    color: #007ACC;
+  }
+  
+  .log-service {
+    color: #FFD700;
+  }
+  
+  .log-message {
+    color: #FFFFFF;
+  }
+  
+  .log-error {
+    color: #FF5252;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 2.5 – System Log Files (/var/log, journalctl)</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn to navigate and analyze system log files using both traditional log files in /var/log and the systemd journal with journalctl.<br><br>
+          <strong>Time Estimate:</strong> 15–20 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">System Log Files Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Explore log files in <code>/var/log</code> directory
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View contents of <code>/var/log/messages</code> file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>journalctl</code> to view recent logs
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter journal by time with <code>--since</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter journal by priority with <code>-p</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter journal by service with <code>-u</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 Exploring /var/log <span class="badge current">Current Step</span></h3>
+          <p>First, let's explore the system log files stored in the /var/log directory.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ls -l /var/log</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              System log files stored in /var/log
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              Record system events for troubleshooting
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              /var/log directory (requires root for some files)
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              Continuously updated by system services
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 2.5: System Log Files</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Exploring /var/log</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>ls -l /var/log</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> Press Tab for command and path completion.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:17%"></div>
+        </div>
+        <strong>17% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">System Log Files Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Explore log files in <code>/var/log</code> directory
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View contents of <code>/var/log/messages</code> file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>journalctl</code> to view recent logs
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter journal by time with <code>--since</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter journal by priority with <code>-p</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter journal by service with <code>-u</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Exploring /var/log <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Viewing Log Contents <span class="badge current">Current Step</span></h3>
+          <p>Now let's view the contents of the system messages log file.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo tail -20 /var/log/messages</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Tools to view log contents
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              Monitor and troubleshoot system issues
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Command line with appropriate permissions
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              When investigating system behavior
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ls -l /var/log</span>
+<span class="out">total 1024</span>
+<span class="out">-rw------- 1 root root  12345 Jan 10 10:00 boot.log</span>
+<span class="out">-rw------- 1 root root  23456 Jan 10 10:00 dmesg</span>
+<span class="out">-rw-r--r-- 1 root root 345678 Jan 10 10:00 messages</span>
+<span class="out">-rw------- 1 root root  45678 Jan 10 10:00 secure</span>
+<span class="out">drwxr-xr-x 2 root root   4096 Jan 10 10:00 httpd</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>sudo tail -20 /var/log/messages</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:33%"></div>
+        </div>
+        <strong>33% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">System Log Files Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Explore log files in <code>/var/log</code> directory
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View contents of <code>/var/log/messages</code> file
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>journalctl</code> to view recent logs
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter journal by time with <code>--since</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter journal by priority with <code>-p</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter journal by service with <code>-u</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Exploring /var/log <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Viewing Log Contents <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Using journalctl <span class="badge current">Current Step</span></h3>
+          <p>Now let's explore the systemd journal using journalctl.</p>
+          <p>Type the commands shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">journalctl -n 10</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">journalctl --since "1 hour ago"</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Systemd's journal logging system
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              Centralized logging with metadata
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Binary logs stored in /var/log/journal
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              Modern systems using systemd
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo tail -20 /var/log/messages</span>
+<div class="log-entry"><span class="log-date">2023-01-10 09:45:23</span> <span class="log-host">lab</span> <span class="log-service">systemd[1]:</span> <span class="log-message">Started User Manager for UID 1000.</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 09:45:25</span> <span class="log-host">lab</span> <span class="log-service">sshd[1234]:</span> <span class="log-message">Accepted password for user from 192.168.1.10 port 22</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 09:46:10</span> <span class="log-host">lab</span> <span class="log-service">kernel:</span> <span class="log-message">usb 1-1: new high-speed USB device number 2 using xhci_hcd</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 09:47:15</span> <span class="log-host">lab</span> <span class="log-service">crond[567]:</span> <span class="log-message">(root) CMD (/usr/lib64/sa/sa1 1 1)</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 09:48:20</span> <span class="log-host">lab</span> <span class="log-service">NetworkManager[890]:</span> <span class="log-message">&lt;info&gt;  [1673344100.1234] device (eth0): state change: ip-config -&gt; ip-check (reason 'none')</span></div>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>journalctl -n 10</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:50%"></div>
+        </div>
+        <strong>50% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">System Log Files Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Explore log files in <code>/var/log</code> directory
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View contents of <code>/var/log/messages</code> file
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>journalctl</code> to view recent logs
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Filter journal by time with <code>--since</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter journal by priority with <code>-p</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter journal by service with <code>-u</code>
+        </div>
+
+        <div class="step done">
+          <h3>3 Using journalctl <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Filtering Logs <span class="badge current">Current Step</span></h3>
+          <p>Now let's practice filtering logs by priority and service.</p>
+          <p>Type the commands shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">journalctl -p err</pre>
+          <pre style="background:#111; padding:12px; border-radius:6px;">journalctl -u sshd</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Filtering logs by priority, service, etc.
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              Focus on relevant log entries
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              journalctl with filtering options
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              Troubleshooting specific issues
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">journalctl -n 10</span>
+<div class="log-entry"><span class="log-date">2023-01-10 09:45:23</span> <span class="log-host">lab</span> <span class="log-service">systemd[1]:</span> <span class="log-message">Started User Manager for UID 1000.</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 09:45:25</span> <span class="log-host">lab</span> <span class="log-service">sshd[1234]:</span> <span class="log-message">Accepted password for user from 192.168.1.10 port 22</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 09:46:10</span> <span class="log-host">lab</span> <span class="log-service">kernel:</span> <span class="log-message">usb 1-1: new high-speed USB device number 2 using xhci_hcd</span></div>
+<span class="success">First journalctl command completed.</span>
+
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">journalctl --since "1 hour ago"</span>
+<div class="log-entry"><span class="log-date">2023-01-10 09:15:30</span> <span class="log-host">lab</span> <span class="log-service">systemd[1]:</span> <span class="log-message">Starting System Logging Service...</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 09:15:31</span> <span class="log-host">lab</span> <span class="log-service">rsyslogd[432]:</span> <span class="log-message">[origin software="rsyslogd" swVersion="8.1911.0" x-pid="432" x-info="http://www.rsyslog.com"] start</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 09:15:32</span> <span class="log-host">lab</span> <span class="log-service">systemd[1]:</span> <span class="log-message">Started System Logging Service.</span></div>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>journalctl -p err</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:67%"></div>
+        </div>
+        <strong>67% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">System Log Files Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Explore log files in <code>/var/log</code> directory
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View contents of <code>/var/log/messages</code> file
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>journalctl</code> to view recent logs
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Filter journal by time with <code>--since</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Filter journal by priority with <code>-p</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter journal by service with <code>-u</code>
+        </div>
+
+        <div class="step done">
+          <h3>4 Filtering Logs <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Filtering by Service <span class="badge current">Current Step</span></h3>
+          <p>Now filter the journal by the SSH service.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">journalctl -u sshd</pre>
+          
+          <p><strong>Common journalctl filters:</strong></p>
+          <ul>
+            <li><code>-p</code>: Priority (emerg, alert, crit, err, warning, notice, info, debug)</li>
+            <li><code>-u</code>: Unit/service name</li>
+            <li><code>--since</code>/<code>--until</code>: Time ranges</li>
+            <li><code>-k</code>: Kernel messages only</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">journalctl -p err</span>
+<div class="log-entry"><span class="log-date">2023-01-10 08:30:15</span> <span class="log-host">lab</span> <span class="log-service">kernel:</span> <span class="log-error">ACPI Error: [\_SB_.PCI0.XHC_.RHUB.HS11] Namespace lookup failure, AE_NOT_FOUND (20210730/dswload2-162)</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 09:10:22</span> <span class="log-host">lab</span> <span class="log-service">smartd[345]:</span> <span class="log-error">Device: /dev/sda [SAT], 1 Currently unreadable (pending) sectors</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 09:25:40</span> <span class="log-host">lab</span> <span class="log-service">NetworkManager[890]:</span> <span class="log-error">&lt;error&gt; [1673342740.5678] device (eth0): failed to renew DHCP lease (ip4)</span></div>
+<span class="success">Priority filter completed.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>journalctl -u sshd</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:83%"></div>
+        </div>
+        <strong>83% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">System Log Files Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Explore log files in <code>/var/log</code> directory
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View contents of <code>/var/log/messages</code> file
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>journalctl</code> to view recent logs
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Filter journal by time with <code>--since</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Filter journal by priority with <code>-p</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Filter journal by service with <code>-u</code>
+        </div>
+
+        <div class="step done">
+          <h3>5 Filtering by Service <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>6 Review and Practice <span class="badge current">Current Step</span></h3>
+          <p>You've successfully completed all the requirements for this lab.</p>
+          <p>Take a moment to review what you've learned:</p>
+          <ul>
+            <li>Navigating the /var/log directory</li>
+            <li>Viewing log files with tail</li>
+            <li>Using journalctl for systemd journal</li>
+            <li>Filtering logs by time, priority, and service</li>
+          </ul>
+          <p>Practice these commands to reinforce your understanding.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">journalctl -u sshd</span>
+<div class="log-entry"><span class="log-date">2023-01-10 08:05:12</span> <span class="log-host">lab</span> <span class="log-service">sshd[1234]:</span> <span class="log-message">Server listening on 0.0.0.0 port 22.</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 08:05:12</span> <span class="log-host">lab</span> <span class="log-service">sshd[1234]:</span> <span class="log-message">Server listening on :: port 22.</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 09:45:25</span> <span class="log-host">lab</span> <span class="log-service">sshd[1234]:</span> <span class="log-message">Accepted password for user from 192.168.1.10 port 22</span></div>
+<div class="log-entry"><span class="log-date">2023-01-10 09:50:30</span> <span class="log-host">lab</span> <span class="log-service">sshd[1234]:</span> <span class="log-message">pam_unix(sshd:session): session opened for user user by (uid=0)</span></div>
+<span class="success">All filtering commands completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> All requirements for this lab have been met.
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Navigating and exploring /var/log directory</li>
+            <li>Viewing log file contents with tail</li>
+            <li>Using journalctl to access systemd journal</li>
+            <li>Filtering logs by time with --since</li>
+            <li>Filtering logs by priority with -p</li>
+            <li>Filtering logs by service with -u</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>All system log file commands executed successfully.</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

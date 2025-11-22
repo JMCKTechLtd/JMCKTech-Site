@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 3.2 - Manage LVM (PVs, VGs, LVs) • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px);
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .lvm-diagram {
+    background:#111;
+    padding:15px;
+    border-radius:6px;
+    margin:15px 0;
+    text-align:center;
+    font-family:'Red Hat Mono', monospace;
+    border:1px solid #444;
+  }
+  
+  .concept-box {
+    background:#111;
+    padding:15px;
+    border-radius:6px;
+    margin:15px 0;
+    border-left:4px solid var(--rh-blue);
+  }
+  
+  .concept-box h4 {
+    margin-top:0;
+    color:var(--rh-blue);
+    border-bottom:1px solid #333;
+    padding-bottom:5px;
+  }
+  
+  .concept-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:10px 0;
+  }
+  
+  .concept-item {
+    background:#1a1a1a;
+    padding:10px;
+    border-radius:4px;
+    border-left:2px solid var(--rh-red);
+  }
+  
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 3.2 – Manage LVM (PVs, VGs, LVs)</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn to manage Logical Volume Manager (LVM) by creating physical volumes, volume groups, and logical volumes, then creating filesystems and extending storage.<br><br>
+          <strong>Time Estimate:</strong> 20–25 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">LVM Configuration Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Create Physical Volume: <code>sudo pvcreate /dev/sdb</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Display PV information: <code>sudo pvdisplay</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create Volume Group: <code>sudo vgcreate vg_data /dev/sdb</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Display VG information: <code>sudo vgdisplay vg_data</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create Logical Volume: <code>sudo lvcreate -n lv_app -L 2G vg_data</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Display LV information: <code>sudo lvdisplay /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create filesystem: <code>sudo mkfs.xfs /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify filesystem: <code>sudo blkid /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Extend LV: <code>sudo lvextend -L +1G /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Grow filesystem: <code>sudo xfs_growfs /dev/vg_data/lv_app</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 Physical Volumes (PVs) <span class="badge current">Current Step</span></h3>
+          <p>First, let's create a physical volume from the disk device.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo pvcreate /dev/sdb</pre>
+          <p>Then display the physical volume information:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo pvdisplay</pre>
+          
+          <div class="concept-box">
+            <h4>Understanding Physical Volumes</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Physical storage devices prepared for LVM
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Foundation for LVM storage management
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Typically disk partitions or whole disks
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                First step in LVM configuration
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>pvcreate</code> initializes a device for LVM. <code>pvdisplay</code> shows PV details including size, free space, and VG membership.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span>Welcome to RHCSA Lab 3.2: LVM Management</span>
+<span class="prompt">[root@lab ~]#</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[root@lab ~]#</span> <span>You must complete each step in order.</span>
+<span class="prompt">[root@lab ~]#</span> <span>Current step: Physical Volumes (PVs)</span>
+<span class="prompt">[root@lab ~]#</span> Type: <code>sudo pvcreate /dev/sdb</code>
+<span class="prompt">[root@lab ~]#</span> <span class="tip"><strong>Tip:</strong> Use Tab completion and the ↑ key for history.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:20%"></div>
+        </div>
+        <strong>20% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">LVM Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Create Physical Volume: <code>sudo pvcreate /dev/sdb</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Display PV information: <code>sudo pvdisplay</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create Volume Group: <code>sudo vgcreate vg_data /dev/sdb</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Display VG information: <code>sudo vgdisplay vg_data</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create Logical Volume: <code>sudo lvcreate -n lv_app -L 2G vg_data</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Display LV information: <code>sudo lvdisplay /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create filesystem: <code>sudo mkfs.xfs /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify filesystem: <code>sudo blkid /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Extend LV: <code>sudo lvextend -L +1G /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Grow filesystem: <code>sudo xfs_growfs /dev/vg_data/lv_app</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Physical Volumes (PVs) <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Volume Groups (VGs) <span class="badge current">Current Step</span></h3>
+          <p>Now let's create a volume group from the physical volume.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo vgcreate vg_data /dev/sdb</pre>
+          <p>Then display the volume group information:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo vgdisplay vg_data</pre>
+          
+          <div class="concept-box">
+            <h4>Understanding Volume Groups</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Pools of PVs that provide storage for LVs
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Combine multiple PVs into flexible storage pools
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Created from one or more PVs
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                After PV creation, before LV creation
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>vgcreate</code> combines PVs into a VG. <code>vgdisplay</code> shows VG details including size, free space, and PV composition. VGs can be extended by adding more PVs.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo pvcreate /dev/sdb</span>
+<span class="out">Physical volume "/dev/sdb" successfully created.</span>
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo pvdisplay</span>
+<span class="out">/dev/sdb</span>
+<span class="out">  PV Name               /dev/sdb</span>
+<span class="out">  VG Name               vg_data</span>
+<span class="out">  PV Size               10.00 GiB</span>
+<span class="out">  Allocatable           yes</span>
+<span class="out">  PE Size               4.00 MiB</span>
+<span class="out">  Total PE              2559</span>
+<span class="out">  Free PE               2047</span>
+<span class="out">  Allocated PE          512</span>
+<span class="out">  PV UUID               abc123-xyz-456</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[root@lab ~]#</span> Next command:
+<span class="prompt">[root@lab ~]#</span> <code>sudo vgcreate vg_data /dev/sdb</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:40%"></div>
+        </div>
+        <strong>40% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">LVM Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create Physical Volume: <code>sudo pvcreate /dev/sdb</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display PV information: <code>sudo pvdisplay</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create Volume Group: <code>sudo vgcreate vg_data /dev/sdb</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display VG information: <code>sudo vgdisplay vg_data</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create Logical Volume: <code>sudo lvcreate -n lv_app -L 2G vg_data</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Display LV information: <code>sudo lvdisplay /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create filesystem: <code>sudo mkfs.xfs /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify filesystem: <code>sudo blkid /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Extend LV: <code>sudo lvextend -L +1G /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Grow filesystem: <code>sudo xfs_growfs /dev/vg_data/lv_app</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Physical Volumes (PVs) <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Volume Groups (VGs) <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Logical Volumes (LVs) <span class="badge current">Current Step</span></h3>
+          <p>Now let's create a logical volume from the volume group.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo lvcreate -n lv_app -L 2G vg_data</pre>
+          <p>Then display the logical volume information:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo lvdisplay /dev/vg_data/lv_app</pre>
+          
+          <div class="concept-box">
+            <h4>Understanding Logical Volumes</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Virtual partitions carved from VGs
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Flexible, resizable storage units
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Created within VGs
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                After VG creation, before filesystem creation
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>lvcreate</code> allocates space from a VG to create an LV. <code>lvdisplay</code> shows LV details including size, VG source, and device path. LVs can be resized as needed.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo vgcreate vg_data /dev/sdb</span>
+<span class="out">Volume group "vg_data" successfully created</span>
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo vgdisplay vg_data</span>
+<span class="out">--- Volume group ---</span>
+<span class="out">VG Name               vg_data</span>
+<span class="out">System ID</span>
+<span class="out">Format                lvm2</span>
+<span class="out">VG Size               10.00 GiB</span>
+<span class="out">PE Size               4.00 MiB</span>
+<span class="out">Total PE              2559</span>
+<span class="out">Alloc PE / Size       512 / 2.00 GiB</span>
+<span class="out">Free  PE / Size      2047 / 8.00 GiB</span>
+<span class="out">VG UUID               def456-uvw-789</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[root@lab ~]#</span> Type: <code>sudo lvcreate -n lv_app -L 2G vg_data</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:60%"></div>
+        </div>
+        <strong>60% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">LVM Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create Physical Volume: <code>sudo pvcreate /dev/sdb</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display PV information: <code>sudo pvdisplay</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create Volume Group: <code>sudo vgcreate vg_data /dev/sdb</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display VG information: <code>sudo vgdisplay vg_data</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create Logical Volume: <code>sudo lvcreate -n lv_app -L 2G vg_data</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display LV information: <code>sudo lvdisplay /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create filesystem: <code>sudo mkfs.xfs /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify filesystem: <code>sudo blkid /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Extend LV: <code>sudo lvextend -L +1G /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Grow filesystem: <code>sudo xfs_growfs /dev/vg_data/lv_app</code>
+        </div>
+
+        <div class="step done">
+          <h3>2 Volume Groups (VGs) <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Logical Volumes (LVs) <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Filesystem Creation <span class="badge current">Current Step</span></h3>
+          <p>Now let's create a filesystem on the logical volume.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo mkfs.xfs /dev/vg_data/lv_app</pre>
+          <p>Then verify the filesystem:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo blkid /dev/vg_data/lv_app</pre>
+          
+          <div class="concept-box">
+            <h4>Understanding Filesystems on LVs</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Filesystem creation on LVs
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Make storage usable by the OS
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                On top of LVM logical volumes
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Final step before mounting
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>mkfs.xfs</code> creates an XFS filesystem on the LV. <code>blkid</code> shows filesystem details including UUID. Other filesystems like ext4 can also be used.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo lvcreate -n lv_app -L 2G vg_data</span>
+<span class="out">Logical volume "lv_app" created.</span>
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo lvdisplay /dev/vg_data/lv_app</span>
+<span class="out">--- Logical volume ---</span>
+<span class="out">LV Path                /dev/vg_data/lv_app</span>
+<span class="out">LV Name                lv_app</span>
+<span class="out">VG Name                vg_data</span>
+<span class="out">LV Size                2.00 GiB</span>
+<span class="out">LV UUID                ghi789-rst-012</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[root@lab ~]#</span> Type: <code>sudo mkfs.xfs /dev/vg_data/lv_app</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:80%"></div>
+        </div>
+        <strong>80% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">LVM Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create Physical Volume: <code>sudo pvcreate /dev/sdb</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display PV information: <code>sudo pvdisplay</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create Volume Group: <code>sudo vgcreate vg_data /dev/sdb</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display VG information: <code>sudo vgdisplay vg_data</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create Logical Volume: <code>sudo lvcreate -n lv_app -L 2G vg_data</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display LV information: <code>sudo lvdisplay /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create filesystem: <code>sudo mkfs.xfs /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Verify filesystem: <code>sudo blkid /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Extend LV: <code>sudo lvextend -L +1G /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Grow filesystem: <code>sudo xfs_growfs /dev/vg_data/lv_app</code>
+        </div>
+
+        <div class="step done">
+          <h3>3 Logical Volumes (LVs) <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Filesystem Creation <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Extending LVM <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's extend the logical volume and grow the filesystem.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo lvextend -L +1G /dev/vg_data/lv_app</pre>
+          <p>Then grow the filesystem to use the new space:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo xfs_growfs /dev/vg_data/lv_app</pre>
+          
+          <div class="concept-box">
+            <h4>Understanding LVM Extension</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Online storage expansion
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Increase capacity without downtime
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                On existing LVs with free space
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When more storage is needed
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>lvextend</code> increases LV size (requires VG free space). <code>xfs_growfs</code> expands XFS filesystem to use new space. For ext4, use <code>resize2fs</code> instead.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo mkfs.xfs /dev/vg_data/lv_app</span>
+<span class="out">meta-data=/dev/vg_data/lv_app isize=512    agcount=4, agsize=131072 blks</span>
+<span class="out">=                       sectsz=512   attr=2, projid32bit=1</span>
+<span class="out">=                       crc=1        finobt=1, sparse=1, rmapbt=0</span>
+<span class="out">=                       reflink=1</span>
+<span class="out">data     =                       bsize=4096   blocks=524288, imaxpct=25</span>
+<span class="out">=                       sunit=0      swidth=0 blks</span>
+<span class="out">naming   =version 2              bsize=4096   ascii-ci=0, ftype=1</span>
+<span class="out">log      =internal log           bsize=4096   blocks=2560, version=2</span>
+<span class="out">=                       sectsz=512   sunit=0 blks, lazy-count=1</span>
+<span class="out">realtime =none                   extsz=4096   blocks=0, rtextents=0</span>
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo blkid /dev/vg_data/lv_app</span>
+<span class="out">/dev/vg_data/lv_app: UUID="a1b2c3d4-e5f6-7890" TYPE="xfs"</span>
+<span class="success">Step 4 completed. Moving to step 5.</span>
+
+<span class="prompt">[root@lab ~]#</span> Type: <code>sudo lvextend -L +1G /dev/vg_data/lv_app</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">LVM Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create Physical Volume: <code>sudo pvcreate /dev/sdb</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display PV information: <code>sudo pvdisplay</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create Volume Group: <code>sudo vgcreate vg_data /dev/sdb</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display VG information: <code>sudo vgdisplay vg_data</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create Logical Volume: <code>sudo lvcreate -n lv_app -L 2G vg_data</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Display LV information: <code>sudo lvdisplay /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create filesystem: <code>sudo mkfs.xfs /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Verify filesystem: <code>sudo blkid /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Extend LV: <code>sudo lvextend -L +1G /dev/vg_data/lv_app</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Grow filesystem: <code>sudo xfs_growfs /dev/vg_data/lv_app</code>
+        </div>
+
+        <div class="step done">
+          <h3>4 Filesystem Creation <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>5 Extending LVM <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>6 LVM Extension Complete <span class="badge current">Current Step</span></h3>
+          <p>Notice how the logical volume was extended and the filesystem was grown to use the new space.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo lvextend -L +1G /dev/vg_data/lv_app</span>
+<span class="out">Size of logical volume vg_data/lv_app changed from 2.00 GiB (512 extents) to 3.00 GiB (768 extents).</span>
+<span class="out">Logical volume vg_data/lv_app successfully resized.</span>
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">sudo xfs_growfs /dev/vg_data/lv_app</span>
+<span class="out">meta-data=/dev/vg_data/lv_app  isize=512    agcount=4, agsize=131072 blks</span>
+<span class="out">=                       sectsz=512   attr=2, projid32bit=1</span>
+<span class="out">=                       crc=1        finobt=1, sparse=1</span>
+<span class="out">data     =                       bsize=4096   blocks=524288, imaxpct=25</span>
+<span class="out">=                       sunit=0      swidth=0 blks</span>
+<span class="out">naming   =version 2              bsize=4096   ascii-ci=0, ftype=1</span>
+<span class="out">log      =internal               bsize=4096   blocks=2560, version=2</span>
+<span class="out">=                       sectsz=512   sunit=0 blks, lazy-count=1</span>
+<span class="out">realtime =none                   extsz=4096   blocks=0, rtextents=0</span>
+<span class="out">data blocks changed from 524288 to 786432</span>
+<span class="success">Step 5 completed. All LVM operations successful.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All LVM management requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Creating and managing Physical Volumes (PVs)</li>
+            <li>Creating and managing Volume Groups (VGs)</li>
+            <li>Creating and managing Logical Volumes (LVs)</li>
+            <li>Creating filesystems on LVM volumes</li>
+            <li>Extending LVs and growing filesystems</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>All LVM operations completed successfully.</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+            <div class="lvm-diagram" style="margin-top:20px; background:#000;">
+              <strong>LVM Structure:</strong><br>
+              [Physical Disks] → [Physical Volumes] → [Volume Groups] → [Logical Volumes] → [Filesystems]
+            </div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

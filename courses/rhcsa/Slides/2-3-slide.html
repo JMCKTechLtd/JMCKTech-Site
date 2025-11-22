@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 2.3 - Identify CPU/Memory Usage • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px); /* Fixed height calculation */
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .concept {
+    background:#2a2a2a;
+    padding:15px;
+    margin:15px 0;
+    border-radius:5px;
+    border-left:4px solid var(--rh-blue);
+  }
+  
+  .concept h4 {
+    margin-top:0;
+    color:var(--rh-blue);
+    border-bottom:1px solid #444;
+    padding-bottom:5px;
+  }
+  
+  .concept-grid {
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+    margin-bottom:10px;
+  }
+  
+  .concept-item {
+    background:#252525;
+    padding:10px;
+    border-radius:5px;
+    border-left:2px solid var(--rh-red);
+  }
+  
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+  
+  .process-table {
+    width:100%;
+    border-collapse:collapse;
+    margin:10px 0;
+  }
+  
+  .process-table th {
+    background:#1e1e1e;
+    padding:5px;
+    text-align:left;
+  }
+  
+  .process-table td {
+    padding:5px;
+    border-bottom:1px solid #444;
+  }
+  
+  .process-table tr:nth-child(even) {
+    background:#252525;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 2.3 – Identify CPU/Memory Usage</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn to monitor system performance using tools like top, htop, free, and ps. You will identify CPU and memory usage patterns and understand process management.<br><br>
+          <strong>Time Estimate:</strong> 15–20 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">System Monitoring Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Use <code>top</code> to view system processes
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>htop</code> for interactive monitoring
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Check memory usage with <code>free -h</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View process information with <code>ps aux</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter processes with <code>ps -ef | grep root</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 View System Processes with top <span class="badge current">Current Step</span></h3>
+          <p>First, let's use the <code>top</code> command to view system processes in real-time.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">top</pre>
+          <p>After viewing the output, press <code>q</code> to exit top.</p>
+          
+          <div class="concept">
+            <h4>Understanding the top Command</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Real-time system monitoring tool
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Monitor CPU, memory usage, and running processes
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Available on all Linux systems
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When diagnosing performance issues
+              </div>
+            </div>
+            <p><strong>Key information in top:</strong></p>
+            <ul>
+              <li>First line: System uptime, users, load averages</li>
+              <li>Second line: Task statistics</li>
+              <li>Third line: CPU usage breakdown</li>
+              <li>Fourth line: Memory usage (RAM)</li>
+              <li>Fifth line: Swap space usage</li>
+              <li>Process list: Detailed per-process stats</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 2.3: Identify CPU/Memory Usage</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: View System Processes with top</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>top</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> Press 'q' to exit top after viewing.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:20%"></div>
+        </div>
+        <strong>20% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">System Monitoring Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Use <code>top</code> to view system processes
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Use <code>htop</code> for interactive monitoring
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Check memory usage with <code>free -h</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View process information with <code>ps aux</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter processes with <code>ps -ef | grep root</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 View System Processes with top <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Interactive Monitoring with htop <span class="badge current">Current Step</span></h3>
+          <p>Now let's use <code>htop</code>, an enhanced version of top with a more user-friendly interface.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">htop</pre>
+          <p>After viewing the output, press <code>F10</code> to exit htop.</p>
+          
+          <div class="concept">
+            <h4>Understanding htop</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Enhanced, interactive version of top
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                More user-friendly with color and mouse support
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                May need to install (<code>dnf install htop</code>)
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When you need more detailed process monitoring
+              </div>
+            </div>
+            <p><strong>htop features:</strong></p>
+            <ul>
+              <li>Color-coded display</li>
+              <li>Vertical and horizontal scrolling</li>
+              <li>Mouse support for process selection</li>
+              <li>Tree view of processes</li>
+              <li>Easier process management (kill, renice)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">top</span>
+<span class="out">top - 10:30:45 up 1 day,  2:15,  1 user,  load average: 0.15, 0.10, 0.05</span>
+<span class="out">Tasks: 120 total,   2 running, 118 sleeping,   0 stopped,   0 zombie</span>
+<span class="out">%Cpu(s):  5.3 us,  1.2 sy,  0.0 ni, 93.5 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span>
+<span class="out">MiB Mem :   7856.4 total,   1024.2 free,   3072.0 used,   3760.2 buff/cache</span>
+<span class="out">MiB Swap:   2048.0 total,   2048.0 free,      0.0 used.   4480.4 avail Mem</span>
+<span class="out"></span>
+<span class="out">  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND</span>
+<span class="out"> 1234 root      20   0  300868  45728  12344 R   6.2  0.6   0:01.23 gnome-shell</span>
+<span class="out"> 5678 user      20   0  250000  35000   9876 S   2.5  0.4   0:00.45 gnome-terminal</span>
+<span class="out"> 9101 user      20   0   25000   5000   3000 S   0.5  0.1   0:00.12 top</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>htop</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:40%"></div>
+        </div>
+        <strong>40% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">System Monitoring Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>top</code> to view system processes
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>htop</code> for interactive monitoring
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Check memory usage with <code>free -h</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View process information with <code>ps aux</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter processes with <code>ps -ef | grep root</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 View System Processes with top <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Interactive Monitoring with htop <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Check Memory Usage with free <span class="badge current">Current Step</span></h3>
+          <p>Now let's check memory usage with the <code>free</code> command.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">free -h</pre>
+          <p>The <code>-h</code> option shows human-readable sizes (MB, GB).</p>
+          
+          <div class="concept">
+            <h4>Understanding Memory Usage</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Reports system memory usage
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Check available memory and swap usage
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Available on all Linux systems
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When diagnosing memory-related issues
+              </div>
+            </div>
+            <p><strong>free command output explained:</strong></p>
+            <table class="process-table">
+              <tr>
+                <th>Column</th>
+                <th>Description</th>
+              </tr>
+              <tr>
+                <td>total</td>
+                <td>Total installed memory</td>
+              </tr>
+              <tr>
+                <td>used</td>
+                <td>Memory currently in use</td>
+              </tr>
+              <tr>
+                <td>free</td>
+                <td>Unused memory</td>
+              </tr>
+              <tr>
+                <td>shared</td>
+                <td>Memory used by tmpfs</td>
+              </tr>
+              <tr>
+                <td>buff/cache</td>
+                <td>Memory used by kernel buffers/cache</td>
+              </tr>
+              <tr>
+                <td>available</td>
+                <td>Memory available for new processes</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">htop</span>
+<span class="out">  CPU[||||||||                    12.5%]   Tasks: 120, 2 thr; 1 running</span>
+<span class="out">  Mem[||||||||||||||||||         500/4000MB]   Load average: 0.15 0.10 0.05</span>
+<span class="out">  Swp[                          0.0/2000MB]   Uptime: 1 day, 02:15:00</span>
+<span class="out"></span>
+<span class="out">  PID USER      PRI  NI  VIRT   RES   SHR S CPU% MEM%   TIME+  Command</span>
+<span class="out"> 1234 root       20   0  300M  45M   12M R  6.2  0.6  0:01.23 gnome-shell</span>
+<span class="out"> 5678 user       20   0  250M  35M  9.8M S  2.5  0.4  0:00.45 gnome-terminal</span>
+<span class="out"> 9101 user       20   0  250M  35M  9.8M S  0.5  0.1  0:00.12 htop</span>
+<span class="out"></span>
+<span class="out">F1Help  F2Setup F3SearchF4FilterF5Tree  F6SortByF7Nice -F8Nice +F9Kill  F10Quit</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>free -h</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:60%"></div>
+        </div>
+        <strong>60% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">System Monitoring Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>top</code> to view system processes
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>htop</code> for interactive monitoring
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check memory usage with <code>free -h</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> View process information with <code>ps aux</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter processes with <code>ps -ef | grep root</code>
+        </div>
+
+        <div class="step done">
+          <h3>2 Interactive Monitoring with htop <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Process Information with ps <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's use the <code>ps</code> command to view detailed process information.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ps aux</pre>
+          <p>Then type:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ps -ef | grep root</pre>
+          
+          <div class="concept">
+            <h4>Understanding Process Status (ps)</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Snapshot of current processes
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                View detailed process information
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Available on all Linux systems
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When you need specific process details
+              </div>
+            </div>
+            <p><strong>Common ps options:</strong></p>
+            <ul>
+              <li><code>ps aux</code>: Show all processes with detailed info</li>
+              <li><code>ps -ef</code>: Full-format listing</li>
+              <li><code>ps -e --forest</code>: Show process hierarchy</li>
+              <li><code>ps -u username</code>: Show processes for a specific user</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">free -h</span>
+<span class="out">              total        used        free      shared  buff/cache   available</span>
+<span class="out">Mem:           7.7G        3.0G        1.0G        123M        3.7G        4.4G</span>
+<span class="out">Swap:          2.0G          0B        2.0G</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>ps aux</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:80%"></div>
+        </div>
+        <strong>80% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">System Monitoring Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>top</code> to view system processes
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>htop</code> for interactive monitoring
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check memory usage with <code>free -h</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View process information with <code>ps aux</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Filter processes with <code>ps -ef | grep root</code>
+        </div>
+
+        <div class="step done">
+          <h3>3 Check Memory Usage with free <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Filter Processes with ps and grep <span class="badge current">Current Step</span></h3>
+          <p>Now let's filter processes to show only those running as root.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">ps -ef | grep root</pre>
+          
+          <div class="concept">
+            <h4>Key columns in ps output:</h4>
+            <table class="process-table">
+              <tr>
+                <th>Column</th>
+                <th>Description</th>
+              </tr>
+              <tr>
+                <td>USER</td>
+                <td>Process owner</td>
+              </tr>
+              <tr>
+                <td>PID</td>
+                <td>Process ID</td>
+              </tr>
+              <tr>
+                <td>%CPU</td>
+                <td>CPU usage percentage</td>
+              </tr>
+              <tr>
+                <td>%MEM</td>
+                <td>Memory usage percentage</td>
+              </tr>
+              <tr>
+                <td>VSZ</td>
+                <td>Virtual memory size (KB)</td>
+              </tr>
+              <tr>
+                <td>RSS</td>
+                <td>Resident set size (physical memory)</td>
+              </tr>
+              <tr>
+                <td>TTY</td>
+                <td>Terminal associated with process</td>
+              </tr>
+              <tr>
+                <td>STAT</td>
+                <td>Process state (S=sleeping, R=running, etc.)</td>
+              </tr>
+              <tr>
+                <td>START</td>
+                <td>Process start time</td>
+              </tr>
+              <tr>
+                <td>TIME</td>
+                <td>CPU time used</td>
+              </tr>
+              <tr>
+                <td>COMMAND</td>
+                <td>Command line that started the process</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ps aux</span>
+<span class="out">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</span>
+<span class="out">root         1  0.0  0.1 168012  9424 ?        Ss   10:28   0:02 /usr/lib/systemd/systemd</span>
+<span class="out">root         2  0.0  0.0      0     0 ?        S    10:28   0:00 [kthreadd]</span>
+<span class="out">root         3  0.0  0.0      0     0 ?        I<   10:28   0:00 [rcu_gp]</span>
+<span class="out">user      1234  0.5  0.6 300868 45728 ?        Sl   10:29   0:01 /usr/bin/gnome-shell</span>
+<span class="out">user      5678  0.2  0.4 250000 35000 pts/0    Sl   10:30   0:00 /usr/bin/gnome-terminal</span>
+<span class="success">First ps command completed.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type: <code>ps -ef | grep root</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">System Monitoring Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>top</code> to view system processes
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Use <code>htop</code> for interactive monitoring
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check memory usage with <code>free -h</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View process information with <code>ps aux</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Filter processes with <code>ps -ef | grep root</code>
+        </div>
+
+        <div class="step done">
+          <h3>4 Process Information with ps <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>5 Filter Processes with ps and grep <span class="badge completed">Completed</span></h3>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">ps -ef | grep root</span>
+<span class="out">root         1     0  0 10:28 ?        00:00:02 /usr/lib/systemd/systemd</span>
+<span class="out">root         2     0  0 10:28 ?        00:00:00 [kthreadd]</span>
+<span class="out">root         3     2  0 10:28 ?        00:00:00 [rcu_gp]</span>
+<span class="out">root       456     1  0 10:28 ?        00:00:01 /usr/lib/systemd/systemd-journald</span>
+<span class="success">All system monitoring commands have been executed correctly.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Using <code>top</code> for real-time system monitoring</li>
+            <li>Interactive monitoring with <code>htop</code></li>
+            <li>Checking memory usage with <code>free -h</code></li>
+            <li>Viewing process information with <code>ps aux</code></li>
+            <li>Filtering processes with <code>ps -ef | grep</code></li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>🎉 Lab 2.3 Completed!</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

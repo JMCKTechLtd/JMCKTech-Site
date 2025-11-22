@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 2.2 - Changing Runlevels/Targets • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px); /* Fixed height calculation */
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .concept-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:10px 0;
+  }
+  .concept-item {
+    background:#111;
+    padding:10px;
+    border-radius:6px;
+    border-left:3px solid var(--rh-blue);
+  }
+  .concept-item strong {
+    color:var(--rh-blue);
+    display:block;
+    margin-bottom:5px;
+  }
+  
+  .target-info {
+    background:#002a2a;
+    padding:15px;
+    border-radius:6px;
+    border-left:4px solid #ff9800;
+    margin:15px 0;
+  }
+  .target-info h5 {
+    margin-top:0;
+    color:#ff9800;
+  }
+  
+  .hint-box {
+    background:#002a2a;
+    padding:10px;
+    border-radius:6px;
+    border-left:4px solid var(--rh-blue);
+    margin:10px 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 2.2 – Changing Runlevels/Targets</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn to manage system states by changing runlevels/targets using systemd.<br><br>
+          <strong>Time Estimate:</strong> 10–15 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Target Configuration Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> Check current target with <code>systemctl get-default</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Change to multi-user target with <code>systemctl isolate multi-user.target</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Change to graphical target with <code>systemctl isolate graphical.target</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set default target with <code>systemctl set-default multi-user.target</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify default target with <code>systemctl get-default</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Enter rescue mode with <code>systemctl rescue</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Exit rescue mode with <code>exit</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 Check Current Target <span class="badge current">Current Step</span></h3>
+          <p>First, let's check the current default target.</p>
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          <pre style="background:#111; padding:12px; border-radius:6px;">systemctl get-default</pre>
+          
+          <div class="target-info">
+            <h5>Common Targets</h5>
+            <ul>
+              <li><strong>graphical.target</strong> - GUI with networking (runlevel 5)</li>
+              <li><strong>multi-user.target</strong> - CLI with networking (runlevel 3)</li>
+              <li><strong>rescue.target</strong> - Single-user mode (runlevel 1)</li>
+              <li><strong>emergency.target</strong> - Emergency shell (most minimal)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span>This is RHCSA Lab 2.2: Changing Runlevels/Targets</span>
+<span class="prompt">[root@lab ~]#</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[root@lab ~]#</span> <span>You must complete each step in order.</span>
+<span class="prompt">[root@lab ~]#</span> <span>Current step: Check Current Target</span>
+<span class="prompt">[root@lab ~]#</span> Type: <code>systemctl get-default</code>
+<span class="prompt">[root@lab ~]#</span> <span class="tip"><strong>Tip:</strong> Systemd targets replace traditional runlevels.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:14%"></div>
+        </div>
+        <strong>14% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Target Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          Check current target with <code>systemctl get-default</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Change to multi-user target with <code>systemctl isolate multi-user.target</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Change to graphical target with <code>systemctl isolate graphical.target</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set default target with <code>systemctl set-default multi-user.target</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify default target with <code>systemctl get-default</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Enter rescue mode with <code>systemctl rescue</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Exit rescue mode with <code>exit</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Check Current Target <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Change to Multi-User Target <span class="badge current">Current Step</span></h3>
+          <p>Now let's change to the multi-user target.</p>
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          <pre style="background:#111; padding:12px; border-radius:6px;">systemctl isolate multi-user.target</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Switching system state immediately
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              For maintenance or performance
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Affects all running services
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              When you need CLI-only access
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">systemctl get-default</span>
+<span class="out">graphical.target</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[root@lab ~]#</span> Next command:
+<span class="prompt">[root@lab ~]#</span> <code>systemctl isolate multi-user.target</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:29%"></div>
+        </div>
+        <strong>29% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Target Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check current target with <code>systemctl get-default</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change to multi-user target with <code>systemctl isolate multi-user.target</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Change to graphical target with <code>systemctl isolate graphical.target</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set default target with <code>systemctl set-default multi-user.target</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify default target with <code>systemctl get-default</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Enter rescue mode with <code>systemctl rescue</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Exit rescue mode with <code>exit</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Check Current Target <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Change to Multi-User Target <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Change to Graphical Target <span class="badge current">Current Step</span></h3>
+          <p>Now let's change back to the graphical target.</p>
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          <pre style="background:#111; padding:12px; border-radius:6px;">systemctl isolate graphical.target</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Desktop environment target
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              For GUI-based workstations
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Requires Xorg/Wayland and display manager
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              Normal desktop usage
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">systemctl isolate multi-user.target</span>
+<span class="out">Stopping graphical.target...</span>
+<span class="out">Starting multi-user.target...</span>
+<span class="out">Switched to multi-user.target</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[root@lab ~]#</span> Type <code>systemctl isolate graphical.target</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:43%"></div>
+        </div>
+        <strong>43% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Target Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check current target with <code>systemctl get-default</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change to multi-user target with <code>systemctl isolate multi-user.target</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change to graphical target with <code>systemctl isolate graphical.target</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Set default target with <code>systemctl set-default multi-user.target</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify default target with <code>systemctl get-default</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Enter rescue mode with <code>systemctl rescue</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Exit rescue mode with <code>exit</code>
+        </div>
+
+        <div class="step done">
+          <h3>2 Change to Multi-User Target <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Change to Graphical Target <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Set Default Target <span class="badge current">Current Step</span></h3>
+          <p>Now let's set the multi-user target as the default.</p>
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          <pre style="background:#111; padding:12px; border-radius:6px;">systemctl set-default multi-user.target</pre>
+          
+          <p>Then verify the change:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">systemctl get-default</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Changes boot-time target
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              For servers or headless systems
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Creates symlink in /etc/systemd/system/
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              When changing system purpose
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">systemctl isolate graphical.target</span>
+<span class="out">Stopping multi-user.target...</span>
+<span class="out">Starting graphical.target...</span>
+<span class="out">Switched to graphical.target</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[root@lab ~]#</span> Type <code>systemctl set-default multi-user.target</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:57%"></div>
+        </div>
+        <strong>57% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Target Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check current target with <code>systemctl get-default</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change to multi-user target with <code>systemctl isolate multi-user.target</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change to graphical target with <code>systemctl isolate graphical.target</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set default target with <code>systemctl set-default multi-user.target</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Verify default target with <code>systemctl get-default</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Enter rescue mode with <code>systemctl rescue</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Exit rescue mode with <code>exit</code>
+        </div>
+
+        <div class="step done">
+          <h3>3 Change to Graphical Target <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Set Default Target <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Rescue Mode <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's explore rescue mode.</p>
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          <pre style="background:#111; padding:12px; border-radius:6px;">systemctl rescue</pre>
+          
+          <p>After seeing the simulated output, exit rescue mode:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">exit</pre>
+          
+          <div class="concept-grid">
+            <div class="concept-item">
+              <strong>What</strong>
+              Minimal environment with networking
+            </div>
+            <div class="concept-item">
+              <strong>Why</strong>
+              For system recovery operations
+            </div>
+            <div class="concept-item">
+              <strong>Where</strong>
+              Mounts filesystems read-only by default
+            </div>
+            <div class="concept-item">
+              <strong>When</strong>
+              When system won't boot normally
+            </div>
+          </div>
+          <div style="background:#220000; padding:10px; border-radius:6px; border-left:3px solid var(--rh-red); margin-top:10px;">
+            <strong>Exam Note:</strong> Know how to boot into rescue mode from GRUB for the RHCSA exam.
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">systemctl set-default multi-user.target</span>
+<span class="out">Removed /etc/systemd/system/default.target.</span>
+<span class="out">Created symlink /etc/systemd/system/default.target → /usr/lib/systemd/system/multi-user.target.</span>
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">systemctl get-default</span>
+<span class="out">multi-user.target</span>
+<span class="success">Step 4 completed. Moving to step 5.</span>
+
+<span class="prompt">[root@lab ~]#</span> Type <code>systemctl rescue</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:71%"></div>
+        </div>
+        <strong>71% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Target Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Check current target with <code>systemctl get-default</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change to multi-user target with <code>systemctl isolate multi-user.target</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Change to graphical target with <code>systemctl isolate graphical.target</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Set default target with <code>systemctl set-default multi-user.target</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Verify default target with <code>systemctl get-default</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Enter rescue mode with <code>systemctl rescue</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Exit rescue mode with <code>exit</code>
+        </div>
+
+        <div class="step current">
+          <h3>6 Exit Rescue Mode <span class="badge current">Current Step</span></h3>
+          <p>Exit rescue mode to complete the lab.</p>
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          <pre style="background:#111; padding:12px; border-radius:6px;">exit</pre>
+          
+          <div class="target-info">
+            <h5>Understanding Rescue Mode</h5>
+            <p>Rescue mode provides a single-user root shell with minimal services running. In a real system, this would actually switch modes.</p>
+            <p><strong>Warning:</strong> In a real system, rescue mode would require authentication and would actually change your system state.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[root@lab ~]#</span> <span class="cmd">systemctl rescue</span>
+<span class="out">System is entering rescue mode...</span>
+<span class="out">You are in rescue mode. Type "exit" to continue.</span>
+<span class="prompt">[root@lab rescue]#</span>
+<span class="tip">You are now in rescue mode simulation.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab rescue]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Systemd targets and how they replace traditional runlevels</li>
+            <li>Checking current target with <code>systemctl get-default</code></li>
+            <li>Changing targets with <code>systemctl isolate</code></li>
+            <li>Setting persistent defaults with <code>systemctl set-default</code></li>
+            <li>Entering and exiting rescue mode</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>All runlevel/target commands executed correctly!</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+            <div style="margin-top:10px;">Lab Completed! 🏆</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[root@lab ~]#</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

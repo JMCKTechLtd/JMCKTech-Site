@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 3.4 - Mount & Unmount Filesystems • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px); /* Fixed height calculation */
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .concept {
+    background:#2a2a2a;
+    padding:15px;
+    margin:15px 0;
+    border-radius:5px;
+    border-left:4px solid var(--rh-blue);
+  }
+  
+  .concept h4 {
+    margin-top:0;
+    color:var(--rh-blue);
+    border-bottom:1px solid #444;
+    padding-bottom:5px;
+  }
+  
+  .concept-grid {
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+    margin-bottom:10px;
+  }
+  
+  .concept-item {
+    background:#252525;
+    padding:10px;
+    border-radius:5px;
+    border-left:2px solid var(--rh-red);
+  }
+  
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+  
+  .filesystem-table {
+    width:100%;
+    border-collapse:collapse;
+    margin:10px 0;
+  }
+  
+  .filesystem-table th, .filesystem-table td {
+    border:1px solid #444;
+    padding:8px;
+    text-align:left;
+  }
+  
+  .filesystem-table th {
+    background-color:#333;
+    color:var(--rh-green);
+  }
+  
+  .filesystem-table tr:nth-child(even) {
+    background-color:#2a2a2a;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 3.4 – Mount & Unmount Filesystems</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn how to mount and unmount filesystems in Linux. You will work with temporary mounts, persistent mounts using /etc/fstab, and understand the fundamentals of filesystem management.<br><br>
+          <strong>Time Estimate:</strong> 15–20 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Filesystem Configuration Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> View mounted filesystems with <code>mount</code> command
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Mount a filesystem temporarily: <code>sudo mount /dev/sdb1 /mnt</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Unmount a filesystem: <code>sudo umount /mnt</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Configure persistent mount in <code>/etc/fstab</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test fstab configuration with <code>sudo mount -a</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 View Mounted Filesystems <span class="badge current">Current Step</span></h3>
+          <p>First, let's view the currently mounted filesystems using the <code>mount</code> command.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">mount</pre>
+          
+          <div class="concept">
+            <h4>Understanding Mounted Filesystems</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Shows currently mounted filesystems
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Verify what's mounted and where
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Works on any Linux system
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Before/after mounting operations
+              </div>
+            </div>
+            <p><strong>How it works:</strong> The <code>mount</code> command without arguments displays all mounted filesystems with their mount points, types, and options.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 3.4: Mount & Unmount Filesystems</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: View Mounted Filesystems</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>mount</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> The mount command shows all currently mounted filesystems.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:20%"></div>
+        </div>
+        <strong>20% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Filesystem Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          View mounted filesystems with <code>mount</code> command
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Mount a filesystem temporarily: <code>sudo mount /dev/sdb1 /mnt</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Unmount a filesystem: <code>sudo umount /mnt</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Configure persistent mount in <code>/etc/fstab</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test fstab configuration with <code>sudo mount -a</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 View Mounted Filesystems <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Mount a Filesystem Temporarily <span class="badge current">Current Step</span></h3>
+          <p>Now let's mount a filesystem temporarily. This mount will persist until the next reboot.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo mount /dev/sdb1 /mnt</pre>
+          <p>Then verify the mount was successful:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">mount | grep /mnt</pre>
+          
+          <div class="concept">
+            <h4>Understanding Temporary Mounts</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Mounts a filesystem until reboot
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Temporary access to storage
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Any available block device
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                For temporary storage needs
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>mount</code> attaches the filesystem on <code>/dev/sdb1</code> to the directory <code>/mnt</code>. The <code>sudo</code> command is needed for root privileges.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">mount</span>
+<span class="out">/dev/sda1 on / type ext4 (rw,relatime)</span>
+<span class="out">tmpfs on /dev/shm type tmpfs (rw,nosuid,nodev)</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>sudo mount /dev/sdb1 /mnt</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:40%"></div>
+        </div>
+        <strong>40% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Filesystem Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View mounted filesystems with <code>mount</code> command
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Mount a filesystem temporarily: <code>sudo mount /dev/sdb1 /mnt</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Unmount a filesystem: <code>sudo umount /mnt</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Configure persistent mount in <code>/etc/fstab</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test fstab configuration with <code>sudo mount -a</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 View Mounted Filesystems <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Mount a Filesystem Temporarily <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Unmount a Filesystem <span class="badge current">Current Step</span></h3>
+          <p>Now let's safely unmount the filesystem we just mounted.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo umount /mnt</pre>
+          <p>Then verify the unmount was successful:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">mount | grep /mnt</pre>
+          
+          <div class="concept">
+            <h4>Understanding Unmounting</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Safely detaches a filesystem
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Prevent data corruption
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Any mounted filesystem
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Before removing storage
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>umount</code> (note the spelling) detaches the filesystem from its mount point. The filesystem must not be in use (no open files or processes using it).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo mount /dev/sdb1 /mnt</span>
+<span class="out">Successfully mounted /dev/sdb1 on /mnt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">mount | grep /mnt</span>
+<span class="out">/dev/sdb1 on /mnt type ext4 (rw,relatime)</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type <code>sudo umount /mnt</code> to unmount the filesystem.
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:60%"></div>
+        </div>
+        <strong>60% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Filesystem Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View mounted filesystems with <code>mount</code> command
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Mount a filesystem temporarily: <code>sudo mount /dev/sdb1 /mnt</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Unmount a filesystem: <code>sudo umount /mnt</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Configure persistent mount in <code>/etc/fstab</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test fstab configuration with <code>sudo mount -a</code>
+        </div>
+
+        <div class="step done">
+          <h3>2 Mount a Filesystem Temporarily <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Unmount a Filesystem <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Configure Persistent Mounts (/etc/fstab) <span class="badge current">Current Step</span></h3>
+          <p>Now let's configure a persistent mount that will survive reboots by editing the <code>/etc/fstab</code> file.</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo vim /etc/fstab</pre>
+          <p>Once in the editor, add this line to the file (use Tab between fields):</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">/dev/sdb1 /mnt ext4 defaults 0 0</pre>
+          <p>To save and exit vim:</p>
+          <ol>
+            <li>Press <code>ESC</code> to ensure you're in command mode</li>
+            <li>Type <code>:wq</code> and press <code>Enter</code> to write and quit</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo umount /mnt</span>
+<span class="out">Successfully unmounted /mnt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">mount | grep /mnt</span>
+<span class="out"># No output - filesystem is unmounted</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type <code>sudo vim /etc/fstab</code> to edit the fstab file.
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:80%"></div>
+        </div>
+        <strong>80% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Filesystem Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View mounted filesystems with <code>mount</code> command
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Mount a filesystem temporarily: <code>sudo mount /dev/sdb1 /mnt</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Unmount a filesystem: <code>sudo umount /mnt</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Configure persistent mount in <code>/etc/fstab</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Test fstab configuration with <code>sudo mount -a</code>
+        </div>
+
+        <div class="step done">
+          <h3>3 Unmount a Filesystem <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Configure Persistent Mounts (/etc/fstab) <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Test fstab Configuration <span class="badge current">Current Step</span></h3>
+          <p>Now test the fstab configuration to ensure it works correctly:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo mount -a</pre>
+          <p>Then verify the mount was successful:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">mount | grep /mnt</pre>
+          
+          <div class="concept">
+            <h4>Understanding /etc/fstab</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Filesystem table configuration
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Persistent mounts across reboots
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                <code>/etc/fstab</code>
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                System boot or mount -a
+              </div>
+            </div>
+            <p><strong>How it works:</strong> The fstab file defines how filesystems should be mounted. Fields are: device, mount point, type, options, dump, fsck order.</p>
+
+            <table class="filesystem-table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Example</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Device</td>
+                  <td>/dev/sdb1</td>
+                  <td>Block device or UUID</td>
+                </tr>
+                <tr>
+                  <td>Mount point</td>
+                  <td>/mnt</td>
+                  <td>Directory to mount to</td>
+                </tr>
+                <tr>
+                  <td>Filesystem type</td>
+                  <td>ext4</td>
+                  <td>Type of filesystem</td>
+                </tr>
+                <tr>
+                  <td>Options</td>
+                  <td>defaults</td>
+                  <td>Mount options (ro,rw,etc)</td>
+                </tr>
+                <tr>
+                  <td>Dump</td>
+                  <td>0</td>
+                  <td>Backup utility flag</td>
+                </tr>
+                <tr>
+                  <td>Fsck order</td>
+                  <td>0</td>
+                  <td>Filesystem check order</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo vim /etc/fstab</span>
+<span class="out"># Vim editor opened</span>
+<span class="out"># Added line: /dev/sdb1 /mnt ext4 defaults 0 0</span>
+<span class="success">fstab configuration saved successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Now test with: <code>sudo mount -a</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Filesystem Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> View mounted filesystems with <code>mount</code> command
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Mount a filesystem temporarily: <code>sudo mount /dev/sdb1 /mnt</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Unmount a filesystem: <code>sudo umount /mnt</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Configure persistent mount in <code>/etc/fstab</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Test fstab configuration with <code>sudo mount -a</code>
+        </div>
+
+        <div class="step done">
+          <h3>4 Configure Persistent Mounts (/etc/fstab) <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>5 Test fstab Configuration <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>6 Filesystem Mounting Complete <span class="badge current">Current Step</span></h3>
+          <p>All filesystem mounting and unmounting requirements have been completed successfully.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo mount -a</span>
+<span class="out">Mounting all filesystems from /etc/fstab...</span>
+<span class="out">/dev/sdb1 mounted on /mnt</span>
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">mount | grep /mnt</span>
+<span class="out">/dev/sdb1 on /mnt type ext4 (rw,relatime)</span>
+<span class="success">Step 5 completed successfully.</span>
+<span class="success">All filesystem operations executed correctly!</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Viewing mounted filesystems with <code>mount</code></li>
+            <li>Temporary mounting with <code>mount /dev/sdb1 /mnt</code></li>
+            <li>Safely unmounting with <code>umount</code></li>
+            <li>Persistent mounts via <code>/etc/fstab</code></li>
+            <li>Testing fstab with <code>mount -a</code></li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>Filesystem operations completed.</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 3.1 - Partition Management • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px);
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+  .warning { color:#ff9800; font-weight:bold; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+  
+  .danger-zone {
+    background:rgba(204, 0, 0, 0.2);
+    padding:10px;
+    border-radius:5px;
+    border-left:3px solid var(--rh-red);
+    margin:10px 0;
+  }
+  
+  .concept {
+    background:#2a2a2a;
+    padding:15px;
+    margin:15px 0;
+    border-radius:5px;
+    border-left:4px solid var(--rh-blue);
+  }
+  
+  .concept h4 {
+    margin-top:0;
+    color:var(--rh-blue);
+    border-bottom:1px solid #444;
+    padding-bottom:5px;
+  }
+  
+  .concept-grid {
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+    margin-bottom:10px;
+  }
+  
+  .concept-item {
+    background:#252525;
+    padding:10px;
+    border-radius:5px;
+    border-left:2px solid var(--rh-red);
+  }
+  
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 3.1 – List, Create, and Delete Partitions</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Learn to list, create, and delete partitions using various Linux tools including fdisk, gdisk, and parted.<br><br>
+          <strong>Time Estimate:</strong> 20–25 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Partition Management Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> List partitions using <code>lsblk</code> and <code>fdisk -l</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create MBR partition using <code>fdisk</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create GPT partition using <code>gdisk</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create partition using <code>parted</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 Listing Partitions <span class="badge current">Current Step</span></h3>
+          <p>First, let's examine the existing partitions on our system.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">lsblk</pre>
+          <p>Then type:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo fdisk -l /dev/sda</pre>
+          
+          <div class="danger-zone">
+            <h4>⚠️ Warning</h4>
+            <p>Partitioning commands can destroy data if used incorrectly. Always double-check the device name before executing commands.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>This is RHCSA Lab 3.1: Partition Management</span>
+<span class="prompt">[user@lab ~]$</span> <span>Follow the instructions in the left panel.</span>
+<span class="prompt">[user@lab ~]$</span> <span>You must complete each step in order.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: Listing Partitions</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>lsblk</code> then <code>sudo fdisk -l /dev/sda</code>
+<span class="prompt">[user@lab ~]$</span> <span class="warning">⚠️ Warning: This lab simulates partition operations. No real disks are modified.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:25%"></div>
+        </div>
+        <strong>25% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Partition Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          List partitions using <code>lsblk</code> and <code>fdisk -l</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create MBR partition using <code>fdisk</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create GPT partition using <code>gdisk</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create partition using <code>parted</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Listing Partitions <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Creating MBR Partitions with fdisk <span class="badge current">Current Step</span></h3>
+          <p>Now let's create a partition using the traditional fdisk tool.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo fdisk /dev/sdb</pre>
+          <p>Once in fdisk, follow these steps:</p>
+          <ol>
+            <li>Type <code>n</code> (for new partition)</li>
+            <li>Type <code>p</code> (for primary)</li>
+            <li>Type <code>1</code> (for partition number)</li>
+            <li>Accept defaults for first/last sectors</li>
+            <li>Type <code>w</code> (to write changes)</li>
+          </ol>
+          
+          <div class="concept">
+            <h4>Understanding fdisk</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Traditional MBR partition editor
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                For disks ≤2TB with MBR partition tables
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Works with MBR-formatted disks
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Legacy systems or small disks
+              </div>
+            </div>
+            <p><strong>How it works:</strong> fdisk is interactive. Common commands: <code>n</code> (new), <code>d</code> (delete), <code>p</code> (print), <code>w</code> (write), <code>q</code> (quit). Changes take effect after writing.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">lsblk</span>
+<span class="out">NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span>
+<span class="out">sda      8:0    0   20G  0 disk</span>
+<span class="out">├─sda1   8:1    0    1G  0 part /boot</span>
+<span class="out">└─sda2   8:2    0   19G  0 part /</span>
+<span class="out">sdb      8:16   0   10G  0 disk</span>
+<span class="out">sdc      8:32   0   10G  0 disk</span>
+<span class="out">sdd      8:48   0   10G  0 disk</span>
+
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo fdisk -l /dev/sda</span>
+<span class="out">Disk /dev/sda: 20 GiB, 21474836480 bytes, 41943040 sectors</span>
+<span class="out">Units: sectors of 1 * 512 = 512 bytes</span>
+<span class="out">Sector size (logical/physical): 512 bytes / 512 bytes</span>
+<span class="out">I/O size (minimum/optimal): 512 bytes / 512 bytes</span>
+<span class="out">Disklabel type: dos</span>
+<span class="out">Disk identifier: 0x000a1b2c</span>
+<span class="out">Device     Boot   Start      End  Sectors Size Id Type</span>
+<span class="out">/dev/sda1  *       2048  2099199  2097152   1G 83 Linux</span>
+<span class="out">/dev/sda2       2099200 41943039 39843840  19G 83 Linux</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>sudo fdisk /dev/sdb</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:50%"></div>
+        </div>
+        <strong>50% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Partition Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> List partitions using <code>lsblk</code> and <code>fdisk -l</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create MBR partition using <code>fdisk</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create GPT partition using <code>gdisk</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create partition using <code>parted</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 Listing Partitions <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Creating MBR Partitions with fdisk <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Creating GPT Partitions with gdisk <span class="badge current">Current Step</span></h3>
+          <p>Now let's create a GPT partition using gdisk.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo gdisk /dev/sdc</pre>
+          <p>Once in gdisk, follow these steps:</p>
+          <ol>
+            <li>Type <code>n</code> (for new partition)</li>
+            <li>Accept defaults for partition number, first/last sectors</li>
+            <li>Set type: <code>8200</code> (Linux swap)</li>
+            <li>Type <code>w</code> (to write changes)</li>
+          </ol>
+          
+          <div class="concept">
+            <h4>Understanding gdisk</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                GPT partition editor (modern alternative)
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                For disks >2TB or modern systems
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Works with GPT-formatted disks
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                UEFI systems or large disks
+              </div>
+            </div>
+            <p><strong>How it works:</strong> Similar to fdisk but for GPT. Common commands: <code>n</code>, <code>d</code>, <code>p</code>, <code>w</code>, <code>q</code>. Type codes: <code>8300</code> (Linux filesystem), <code>8200</code> (Linux swap).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo fdisk /dev/sdb</span>
+<span class="out">Welcome to fdisk (util-linux 2.32.1).</span>
+<span class="out">Changes will remain in memory only until you decide to write them.</span>
+<span class="out">Be careful before using the write command.</span>
+<span class="out">Command (m for help): n</span>
+<span class="out">Partition type</span>
+<span class="out">   p   primary (0 primary, 0 extended, 4 free)</span>
+<span class="out">   e   extended (container for logical partitions)</span>
+<span class="out">Select (default p): p</span>
+<span class="out">Partition number (1-4, default 1): 1</span>
+<span class="out">First sector (2048-20971519, default 2048):</span>
+<span class="out">Last sector, +/-sectors or +/-size{K,M,G,T,P} (2048-20971519, default 20971519):</span>
+<span class="out">Created a new partition 1 of type 'Linux' and of size 10 GiB.</span>
+<span class="out">Command (m for help): w</span>
+<span class="out">The partition table has been altered.</span>
+<span class="out">Calling ioctl() to re-read partition table.</span>
+<span class="out">Syncing disks.</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next: <code>sudo gdisk /dev/sdc</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:75%"></div>
+        </div>
+        <strong>75% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Partition Management Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> List partitions using <code>lsblk</code> and <code>fdisk -l</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create MBR partition using <code>fdisk</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create GPT partition using <code>gdisk</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create partition using <code>parted</code>
+        </div>
+
+        <div class="step done">
+          <h3>2 Creating MBR Partitions with fdisk <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Creating GPT Partitions with gdisk <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Using parted for Advanced Partitioning <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's use parted for more advanced partitioning operations.</p>
+          <p>Type the command shown below:</p>
+          <pre style="background:#111; padding:12px; border-radius:6px;">sudo parted /dev/sdd</pre>
+          <p>Once in parted, follow these steps:</p>
+          <ol>
+            <li>Type <code>mklabel gpt</code></li>
+            <li>Type <code>mkpart primary ext4 1MiB 500MiB</code></li>
+            <li>Type <code>print</code> to verify</li>
+            <li>Type <code>quit</code> to exit</li>
+          </ol>
+          
+          <div class="concept">
+            <h4>Understanding parted</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Advanced partition manipulation tool
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Scriptable and supports both MBR/GPT
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Useful for precise partition sizing
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Automation or complex partitioning
+              </div>
+            </div>
+            <p><strong>How it works:</strong> parted allows precise control. Commands: <code>mklabel</code> (create partition table), <code>mkpart</code> (create partition), <code>rm</code> (delete), <code>print</code> (show info). Changes take effect immediately.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo gdisk /dev/sdc</span>
+<span class="out">GPT fdisk (gdisk) version 1.0.3</span>
+<span class="out">Partition table scan:</span>
+<span class="out">  MBR: not present</span>
+<span class="out">  BSD: not present</span>
+<span class="out">  APM: not present</span>
+<span class="out">  GPT: not present</span>
+<span class="out">Creating new GPT entries.</span>
+<span class="out">Command (? for help): n</span>
+<span class="out">Partition number (1-128, default 1):</span>
+<span class="out">First sector (34-20971486, default = 2048) or {+-}size{KMGTP}:</span>
+<span class="out">Last sector (2048-20971486, default = 20971486) or {+-}size{KMGTP}:</span>
+<span class="out">Current type is 'Linux filesystem'</span>
+<span class="out">Hex code or GUID (L to show codes, Enter = 8300): 8200</span>
+<span class="out">Changed type of partition to 'Linux swap'</span>
+<span class="out">Command (? for help): w</span>
+<span class="out">Final checks complete. About to write GPT data. This will overwrite existing partitions!</span>
+<span class="out">Do you want to proceed? (Y/N): Y</span>
+<span class="out">OK; writing new GUID partition table (GPT) to /dev/sdc.</span>
+<span class="out">The operation has completed successfully.</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next: <code>sudo parted /dev/sdd</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All partition management requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Listing partitions with lsblk and fdisk -l</li>
+            <li>Creating MBR partitions using fdisk</li>
+            <li>Creating GPT partitions using gdisk</li>
+            <li>Advanced partitioning with parted</li>
+            <li>Differences between MBR and GPT partition tables</li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>All partition operations completed successfully.</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RHCSA Lab 3.3 - Create and Configure Filesystems • Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rh-red: #ee0000;
+    --rh-dark: #1e1e1e;
+    --rh-gray: #252525;
+    --rh-green: #8cc63f;
+    --rh-blue: #007acc;
+    --text: #f0f0f0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin:0;
+    padding:0;
+    height:100%;
+    background:#0d0d0d;
+    color:var(--text);
+    font-family:'Red Hat Text', sans-serif;
+    overflow:hidden;
+  }
+  header {
+    background:#111;
+    padding:15px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--rh-red);
+  }
+  .logo {
+    height:36px;
+  }
+  h1 {
+    font-size:1.6rem;
+    margin:0;
+    font-weight:500;
+  }
+  .header-left {
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .nav {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button {
+    background:#333;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:1rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background:#555;
+  }
+
+  #slides {
+    width:100%;
+    height:calc(100vh - 130px);
+    overflow:hidden;
+  }
+
+  .slide {
+    display:none;
+    width:100%;
+    height:100%;
+    flex-direction:column;
+  }
+  .slide.active {
+    display:flex;
+  }
+
+  main {
+    flex:1;
+    display:flex;
+    height:100%;
+  }
+  .left, .right {
+    padding:20px;
+    overflow-y:auto;
+    height:100%;
+  }
+  .left {
+    width:50%;
+    background:#1a1a1a;
+    border-right:1px solid #333;
+  }
+  .right {
+    width:50%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    font-family:'Red Hat Mono', monospace;
+  }
+  .terminal {
+    flex:1;
+    padding:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    color:#aaa;
+    overflow-y:auto;
+  }
+  .prompt { color:#8cc63f; }
+  .cmd { color:#ffffff; }
+  .out { color:#ccc; }
+  .success { color:#8cc63f; font-weight:bold; }
+  .tip { color:#4fc3f7; }
+  .note { color:#ff9800; font-size:0.9em; }
+
+  .input-line {
+    background:#111;
+    padding:12px 15px;
+    border-top:1px solid #333;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .input-line input {
+    flex:1;
+    background:transparent;
+    border:none;
+    color:#ccc;
+    font-family:'Red Hat Mono',monospace;
+    font-size:1rem;
+    outline:none;
+  }
+
+  .progress {
+    height:8px;
+    background:#333;
+    border-radius:4px;
+    overflow:hidden;
+    margin:15px 0;
+  }
+  .fill {
+    height:100%;
+    background:var(--rh-green);
+    transition:width .6s ease;
+  }
+
+  .req-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    background:#222;
+    border-radius:6px;
+    margin:8px 0;
+  }
+  .req-item.done {
+    border-left:4px solid var(--rh-green);
+    background:#0a2a0a;
+  }
+  .check {
+    min-width:24px;
+    text-align:center;
+    font-size:1.3em;
+  }
+
+  .step {
+    background:#222;
+    padding:14px;
+    border-radius:8px;
+    margin:10px 0;
+    border-left:5px solid #444;
+  }
+  .step.current {
+    border-color:var(--rh-green);
+    background:#0a2a0a;
+  }
+  .step.done {
+    opacity:0.7;
+    border-color:#666;
+  }
+  .step h3 {
+    margin:0 0 10px 0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:var(--rh-green);
+  }
+  .badge {
+    margin-left:auto;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:0.8rem;
+    font-weight:bold;
+  }
+  .completed {
+    background:#8cc63f;
+    color:black;
+  }
+  .current {
+    background:var(--rh-blue);
+    color:white;
+  }
+  .pending {
+    background:#555;
+    color:#ccc;
+  }
+
+  .completion {
+    text-align:center;
+    padding:30px;
+    background:#003300;
+    border:2px solid var(--rh-green);
+    border-radius:12px;
+    font-size:1.3rem;
+    max-width:700px;
+    margin:20px auto;
+  }
+  .completion ul {
+    text-align:left;
+    margin:20px auto;
+    max-width:500px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#000;
+    color:#666;
+    text-align:center;
+    padding:10px;
+    font-size:0.9rem;
+    z-index:10;
+  }
+
+  .concept {
+    background:#2a2a2a;
+    padding:15px;
+    margin:15px 0;
+    border-radius:5px;
+    border-left:4px solid var(--rh-blue);
+  }
+  .concept h4 {
+    margin-top:0;
+    color:var(--rh-blue);
+    border-bottom:1px solid #444;
+    padding-bottom:5px;
+  }
+  .concept-grid {
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .concept-item {
+    background:#252525;
+    padding:10px;
+    border-radius:5px;
+    border-left:2px solid var(--rh-red);
+  }
+  .concept-item strong {
+    color:var(--rh-red);
+    display:block;
+    margin-bottom:5px;
+  }
+  .hint-box {
+    background:rgba(255,215,0,0.1);
+    border-left:4px solid #FFD700;
+    padding:10px;
+    margin:10px 0;
+    border-radius:3px;
+  }
+  .command-hint {
+    background:#2a2a2a;
+    padding:10px;
+    border-radius:3px;
+    margin:10px 0;
+    border-left:3px solid var(--rh-blue);
+    font-family:'Red Hat Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg" class="logo" alt="Red Hat">
+    <h1>RHCSA Lab 3.3 – Create and Configure Filesystems (ext4, XFS, vfat)</h1>
+  </div>
+  <div class="nav">
+    <button id="prevBtn">Previous</button>
+    <span>Slide <span id="current">1</span> / <span id="totalSlides">7</span></span>
+    <button id="nextBtn">Next</button>
+  </div>
+</header>
+
+<div id="slides">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Lab Instructions</h2>
+        <div style="background:#002200; padding:20px; border-left:4px solid var(--rh-green); border-radius:8px;">
+          <strong>Lab Objective</strong><br>
+          Create and configure three different types of filesystems: ext4, XFS, and vfat on available partitions.<br><br>
+          <strong>Time Estimate:</strong> 15-20 minutes
+          <div class="progress">
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <strong>0% Complete</strong>
+        </div>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Filesystem Configuration Requirements</h4>
+        <div class="req-item">
+          <span class="check"></span> List available block devices using <code>lsblk</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create ext4 filesystem on <code>/dev/sdb1</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create XFS filesystem on <code>/dev/sdb2</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create vfat filesystem on <code>/dev/sdb3</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify filesystem creation using <code>blkid</code> and <code>lsblk -f</code>
+        </div>
+
+        <div class="step current">
+          <h3>1 List Available Block Devices <span class="badge current">Current Step</span></h3>
+          <p>First, let's identify the available block devices and partitions.</p>
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          <div class="command-hint">lsblk</div>
+          
+          <div class="concept">
+            <h4>Understanding Block Devices</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Physical and virtual storage devices
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Identify available storage for filesystems
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Under /dev directory (e.g., /dev/sda, /dev/vdb)
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                Before creating partitions or filesystems
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>lsblk</code> lists all block devices (disks, partitions) in a tree format. Look for devices without partitions or with free space.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span>Welcome to RHCSA Lab 3.3: Filesystems!</span>
+<span class="prompt">[user@lab ~]$</span> <span>You'll create and verify ext4, XFS, and vfat filesystems.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Assume /dev/sdb1, /dev/sdb2, /dev/sdb3 are available partitions.</span>
+<span class="prompt">[user@lab ~]$</span> <span>Current step: List Available Block Devices</span>
+<span class="prompt">[user@lab ~]$</span> Type: <code>lsblk</code>
+<span class="prompt">[user@lab ~]$</span> <span class="tip"><strong>Tip:</strong> Use Tab completion and the ↑ key for history.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" placeholder="Input disabled in slideshow view..." disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:17%"></div>
+        </div>
+        <strong>17% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Filesystem Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span>
+          List available block devices using <code>lsblk</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create ext4 filesystem on <code>/dev/sdb1</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create XFS filesystem on <code>/dev/sdb2</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create vfat filesystem on <code>/dev/sdb3</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify filesystem creation using <code>blkid</code> and <code>lsblk -f</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 List Available Block Devices <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>2 Create an ext4 Filesystem <span class="badge current">Current Step</span></h3>
+          <p>Now let's create an ext4 filesystem on the first partition.</p>
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          <div class="command-hint">sudo mkfs.ext4 /dev/sdb1</div>
+          
+          <div class="concept">
+            <h4>Understanding ext4 Filesystems</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Default Linux filesystem (journaling)
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Reliable, mature, good general-purpose choice
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Commonly used for root and /home partitions
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                For most Linux system partitions
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>mkfs.ext4</code> creates an ext4 filesystem on the specified partition. You can add options like <code>-L label</code> to set a volume label.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">lsblk</span>
+<span class="out">NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span>
+<span class="out">sda     8:0    0   20G  0 disk</span>
+<span class="out">├─sda1  8:1    0   18G  0 part /</span>
+<span class="out">└─sda2  8:2    0    2G  0 part [SWAP]</span>
+<span class="out">sdb     8:16   0   10G  0 disk</span>
+<span class="out">├─sdb1  8:17   0    3G  0 part</span>
+<span class="out">├─sdb2  8:18   0    3G  0 part</span>
+<span class="out">└─sdb3  8:19   0    4G  0 part</span>
+<span class="success">Step 1 completed successfully.</span>
+
+<span class="prompt">[user@lab ~]$</span> Next command:
+<span class="prompt">[user@lab ~]$</span> <code>sudo mkfs.ext4 /dev/sdb1</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:33%"></div>
+        </div>
+        <strong>33% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Filesystem Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> List available block devices using <code>lsblk</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create ext4 filesystem on <code>/dev/sdb1</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create XFS filesystem on <code>/dev/sdb2</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create vfat filesystem on <code>/dev/sdb3</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify filesystem creation using <code>blkid</code> and <code>lsblk -f</code>
+        </div>
+
+        <div class="step done">
+          <h3>1 List Available Block Devices <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>2 Create an ext4 Filesystem <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>3 Create an XFS Filesystem <span class="badge current">Current Step</span></h3>
+          <p>Now let's create an XFS filesystem on the second partition.</p>
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          <div class="command-hint">sudo mkfs.xfs /dev/sdb2</div>
+          
+          <div class="concept">
+            <h4>Understanding XFS Filesystems</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                High-performance 64-bit journaling filesystem
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Excellent for large files and high scalability
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Often used for databases and large storage
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When dealing with large files or high throughput
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>mkfs.xfs</code> creates an XFS filesystem. XFS excels at parallel I/O and large file support. Use <code>-f</code> to force creation if needed.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo mkfs.ext4 /dev/sdb1</span>
+<span class="out">mke2fs 1.45.6 (20-Mar-2020)</span>
+<span class="out">Creating filesystem with 786432 4k blocks and 196608 inodes</span>
+<span class="out">Filesystem UUID: d4e5f6g7-h8i9-0123-j4k5-l6m7n8o9p0q1</span>
+<span class="out">Superblock backups stored on blocks:</span>
+<span class="out">    32768, 98304, 163840, 229376, 294912</span>
+<span class="out">Allocating group tables: done</span>
+<span class="out">Writing inode tables: done</span>
+<span class="out">Creating journal (16384 blocks): done</span>
+<span class="out">Writing superblocks and filesystem accounting information: done</span>
+<span class="success">Step 2 completed. Moving to step 3.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type <code>sudo mkfs.xfs /dev/sdb2</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:50%"></div>
+        </div>
+        <strong>50% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Filesystem Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> List available block devices using <code>lsblk</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create ext4 filesystem on <code>/dev/sdb1</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create XFS filesystem on <code>/dev/sdb2</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Create vfat filesystem on <code>/dev/sdb3</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify filesystem creation using <code>blkid</code> and <code>lsblk -f</code>
+        </div>
+
+        <div class="step done">
+          <h3>2 Create an ext4 Filesystem <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>3 Create an XFS Filesystem <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>4 Create a vfat Filesystem <span class="badge current">Current Step</span></h3>
+          <p>Now let's create a vfat filesystem on the third partition.</p>
+          <div class="hint-box">
+            <strong>Type this command exactly:</strong>
+          </div>
+          <div class="command-hint">sudo mkfs.vfat /dev/sdb3</div>
+          
+          <div class="concept">
+            <h4>Understanding vfat Filesystems</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                FAT32 compatible filesystem
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Compatibility with Windows and other systems
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Used for USB drives and cross-platform sharing
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                When interoperability is required
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>mkfs.vfat</code> creates a FAT32 filesystem. Use <code>-n NAME</code> to set a volume label (max 11 chars). Limited to 4GB file sizes.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo mkfs.xfs /dev/sdb2</span>
+<span class="out">meta-data=/dev/sdb2              isize=512    agcount=4, agsize=196608 blks</span>
+<span class="out">         =                       sectsz=512   attr=2, projid32bit=1</span>
+<span class="out">         =                       crc=1        finobt=1, sparse=1, rmapbt=0</span>
+<span class="out">         =                       reflink=1</span>
+<span class="out">data     =                       bsize=4096   blocks=786432, imaxpct=25</span>
+<span class="out">         =                       sunit=0      swidth=0 blks</span>
+<span class="out">naming   =version 2              bsize=4096   ascii-ci=0, ftype=1</span>
+<span class="out">log      =internal log           bsize=4096   blocks=2560, version=2</span>
+<span class="out">         =                       sectsz=512   sunit=0 blks, lazy-count=1</span>
+<span class="out">realtime =none                   extsz=4096   blocks=0, rtextents=0</span>
+<span class="success">Step 3 completed. Moving to step 4.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type <code>sudo mkfs.vfat /dev/sdb3</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:67%"></div>
+        </div>
+        <strong>67% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Filesystem Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> List available block devices using <code>lsblk</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create ext4 filesystem on <code>/dev/sdb1</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create XFS filesystem on <code>/dev/sdb2</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create vfat filesystem on <code>/dev/sdb3</code>
+        </div>
+        <div class="req-item">
+          <span class="check"></span> Verify filesystem creation using <code>blkid</code> and <code>lsblk -f</code>
+        </div>
+
+        <div class="step done">
+          <h3>3 Create an XFS Filesystem <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step done">
+          <h3>4 Create a vfat Filesystem <span class="badge completed">Completed</span></h3>
+        </div>
+        <div class="step current">
+          <h3>5 Verify Filesystem Creation <span class="badge current">Current Step</span></h3>
+          <p>Finally, let's verify that all our filesystems were created correctly.</p>
+          <div class="hint-box">
+            <strong>Type these commands exactly:</strong>
+          </div>
+          <div class="command-hint">sudo blkid /dev/sdb1 /dev/sdb2 /dev/sdb3</div>
+          <div class="command-hint">lsblk -f</div>
+          
+          <div class="concept">
+            <h4>Understanding Filesystem Verification</h4>
+            <div class="concept-grid">
+              <div class="concept-item">
+                <strong>What</strong>
+                Tools to inspect filesystem metadata
+              </div>
+              <div class="concept-item">
+                <strong>Why</strong>
+                Confirm successful creation and type
+              </div>
+              <div class="concept-item">
+                <strong>Where</strong>
+                Works on any block device
+              </div>
+              <div class="concept-item">
+                <strong>When</strong>
+                After filesystem creation or before mounting
+              </div>
+            </div>
+            <p><strong>How it works:</strong> <code>blkid</code> shows filesystem UUIDs and types. <code>lsblk -f</code> displays filesystem information in a tree format with types and labels.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo mkfs.vfat /dev/sdb3</span>
+<span class="out">mkfs.fat 4.1 (2017-01-24)</span>
+<span class="out">/dev/sdb3 has 64 heads and 32 sectors per track,</span>
+<span class="out">hidden sectors 0x0000;</span>
+<span class="out">logical sector size is 512,</span>
+<span class="out">using 0xf8 media descriptor, with 8388608 sectors;</span>
+<span class="out">drive number 0x80;</span>
+<span class="out">filesystem has 2 32-bit FATs and 8 sectors per cluster.</span>
+<span class="out">FAT size is 4096 sectors, and provides 1048544 clusters.</span>
+<span class="out">There are 32 reserved sectors.</span>
+<span class="out">Volume ID is f6g7h8i9, volume label has no name.</span>
+<span class="success">Step 4 completed. Moving to step 5.</span>
+
+<span class="prompt">[user@lab ~]$</span> Type <code>sudo blkid /dev/sdb1 /dev/sdb2 /dev/sdb3</code>
+<span class="prompt">[user@lab ~]$</span> Then type <code>lsblk -f</code>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:83%"></div>
+        </div>
+        <strong>83% Complete</strong>
+
+        <h4 style="color:#ee0000; margin:20px 0 10px;">Filesystem Configuration Requirements</h4>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> List available block devices using <code>lsblk</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create ext4 filesystem on <code>/dev/sdb1</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create XFS filesystem on <code>/dev/sdb2</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Create vfat filesystem on <code>/dev/sdb3</code>
+        </div>
+        <div class="req-item done">
+          <span class="check" style="color:var(--rh-green);">✔</span> Verify filesystem creation using <code>blkid</code> and <code>lsblk -f</code>
+        </div>
+
+        <div class="step current">
+          <h3>6 Verification Complete <span class="badge current">Current Step</span></h3>
+          <p>Notice how the filesystems now show their types and UUIDs in the verification output.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal">
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">sudo blkid /dev/sdb1 /dev/sdb2 /dev/sdb3</span>
+<span class="out">/dev/sdb1: UUID="d4e5f6g7-h8i9-0123-j4k5-l6m7n8o9p0q1" TYPE="ext4"</span>
+<span class="out">/dev/sdb2: UUID="e5f6g7h8-i9j0-1234-k5l6-m7n8o9p0q1r2" TYPE="xfs"</span>
+<span class="out">/dev/sdb3: UUID="F6G7-H8I9" TYPE="vfat"</span>
+
+<span class="prompt">[user@lab ~]$</span> <span class="cmd">lsblk -f</span>
+<span class="out">NAME   FSTYPE LABEL UUID                                 MOUNTPOINT</span>
+<span class="out">sda</span>
+<span class="out">├─sda1 ext4   root  a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8 /</span>
+<span class="out">├─sda2 swap        b2c3d4e5-f6g7-8901-h2i3-j4k5l6m7n8a1 [SWAP]</span>
+<span class="out">sdb</span>
+<span class="out">├─sdb1 ext4        d4e5f6g7-h8i9-0123-j4k5-l6m7n8o9p0q1</span>
+<span class="out">├─sdb2 xfs         e5f6g7h8-i9j0-1234-k5l6-m7n8o9p0q1r2</span>
+<span class="out">└─sdb3 vfat        f6g7h8i9-j0k1-2345-l6m7-n8o9p0q1r2s3</span>
+<span class="tip">The verification confirms all three filesystems were created successfully.</span>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SLIDE 7 – FINAL -->
+  <div class="slide">
+    <main>
+      <div class="left">
+        <h2 style="color:var(--rh-green); border-bottom:1px solid #444; padding-bottom:10px;">Progress</h2>
+        <div class="progress">
+          <div class="fill" style="width:100%"></div>
+        </div>
+        <strong>100% Complete</strong>
+
+        <div class="completion">
+          <h2 style="margin:0; color:var(--rh-green);">Lab Completed Successfully!</h2>
+          <p style="font-size:1.3rem; margin:20px 0;">
+            All filesystem configuration requirements met.<br>
+            Great work! You now understand:
+          </p>
+          <ul>
+            <li>Identifying block devices with <code>lsblk</code></li>
+            <li>Creating ext4 filesystems with <code>mkfs.ext4</code></li>
+            <li>Creating XFS filesystems with <code>mkfs.xfs</code></li>
+            <li>Creating vfat filesystems with <code>mkfs.vfat</code></li>
+            <li>Verifying filesystems with <code>blkid</code> and <code>lsblk -f</code></li>
+          </ul>
+          <p>You're ready for the next RHCSA lab.</p>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="terminal" style="color:#8cc63f; font-size:1.4rem; display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center;">
+            <div>All filesystems created successfully.</div>
+            <div style="margin-top:20px; font-size:3rem;">✔</div>
+          </div>
+        </div>
+        <div class="input-line">
+          <span class="prompt">[user@lab ~]$</span>
+          <input type="text" disabled>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="footer">
+  Use ← → arrow keys or the Previous/Next buttons • Press F11 for fullscreen • Perfect for training & screenshots
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('current');
+  const totalSpan = document.getElementById('totalSlides');
+  const total = slides.length;
+
+  if (totalSpan) {
+    totalSpan.textContent = total;
+  }
+
+  function show(n) {
+    if (n < 0 || n >= total) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+    });
+    current = n;
+    if (counter) counter.textContent = n + 1;
+    if (prevBtn) prevBtn.disabled = (n === 0);
+    if (nextBtn) nextBtn.disabled = (n === total - 1);
+  }
+
+  function next() {
+    if (current < total - 1) {
+      show(current + 1);
+    }
+  }
+
+  function prev() {
+    if (current > 0) {
+      show(current - 1);
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      prev();
+    }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>
