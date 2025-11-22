@@ -1,10 +1,1234 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Lab 125</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 125: SELinux & HTTP on Port 82</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step-bg: #3a3a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--redhat-dark);
+        }
+
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: normal;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--redhat-accent);
+            transition: width 0.3s ease;
+        }
+
+        #progress-text {
+            font-size: 0.9em;
+            margin-top: 5px;
+            color: #ccc;
+        }
+
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .requirement-checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            border: 1px solid #666;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 0.8em;
+        }
+
+        .requirement-item.completed {
+            color: var(--redhat-accent);
+        }
+
+        .requirement-item.completed .requirement-checkbox {
+            background: var(--redhat-accent);
+            border-color: var(--redhat-accent);
+            color: #fff;
+        }
+
+        .guide-step {
+            background: #2c2c2c;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #555;
+        }
+
+        .guide-step.current {
+            background: var(--current-step-bg);
+            border-left-color: var(--redhat-blue);
+        }
+
+        .guide-step.completed {
+            border-left-color: var(--redhat-accent);
+            opacity: 0.9;
+        }
+
+        .guide-step h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+
+        .hint-box {
+            background: rgba(0, 122, 204, 0.1);
+            padding: 8px 10px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-blue);
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+
+        .file-content {
+            background: #1f1f1f;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .completion-message {
+            background: rgba(76, 175, 80, 0.15);
+            border-left: 4px solid var(--redhat-accent);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .completion-message h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .warning {
+            color: #ffcc00;
+            font-size: 0.9em;
+        }
+
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+        }
+
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+        }
+
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+
+        .success {
+            color: var(--redhat-accent);
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
+
+        /* Vim-style overlay for editing httpd.conf */
+        .vim-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .vim-container {
+            display: flex;
+            background: #1e1e1e;
+            border-radius: 8px;
+            border: 1px solid #555;
+            width: 80%;
+            max-width: 900px;
+            height: 70%;
+            overflow: hidden;
+        }
+
+        .vim-instructions {
+            width: 40%;
+            padding: 15px;
+            border-right: 1px solid #444;
+            background: #252525;
+            font-size: 0.9em;
+        }
+
+        .vim-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .vim-editor {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vim-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #111;
+            border-bottom: 1px solid #444;
+            font-size: 0.9em;
+        }
+
+        .vim-command-buttons button {
+            margin-left: 5px;
+            background: #333;
+            color: #eee;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 3px 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .vim-command-buttons button:hover {
+            background: #444;
+        }
+
+        .vim-content {
+            flex: 1;
+            position: relative;
+            background: #000;
+        }
+
+        .vim-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+
+        .vim-command-line {
+            padding: 5px 10px;
+            background: #111;
+            border-top: 1px solid #444;
+        }
+
+        .vim-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+            font-size: 0.9em;
+        }
+
+        .vim-status {
+            padding: 4px 10px;
+            background: #111;
+            border-top: 1px solid #444;
+            font-size: 0.8em;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .vim-mode-indicator {
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .command-mode {
+            background: #444;
+            color: #fff;
+        }
+
+        .insert-mode {
+            background: var(--redhat-accent);
+            color: #000;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .guide-panel,
+            .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+
+            .vim-container {
+                width: 95%;
+                height: 85%;
+                flex-direction: column;
+            }
+
+            .vim-instructions,
+            .vim-editor {
+                width: 100%;
+            }
+
+            .vim-instructions {
+                height: 35%;
+            }
+
+            .vim-editor {
+                height: 65%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 125: SELinux & HTTP on Port 82</h1>
+    </div>
 
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>
+                    You must have an HTTP server running on your system, serving
+                    content using a <strong>non-standard port (82)</strong>.
+                </p>
+                <p>
+                    Configure SELinux and the firewall so that Apache
+                    (<code>httpd</code>) can listen on TCP port 82 and be reached
+                    from the network.
+                </p>
+                <p><strong>Time Estimate:</strong> 15–20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Configuration Requirements</h4>
+                <div class="requirement-item" id="req-selinux-port-added">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        SELinux type <code>http_port_t</code> includes TCP port
+                        <code>82</code>
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-httpd-conf-listen82">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>/etc/httpd/conf/httpd.conf</code> configured to
+                        <code>Listen 82</code>
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-firewall-port">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        Firewall permanently allows <code>82/tcp</code> in the
+                        <code>public</code> zone
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-firewall-reload">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        Firewall configuration reloaded
+                        (<code>firewall-cmd --reload</code>)
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-httpd-running82">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>httpd</code> restarted and reachable on
+                        <code>http://node1.domain15.example.com:82</code>
+                    </span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>
+                    In this RHCSA-style task you will manage SELinux, firewall,
+                    and Apache configuration so that a web server can listen on
+                    TCP port 82 and be accessed successfully.
+                </p>
+                <p>
+                    Follow the steps in order. The terminal on the right
+                    simulates the commands needed to complete the task.
+                </p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Check current SELinux HTTP ports
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>
+                    First, inspect which TCP ports are currently associated with
+                    the <code>http_port_t</code> SELinux type.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    semanage port -l | grep http
+                </div>
+                <div class="concept">
+                    <h4>http_port_t</h4>
+                    <p>
+                        SELinux restricts which ports a domain (like
+                        <code>httpd_t</code>) may bind to. Only ports labelled
+                        <code>http_port_t</code> are allowed for Apache by default.
+                    </p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Add port 82 to http_port_t
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Add TCP port 82 to the list of allowed HTTP ports in SELinux.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    semanage port -a -t http_port_t -p tcp 82
+                </div>
+                <p class="warning">
+                    If the port already exists, you would use
+                    <code>semanage port -m ...</code> instead. For this lab, we
+                    assume it is not present yet.
+                </p>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Verify SELinux port mapping
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Verify that <code>82</code> now appears in the list of
+                    ports for <code>http_port_t</code>.
+                </p>
+                <div class="command-hint">
+                    semanage port -l | grep http
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Set Apache to listen on port 82
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Edit the Apache configuration so that it listens on port 82.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    vim /etc/httpd/conf/httpd.conf
+                </div>
+                <p>
+                    In the file, ensure you have a line:
+                </p>
+                <div class="file-content">
+Listen 82
+                </div>
+                <p>
+                    Then save and exit with <code>:wq</code>.
+                </p>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Open port 82 in the firewall (permanent)
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Permanently allow TCP port 82 in the
+                    <code>public</code> zone.
+                </p>
+                <div class="command-hint">
+                    firewall-cmd --permanent --zone=public --add-port=82/tcp
+                </div>
+            </div>
+
+            <div class="guide-step" id="step6">
+                <h3>
+                    <span class="step-number">6</span>
+                    Reload firewall configuration
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Apply the new firewall rule by reloading the configuration.
+                </p>
+                <div class="command-hint">
+                    firewall-cmd --reload
+                </div>
+            </div>
+
+            <div class="guide-step" id="step7">
+                <h3>
+                    <span class="step-number">7</span>
+                    Restart Apache
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Restart the Apache service so it begins listening on the new
+                    port 82.
+                </p>
+                <div class="command-hint">
+                    systemctl restart httpd
+                </div>
+            </div>
+
+            <div class="guide-step" id="step8">
+                <h3>
+                    <span class="step-number">8</span>
+                    Test HTTP on port 82
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Finally, confirm that the server is reachable on port 82
+                    using <code>wget</code>.
+                </p>
+                <div class="command-hint">
+                    wget http://node1.domain15.example.com:82
+                </div>
+                <div class="concept">
+                    <h4>RHCSA-style verification</h4>
+                    <p>
+                        In the exam, a simple fetch like <code>curl</code> or
+                        <code>wget</code> is often used to check that the
+                        service is reachable and returning content.
+                    </p>
+                </div>
+            </div>
+
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>
+                    SELinux now allows Apache to bind to TCP port 82 via
+                    <code>http_port_t</code>, Apache is configured to
+                    <code>Listen 82</code>, the firewall permits
+                    <code>82/tcp</code>, and the service is reachable at:
+                </p>
+                <p>
+                    <code>http://node1.domain15.example.com:82</code>
+                </p>
+                <p>
+                    This completes the RHCSA-style task on
+                    <strong>Managing SELinux Security for HTTP on a non-standard port</strong>.
+                </p>
+            </div>
+        </div>
+
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@node1 ~]#</span> Welcome to RHCSA Lab 125: SELinux &amp; HTTP on Port 82</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Follow the steps on the left. Commands are simulated for this lab.</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Current step: check current SELinux HTTP ports</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Type: <code>semanage port -l | grep http</code></div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@node1 ~]#</span>
+                <input id="command-input" type="text" placeholder="Type the command shown in the current step." autofocus/>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vim-style editor overlay for httpd.conf -->
+<div id="vim-overlay" class="vim-overlay">
+    <div class="vim-container">
+        <div class="vim-instructions">
+            <h3>Editing /etc/httpd/conf/httpd.conf</h3>
+            <div id="vim-instructions-content">
+                <p>You are editing the Apache main configuration file.</p>
+                <p>Ensure there is a line like:</p>
+                <div class="file-content">
+Listen 82
+                </div>
+                <p><strong>Vim-style controls:</strong></p>
+                <ul>
+                    <li>Type directly into the right-hand editor area</li>
+                    <li>In the bottom bar, type <code>:wq</code> and press Enter to save and exit</li>
+                    <li>Type <code>:q!</code> to discard changes</li>
+                </ul>
+                <p>
+                    This lab checks that the saved file contains
+                    <code>Listen 82</code>.
+                </p>
+            </div>
+        </div>
+        <div class="vim-editor">
+            <div class="vim-header">
+                <span id="vim-filename">/etc/httpd/conf/httpd.conf</span>
+                <div class="vim-command-buttons">
+                    <button id="vim-close-btn">Close</button>
+                </div>
+            </div>
+            <div class="vim-content">
+                <textarea id="vim-textarea" class="vim-textarea" spellcheck="false"></textarea>
+            </div>
+            <div class="vim-command-line">
+                <input type="text" id="vim-input" class="vim-input" placeholder="Type :wq to save and exit"/>
+            </div>
+            <div class="vim-status">
+                <span id="vim-mode-indicator" class="vim-mode-indicator command-mode">COMMAND LINE</span>
+                <span id="vim-cursor-position">1,1</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+
+    // Vim overlay elements
+    const vimOverlay = document.getElementById('vim-overlay');
+    const vimTextarea = document.getElementById('vim-textarea');
+    const vimInput = document.getElementById('vim-input');
+    const vimModeIndicator = document.getElementById('vim-mode-indicator');
+    const vimCursorPosition = document.getElementById('vim-cursor-position');
+    const vimCloseBtn = document.getElementById('vim-close-btn');
+
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+
+    // Simulated http port list before/after adding 82
+    let httpPortsBefore = "80,81,443,488,8008,8009";
+    let httpPortsAfter = "80,81,82,443,488,8008,8009";
+
+    // Simulated httpd.conf content
+    let httpdConfContent =
+`# This is a simplified /etc/httpd/conf/httpd.conf fragment
+ServerRoot "/etc/httpd"
+Listen 80
+
+IncludeOptional conf.modules.d/*.conf
+User apache
+Group apache
+`;
+
+    // Lab state tracking
+    const configState = {
+        selinuxCheckedInitial: false,
+        selinuxPortAdded: false,
+        selinuxCheckedFinal: false,
+        httpdConfUpdated: false,
+        firewallPortAdded: false,
+        firewallReloaded: false,
+        httpdRestarted: false,
+        httpdVerified: false
+    };
+
+    const stepCommands = {
+        1: ['semanage port -l | grep http'],
+        2: ['semanage port -a -t http_port_t -p tcp 82'],
+        3: ['semanage port -l | grep http'],
+        4: ['vim /etc/httpd/conf/httpd.conf'],
+        5: ['firewall-cmd --permanent --zone=public --add-port=82/tcp'],
+        6: ['firewall-cmd --reload'],
+        7: ['systemctl restart httpd'],
+        8: ['wget http://node1.domain15.example.com:82']
+    };
+
+    function addTerminalOutput(text) {
+        const line = document.createElement('div');
+        line.innerHTML = text;
+        terminalOutput.appendChild(line);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    function updateRequirements() {
+        if (configState.selinuxPortAdded) {
+            const item = document.getElementById('req-selinux-port-added');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.httpdConfUpdated) {
+            const item = document.getElementById('req-httpd-conf-listen82');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.firewallPortAdded) {
+            const item = document.getElementById('req-firewall-port');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.firewallReloaded) {
+            const item = document.getElementById('req-firewall-reload');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.httpdRestarted && configState.httpdVerified) {
+            const item = document.getElementById('req-httpd-running82');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        const completedCount = Object.values(configState).filter(Boolean).length;
+        const total = Object.keys(configState).length;
+        const percent = (completedCount / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.textContent = Math.round(percent) + '% Complete';
+
+        if (completedCount === total) {
+            completionMessage.style.display = 'block';
+        }
+    }
+
+    function completeStep(step) {
+        if (step !== currentStep) return;
+
+        const stepElement = document.getElementById('step' + step);
+        if (!stepElement) return;
+
+        stepElement.classList.remove('current');
+        stepElement.classList.add('completed');
+        const statusSpan = stepElement.querySelector('.step-status');
+        statusSpan.textContent = 'Completed';
+        statusSpan.className = 'step-status status-completed';
+
+        currentStep++;
+        const nextStep = document.getElementById('step' + currentStep);
+        if (nextStep) {
+            nextStep.classList.add('current');
+            const nextStatus = nextStep.querySelector('.step-status');
+            nextStatus.textContent = 'Current Step';
+            nextStatus.className = 'step-status status-current';
+            addTerminalOutput(
+                `<span class="prompt">[root@node1 ~]#</span> Step ${step} completed. Moving to step ${currentStep}.`
+            );
+            const hint = stepCommands[currentStep] && stepCommands[currentStep][0];
+            if (hint) {
+                addTerminalOutput(
+                    `<span class="prompt">[root@node1 ~]#</span> Next: <code>${hint}</code>`
+                );
+            }
+        } else {
+            addTerminalOutput(
+                `<span class="prompt">[root@node1 ~]#</span> All steps completed. Review the summary on the left.`
+            );
+        }
+    }
+
+    // Vim overlay helpers
+    function openVimHttpd() {
+        vimOverlay.style.display = 'flex';
+        vimModeIndicator.textContent = 'COMMAND LINE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        vimTextarea.value = httpdConfContent;
+        setTimeout(() => {
+            vimInput.focus();
+            updateVimCursorPosition();
+        }, 50);
+        return 'Opening /etc/httpd/conf/httpd.conf in simulated editor.';
+    }
+
+    function closeVim() {
+        vimOverlay.style.display = 'none';
+        commandInput.focus();
+    }
+
+    function updateVimCursorPosition() {
+        const text = vimTextarea.value;
+        const pos = vimTextarea.selectionStart || 0;
+        const before = text.substring(0, pos);
+        const lines = before.split('\n');
+        const line = lines.length;
+        const col = lines[lines.length - 1].length + 1;
+        vimCursorPosition.textContent = `${line},${col}`;
+    }
+
+    function handleVimWrite() {
+        httpdConfContent = vimTextarea.value;
+        if (httpdConfContent.includes('Listen 82')) {
+            if (!configState.httpdConfUpdated) {
+                configState.httpdConfUpdated = true;
+                updateRequirements();
+                completeStep(4);
+            }
+            return 'File saved';
+        } else {
+            return '<span class="error">Required line "Listen 82" not found. Make sure the file contains that directive.</span>';
+        }
+    }
+
+    function handleVimCommand(cmd) {
+        if (cmd === 'w' || cmd === 'write') {
+            return handleVimWrite();
+        } else if (cmd === 'wq') {
+            const msg = handleVimWrite();
+            if (!msg.startsWith('<span class="error">')) {
+                closeVim();
+                return msg + ' and exiting';
+            }
+            return msg;
+        } else if (cmd === 'q' || cmd === 'quit' || cmd === 'q!') {
+            closeVim();
+            return 'Exiting editor';
+        }
+        return `Not an editor command: ${cmd}`;
+    }
+
+    // Command simulations
+    const commands = {
+        semanage: (argsRaw) => {
+            // argsRaw is an array like ['port','-l','|','grep','http'] or ['port','-a','-t','http_port_t','-p','tcp','82']
+            if (argsRaw.length === 0 || argsRaw[0] !== 'port') {
+                return 'This lab only simulates "semanage port" commands.';
+            }
+
+            if (argsRaw.includes('-l')) {
+                // Listing ports
+                if (currentStep === 1) {
+                    configState.selinuxCheckedInitial = true;
+                    updateRequirements();
+                    completeStep(1);
+                    return `http_port_t              tcp      ${httpPortsBefore}`;
+                } else {
+                    // Step 3 verification
+                    if (!configState.selinuxPortAdded) {
+                        return '<span class="error">Port 82 has not been added yet. Complete the previous step first.</span>';
+                    }
+                    configState.selinuxCheckedFinal = true;
+                    updateRequirements();
+                    completeStep(3);
+                    return `http_port_t              tcp      ${httpPortsAfter}`;
+                }
+            }
+
+            // Add port 82
+            const hasAdd = argsRaw.includes('-a');
+            const hasType = argsRaw.includes('-t') && argsRaw.includes('http_port_t');
+            const hasProto = argsRaw.includes('-p') && argsRaw.includes('tcp');
+            const has82 = argsRaw.includes('82');
+
+            if (hasAdd && hasType && hasProto && has82) {
+                if (currentStep < 2) {
+                    return '<span class="error">Complete Step 1 before adding a new SELinux port mapping.</span>';
+                }
+                configState.selinuxPortAdded = true;
+                updateRequirements();
+                completeStep(2);
+                return '';
+            }
+
+            return 'For this lab, use:<br><code>semanage port -l | grep http</code><br>or<br><code>semanage port -a -t http_port_t -p tcp 82</code>';
+        },
+
+        vim: (args) => {
+            if (args.length === 0) {
+                return 'vim: please specify a file to edit';
+            }
+            const file = args[0];
+            if (file === '/etc/httpd/conf/httpd.conf') {
+                if (currentStep < 4) {
+                    return '<span class="error">Complete the previous SELinux steps before editing httpd.conf.</span>';
+                }
+                return openVimHttpd();
+            }
+            return `Editing ${file} is not required for this lab.`;
+        },
+
+        'firewall-cmd': (argsRaw) => {
+            const args = argsRaw.join(' ');
+            if (args === '--permanent --zone=public --add-port=82/tcp') {
+                if (currentStep < 5) {
+                    return '<span class="error">Complete the httpd.conf and SELinux steps before opening the firewall port.</span>';
+                }
+                configState.firewallPortAdded = true;
+                updateRequirements();
+                completeStep(5);
+                return 'success';
+            }
+            if (args === '--reload') {
+                if (currentStep < 6) {
+                    return '<span class="error">Open the firewall port before reloading the configuration.</span>';
+                }
+                configState.firewallReloaded = true;
+                updateRequirements();
+                completeStep(6);
+                return 'success';
+            }
+            return 'For this lab, use:<br><code>firewall-cmd --permanent --zone=public --add-port=82/tcp</code><br>and<br><code>firewall-cmd --reload</code>';
+        },
+
+        systemctl: (argsRaw) => {
+            if (argsRaw.length < 2) {
+                return 'systemctl: not enough arguments';
+            }
+            const action = argsRaw[0];
+            const unit = argsRaw[1];
+            if (unit !== 'httpd') {
+                return 'This lab only simulates systemctl for the httpd service.';
+            }
+            if (action === 'restart') {
+                if (currentStep < 7) {
+                    return '<span class="error">Complete SELinux and firewall configuration before restarting httpd.</span>';
+                }
+                configState.httpdRestarted = true;
+                updateRequirements();
+                completeStep(7);
+                return '';
+            }
+            return 'For this lab, use: <code>systemctl restart httpd</code>.';
+        },
+
+        wget: (argsRaw) => {
+            const url = argsRaw[0] || '';
+            if (url === 'http://node1.domain15.example.com:82') {
+                if (currentStep < 8) {
+                    return '<span class="error">Restart httpd first before testing with wget.</span>';
+                }
+                configState.httpdVerified = true;
+                updateRequirements();
+                completeStep(8);
+                return `--2023-01-01 12:00:00--  ${url}
+Resolving node1.domain15.example.com (node1.domain15.example.com)... 192.168.0.10
+Connecting to node1.domain15.example.com|192.168.0.10|:82... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 120 (text/html)
+Saving to: ‘index.html’
+
+index.html          100%[===================>]     120  --.-KB/s    in 0s
+
+2023-01-01 12:00:00 (10.0 MB/s) - ‘index.html’ saved [120/120]`;
+            }
+            return 'For this lab, use:<br><code>wget http://node1.domain15.example.com:82</code>';
+        },
+
+        clear: () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+
+        help: () => {
+            return `Available commands in this lab:
+- semanage port -l | grep http
+- semanage port -a -t http_port_t -p tcp 82
+- vim /etc/httpd/conf/httpd.conf
+- firewall-cmd --permanent --zone=public --add-port=82/tcp
+- firewall-cmd --reload
+- systemctl restart httpd
+- wget http://node1.domain15.example.com:82
+- clear
+- help`;
+        }
+    };
+
+    function executeCommand(input) {
+        const trimmed = input.trim();
+        if (!trimmed) return;
+
+        commandHistory.push(trimmed);
+        historyIndex = commandHistory.length;
+
+        addTerminalOutput(`<span class="prompt">[root@node1 ~]#</span> ${trimmed}`);
+
+        const parts = trimmed.split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+
+        if (commands[cmd]) {
+            const result = commands[cmd](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${cmd}: command not found`);
+            addTerminalOutput('Type "help" to see the simulated commands available in this lab.');
+        }
+    }
+
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) historyIndex--;
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex] || '';
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        }
+    });
+
+    // Vim overlay events
+    vimCloseBtn.addEventListener('click', () => {
+        closeVim();
+    });
+
+    vimTextarea.addEventListener('click', () => {
+        updateVimCursorPosition();
+    });
+
+    vimTextarea.addEventListener('keyup', () => {
+        updateVimCursorPosition();
+    });
+
+    vimInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const value = vimInput.value.trim();
+            if (!value) return;
+            if (value.startsWith(':')) {
+                const cmd = value.substring(1);
+                const result = handleVimCommand(cmd);
+                if (result) addTerminalOutput(result);
+                vimInput.value = '';
+                return;
+            }
+            vimInput.value = '';
+        }
+    });
+
+    // Initialise progress UI
+    updateRequirements();
+</script>
 </body>
 </html>

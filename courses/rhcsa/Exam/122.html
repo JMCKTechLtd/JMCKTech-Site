@@ -1,10 +1,1113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Lab 122</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 122: Scheduling Future Tasks (cron)</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step-bg: #3a3a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--redhat-dark);
+        }
+
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: normal;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--redhat-accent);
+            transition: width 0.3s ease;
+        }
+
+        #progress-text {
+            font-size: 0.9em;
+            margin-top: 5px;
+            color: #ccc;
+        }
+
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .requirement-checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            border: 1px solid #666;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 0.8em;
+        }
+
+        .requirement-item.completed {
+            color: var(--redhat-accent);
+        }
+
+        .requirement-item.completed .requirement-checkbox {
+            background: var(--redhat-accent);
+            border-color: var(--redhat-accent);
+            color: #fff;
+        }
+
+        .guide-step {
+            background: #2c2c2c;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #555;
+        }
+
+        .guide-step.current {
+            background: var(--current-step-bg);
+            border-left-color: var(--redhat-blue);
+        }
+
+        .guide-step.completed {
+            border-left-color: var(--redhat-accent);
+            opacity: 0.9;
+        }
+
+        .guide-step h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            background: #444;
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+
+        .hint-box {
+            background: rgba(0, 122, 204, 0.1);
+            padding: 8px 10px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-blue);
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+
+        .file-content {
+            background: #1f1f1f;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .completion-message {
+            background: rgba(76, 175, 80, 0.15);
+            border-left: 4px solid var(--redhat-accent);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .completion-message h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .warning {
+            color: #ffcc00;
+            font-size: 0.9em;
+        }
+
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+        }
+
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+        }
+
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+
+        .success {
+            color: var(--redhat-accent);
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
+
+        /* Vim overlay for editing crontab */
+        .vim-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .vim-container {
+            display: flex;
+            background: #1e1e1e;
+            border-radius: 8px;
+            border: 1px solid #555;
+            width: 80%;
+            max-width: 900px;
+            height: 70%;
+            overflow: hidden;
+        }
+
+        .vim-instructions {
+            width: 40%;
+            padding: 15px;
+            border-right: 1px solid #444;
+            background: #252525;
+            font-size: 0.9em;
+        }
+
+        .vim-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .vim-editor {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vim-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #111;
+            border-bottom: 1px solid #444;
+            font-size: 0.9em;
+        }
+
+        .vim-command-buttons button {
+            margin-left: 5px;
+            background: #333;
+            color: #eee;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 3px 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .vim-command-buttons button:hover {
+            background: #444;
+        }
+
+        .vim-content {
+            flex: 1;
+            position: relative;
+            background: #000;
+        }
+
+        .vim-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+
+        .vim-command-line {
+            padding: 5px 10px;
+            background: #111;
+            border-top: 1px solid #444;
+        }
+
+        .vim-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+            font-size: 0.9em;
+        }
+
+        .vim-status {
+            padding: 4px 10px;
+            background: #111;
+            border-top: 1px solid #444;
+            font-size: 0.8em;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .vim-mode-indicator {
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .command-mode {
+            background: #444;
+            color: #fff;
+        }
+
+        .insert-mode {
+            background: var(--redhat-accent);
+            color: #000;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .guide-panel,
+            .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+
+            .vim-container {
+                width: 95%;
+                height: 85%;
+                flex-direction: column;
+            }
+
+            .vim-instructions,
+            .vim-editor {
+                width: 100%;
+            }
+
+            .vim-instructions {
+                height: 35%;
+            }
+
+            .vim-editor {
+                height: 65%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 122: Scheduling Future Tasks (cron)</h1>
+    </div>
 
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>
+                    The user <code>natasha</code> must configure a cron job that runs
+                    <strong>daily at 14:23 local time</strong> and executes:
+                </p>
+                <div class="file-content">
+/bin/echo hello >> /home/natasha/hello
+                </div>
+                <p>
+                    The job must be configured in <strong>natasha’s user crontab</strong>,
+                    and the <code>crond</code> service must be running on the system.
+                </p>
+                <p><strong>Time Estimate:</strong> 10–15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Configuration Requirements</h4>
+                <div class="requirement-item" id="req-cron-line">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        natasha’s crontab contains:
+                        <code>23 14 * * * /bin/echo hello &gt;&gt; /home/natasha/hello</code>
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-cron-listed">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        Cron entry verified with
+                        <code>crontab -l -u natasha</code>
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-crond-running">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>crond</code> service is running and checked with
+                        <code>systemctl status crond.service</code>
+                    </span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>
+                    In this lab you will use <code>crontab</code> and the
+                    <code>crond</code> service to schedule a recurring task for the
+                    user <code>natasha</code>.
+                </p>
+                <p>
+                    Complete each step in order. The terminal on the right will only
+                    accept commands relevant to this lab.
+                </p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Edit natasha’s user crontab
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>
+                    From the <code>root</code> shell, open natasha’s user crontab
+                    in the editor:
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    crontab -e -u natasha
+                </div>
+                <div class="concept">
+                    <h4>User vs System crontab</h4>
+                    <p>
+                        Using <code>crontab -e -u natasha</code> edits the crontab
+                        <em>owned by natasha</em>, stored under <code>/var/spool/cron/</code>.
+                        This is typically what RHCSA tasks expect.
+                    </p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Add the daily 14:23 cron entry
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Inside the editor, add the following line to natasha’s crontab:
+                </p>
+                <div class="file-content">
+23 14 * * * /bin/echo hello >> /home/natasha/hello
+                </div>
+                <p>
+                    Then save and exit the editor with <code>:wq</code>.
+                </p>
+                <div class="hint-box">
+                    <strong>Reminder:</strong> Press <code>i</code> for INSERT mode,
+                    type the line, press <code>ESC</code>, then type <code>:wq</code>
+                    and press <code>Enter</code>.
+                </div>
+                <div class="concept">
+                    <h4>Cron time fields</h4>
+                    <p>
+                        The fields are: <code>minute hour day-of-month month day-of-week</code>.
+                        So <code>23 14 * * *</code> means “every day at 14:23”.
+                    </p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Verify natasha’s crontab
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    List natasha’s crontab to confirm that the entry is present:
+                </p>
+                <div class="command-hint">
+                    crontab -l -u natasha
+                </div>
+                <p>
+                    You should see the <code>23 14 * * * /bin/echo hello &gt;&gt; /home/natasha/hello</code>
+                    line in the output.
+                </p>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Check the crond service status
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Ensure the cron daemon is running so that scheduled jobs will
+                    actually execute.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    systemctl status crond.service
+                </div>
+                <p class="warning">
+                    In a real exam you might need to start or enable the service with
+                    <code>systemctl enable --now crond.service</code> if it is not
+                    already active.
+                </p>
+            </div>
+
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>
+                    You have scheduled a daily cron job for <code>natasha</code>
+                    at <strong>14:23</strong> that appends <code>hello</code> to
+                    <code>/home/natasha/hello</code>, and verified that
+                    <code>crond</code> is running.
+                </p>
+                <p>
+                    This covers a classic RHCSA-style “Scheduling Future Tasks”
+                    requirement using user crontabs and systemd services.
+                </p>
+                <p>You can now move on to the next lab.</p>
+            </div>
+        </div>
+
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@node1 ~]#</span> Welcome to RHCSA Lab 122: Scheduling Future Tasks (cron)</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Follow the steps on the left. Commands are simulated for this lab.</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Current step: edit natasha’s crontab</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Type: <code>crontab -e -u natasha</code></div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@node1 ~]#</span>
+                <input id="command-input" type="text" placeholder="Type the command shown in the current step." autofocus/>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vim-style editor overlay for crontab -->
+<div id="vim-overlay" class="vim-overlay">
+    <div class="vim-container">
+        <div class="vim-instructions">
+            <h3>Editing natasha’s crontab</h3>
+            <div id="vim-instructions-content">
+                <p>You are editing the user crontab for <code>natasha</code>.</p>
+                <p>Add the following line somewhere in the file:</p>
+                <div class="file-content">
+23 14 * * * /bin/echo hello >> /home/natasha/hello
+                </div>
+                <p><strong>Vim-style controls:</strong></p>
+                <ul>
+                    <li><code>i</code> – enter INSERT mode</li>
+                    <li>Type or edit the cron line</li>
+                    <li><code>ESC</code> – return to command mode</li>
+                    <li><code>:wq</code> – save and exit</li>
+                </ul>
+            </div>
+        </div>
+        <div class="vim-editor">
+            <div class="vim-header">
+                <span id="vim-filename">crontab (natasha)</span>
+                <div class="vim-command-buttons">
+                    <button id="vim-insert-button">i (Insert)</button>
+                    <button id="vim-esc-button">ESC</button>
+                    <span id="vim-close-btn" style="cursor: pointer; margin-left: 10px;">×</span>
+                </div>
+            </div>
+            <div class="vim-content">
+                <textarea id="vim-textarea" class="vim-textarea" spellcheck="false"></textarea>
+            </div>
+            <div class="vim-command-line">
+                <input type="text" id="vim-input" class="vim-input" placeholder="Type :wq to save and exit"/>
+            </div>
+            <div class="vim-status">
+                <span id="vim-mode-indicator" class="vim-mode-indicator command-mode">COMMAND MODE</span>
+                <span id="vim-cursor-position">1,1</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+
+    const vimOverlay = document.getElementById('vim-overlay');
+    const vimTextarea = document.getElementById('vim-textarea');
+    const vimInput = document.getElementById('vim-input');
+    const vimModeIndicator = document.getElementById('vim-mode-indicator');
+    const vimCursorPosition = document.getElementById('vim-cursor-position');
+    const vimCloseBtn = document.getElementById('vim-close-btn');
+    const vimEscButton = document.getElementById('vim-esc-button');
+    const vimInsertButton = document.getElementById('vim-insert-button');
+
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+
+    // Simulated crontab content for natasha
+    let natashaCrontabContent =
+`# crontab for natasha
+# m h  dom mon dow   command
+`;
+
+    const REQUIRED_LINE = '23 14 * * * /bin/echo hello >> /home/natasha/hello';
+
+    const configState = {
+        cronLinePresent: false,
+        cronListed: false,
+        crondChecked: false
+    };
+
+    function updateRequirements() {
+        if (configState.cronLinePresent) {
+            const item = document.getElementById('req-cron-line');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.cronListed) {
+            const item = document.getElementById('req-cron-listed');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.crondChecked) {
+            const item = document.getElementById('req-crond-running');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        const completedCount = Object.values(configState).filter(Boolean).length;
+        const total = Object.keys(configState).length;
+        const percent = (completedCount / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.textContent = Math.round(percent) + '% Complete';
+
+        if (completedCount === total) {
+            completionMessage.style.display = 'block';
+        }
+    }
+
+    function addTerminalOutput(text) {
+        const line = document.createElement('div');
+        line.innerHTML = text;
+        terminalOutput.appendChild(line);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    function completeStep(step) {
+        if (step !== currentStep) return;
+
+        const stepElement = document.getElementById('step' + step);
+        if (!stepElement) return;
+
+        stepElement.classList.remove('current');
+        stepElement.classList.add('completed');
+        const statusSpan = stepElement.querySelector('.step-status');
+        statusSpan.textContent = 'Completed';
+        statusSpan.className = 'step-status status-completed';
+
+        currentStep++;
+        const nextStep = document.getElementById('step' + currentStep);
+        if (nextStep) {
+            nextStep.classList.add('current');
+            const nextStatus = nextStep.querySelector('.step-status');
+            nextStatus.textContent = 'Current Step';
+            nextStatus.className = 'step-status status-current';
+            addTerminalOutput(
+                `<span class="prompt">[root@node1 ~]#</span> Step ${step} completed. Moving to step ${currentStep}.`
+            );
+            const hint = stepCommands[currentStep] && stepCommands[currentStep][0];
+            if (hint) {
+                addTerminalOutput(
+                    `<span class="prompt">[root@node1 ~]#</span> Next: <code>${hint}</code>`
+                );
+            }
+        } else {
+            addTerminalOutput(
+                `<span class="prompt">[root@node1 ~]#</span> All steps completed. Review the summary on the left.`
+            );
+        }
+    }
+
+    function openVimForCrontab() {
+        vimOverlay.style.display = 'flex';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        vimTextarea.value = natashaCrontabContent;
+        setTimeout(() => {
+            vimInput.focus();
+            updateVimCursorPosition();
+        }, 50);
+        return 'Opening user crontab for natasha in editor.';
+    }
+
+    function closeVim() {
+        vimOverlay.style.display = 'none';
+        commandInput.focus();
+    }
+
+    function updateVimCursorPosition() {
+        const text = vimTextarea.value;
+        const pos = vimTextarea.selectionStart || 0;
+        const before = text.substring(0, pos);
+        const lines = before.split('\n');
+        const line = lines.length;
+        const col = lines[lines.length - 1].length + 1;
+        vimCursorPosition.textContent = `${line},${col}`;
+    }
+
+    function handleVimCommand(cmd) {
+        if (cmd === 'w' || cmd === 'write') {
+            natashaCrontabContent = vimTextarea.value;
+            if (natashaCrontabContent.includes(REQUIRED_LINE)) {
+                if (!configState.cronLinePresent) {
+                    configState.cronLinePresent = true;
+                    updateRequirements();
+                    completeStep(2);
+                }
+                return 'crontab updated';
+            } else {
+                return `<span class="error">Required line not found. Ensure the file contains:<br><code>${REQUIRED_LINE}</code></span>`;
+            }
+        } else if (cmd === 'wq') {
+            const msg = handleVimCommand('w');
+            closeVim();
+            return msg + ' and exiting';
+        } else if (cmd === 'q' || cmd === 'quit') {
+            closeVim();
+            return 'Exiting editor';
+        } else if (cmd === 'q!') {
+            closeVim();
+            return 'Exiting without saving';
+        }
+        return `Not an editor command: ${cmd}`;
+    }
+
+    const stepCommands = {
+        1: ['crontab -e -u natasha'],
+        2: ['(edit crontab and add required line)'],
+        3: ['crontab -l -u natasha'],
+        4: ['systemctl status crond.service']
+    };
+
+    const commands = {
+        crontab: (args) => {
+            if (args.length === 0) {
+                return 'crontab: usage: crontab [-u user] [-e|-l]';
+            }
+
+            let user = null;
+            let mode = null;
+
+            for (let i = 0; i < args.length; i++) {
+                if (args[i] === '-u' && i + 1 < args.length) {
+                    user = args[i + 1];
+                    i++;
+                } else if (args[i] === '-e' || args[i] === '-l') {
+                    mode = args[i];
+                }
+            }
+
+            if (user !== 'natasha') {
+                return '<span class="error">This lab only simulates crontab for user "natasha". Use <code>crontab -e -u natasha</code> or <code>crontab -l -u natasha</code>.</span>';
+            }
+
+            if (mode === '-e') {
+                if (currentStep > 1 || currentStep === 1) {
+                    if (currentStep === 1) {
+                        completeStep(1);
+                    }
+                    return openVimForCrontab();
+                } else {
+                    return '<span class="error">Please follow the steps in order.</span>';
+                }
+            } else if (mode === '-l') {
+                if (currentStep < 3) {
+                    return '<span class="error">Complete the earlier steps before listing natasha’s crontab.</span>';
+                }
+                configState.cronListed = true;
+                updateRequirements();
+                completeStep(3);
+                return natashaCrontabContent || 'no crontab for natasha';
+            }
+
+            return 'crontab: unsupported option combination for this lab.';
+        },
+
+        systemctl: (args) => {
+            if (args.length < 2) {
+                return 'systemctl: not enough arguments';
+            }
+            const action = args[0];
+            const unit = args[1];
+
+            if (unit !== 'crond.service' && unit !== 'crond') {
+                return 'This lab only simulates systemctl for crond.service';
+            }
+
+            if (action === 'status') {
+                if (currentStep < 4) {
+                    return '<span class="error">Complete the earlier steps before checking crond status.</span>';
+                }
+                configState.crondChecked = true;
+                updateRequirements();
+                completeStep(4);
+                return `● crond.service - Command Scheduler
+   Loaded: loaded (/usr/lib/systemd/system/crond.service; enabled; vendor preset: enabled)
+   Active: active (running) since Fri 2023-01-01 12:00:00 UTC; 5s ago
+ Main PID: 987 (crond)
+   CGroup: /system.slice/crond.service
+           └─987 /usr/sbin/crond -n
+
+Jan 01 12:00:00 node1.example.com systemd[1]: Started Command Scheduler.`;
+            }
+
+            if (action === 'enable' || action === 'start' || action === 'enable--now' || action === 'enable--now') {
+                return 'For this lab you only need to use: <code>systemctl status crond.service</code>.';
+            }
+
+            return 'For this lab, only <code>systemctl status crond.service</code> is required.';
+        },
+
+        clear: () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+
+        help: () => {
+            return `Available commands in this lab:
+- crontab -e -u natasha
+- crontab -l -u natasha
+- systemctl status crond.service
+- clear
+- help`;
+        }
+    };
+
+    function executeCommand(input) {
+        const trimmed = input.trim();
+        if (!trimmed) return;
+
+        commandHistory.push(trimmed);
+        historyIndex = commandHistory.length;
+
+        addTerminalOutput(`<span class="prompt">[root@node1 ~]#</span> ${trimmed}`);
+
+        const parts = trimmed.split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+
+        if (commands[cmd]) {
+            const result = commands[cmd](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${cmd}: command not found`);
+            addTerminalOutput('Type "help" to see the simulated commands available in this lab.');
+        }
+    }
+
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) historyIndex--;
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex] || '';
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        }
+    });
+
+    // Vim controls
+    vimCloseBtn.addEventListener('click', () => {
+        closeVim();
+    });
+
+    vimEscButton.addEventListener('click', () => {
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        vimTextarea.blur();
+        vimInput.focus();
+        updateVimCursorPosition();
+    });
+
+    vimInsertButton.addEventListener('click', () => {
+        vimModeIndicator.textContent = 'INSERT MODE';
+        vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+        vimInput.blur();
+        vimTextarea.focus();
+        updateVimCursorPosition();
+    });
+
+    vimTextarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            vimModeIndicator.textContent = 'COMMAND MODE';
+            vimModeIndicator.className = 'vim-mode-indicator command-mode';
+            vimTextarea.blur();
+            vimInput.focus();
+        }
+        updateVimCursorPosition();
+    });
+
+    vimTextarea.addEventListener('keyup', () => {
+        updateVimCursorPosition();
+    });
+
+    vimTextarea.addEventListener('click', () => {
+        updateVimCursorPosition();
+    });
+
+    vimInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const value = vimInput.value.trim();
+            if (!value) return;
+
+            if (value === 'i') {
+                vimModeIndicator.textContent = 'INSERT MODE';
+                vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+                vimInput.blur();
+                vimTextarea.focus();
+                vimInput.value = '';
+                return;
+            }
+
+            if (value.startsWith(':')) {
+                const cmd = value.substring(1);
+                const result = handleVimCommand(cmd);
+                if (result) addTerminalOutput(result);
+                vimInput.value = '';
+                return;
+            }
+
+            vimInput.value = '';
+        }
+    });
+
+    // Initialise progress UI
+    updateRequirements();
+</script>
 </body>
 </html>

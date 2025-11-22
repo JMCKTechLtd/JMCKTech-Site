@@ -1,10 +1,1103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Lab 115</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 115: Collaborative Directory with Special Permissions</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 115: Collaborative Directory with Special Permissions</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Create a collaborative directory with specific permissions that allow group members to share files while automatically inheriting the group ownership.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
+            <div class="requirements-panel">
+                <h4>Directory Requirements</h4>
+                <div class="requirement-item" id="req-directory">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create directory: <code>/mnt/shares</code></span>
+                </div>
+                <div class="requirement-item" id="req-group-ownership">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set group ownership to <code>sharegrp</code></span>
+                </div>
+                <div class="requirement-item" id="req-permissions">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set permissions to <code>2770</code> (rwxrws---)</span>
+                </div>
+                <div class="requirement-item" id="req-sgid">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Enable SGID bit for automatic group inheritance</span>
+                </div>
+                <div class="requirement-item" id="req-verify">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify directory permissions and test functionality</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Collaborative Directory Lab. In this lab, you will create a shared directory with special permissions that allow group collaboration.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Create the Shared Directory
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's create the directory that will be used for collaboration.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    mkdir -p /mnt/shares
+                </div>
+                
+                <p>The <code>-p</code> option ensures parent directories are created if they don't exist.</p>
+
+                <div class="concept">
+                    <h4>Understanding Collaborative Directories</h4>
+                    <p>Collaborative directories allow multiple users in the same group to share files while maintaining proper ownership and permissions.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Set Group Ownership
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's set the group ownership of the directory to sharegrp.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    chgrp sharegrp /mnt/shares/
+                </div>
+                
+                <p>This changes the group ownership to sharegrp, allowing members of that group to access the directory.</p>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Set Directory Permissions
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now we need to set the permissions to allow group members full access while restricting others.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    chmod 2770 /mnt/shares/
+                </div>
+                
+                <p>The <code>2770</code> permission set:</p>
+                <ul>
+                    <li><code>2</code> - Sets the SGID bit</li>
+                    <li><code>7</code> - Owner has read, write, execute</li>
+                    <li><code>7</code> - Group has read, write, execute</li>
+                    <li><code>0</code> - Others have no permissions</li>
+                </ul>
+
+                <div class="concept">
+                    <h4>Understanding Special Permissions</h4>
+                    <p>The SGID (Set Group ID) bit ensures that files created in the directory inherit the directory's group ownership rather than the user's primary group.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Verify Directory Configuration
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Let's verify that our directory is configured correctly.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ls -ld /mnt/shares/
+                </div>
+                
+                <p>This should show the directory with <code>drwxrws---</code> permissions and sharegrp group ownership.</p>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Test the Collaborative Functionality
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's test that the collaborative features work as expected.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    su - harry -c "touch /mnt/shares/harry_file"
+                </div>
+                <p>Creates a file as user harry</p>
+                
+                <div class="command-hint">
+                    su - natasha -c "touch /mnt/shares/natasha_file"
+                </div>
+                <p>Creates a file as user natasha</p>
+                
+                <div class="command-hint">
+                    ls -l /mnt/shares/
+                </div>
+                <p>Should show both files with sharegrp group ownership</p>
+
+                <div class="concept">
+                    <h4>Testing Collaboration</h4>
+                    <p>When the SGID bit is set, files created by any group member automatically belong to the directory's group, enabling seamless collaboration.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All collaborative directory requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@node1 ~]#</span> Welcome to RHCSA Lab 115: Collaborative Directory with Special Permissions</div>
+                <div><span class="prompt">[root@node1 ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@node1 ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Current step: Create the Shared Directory</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Type: <code>mkdir -p /mnt/shares</code></div>
+                <div><span class="prompt">[root@node1 ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@node1 ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'mkdir', 'chgrp', 'chmod', 'ls', 'su', 'touch', 'clear', 'help'
+    ];
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/': ['mnt/'],
+        '/mnt/': ['shares/']
+    };
+    
+    // Track configuration state
+    const configState = {
+        directory: false,
+        groupOwnership: false,
+        permissions: false,
+        sgid: false,
+        verify: false
+    };
+    
+    // Directory state
+    const directoryState = {
+        '/mnt/shares': {
+            exists: false,
+            group: '',
+            permissions: '',
+            files: []
+        }
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['mkdir -p /mnt/shares'],
+        2: ['chgrp sharegrp /mnt/shares/'],
+        3: ['chmod 2770 /mnt/shares/'],
+        4: ['ls -ld /mnt/shares/'],
+        5: ['su - harry -c "touch /mnt/shares/harry_file"', 'su - natasha -c "touch /mnt/shares/natasha_file"', 'ls -l /mnt/shares/']
+    };
+    
+    const commands = {
+        'mkdir': (args) => {
+            if (args.length === 2 && args[0] === '-p' && args[1] === '/mnt/shares' && 
+                (currentStep === 1 || currentStep > 1)) {
+                directoryState['/mnt/shares'].exists = true;
+                directoryState['/mnt/shares'].permissions = 'drwxr-xr-x';
+                directoryState['/mnt/shares'].group = 'root';
+                configState.directory = true;
+                updateRequirements();
+                completeStep(1);
+                return "";
+            } else if (currentStep < 1) {
+                return "Please complete the previous steps first.";
+            }
+            return `mkdir: cannot create directory '${args[1]}': File exists`;
+        },
+        
+        'chgrp': (args) => {
+            if (args.length === 2 && args[0] === 'sharegrp' && args[1] === '/mnt/shares/' && 
+                (currentStep === 2 || currentStep > 2)) {
+                if (directoryState['/mnt/shares'].exists) {
+                    directoryState['/mnt/shares'].group = 'sharegrp';
+                    configState.groupOwnership = true;
+                    updateRequirements();
+                    completeStep(2);
+                    return "";
+                } else {
+                    return `chgrp: cannot access '/mnt/shares/': No such file or directory`;
+                }
+            } else if (currentStep < 2) {
+                return "Please complete the previous steps first.";
+            }
+            return `chgrp: invalid group: '${args[0]}'`;
+        },
+        
+        'chmod': (args) => {
+            if (args.length === 2 && args[0] === '2770' && args[1] === '/mnt/shares/' && 
+                (currentStep === 3 || currentStep > 3)) {
+                if (directoryState['/mnt/shares'].exists) {
+                    directoryState['/mnt/shares'].permissions = 'drwxrws---';
+                    configState.permissions = true;
+                    configState.sgid = true;
+                    updateRequirements();
+                    completeStep(3);
+                    return "";
+                } else {
+                    return `chmod: cannot access '/mnt/shares/': No such file or directory`;
+                }
+            } else if (currentStep < 3) {
+                return "Please complete the previous steps first.";
+            }
+            return `chmod: invalid mode: '${args[0]}'`;
+        },
+        
+        'ls': (args) => {
+            if (args.length === 2 && args[0] === '-ld' && args[1] === '/mnt/shares/' && 
+                (currentStep === 4 || currentStep > 4)) {
+                if (directoryState['/mnt/shares'].exists) {
+                    const dir = directoryState['/mnt/shares'];
+                    completeStep(4);
+                    return `${dir.permissions} 2 root ${dir.group} 4096 $(date +"%b %d %H:%M") /mnt/shares/`;
+                } else {
+                    return `ls: cannot access '/mnt/shares/': No such file or directory`;
+                }
+            }
+            
+            if (args.length === 2 && args[0] === '-l' && args[1] === '/mnt/shares/' && 
+                (currentStep === 5 || currentStep > 5)) {
+                if (directoryState['/mnt/shares'].exists) {
+                    let output = `total 0\n`;
+                    directoryState['/mnt/shares'].files.forEach(file => {
+                        output += `-rw-rw-r-- 1 ${file.user} sharegrp 0 $(date +"%b %d %H:%M") ${file.name}\n`;
+                    });
+                    configState.verify = true;
+                    updateRequirements();
+                    return output;
+                } else {
+                    return `ls: cannot access '/mnt/shares/': No such file or directory`;
+                }
+            }
+            
+            return `ls: cannot access '${args[0]}': No such file or directory`;
+        },
+        
+        'su': (args) => {
+            // Handle su - user -c "command" pattern
+            if (args.length >= 4 && args[0] === '-' && args[2] === '-c' && 
+                (currentStep === 5 || currentStep > 5)) {
+                
+                const user = args[1];
+                const command = args.slice(3).join(' ').replace(/"/g, '');
+                
+                if (command === 'touch /mnt/shares/harry_file' && user === 'harry') {
+                    if (directoryState['/mnt/shares'].exists) {
+                        directoryState['/mnt/shares'].files.push({
+                            name: 'harry_file',
+                            user: 'harry'
+                        });
+                        return "";
+                    } else {
+                        return `touch: cannot touch '/mnt/shares/harry_file': No such file or directory`;
+                    }
+                }
+                
+                if (command === 'touch /mnt/shares/natasha_file' && user === 'natasha') {
+                    if (directoryState['/mnt/shares'].exists) {
+                        directoryState['/mnt/shares'].files.push({
+                            name: 'natasha_file',
+                            user: 'natasha'
+                        });
+                        return "";
+                    } else {
+                        return `touch: cannot touch '/mnt/shares/natasha_file': No such file or directory`;
+                    }
+                }
+            }
+            
+            return `su: incorrect password`;
+        },
+        
+        'touch': (args) => {
+            if (args[0] === '/mnt/shares/harry_file' || args[0] === '/mnt/shares/natasha_file') {
+                const filename = args[0].split('/').pop();
+                const user = filename.split('_')[0];
+                
+                if (directoryState['/mnt/shares'].exists) {
+                    directoryState['/mnt/shares'].files.push({
+                        name: filename,
+                        user: user
+                    });
+                    return "";
+                } else {
+                    return `touch: cannot touch '${args[0]}': No such file or directory`;
+                }
+            }
+            return `touch: missing file operand`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: mkdir, chgrp, chmod, ls, su, touch, clear, help";
+        }
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.directory) {
+            document.getElementById('req-directory').classList.add('completed');
+            document.getElementById('req-directory').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.groupOwnership) {
+            document.getElementById('req-group-ownership').classList.add('completed');
+            document.getElementById('req-group-ownership').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.permissions) {
+            document.getElementById('req-permissions').classList.add('completed');
+            document.getElementById('req-permissions').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.sgid) {
+            document.getElementById('req-sgid').classList.add('completed');
+            document.getElementById('req-sgid').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.verify) {
+            document.getElementById('req-verify').classList.add('completed');
+            document.getElementById('req-verify').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[root@node1 ~]# Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[root@node1 ~]# Next: ${stepCommands[currentStep][0]}`);
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@node1 ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>

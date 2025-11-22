@@ -1,10 +1,1333 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Lab 118</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 118: File Search and Processing</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .vim-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .vim-container {
+            display: flex;
+            width: 90%;
+            height: 80%;
+            gap: 20px;
+        }
+        
+        .vim-instructions {
+            width: 30%;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+        
+        .vim-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .vim-editor {
+            width: 70%;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .vim-header {
+            background: #333;
+            padding: 5px 10px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .vim-content {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+            white-space: pre;
+            color: #ccc;
+            position: relative;
+        }
+        
+        .vim-command-line {
+            display: flex;
+            background: #333;
+            padding: 5px;
+            border-top: 1px solid #444;
+        }
+        
+        .vim-prompt {
+            color: #4CAF50;
+            padding: 0 5px;
+        }
+        
+        .vim-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+        }
+        
+        .vim-status {
+            background: #333;
+            padding: 3px 10px;
+            color: #ccc;
+            font-size: 0.9em;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .vim-mode-indicator {
+            color: #FFD700;
+        }
+        
+        .vim-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #ccc;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        
+        .vim-esc-button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .vim-esc-button:hover {
+            background: #666;
+        }
+        
+        .vim-command-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .vim-command-button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .vim-command-button:hover {
+            background: #555;
+        }
+        
+        .vim-mode-indicator.command-mode {
+            color: #FFD700;
+        }
+        
+        .vim-mode-indicator.insert-mode {
+            color: #4CAF50;
+        }
+        
+        .vim-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+            
+            .vim-container {
+                width: 95%;
+                height: 90%;
+                flex-direction: column;
+            }
+            
+            .vim-instructions, .vim-editor {
+                width: 100%;
+            }
+            
+            .vim-instructions {
+                height: 30%;
+            }
+            
+            .vim-editor {
+                height: 70%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 118: File Search and Processing</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Find files owned by specific users and files larger than a certain size, then redirect the output to specified locations.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
+            <div class="requirements-panel">
+                <h4>File Search Requirements</h4>
+                <div class="requirement-item" id="req-find-natasha">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Find files owned by user natasha</span>
+                </div>
+                <div class="requirement-item" id="req-redirect-natasha">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Redirect natasha files output to <code>/home/alex/files</code></span>
+                </div>
+                <div class="requirement-item" id="req-create-find-dir">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create directory <code>/find</code></span>
+                </div>
+                <div class="requirement-item" id="req-find-large-files">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Find files larger than 5MiB in <code>/etc</code></span>
+                </div>
+                <div class="requirement-item" id="req-redirect-large-files">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Redirect large files output to <code>/find/largefiles</code></span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA File Search and Processing Lab. In this lab, you will use the find command to locate files based on ownership and size criteria.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Find Files Owned by User Natasha
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's find all files owned by the user natasha and redirect the output to a file.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    find / -user natasha -type f > /home/alex/files
+                </div>
+                
+                <p>This command:</p>
+                <ul>
+                    <li>Searches the entire filesystem (<code>/</code>)</li>
+                    <li>Finds files owned by user <code>natasha</code></li>
+                    <li>Limits to regular files (<code>-type f</code>)</li>
+                    <li>Redirects output to <code>/home/alex/files</code></li>
+                </ul>
+
+                <div class="concept">
+                    <h4>Understanding the find Command</h4>
+                    <p>The <code>find</code> command is a powerful tool for searching files. Key options:</p>
+                    <ul>
+                        <li><code>-user username</code> - Find files owned by specific user</li>
+                        <li><code>-type f</code> - Find only regular files (not directories)</li>
+                        <li><code>-size +5M</code> - Find files larger than 5MB</li>
+                        <li><code>-name pattern</code> - Find files by name pattern</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Verify Natasha Files Output
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's verify that the files owned by natasha were found and saved correctly.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    cat /home/alex/files
+                </div>
+                
+                <p>This should display the list of files owned by user natasha.</p>
+                
+                <div class="hint-box">
+                    <strong>You can also check how many files were found:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    wc -l /home/alex/files
+                </div>
+                
+                <p>This will show the number of files found.</p>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Create the /find Directory
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create the directory where we'll store the large files list.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    mkdir /find
+                </div>
+                
+                <p>This creates the <code>/find</code> directory for storing our search results.</p>
+
+                <div class="concept">
+                    <h4>Directory Creation</h4>
+                    <p>The <code>mkdir</code> command creates directories. Useful options:</p>
+                    <ul>
+                        <li><code>mkdir dirname</code> - Create a single directory</li>
+                        <li><code>mkdir -p /path/to/dir</code> - Create parent directories if needed</li>
+                        <li><code>mkdir -m 755 dirname</code> - Create with specific permissions</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Find Large Files in /etc Directory
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's find files larger than 5MiB in the /etc directory and save the results.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    find /etc -size +5M > /find/largefiles
+                </div>
+                
+                <p>This command:</p>
+                <ul>
+                    <li>Searches in the <code>/etc</code> directory</li>
+                    <li>Finds files larger than 5MiB (<code>-size +5M</code>)</li>
+                    <li>Redirects output to <code>/find/largefiles</code></li>
+                </ul>
+
+                <div class="concept">
+                    <h4>File Size Searching</h4>
+                    <p>The <code>-size</code> option in find supports various units:</p>
+                    <ul>
+                        <li><code>c</code> - bytes</li>
+                        <li><code>k</code> - kilobytes</li>
+                        <li><code>M</code> - megabytes</li>
+                        <li><code>G</code> - gigabytes</li>
+                        <li><code>+</code> - greater than</li>
+                        <li><code>-</code> - less than</li>
+                    </ul>
+                    <p>Example: <code>-size +10M</code> finds files larger than 10MB.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Verify Large Files Output
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's verify that the large files were found and saved correctly.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands to verify:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    cat /find/largefiles
+                </div>
+                <p>Displays the list of large files found in /etc.</p>
+                
+                <div class="command-hint">
+                    ls -lh /find/largefiles
+                </div>
+                <p>Shows information about the output file itself.</p>
+                
+                <div class="command-hint">
+                    du -sh /etc
+                </div>
+                <p>Shows the total size of the /etc directory for comparison.</p>
+
+                <div class="concept">
+                    <h4>File Size Commands</h4>
+                    <p>Other useful commands for file size analysis:</p>
+                    <ul>
+                        <li><code>du -sh directory</code> - Show total size of directory</li>
+                        <li><code>ls -lh file</code> - Show file size in human-readable format</li>
+                        <li><code>stat file</code> - Show detailed file information including size</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All file search and processing requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 118: File Search and Processing</div>
+                <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Find Files Owned by User Natasha</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>find / -user natasha -type f > /home/alex/files</code></div>
+                <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@station ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'find', 'mkdir', 'cat', 'wc', 'ls', 'du', 'clear', 'help'
+    ];
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/': ['home/', 'etc/', 'find/'],
+        '/home/': ['alex/'],
+        '/home/alex/': ['files'],
+        '/find/': ['largefiles']
+    };
+    
+    // Track configuration state
+    const configState = {
+        findNatasha: false,
+        redirectNatasha: false,
+        createFindDir: false,
+        findLargeFiles: false,
+        redirectLargeFiles: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['find / -user natasha -type f > /home/alex/files'],
+        2: ['cat /home/alex/files', 'wc -l /home/alex/files'],
+        3: ['mkdir /find'],
+        4: ['find /etc -size +5M > /find/largefiles'],
+        5: ['cat /find/largefiles', 'ls -lh /find/largefiles', 'du -sh /etc']
+    };
+    
+    // Simulated file lists
+    let natashaFiles = [];
+    let largeFiles = [];
+    let findDirCreated = false;
+    
+    // Initialize with some simulated files
+    function initializeFiles() {
+        natashaFiles = [
+            '/var/spool/mail/natasha',
+            '/mnt/shares/natasha',
+            '/home/natasha/.bashrc',
+            '/home/natasha/.ssh/id_rsa'
+        ];
+        
+        largeFiles = [
+            '/etc/selinux/targeted/policy/policy.31',
+            '/etc/udev/hwdb.bin',
+            '/etc/brltty/brl-ja.ktb',
+            '/etc/brltty/brl-zh-tw.ctb'
+        ];
+    }
+    
+    initializeFiles();
+    
+    const commands = {
+        'find': (args) => {
+            // Handle find for natasha files
+            if (args.length >= 5 && 
+                args[0] === '/' && 
+                args[1] === '-user' && args[2] === 'natasha' &&
+                args[3] === '-type' && args[4] === 'f' &&
+                args[5] === '>' && args[6] === '/home/alex/files') {
+                
+                if (currentStep === 1 || currentStep > 1) {
+                    configState.findNatasha = true;
+                    configState.redirectNatasha = true;
+                    updateRequirements();
+                    completeStep(1);
+                    return `Found ${natashaFiles.length} files owned by natasha`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            
+            // Handle find for large files in /etc
+            if (args.length >= 4 && 
+                args[0] === '/etc' && 
+                args[1] === '-size' && args[2] === '+5M' &&
+                args[3] === '>' && args[4] === '/find/largefiles') {
+                
+                if (currentStep === 4 || currentStep > 4) {
+                    if (findDirCreated) {
+                        configState.findLargeFiles = true;
+                        configState.redirectLargeFiles = true;
+                        updateRequirements();
+                        completeStep(4);
+                        return `Found ${largeFiles.length} files larger than 5MiB in /etc`;
+                    } else {
+                        return "find: /find/largefiles: No such file or directory. Did you create /find directory?";
+                    }
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            
+            return `find: invalid option or argument`;
+        },
+        
+        'mkdir': (args) => {
+            if (args.length === 1 && args[0] === '/find') {
+                if (currentStep === 3 || currentStep > 3) {
+                    findDirCreated = true;
+                    configState.createFindDir = true;
+                    updateRequirements();
+                    completeStep(3);
+                    return "Directory /find created successfully";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `mkdir: invalid option or argument`;
+        },
+        
+        'cat': (args) => {
+            if (args.length === 1 && args[0] === '/home/alex/files') {
+                if (currentStep === 2 || currentStep > 2) {
+                    completeStep(2);
+                    return natashaFiles.join('\n');
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            
+            if (args.length === 1 && args[0] === '/find/largefiles') {
+                if (currentStep === 5 || currentStep > 5) {
+                    if (findDirCreated) {
+                        completeStep(5);
+                        return largeFiles.join('\n');
+                    } else {
+                        return "cat: /find/largefiles: No such file or directory";
+                    }
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            
+            return `cat: invalid option or argument`;
+        },
+        
+        'wc': (args) => {
+            if (args.length === 2 && args[0] === '-l' && args[1] === '/home/alex/files') {
+                if (currentStep === 2 || currentStep > 2) {
+                    return `${natashaFiles.length} /home/alex/files`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `wc: invalid option or argument`;
+        },
+        
+        'ls': (args) => {
+            if (args.length === 2 && args[0] === '-lh' && args[1] === '/find/largefiles') {
+                if (currentStep === 5 || currentStep > 5) {
+                    if (findDirCreated) {
+                        return "-rw-r--r-- 1 root root 2.1K Mar 21 06:03 /find/largefiles";
+                    } else {
+                        return "ls: cannot access '/find/largefiles': No such file or directory";
+                    }
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `ls: invalid option or argument`;
+        },
+        
+        'du': (args) => {
+            if (args.length === 2 && args[0] === '-sh' && args[1] === '/etc') {
+                if (currentStep === 5 || currentStep > 5) {
+                    return "48M    /etc";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `du: invalid option or argument`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: find, mkdir, cat, wc, ls, du, clear, help";
+        }
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.findNatasha) {
+            document.getElementById('req-find-natasha').classList.add('completed');
+            document.getElementById('req-find-natasha').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.redirectNatasha) {
+            document.getElementById('req-redirect-natasha').classList.add('completed');
+            document.getElementById('req-redirect-natasha').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.createFindDir) {
+            document.getElementById('req-create-find-dir').classList.add('completed');
+            document.getElementById('req-create-find-dir').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.findLargeFiles) {
+            document.getElementById('req-find-large-files').classList.add('completed');
+            document.getElementById('req-find-large-files').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.redirectLargeFiles) {
+            document.getElementById('req-redirect-large-files').classList.add('completed');
+            document.getElementById('req-redirect-large-files').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[root@station ~]# Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep] && stepCommands[currentStep].length > 0) {
+                    addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep][0]}`);
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>

@@ -1,10 +1,833 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Lab 124</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 124: Archiving /usr/local & Enforcing SELinux</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step-bg: #3a3a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--redhat-dark);
+        }
+
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: normal;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--redhat-accent);
+            transition: width 0.3s ease;
+        }
+
+        #progress-text {
+            font-size: 0.9em;
+            margin-top: 5px;
+            color: #ccc;
+        }
+
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .requirement-checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            border: 1px solid #666;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 0.8em;
+        }
+
+        .requirement-item.completed {
+            color: var(--redhat-accent);
+        }
+
+        .requirement-item.completed .requirement-checkbox {
+            background: var(--redhat-accent);
+            border-color: var(--redhat-accent);
+            color: #fff;
+        }
+
+        .guide-step {
+            background: #2c2c2c;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #555;
+        }
+
+        .guide-step.current {
+            background: var(--current-step-bg);
+            border-left-color: var(--redhat-blue);
+        }
+
+        .guide-step.completed {
+            border-left-color: var(--redhat-accent);
+            opacity: 0.9;
+        }
+
+        .guide-step h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            background: #444;
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+
+        .hint-box {
+            background: rgba(0, 122, 204, 0.1);
+            padding: 8px 10px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-blue);
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+
+        .file-content {
+            background: #1f1f1f;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .completion-message {
+            background: rgba(76, 175, 80, 0.15);
+            border-left: 4px solid var(--redhat-accent);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .completion-message h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .warning {
+            color: #ffcc00;
+            font-size: 0.9em;
+        }
+
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+        }
+
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+        }
+
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+
+        .success {
+            color: var(--redhat-accent);
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .guide-panel,
+            .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 124: Archiving /usr/local & Enforcing SELinux</h1>
+    </div>
 
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>
+                    Create a backup file named <code>/root/backup.tar.bz2</code>.
+                    The backup file should contain the content of
+                    <code>/usr/local</code> and should be zipped with
+                    <strong>bzip2</strong> compression format.
+                </p>
+                <p>
+                    Furthermore, ensure SELinux is in <strong>enforcing</strong>
+                    mode. If it is not, change SELinux to enforcing mode.
+                </p>
+                <p><strong>Time Estimate:</strong> 10–15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Configuration Requirements</h4>
+                <div class="requirement-item" id="req-backup-created">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>/root/backup.tar.bz2</code> created from
+                        <code>/usr/local</code> using bzip2 compression
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-archive-listed">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        Archive presence verified with
+                        <code>ls /root/backup.tar.bz2</code>
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-file-checked">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        Archive type checked with
+                        <code>file /root/backup.tar.bz2</code>
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-selinux-checked">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        SELinux mode checked with <code>getenforce</code>
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-selinux-enforcing">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        SELinux set to <strong>Enforcing</strong> (e.g.
+                        <code>setenforce 1</code>)
+                    </span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>
+                    In this lab you will create a compressed backup of
+                    <code>/usr/local</code> and verify SELinux is running in
+                    enforcing mode, as required in the RHCSA exam objective:
+                    <em>Archiving and Transferring Files &amp; SELinux</em>.
+                </p>
+                <p>
+                    Follow the steps in order. The terminal on the right
+                    simulates the commands needed to complete the task.
+                </p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Create /root/backup.tar.bz2 from /usr/local
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>
+                    Use <code>tar</code> with bzip2 compression to create the
+                    backup file <code>/root/backup.tar.bz2</code> containing
+                    the content of <code>/usr/local</code>.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    tar -cvjf /root/backup.tar.bz2 /usr/local
+                </div>
+                <div class="concept">
+                    <h4>tar + bzip2</h4>
+                    <p>
+                        The option <code>-j</code> enables bzip2 compression.
+                        The full option set is:
+                        <code>-c</code> (create),
+                        <code>-v</code> (verbose),
+                        <code>-j</code> (bzip2),
+                        <code>-f</code> (archive file name).
+                    </p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Verify the archive file exists
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Confirm that <code>/root/backup.tar.bz2</code> has been
+                    created.
+                </p>
+                <div class="command-hint">
+                    ls /root/backup.tar.bz2
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Check the archive file type
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Use the <code>file</code> command to confirm that the backup
+                    is recognised as a bzip2-compressed tar archive.
+                </p>
+                <div class="command-hint">
+                    file /root/backup.tar.bz2
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Check current SELinux mode
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Check the current SELinux mode. If the output is anything
+                    other than <code>Enforcing</code>, you must change it.
+                </p>
+                <div class="command-hint">
+                    getenforce
+                </div>
+                <div class="concept">
+                    <h4>SELinux runtime mode</h4>
+                    <p>
+                        The <code>getenforce</code> command returns one of:
+                        <code>Enforcing</code>, <code>Permissive</code>,
+                        or <code>Disabled</code>.
+                    </p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Set SELinux to enforcing mode
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    If SELinux is not already enforcing, change it to enforcing
+                    mode at runtime:
+                </p>
+                <div class="command-hint">
+                    setenforce 1
+                </div>
+                <p class="warning">
+                    In a real system you would also update
+                    <code>/etc/selinux/config</code> to make this persistent
+                    across reboots, but this lab focuses on the runtime change
+                    required by the exam question.
+                </p>
+            </div>
+
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>
+                    You have created <code>/root/backup.tar.bz2</code> containing
+                    the content of <code>/usr/local</code> using bzip2
+                    compression, and ensured SELinux is running in
+                    <strong>Enforcing</strong> mode.
+                </p>
+                <p>
+                    This matches the RHCSA-style task
+                    <em>Task 13 [Archiving and Transferring Files &amp; SELinux]</em>.
+                </p>
+                <p>You can now move on to the next lab.</p>
+            </div>
+        </div>
+
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@node1 ~]#</span> Welcome to RHCSA Lab 124: Archiving /usr/local &amp; Enforcing SELinux</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Follow the steps on the left. Commands are simulated for this lab.</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Current step: create /root/backup.tar.bz2 from /usr/local</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Type: <code>tar -cvjf /root/backup.tar.bz2 /usr/local</code></div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@node1 ~]#</span>
+                <input id="command-input" type="text" placeholder="Type the command shown in the current step." autofocus/>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+
+    // Simulated state for this lab
+    const configState = {
+        backupCreated: false,
+        archiveListed: false,
+        fileChecked: false,
+        selinuxChecked: false,
+        selinuxEnforcing: false
+    };
+
+    let backupExists = false;
+    let selinuxMode = 'Permissive'; // initial simulated mode
+
+    const stepCommands = {
+        1: ['tar -cvjf /root/backup.tar.bz2 /usr/local'],
+        2: ['ls /root/backup.tar.bz2'],
+        3: ['file /root/backup.tar.bz2'],
+        4: ['getenforce'],
+        5: ['setenforce 1']
+    };
+
+    function addTerminalOutput(text) {
+        const line = document.createElement('div');
+        line.innerHTML = text;
+        terminalOutput.appendChild(line);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    function updateRequirements() {
+        if (configState.backupCreated) {
+            const item = document.getElementById('req-backup-created');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.archiveListed) {
+            const item = document.getElementById('req-archive-listed');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.fileChecked) {
+            const item = document.getElementById('req-file-checked');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.selinuxChecked) {
+            const item = document.getElementById('req-selinux-checked');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.selinuxEnforcing) {
+            const item = document.getElementById('req-selinux-enforcing');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        const completedCount = Object.values(configState).filter(Boolean).length;
+        const total = Object.keys(configState).length;
+        const percent = (completedCount / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.textContent = Math.round(percent) + '% Complete';
+
+        if (completedCount === total) {
+            completionMessage.style.display = 'block';
+        }
+    }
+
+    function completeStep(step) {
+        if (step !== currentStep) return;
+
+        const stepElement = document.getElementById('step' + step);
+        if (!stepElement) return;
+
+        stepElement.classList.remove('current');
+        stepElement.classList.add('completed');
+        const statusSpan = stepElement.querySelector('.step-status');
+        statusSpan.textContent = 'Completed';
+        statusSpan.className = 'step-status status-completed';
+
+        currentStep++;
+        const nextStep = document.getElementById('step' + currentStep);
+        if (nextStep) {
+            nextStep.classList.add('current');
+            const nextStatus = nextStep.querySelector('.step-status');
+            nextStatus.textContent = 'Current Step';
+            nextStatus.className = 'step-status status-current';
+            addTerminalOutput(
+                `<span class="prompt">[root@node1 ~]#</span> Step ${step} completed. Moving to step ${currentStep}.`
+            );
+            const hint = stepCommands[currentStep] && stepCommands[currentStep][0];
+            if (hint) {
+                addTerminalOutput(
+                    `<span class="prompt">[root@node1 ~]#</span> Next: <code>${hint}</code>`
+                );
+            }
+        } else {
+            addTerminalOutput(
+                `<span class="prompt">[root@node1 ~]#</span> All steps completed. Review the summary on the left.`
+            );
+        }
+    }
+
+    const commands = {
+        tar: (args) => {
+            const full = ['tar'].concat(args).join(' ');
+            const expected = stepCommands[1][0];
+
+            if (full === expected) {
+                if (currentStep !== 1) {
+                    return '<span class="error">This command is valid, but it belongs to Step 1. Please follow the steps in order.</span>';
+                }
+                backupExists = true;
+                configState.backupCreated = true;
+                updateRequirements();
+                completeStep(1);
+                return `tar: Removing leading \`/' from member names
+usr/local/
+usr/local/bin/
+... (output truncated)
+[simulated] bzip2 compression applied to create /root/backup.tar.bz2`;
+            }
+            return 'For this lab, use: <code>tar -cvjf /root/backup.tar.bz2 /usr/local</code>';
+        },
+
+        ls: (args) => {
+            const full = ['ls'].concat(args).join(' ');
+            const expected = stepCommands[2][0];
+            if (full === expected) {
+                if (currentStep < 2) {
+                    return '<span class="error">Complete Step 1 before listing the archive.</span>';
+                }
+                if (!backupExists) {
+                    return 'ls: cannot access /root/backup.tar.bz2: No such file or directory';
+                }
+                configState.archiveListed = true;
+                updateRequirements();
+                completeStep(2);
+                return '/root/backup.tar.bz2';
+            }
+            return 'For this lab, use: <code>ls /root/backup.tar.bz2</code>';
+        },
+
+        file: (args) => {
+            const full = ['file'].concat(args).join(' ');
+            const expected = stepCommands[3][0];
+            if (full === expected) {
+                if (currentStep < 3) {
+                    return '<span class="error">Complete earlier steps before checking the file type.</span>';
+                }
+                if (!backupExists) {
+                    return 'file: cannot open `/root/backup.tar.bz2` (No such file or directory)';
+                }
+                configState.fileChecked = true;
+                updateRequirements();
+                completeStep(3);
+                return '/root/backup.tar.bz2: bzip2 compressed data, block size = 900k (simulated tar archive)';
+            }
+            return 'For this lab, use: <code>file /root/backup.tar.bz2</code>';
+        },
+
+        getenforce: () => {
+            if (currentStep < 4) {
+                return '<span class="error">Complete earlier steps before checking SELinux mode.</span>';
+            }
+            configState.selinuxChecked = true;
+            updateRequirements();
+            completeStep(4);
+            return selinuxMode;
+        },
+
+        setenforce: (args) => {
+            if (args.length === 0) {
+                return 'usage: setenforce [Enforcing|Permissive|1|0]';
+            }
+            if (currentStep < 5) {
+                return '<span class="error">Check SELinux mode with <code>getenforce</code> before changing it.</span>';
+            }
+            const value = args[0];
+            if (value === '1' || value.toLowerCase() === 'enforcing') {
+                selinuxMode = 'Enforcing';
+                configState.selinuxEnforcing = true;
+                updateRequirements();
+                completeStep(5);
+                return '';
+            }
+            return '<span class="error">For this lab, set SELinux to enforcing using <code>setenforce 1</code>.</span>';
+        },
+
+        clear: () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+
+        help: () => {
+            return `Available commands in this lab:
+- tar -cvjf /root/backup.tar.bz2 /usr/local
+- ls /root/backup.tar.bz2
+- file /root/backup.tar.bz2
+- getenforce
+- setenforce 1
+- clear
+- help`;
+        }
+    };
+
+    function executeCommand(input) {
+        const trimmed = input.trim();
+        if (!trimmed) return;
+
+        commandHistory.push(trimmed);
+        historyIndex = commandHistory.length;
+
+        addTerminalOutput(`<span class="prompt">[root@node1 ~]#</span> ${trimmed}`);
+
+        const parts = trimmed.split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+
+        if (commands[cmd]) {
+            const result = commands[cmd](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${cmd}: command not found`);
+            addTerminalOutput('Type "help" to see the simulated commands available in this lab.');
+        }
+    }
+
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) historyIndex--;
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex] || '';
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        }
+    });
+
+    // Initialise progress UI
+    updateRequirements();
+</script>
 </body>
 </html>

@@ -1,10 +1,1276 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Lab 121</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 121: NTP Client Configuration (chrony)</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: normal;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--redhat-accent);
+            transition: width 0.3s ease;
+        }
+
+        #progress-text {
+            font-size: 0.9em;
+            margin-top: 5px;
+            color: #ccc;
+        }
+
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .requirement-item.completed {
+            color: var(--redhat-accent);
+        }
+
+        .requirement-checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            border: 1px solid #666;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 0.8em;
+        }
+
+        .requirement-item.completed .requirement-checkbox {
+            background: var(--redhat-accent);
+            border-color: var(--redhat-accent);
+            color: #fff;
+        }
+
+        .guide-step {
+            background: #2c2c2c;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #555;
+        }
+
+        .guide-step.current {
+            background: var(--current-step);
+            border-left-color: var(--redhat-blue);
+        }
+
+        .guide-step.completed {
+            border-left-color: var(--redhat-accent);
+            opacity: 0.9;
+        }
+
+        .guide-step h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            background: #444;
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+
+        .hint-box {
+            background: rgba(0, 122, 204, 0.1);
+            padding: 8px 10px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-blue);
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+
+        .file-content {
+            background: #1f1f1f;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+
+        .warning {
+            color: #ffcc00;
+            font-size: 0.9em;
+        }
+
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .completion-message {
+            background: rgba(76, 175, 80, 0.15);
+            border-left: 4px solid var(--redhat-accent);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .completion-message h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+        }
+
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+
+        .success {
+            color: var(--redhat-accent);
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
+
+        /* Vim overlay (simplified for this lab) */
+        .vim-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        .vim-container {
+            display: flex;
+            background: #1e1e1e;
+            border-radius: 8px;
+            border: 1px solid #555;
+            width: 80%;
+            max-width: 900px;
+            height: 70%;
+            overflow: hidden;
+        }
+
+        .vim-instructions {
+            width: 40%;
+            padding: 15px;
+            border-right: 1px solid #444;
+            background: #252525;
+            font-size: 0.9em;
+        }
+
+        .vim-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .vim-editor {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vim-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #111;
+            border-bottom: 1px solid #444;
+            font-size: 0.9em;
+        }
+
+        .vim-command-buttons button {
+            margin-left: 5px;
+            background: #333;
+            color: #eee;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 3px 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .vim-command-buttons button:hover {
+            background: #444;
+        }
+
+        .vim-content {
+            flex: 1;
+            position: relative;
+            background: #000;
+        }
+
+        .vim-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+
+        .vim-command-line {
+            padding: 5px 10px;
+            background: #111;
+            border-top: 1px solid #444;
+        }
+
+        .vim-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+            font-size: 0.9em;
+        }
+
+        .vim-status {
+            padding: 4px 10px;
+            background: #111;
+            border-top: 1px solid #444;
+            font-size: 0.8em;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .vim-mode-indicator {
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .command-mode {
+            background: #444;
+            color: #fff;
+        }
+
+        .insert-mode {
+            background: var(--redhat-accent);
+            color: #000;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+
+            .vim-container {
+                width: 95%;
+                height: 85%;
+                flex-direction: column;
+            }
+
+            .vim-instructions, .vim-editor {
+                width: 100%;
+            }
+
+            .vim-instructions {
+                height: 35%;
+            }
+
+            .vim-editor {
+                height: 65%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 121: NTP Client Configuration with chrony</h1>
+    </div>
 
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>
+                    Configure your system so that it is an NTP client of
+                    <code>utility.domain15.example.com</code> using <code>chrony</code>.
+                </p>
+                <p>
+                    Set the system time zone to your (or the nearest) region and ensure NTP
+                    synchronization is configured and running.
+                </p>
+                <p><strong>Time Estimate:</strong> 15–20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Configuration Requirements</h4>
+                <div class="requirement-item" id="req-chrony-installed">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>chrony</code> package installed (e.g. <code>yum install chrony</code>)
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-ntp-server">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>/etc/chrony.conf</code> configured with
+                        <code>pool utility.domain15.example.com iburst</code>
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-chronyd-enabled">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>chronyd</code> enabled to start at boot
+                        (<code>systemctl enable chronyd</code>)
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-chronyd-running">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>chronyd</code> service running
+                        (<code>systemctl restart chronyd</code>)
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-timezone-set">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        System time zone selected using <code>tzselect</code>
+                    </span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>
+                    In this lab you will configure an RHCSA-style system to use
+                    <code>utility.domain15.example.com</code> as its NTP source, using
+                    the <code>chrony</code> suite, and then set the correct system
+                    time zone.
+                </p>
+                <p>
+                    Follow the steps in order. You must complete each step before moving
+                    to the next one.
+                </p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Install chrony
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>
+                    First, install the <code>chrony</code> package which provides
+                    NTP client services.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    yum install chrony
+                </div>
+                <div class="concept">
+                    <h4>Why chrony?</h4>
+                    <p>
+                        On modern RHEL-based systems, <code>chrony</code> replaces
+                        the older <code>ntpd</code> service and is recommended
+                        for accurate time synchronization.
+                    </p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Configure NTP Server in /etc/chrony.conf
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Next, configure <code>chrony</code> to use
+                    <code>utility.domain15.example.com</code> as its NTP source.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly to edit the configuration file:</strong>
+                </div>
+                <div class="command-hint">
+                    vim /etc/chrony.conf
+                </div>
+                <p>In the file, ensure you add a line similar to:</p>
+                <div class="file-content">
+pool utility.domain15.example.com iburst
+                </div>
+                <p>Then save and exit Vim with <code>:wq</code>.</p>
+                <div class="concept">
+                    <h4>chrony Server Configuration</h4>
+                    <p>
+                        The <code>pool</code> line defines which NTP server(s) your
+                        system will query for time. The <code>iburst</code> option
+                        speeds up initial synchronization.
+                    </p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Enable chronyd at Boot
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Ensure the <code>chronyd</code> service starts automatically
+                    whenever the system boots.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    systemctl enable chronyd
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Start/Restart chronyd
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Start (or restart) the <code>chronyd</code> service to apply the
+                    new configuration.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    systemctl restart chronyd
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Verify NTP Synchronization
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Check the status of the <code>chronyd</code> service and ensure
+                    it is running correctly.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    systemctl status chronyd
+                </div>
+                <p class="warning">
+                    In a real system you might also use <code>chronyc sources</code> or
+                    <code>chronyc tracking</code> to confirm synchronization.
+                </p>
+            </div>
+
+            <div class="guide-step" id="step6">
+                <h3>
+                    <span class="step-number">6</span>
+                    Set the System Time Zone with tzselect
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Finally, run <code>tzselect</code> and choose the time zone that
+                    matches your location (or the nearest region).
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    tzselect
+                </div>
+                <p>
+                    Follow the interactive prompts and confirm your time zone
+                    selection.
+                </p>
+                <div class="concept">
+                    <h4>Time Zone Configuration</h4>
+                    <p>
+                        The correct time zone ensures logs and scheduled tasks use
+                        local time. On real systems you might combine
+                        <code>tzselect</code> with <code>timedatectl set-timezone</code>.
+                    </p>
+                </div>
+            </div>
+
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>
+                    Your system is now configured as an NTP client of
+                    <code>utility.domain15.example.com</code> using
+                    <code>chrony</code>.
+                </p>
+                <p>
+                    The <code>chronyd</code> service is enabled and running, and the
+                    time zone has been set via <code>tzselect</code>.
+                </p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@node1 ~]#</span> Welcome to RHCSA Lab 121: NTP Client Configuration</div>
+                <div><span class="prompt">[root@node1 ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@node1 ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Current step: Install chrony</div>
+                <div><span class="prompt">[root@node1 ~]#</span> Type: <code>yum install chrony</code></div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@node1 ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step." type="text"/>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vim Editor Overlay -->
+<div id="vim-overlay" class="vim-overlay">
+    <div class="vim-container">
+        <div class="vim-instructions">
+            <h3>Vim Editor Instructions</h3>
+            <div id="vim-instructions-content"></div>
+        </div>
+        <div class="vim-editor">
+            <div class="vim-header">
+                <span id="vim-filename">filename</span>
+                <div class="vim-command-buttons">
+                    <button class="vim-command-button" id="vim-insert-button">i (Insert)</button>
+                    <button class="vim-command-button" id="vim-esc-button">ESC</button>
+                    <span id="vim-close-btn" style="cursor: pointer; margin-left: 10px;">×</span>
+                </div>
+            </div>
+            <div class="vim-content">
+                <textarea id="vim-textarea" class="vim-textarea" spellcheck="false"></textarea>
+            </div>
+            <div class="vim-command-line">
+                <input type="text" class="vim-input" id="vim-input" placeholder="Type :wq to save and exit"/>
+            </div>
+            <div class="vim-status">
+                <span class="vim-mode-indicator command-mode" id="vim-mode-indicator">COMMAND MODE</span>
+                <span id="vim-cursor-position">1,1</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+
+    // Vim elements
+    const vimOverlay = document.getElementById('vim-overlay');
+    const vimInstructionsContent = document.getElementById('vim-instructions-content');
+    const vimFilename = document.getElementById('vim-filename');
+    const vimTextarea = document.getElementById('vim-textarea');
+    const vimInput = document.getElementById('vim-input');
+    const vimModeIndicator = document.getElementById('vim-mode-indicator');
+    const vimCursorPosition = document.getElementById('vim-cursor-position');
+    const vimCloseBtn = document.getElementById('vim-close-btn');
+    const vimEscButton = document.getElementById('vim-esc-button');
+    const vimInsertButton = document.getElementById('vim-insert-button');
+
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+
+    // Track configuration state
+    const configState = {
+        chronyInstalled: false,
+        ntpServerConfigured: false,
+        chronydEnabled: false,
+        chronydRunning: false,
+        timezoneSet: false
+    };
+
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['yum install chrony'],
+        2: ['vim /etc/chrony.conf'],
+        3: ['systemctl enable chronyd'],
+        4: ['systemctl restart chronyd', 'systemctl start chronyd'],
+        5: ['systemctl status chronyd'],
+        6: ['tzselect']
+    };
+
+    // Simulated chrony.conf content
+    let chronyConfContent =
+`# chrony.conf - Example default content
+pool 0.rhel.pool.ntp.org iburst
+pool 1.rhel.pool.ntp.org iburst
+driftfile /var/lib/chrony/drift
+makestep 1.0 3`;
+
+    // Vim editor state
+    let vimState = {
+        file: '',
+        isEditing: false,
+        mode: 'command'
+    };
+
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    function updateRequirements() {
+        if (configState.chronyInstalled) {
+            const item = document.getElementById('req-chrony-installed');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.ntpServerConfigured) {
+            const item = document.getElementById('req-ntp-server');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.chronydEnabled) {
+            const item = document.getElementById('req-chronyd-enabled');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.chronydRunning) {
+            const item = document.getElementById('req-chronyd-running');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.timezoneSet) {
+            const item = document.getElementById('req-timezone-set');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const total = Object.keys(configState).length;
+        const percent = (completedCount / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.textContent = Math.round(percent) + '% Complete';
+
+        if (completedCount === total) {
+            completionMessage.style.display = 'block';
+        }
+    }
+
+    function completeStep(step) {
+        if (step !== currentStep) return;
+
+        const stepElement = document.getElementById('step' + step);
+        if (!stepElement) return;
+
+        stepElement.classList.remove('current');
+        stepElement.classList.add('completed');
+        const statusSpan = stepElement.querySelector('.step-status');
+        statusSpan.textContent = 'Completed';
+        statusSpan.className = 'step-status status-completed';
+
+        currentStep++;
+        const nextStep = document.getElementById('step' + currentStep);
+        if (nextStep) {
+            nextStep.classList.add('current');
+            const nextStatus = nextStep.querySelector('.step-status');
+            nextStatus.textContent = 'Current Step';
+            nextStatus.className = 'step-status status-current';
+            addTerminalOutput(
+                `<span class="prompt">[root@node1 ~]#</span> Step ${step} completed. Moving to step ${currentStep}.`
+            );
+            if (stepCommands[currentStep]) {
+                addTerminalOutput(
+                    `<span class="prompt">[root@node1 ~]#</span> Next: <code>${stepCommands[currentStep][0]}</code>`
+                );
+            }
+        } else {
+            addTerminalOutput(
+                `<span class="prompt">[root@node1 ~]#</span> All steps completed. Review the summary message on the left.`
+            );
+        }
+    }
+
+    function openVimEditor(filename, content) {
+        vimState.file = filename;
+        vimState.isEditing = true;
+        vimState.mode = 'command';
+        vimFilename.textContent = filename;
+        vimTextarea.value = content;
+
+        vimInstructionsContent.innerHTML = `
+            <p>Edit the <code>${filename}</code> file to configure the NTP server.</p>
+            <p>Add (or ensure there is) a line like:</p>
+            <div class="file-content">pool utility.domain15.example.com iburst</div>
+            <p><strong>Vim Commands:</strong></p>
+            <ul>
+                <li>Press <code>i</code> to enter INSERT mode</li>
+                <li>Type or edit the configuration</li>
+                <li>Press <code>ESC</code> to return to command mode</li>
+                <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
+            </ul>
+        `;
+
+        vimOverlay.style.display = 'flex';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        setTimeout(() => {
+            vimInput.focus();
+            updateVimCursorPosition();
+        }, 50);
+        return `Opening ${filename} in Vim editor.`;
+    }
+
+    function closeVimEditor() {
+        vimOverlay.style.display = 'none';
+        vimState.isEditing = false;
+        commandInput.focus();
+    }
+
+    function updateVimCursorPosition() {
+        const text = vimTextarea.value;
+        const cursorPos = vimTextarea.selectionStart || 0;
+        const lines = text.substring(0, cursorPos).split('\n');
+        const line = lines.length;
+        const column = lines[lines.length - 1].length + 1;
+        vimCursorPosition.textContent = `${line},${column}`;
+    }
+
+    function handleVimCommand(command) {
+        if (command === 'w' || command === 'write') {
+            if (vimState.file === '/etc/chrony.conf') {
+                chronyConfContent = vimTextarea.value;
+                if (chronyConfContent.includes('pool utility.domain15.example.com iburst')) {
+                    configState.ntpServerConfigured = true;
+                    updateRequirements();
+                    completeStep(2);
+                }
+            }
+            return 'File saved';
+        } else if (command === 'wq') {
+            const msg = handleVimCommand('w');
+            closeVimEditor();
+            return msg + ' and exiting';
+        } else if (command === 'q' || command === 'quit') {
+            closeVimEditor();
+            return '';
+        } else if (command === 'q!') {
+            closeVimEditor();
+            return 'Exiting without saving';
+        }
+        return `Not an editor command: ${command}`;
+    }
+
+    const commands = {
+        yum: (args) => {
+            if (args.length >= 2 && args[0] === 'install' && args[1] === 'chrony') {
+                if (currentStep !== 1) {
+                    return '<span class="error">This command is valid, but it belongs to Step 1. Please follow the steps in order.</span>';
+                }
+                configState.chronyInstalled = true;
+                updateRequirements();
+                completeStep(1);
+                return `Loaded plugins: fastestmirror
+Resolving Dependencies
+--> Running transaction check
+---> Package chrony.x86_64 will be installed
+--> Finished Dependency Resolution
+
+Installed:
+  chrony.x86_64
+
+Complete!`;
+            }
+            return `No action taken. For this lab, use: <code>yum install chrony</code>`;
+        },
+
+        vim: (args) => {
+            if (args.length === 0) {
+                return 'vim: Please specify a file to edit';
+            }
+            const file = args[0];
+            if (file === '/etc/chrony.conf') {
+                if (currentStep < 2) {
+                    return '<span class="error">Please complete Step 1 before editing /etc/chrony.conf.</span>';
+                }
+                return openVimEditor(file, chronyConfContent);
+            }
+            return `vim: editing ${file} is not required in this lab.`;
+        },
+
+        cat: (args) => {
+            if (args.length === 0) {
+                return 'cat: missing file operand';
+            }
+            if (args[0] === '/etc/chrony.conf') {
+                return chronyConfContent;
+            }
+            return `cat: ${args[0]}: No such file or not relevant for this lab`;
+        },
+
+        systemctl: (args) => {
+            if (args.length < 2) {
+                return 'systemctl: not enough arguments';
+            }
+            const action = args[0];
+            const unit = args[1];
+
+            if (unit !== 'chronyd') {
+                return 'This lab only simulates systemctl for chronyd.service';
+            }
+
+            if (action === 'enable') {
+                if (currentStep < 3) {
+                    return '<span class="error">Please complete previous steps before enabling chronyd.</span>';
+                }
+                configState.chronydEnabled = true;
+                updateRequirements();
+                completeStep(3);
+                return 'Created symlink /etc/systemd/system/multi-user.target.wants/chronyd.service → /usr/lib/systemd/system/chronyd.service.';
+            }
+
+            if (action === 'restart' || action === 'start') {
+                if (currentStep < 4) {
+                    return '<span class="error">Please complete previous steps before starting chronyd.</span>';
+                }
+                configState.chronydRunning = true;
+                updateRequirements();
+                completeStep(4);
+                return '';
+            }
+
+            if (action === 'status') {
+                if (currentStep < 5) {
+                    return '<span class="error">Please complete previous steps before checking status.</span>';
+                }
+                completeStep(5);
+                if (configState.chronydRunning) {
+                    return `● chronyd.service - NTP client/server
+   Loaded: loaded (/usr/lib/systemd/system/chronyd.service; enabled; vendor preset: enabled)
+   Active: active (running) since Fri 2023-01-01 12:00:00 UTC; 5s ago
+ Main PID: 1234 (chronyd)
+   CGroup: /system.slice/chronyd.service
+           └─1234 /usr/sbin/chronyd
+
+Jan 01 12:00:00 node1.example.com systemd[1]: Started NTP client/server.`;
+                } else {
+                    return `● chronyd.service - NTP client/server
+   Loaded: loaded (/usr/lib/systemd/system/chronyd.service; enabled; vendor preset: enabled)
+   Active: inactive (dead)`;
+                }
+            }
+
+            return 'For this lab, supported actions are: enable, restart, start, status on chronyd';
+        },
+
+        tzselect: () => {
+            if (currentStep < 6) {
+                return '<span class="error">Please complete previous steps before setting the time zone.</span>';
+            }
+            configState.timezoneSet = true;
+            updateRequirements();
+            completeStep(6);
+            return `Please identify a location so that time zone rules can be set correctly.
+Please select a continent, ocean, "coord", or "TZ".
+ 1) Africa
+ 2) Americas
+ 3) Antarctica
+ 4) Asia
+ 5) Europe
+ 6) Indian Ocean
+ 7) Pacific Ocean
+ 8) None of the above
+
+... (interactive prompts simulated) ...
+
+Therefore TZ='Europe/London' will be used.
+Is the above information OK?
+ 1) Yes
+ 2) No
+
+You selected Europe/London as your time zone.`;
+        },
+
+        timedatectl: () => {
+            const sync = configState.chronydRunning ? 'yes' : 'no';
+            return `               Local time: Fri 2023-01-01 12:00:00 GMT
+           Universal time: Fri 2023-01-01 12:00:00 UTC
+                 RTC time: Fri 2023-01-01 12:00:00
+                Time zone: Europe/London (GMT, +0000)
+System clock synchronized: ${sync}
+              NTP service: active
+          RTC in local TZ: no`;
+        },
+
+        clear: () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+
+        help: () => {
+            return `Available commands in this lab:
+- yum install chrony
+- vim /etc/chrony.conf
+- cat /etc/chrony.conf
+- systemctl enable|restart|start|status chronyd
+- tzselect
+- timedatectl
+- clear
+- help`;
+        }
+    };
+
+    function executeCommand(input) {
+        const trimmed = input.trim();
+        if (!trimmed) return;
+
+        commandHistory.push(trimmed);
+        historyIndex = commandHistory.length;
+
+        addTerminalOutput(`<span class="prompt">[root@node1 ~]#</span> ${trimmed}`);
+
+        const parts = trimmed.split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+
+        if (commands[cmd]) {
+            const result = commands[cmd](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${cmd}: command not found`);
+            addTerminalOutput('Type "help" for available commands in this lab.');
+        }
+    }
+
+    // Command-line key handling
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) historyIndex--;
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex] || '';
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        }
+    });
+
+    // Vim controls
+    vimCloseBtn.addEventListener('click', () => {
+        closeVimEditor();
+    });
+
+    vimEscButton.addEventListener('click', () => {
+        vimState.mode = 'command';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        vimTextarea.blur();
+        vimInput.focus();
+        updateVimCursorPosition();
+    });
+
+    vimInsertButton.addEventListener('click', () => {
+        vimState.mode = 'insert';
+        vimModeIndicator.textContent = 'INSERT MODE';
+        vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+        vimInput.blur();
+        vimTextarea.focus();
+        updateVimCursorPosition();
+    });
+
+    vimTextarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            vimState.mode = 'command';
+            vimModeIndicator.textContent = 'COMMAND MODE';
+            vimModeIndicator.className = 'vim-mode-indicator command-mode';
+            vimTextarea.blur();
+            vimInput.focus();
+        }
+        updateVimCursorPosition();
+    });
+
+    vimTextarea.addEventListener('keyup', () => {
+        if (vimState.mode === 'insert') {
+            updateVimCursorPosition();
+        }
+    });
+
+    vimTextarea.addEventListener('click', () => {
+        if (vimState.mode === 'command') {
+            vimInput.focus();
+        } else {
+            updateVimCursorPosition();
+        }
+    });
+
+    vimInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const value = vimInput.value.trim();
+            if (!value) return;
+            if (value === 'i') {
+                vimState.mode = 'insert';
+                vimModeIndicator.textContent = 'INSERT MODE';
+                vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+                vimInput.blur();
+                vimTextarea.focus();
+                vimInput.value = '';
+                return;
+            }
+            if (value.startsWith(':')) {
+                const cmd = value.substring(1);
+                const result = handleVimCommand(cmd);
+                if (result) addTerminalOutput(result);
+                vimInput.value = '';
+                return;
+            }
+            vimInput.value = '';
+        }
+    });
+
+    // Initialize requirements/progress
+    updateRequirements();
+</script>
 </body>
 </html>

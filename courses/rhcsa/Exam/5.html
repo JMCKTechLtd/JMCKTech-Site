@@ -1,10 +1,1297 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Lab 5</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 5: File Operations</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .vim-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .vim-container {
+            display: flex;
+            width: 90%;
+            height: 80%;
+            gap: 20px;
+        }
+        
+        .vim-instructions {
+            width: 30%;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+        
+        .vim-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .vim-editor {
+            width: 70%;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .vim-header {
+            background: #333;
+            padding: 5px 10px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .vim-content {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+            white-space: pre;
+            color: #ccc;
+            position: relative;
+        }
+        
+        .vim-command-line {
+            display: flex;
+            background: #333;
+            padding: 5px;
+            border-top: 1px solid #444;
+        }
+        
+        .vim-prompt {
+            color: #4CAF50;
+            padding: 0 5px;
+        }
+        
+        .vim-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+        }
+        
+        .vim-status {
+            background: #333;
+            padding: 3px 10px;
+            color: #ccc;
+            font-size: 0.9em;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .vim-mode-indicator {
+            color: #FFD700;
+        }
+        
+        .vim-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #ccc;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        
+        .vim-esc-button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .vim-esc-button:hover {
+            background: #666;
+        }
+        
+        .vim-command-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .vim-command-button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .vim-command-button:hover {
+            background: #555;
+        }
+        
+        .vim-mode-indicator.command-mode {
+            color: #FFD700;
+        }
+        
+        .vim-mode-indicator.insert-mode {
+            color: #4CAF50;
+        }
+        
+        .vim-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+            
+            .vim-container {
+                width: 95%;
+                height: 90%;
+                flex-direction: column;
+            }
+            
+            .vim-instructions, .vim-editor {
+                width: 100%;
+            }
+            
+            .vim-instructions {
+                height: 30%;
+            }
+            
+            .vim-editor {
+                height: 70%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 5: File Operations</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Find all files owned by user 'harry' and copy them to the directory /opt/dir while preserving their attributes.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
+            <div class="requirements-panel">
+                <h4>File Operations Requirements</h4>
+                <div class="requirement-item" id="req-create-dir">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create directory <code>/opt/dir</code></span>
+                </div>
+                <div class="requirement-item" id="req-find-files">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Find all files owned by user <code>harry</code></span>
+                </div>
+                <div class="requirement-item" id="req-copy-files">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Copy all found files to <code>/opt/dir</code> preserving attributes</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA File Operations Lab. In this lab, you will practice using the find command to locate files and copy them to a target directory while preserving their attributes.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Create Target Directory
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, create the directory where we'll copy the files:</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    mkdir -p /opt/dir
+                </div>
+                
+                <p>The <code>-p</code> option ensures parent directories are created if needed.</p>
+
+                <div class="concept">
+                    <h4>Understanding Directory Creation</h4>
+                    <p>The <code>/opt</code> directory is a standard location for optional software packages. We're creating a subdirectory here to store our copied files.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Find Files Owned by harry
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Use the <code>find</code> command to locate all files owned by user 'harry':</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    find / -user harry
+                </div>
+                
+                <p>This searches the entire filesystem for files owned by harry.</p>
+
+                <div class="concept">
+                    <h4>Understanding the find Command</h4>
+                    <p>The <code>find</code> command is powerful for locating files based on various criteria:</p>
+                    <ul>
+                        <li><code>/</code>: Start searching from root directory</li>
+                        <li><code>-user harry</code>: Only show files owned by user 'harry'</li>
+                        <li>You can add <code>-type f</code> to only find regular files (not directories)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Copy Files to Target Directory
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Combine the find command with copy operation to move all files:</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    find / -user harry -exec cp -rfp {} /opt/dir/ \;
+                </div>
+                
+                <p>This command does the following:</p>
+                <ul>
+                    <li><code>find / -user harry</code>: Finds all files owned by harry</li>
+                    <li><code>-exec ... \;</code>: Executes the following command for each found file</li>
+                    <li><code>cp -rfp</code>: Copies files recursively, forcing overwrites, preserving attributes</li>
+                    <li><code>{}</code>: Placeholder for each found file</li>
+                    <li><code>/opt/dir/</code>: Destination directory</li>
+                </ul>
+
+                <div class="concept">
+                    <h4>Understanding the Copy Operation</h4>
+                    <p>The <code>-exec</code> option allows you to run commands on each found file. Important flags for <code>cp</code>:</p>
+                    <ul>
+                        <li><code>-r</code>: Recursive copy (for directories)</li>
+                        <li><code>-f</code>: Force overwrite if files exist</li>
+                        <li><code>-p</code>: Preserve file attributes (owner, permissions, timestamps)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Verify the Results
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Check that the files were copied correctly:</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ls -l /opt/dir
+                </div>
+                <p>This should show all files owned by harry that were copied.</p>
+                
+                <div class="command-hint">
+                    ls -l /opt/dir | head -n 3
+                </div>
+                <p>Verify the owner and permissions were preserved.</p>
+
+                <div class="concept">
+                    <h4>Verification Tips</h4>
+                    <p>When verifying:</p>
+                    <ul>
+                        <li>Check that all expected files are present</li>
+                        <li>Verify ownership and permissions match originals</li>
+                        <li>For large numbers of files, use <code>wc -l</code> to count them</li>
+                        <li>Compare with original locations if needed</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="concept">
+                <h4>File Operations Concepts</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>find command</strong>
+                        Search for files with specific criteria:<br>
+                        <code>find [path] [options] [actions]</code><br>
+                        Common options: <code>-user</code>, <code>-name</code>, <code>-type</code>
+                    </div>
+                    <div class="concept-item">
+                        <strong>exec action</strong>
+                        Execute command on found files:<br>
+                        <code>-exec command {} \;</code><br>
+                        <code>{}</code> is replaced by each found file<br>
+                        <code>\;</code> terminates the command
+                    </div>
+                    <div class="concept-item">
+                        <strong>cp command</strong>
+                        Copy files with options:<br>
+                        <code>-r</code>: recursive<br>
+                        <code>-p</code>: preserve attributes<br>
+                        <code>-f</code>: force overwrite
+                    </div>
+                    <div class="concept-item">
+                        <strong>Directory creation</strong>
+                        <code>mkdir</code> creates directories:<br>
+                        <code>mkdir /path/to/dir</code><br>
+                        Use <code>-p</code> to create parent directories if needed
+                    </div>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All file operation requirements have been met and verified.</p>
+                <p><strong>Lab Summary:</strong></p>
+                <ul style="text-align: left; display: inline-block;">
+                    <li>✓ Created directory /opt/dir</li>
+                    <li>✓ Found all files owned by user 'harry'</li>
+                    <li>✓ Copied files to /opt/dir while preserving attributes</li>
+                    <li>✓ Verified the results</li>
+                </ul>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 5: File Operations</div>
+                <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Create Target Directory</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>mkdir -p /opt/dir</code></div>
+                <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@station ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Track step 4 verification commands
+    let step4CommandsExecuted = {
+        'ls -l /opt/dir': false,
+        'ls -l /opt/dir | head -n 3': false
+    };
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'mkdir', 'find', 'ls', 'cp', 'head', 'wc', 'clear', 'help'
+    ];
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/': ['opt/', 'home/', 'var/'],
+        '/opt/': ['dir/'],
+        '/opt/dir/': []
+    };
+    
+    // Track configuration state
+    const configState = {
+        dirCreated: false,
+        filesFound: false,
+        filesCopied: false,
+        verificationComplete: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['mkdir -p /opt/dir'],
+        2: ['find / -user harry'],
+        3: ['find / -user harry -exec cp -rfp {} /opt/dir/ \\;'],
+        4: ['ls -l /opt/dir', 'ls -l /opt/dir | head -n 3']
+    };
+    
+    // Simulated files owned by harry
+    const harryFiles = [
+        "/home/harry/document1.txt",
+        "/home/harry/report.pdf",
+        "/var/log/harry-app.log"
+    ];
+    let copiedFiles = [];
+    
+    const commands = {
+        'mkdir': (args) => {
+            if (args.includes('-p') && args.includes('/opt/dir')) {
+                if (currentStep === 1 || currentStep > 1) {
+                    configState.dirCreated = true;
+                    updateRequirements();
+                    completeStep(1);
+                    return "Directory '/opt/dir' created successfully";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `mkdir: missing operand`;
+        },
+        
+        'find': (args) => {
+            if (args.includes('/') && args.includes('-user') && args.includes('harry')) {
+                if (currentStep === 2 || currentStep > 2) {
+                    configState.filesFound = true;
+                    updateRequirements();
+                    
+                    if (args.includes('-exec')) {
+                        // This is the copy operation
+                        if (currentStep === 3 || currentStep > 3) {
+                            configState.filesCopied = true;
+                            updateRequirements();
+                            copiedFiles = [...harryFiles];
+                            completeStep(3);
+                            return "Files copied successfully to /opt/dir";
+                        } else {
+                            return "Please complete the previous steps first.";
+                        }
+                    }
+                    
+                    // Just the find command
+                    completeStep(2);
+                    return harryFiles.join('\n');
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `find: missing argument to \`-user'`;
+        },
+        
+        'ls': (args) => {
+            if (args.includes('-l') && args.includes('/opt/dir')) {
+                if (copiedFiles.length > 0) {
+                    // Check if this is the pipe version with head
+                    const fullCommand = commandHistory[commandHistory.length - 1];
+                    if (fullCommand.includes('| head -n 3')) {
+                        step4CommandsExecuted['ls -l /opt/dir | head -n 3'] = true;
+                    } else {
+                        step4CommandsExecuted['ls -l /opt/dir'] = true;
+                    }
+                    
+                    // Check if both verification commands have been executed
+                    if (step4CommandsExecuted['ls -l /opt/dir'] && step4CommandsExecuted['ls -l /opt/dir | head -n 3']) {
+                        if (currentStep === 4) {
+                            configState.verificationComplete = true;
+                            updateRequirements();
+                            completeStep(4);
+                        }
+                    }
+                    
+                    return copiedFiles.map(f => `-rw-r--r-- 1 harry harry 1024 Jun  1 10:00 ${f.split('/').pop()}`).join('\n');
+                }
+                return `ls: cannot access '/opt/dir': No such file or directory`;
+            }
+            return `ls: missing operand`;
+        },
+        
+        'cp': (args) => {
+            if (args.includes('-rfp') && args.includes('/opt/dir')) {
+                if (currentStep === 3 || currentStep > 3) {
+                    configState.filesCopied = true;
+                    copiedFiles = [...harryFiles];
+                    updateRequirements();
+                    completeStep(3);
+                    return "Files copied successfully to /opt/dir";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `cp: missing file operand`;
+        },
+        
+        'head': (args) => {
+            if (args.includes('-n') && args.includes('3') && args.includes('/opt/dir')) {
+                if (copiedFiles.length > 0) {
+                    step4CommandsExecuted['ls -l /opt/dir | head -n 3'] = true;
+                    
+                    // Check if both verification commands have been executed
+                    if (step4CommandsExecuted['ls -l /opt/dir'] && step4CommandsExecuted['ls -l /opt/dir | head -n 3']) {
+                        if (currentStep === 4) {
+                            configState.verificationComplete = true;
+                            updateRequirements();
+                            completeStep(4);
+                        }
+                    }
+                    
+                    return copiedFiles.slice(0, 3).map(f => `-rw-r--r-- 1 harry harry 1024 Jun  1 10:00 ${f.split('/').pop()}`).join('\n');
+                }
+                return "";
+            }
+            return `head: missing operand`;
+        },
+        
+        'wc': (args) => {
+            if (args.includes('-l') && args.includes('/opt/dir')) {
+                return `${copiedFiles.length}`;
+            }
+            return `wc: missing operand`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: mkdir, find, ls, cp, head, wc, clear, help";
+        }
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.dirCreated) {
+            document.getElementById('req-create-dir').classList.add('completed');
+            document.getElementById('req-create-dir').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.filesFound) {
+            document.getElementById('req-find-files').classList.add('completed');
+            document.getElementById('req-find-files').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.filesCopied) {
+            document.getElementById('req-copy-files').classList.add('completed');
+            document.getElementById('req-copy-files').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress based on steps completed (not just requirements)
+        const completedSteps = currentStep - 1; // Step 0 is intro, so subtract 1
+        const progressPercent = (completedSteps / 4) * 100; // 4 main steps (1-4)
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all steps are completed
+        if (currentStep > 4) {
+            completionMessage.style.display = 'block';
+            addTerminalOutput('<span class="prompt">[root@station ~]#</span> <span class="success">✓ Lab completed successfully! All requirements met.</span>');
+            addTerminalOutput('<span class="prompt">[root@station ~]#</span> <span class="success">You can now proceed to the next lab.</span>');
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`<span class="prompt">[root@station ~]#</span> <span class="success">✓ Step ${step} completed successfully.</span>`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    if (currentStep === 4) {
+                        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> Next step: Run both verification commands`);
+                        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> Commands: ${stepCommands[currentStep].join(' and ')}`);
+                    } else {
+                        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> Next step: ${stepCommands[currentStep][0]}`);
+                    }
+                }
+            } else {
+                // All steps completed
+                addTerminalOutput(`<span class="prompt">[root@station ~]#</span> <span class="success">✓ Step ${step} completed successfully.</span>`);
+                addTerminalOutput('<span class="prompt">[root@station ~]#</span> <span class="success">🎉 All lab steps completed!</span>');
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>

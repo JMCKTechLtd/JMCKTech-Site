@@ -1,10 +1,1553 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Lab 107</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab: Swap Partition Management</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .vim-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .vim-container {
+            display: flex;
+            width: 90%;
+            height: 80%;
+            gap: 20px;
+        }
+        
+        .vim-instructions {
+            width: 30%;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+        
+        .vim-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .vim-editor {
+            width: 70%;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .vim-header {
+            background: #333;
+            padding: 5px 10px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .vim-content {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+            white-space: pre;
+            color: #ccc;
+            position: relative;
+        }
+        
+        .vim-command-line {
+            display: flex;
+            background: #333;
+            padding: 5px;
+            border-top: 1px solid #444;
+        }
+        
+        .vim-prompt {
+            color: #4CAF50;
+            padding: 0 5px;
+        }
+        
+        .vim-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+        }
+        
+        .vim-status {
+            background: #333;
+            padding: 3px 10px;
+            color: #ccc;
+            font-size: 0.9em;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .vim-mode-indicator {
+            color: #FFD700;
+        }
+        
+        .vim-esc-button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .vim-esc-button:hover {
+            background: #666;
+        }
+        
+        .vim-command-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .vim-command-button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .vim-command-button:hover {
+            background: #555;
+        }
+        
+        .vim-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+            
+            .vim-container {
+                width: 95%;
+                height: 90%;
+                flex-direction: column;
+            }
+            
+            .vim-instructions, .vim-editor {
+                width: 100%;
+            }
+            
+            .vim-instructions {
+                height: 30%;
+            }
+            
+            .vim-editor {
+                height: 70%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab: Swap Partition Management</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Add an additional 754 MB swap partition to your system and configure it to mount automatically at boot.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
+            <div class="requirements-panel">
+                <h4>Swap Partition Requirements</h4>
+                <div class="requirement-item" id="req-partition">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create a 754 MB partition for swap</span>
+                </div>
+                <div class="requirement-item" id="req-mkswap">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Format partition as swap with <code>mkswap</code></span>
+                </div>
+                <div class="requirement-item" id="req-swapon">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Enable swap partition with <code>swapon</code></span>
+                </div>
+                <div class="requirement-item" id="req-fstab">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Configure automatic mounting in <code>/etc/fstab</code></span>
+                </div>
+                <div class="requirement-item" id="req-verification">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify swap is active and persistent</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Swap Partition Lab. In this lab, you will add additional swap space to your system.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Check Current Disk Layout
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's check the current disk layout to identify available space.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    fdisk -l
+                </div>
+                
+                <p>This will show all disks and partitions on your system.</p>
+                
+                <div class="concept">
+                    <h4>Understanding Disk Layout</h4>
+                    <p>The <code>fdisk -l</code> command displays partition tables for all available disks.</p>
+                    <p>Look for available space or unused partitions where you can create the swap partition.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Create Swap Partition
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a new partition for swap. We'll use <code>/dev/vda</code> as our target disk.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    fdisk -cu /dev/vda
+                </div>
+                
+                <p>Once in fdisk, follow these steps:</p>
+                <ol>
+                    <li>Press <code>n</code> to create a new partition</li>
+                    <li>Press <code>e</code> for extended partition or <code>p</code> for primary</li>
+                    <li>Accept default first sector by pressing <code>Enter</code></li>
+                    <li>For size, type <code>+754M</code> and press <code>Enter</code></li>
+                    <li>Press <code>t</code> to change partition type</li>
+                    <li>Select partition number (likely 1-5)</li>
+                    <li>Type <code>82</code> for Linux swap</li>
+                    <li>Press <code>p</code> to verify the partition table</li>
+                    <li>Press <code>w</code> to write changes and exit</li>
+                </ol>
+
+                <div class="concept">
+                    <h4>Understanding Partition Types</h4>
+                    <p>Partition type <code>82</code> indicates a Linux swap partition.</p>
+                    <p>The <code>+754M</code> specifies the partition size as 754 megabytes.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Format Partition as Swap
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's format the new partition as swap space.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    mkswap /dev/vda5
+                </div>
+                
+                <p class="warning">Note: The partition number might be different. Use the partition you created in the previous step.</p>
+                
+                <div class="concept">
+                    <h4>Understanding Swap Formatting</h4>
+                    <p>The <code>mkswap</code> command sets up a Linux swap area on a device or in a file.</p>
+                    <p>This prepares the partition to be used as virtual memory by the system.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Enable Swap Partition
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's enable the swap partition so the system can use it.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    swapon /dev/vda5
+                </div>
+                
+                <p>Then verify the swap is active:</p>
+                
+                <div class="command-hint">
+                    swapon -s
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding Swap Activation</h4>
+                    <p>The <code>swapon</code> command enables swap space for paging and swapping.</p>
+                    <p><code>swapon -s</code> displays a summary of swap usage and configuration.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Configure Automatic Mounting
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>To make the swap partition persistent across reboots, we need to add it to <code>/etc/fstab</code>.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    vim /etc/fstab
+                </div>
+                
+                <p>Add this line to the file:</p>
+                
+                <div class="file-content">/dev/vda5 swap swap defaults 0 0</div>
+                
+                <p>To save and exit vim:</p>
+                <ol>
+                    <li>Press <code>ESC</code> to ensure you're in command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to write and quit</li>
+                </ol>
+
+                <div class="concept">
+                    <h4>Understanding fstab Configuration</h4>
+                    <p>The <code>/etc/fstab</code> file contains information about filesystems and swap partitions.</p>
+                    <p>The format for swap entries is: <code>device swap swap options dump pass</code></p>
+                    <p>For swap partitions, both dump and pass should be set to 0.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step6">
+                <h3>
+                    <span class="step-number">6</span>
+                    Verify Configuration
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's verify that our swap configuration is working correctly.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    free -h
+                </div>
+                <p>Should show the additional swap space</p>
+                
+                <div class="command-hint">
+                    swapon --show
+                </div>
+                <p>Should display all active swap partitions</p>
+                
+                <div class="command-hint">
+                    cat /proc/swaps
+                </div>
+                <p>Should show swap partitions information</p>
+
+                <div class="concept">
+                    <h4>Verification Commands</h4>
+                    <p>After configuring swap, always verify with these commands:</p>
+                    <ul>
+                        <li><code>free -h</code> - Shows memory usage including swap</li>
+                        <li><code>swapon --show</code> - Displays active swap partitions</li>
+                        <li><code>cat /proc/swaps</code> - Shows kernel swap information</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All swap partition requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab: Swap Partition Management</div>
+                <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Check Current Disk Layout</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>fdisk -l</code></div>
+                <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@station ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vim Editor Overlay -->
+<div id="vim-overlay" class="vim-overlay" style="display: none;">
+    <div class="vim-container">
+        <div class="vim-instructions" id="vim-instructions">
+            <h3>Vim Editor Instructions</h3>
+            <div id="vim-instructions-content"></div>
+        </div>
+        
+        <div class="vim-editor">
+            <div class="vim-header">
+                <span id="vim-filename">filename</span>
+                <div class="vim-command-buttons">
+                    <button class="vim-command-button" id="vim-insert-button">i (Insert)</button>
+                    <button class="vim-esc-button" id="vim-esc-button">ESC</button>
+                    <span id="vim-close-btn" style="cursor: pointer; margin-left: 10px;">×</span>
+                </div>
+            </div>
+            <div class="vim-content" id="vim-content">
+                <textarea id="vim-textarea" class="vim-textarea" spellcheck="false"></textarea>
+            </div>
+            <div class="vim-command-line">
+                <input type="text" class="vim-input" id="vim-input" placeholder="Type :wq to save and exit"/>
+            </div>
+            <div class="vim-status">
+                <span class="vim-mode-indicator command-mode" id="vim-mode-indicator">COMMAND MODE</span>
+                <span id="vim-cursor-position">1,1</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    // Vim editor elements
+    const vimOverlay = document.getElementById('vim-overlay');
+    const vimInstructions = document.getElementById('vim-instructions');
+    const vimInstructionsContent = document.getElementById('vim-instructions-content');
+    const vimFilename = document.getElementById('vim-filename');
+    const vimContent = document.getElementById('vim-content');
+    const vimTextarea = document.getElementById('vim-textarea');
+    const vimInput = document.getElementById('vim-input');
+    const vimModeIndicator = document.getElementById('vim-mode-indicator');
+    const vimCursorPosition = document.getElementById('vim-cursor-position');
+    const vimCloseBtn = document.getElementById('vim-close-btn');
+    const vimEscButton = document.getElementById('vim-esc-button');
+    const vimInsertButton = document.getElementById('vim-insert-button');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'fdisk', 'mkswap', 'swapon', 'free', 'cat', 'vim', 'clear', 'help'
+    ];
+    
+    // Track configuration state
+    const configState = {
+        partition: false,
+        mkswap: false,
+        swapon: false,
+        fstab: false,
+        verification: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['fdisk -l'],
+        2: ['fdisk -cu /dev/vda'],
+        3: ['mkswap /dev/vda5'],
+        4: ['swapon /dev/vda5', 'swapon -s'],
+        5: ['vim /etc/fstab'],
+        6: ['free -h', 'swapon --show', 'cat /proc/swaps']
+    };
+    
+    // Simulated file contents
+    let fstabContent = `#
+# /etc/fstab
+# Created by anaconda on Fri Oct 15 12:45:23 2021
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/rhel-root   /                       xfs     defaults        0 0
+UUID=abcd1234-5678-90ef-ghij-klmnopqrstuv /boot xfs     defaults        0 0
+/dev/mapper/rhel-swap   swap                    swap    defaults        0 0
+`;
+    
+    const commands = {
+        'fdisk': (args) => {
+            if (args.length === 1 && args[0] === '-l') {
+                if (currentStep === 1 || currentStep > 1) {
+                    completeStep(1);
+                    return `Disk /dev/vda: 10 GiB, 10737418240 bytes, 20971520 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos
+Disk identifier: 0x12345678
+
+Device     Boot   Start      End  Sectors Size Id Type
+/dev/vda1  *       2048  2099199  2097152   1G 83 Linux
+/dev/vda2       2099200 20971519 18872320   9G 8e Linux LVM
+
+Disk /dev/mapper/rhel-root: 8 GiB, 8589934592 bytes, 16777216 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+
+Disk /dev/mapper/rhel-swap: 1 GiB, 1073741824 bytes, 2097152 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args.length === 2 && args[0] === '-cu' && args[1] === '/dev/vda') {
+                if (currentStep === 2 || currentStep > 2) {
+                    configState.partition = true;
+                    updateRequirements();
+                    completeStep(2);
+                    return `Welcome to fdisk (util-linux 2.32.1).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+Command (m for help): n
+Partition type
+   p   primary (2 primary, 0 extended, 2 free)
+   e   extended (container for logical partitions)
+Select (default p): e
+
+Selected partition 3
+First sector (20971520-20971519, default 20971520): 
+Last sector, +sectors or +size{K,M,G,T,P} (20971520-20971519, default 20971519): +754M
+
+Created a new partition 3 of type 'Extended' and of size 754 MiB.
+
+Command (m for help): t
+Partition number (1-3, default 3): 3
+Hex code (type L to list all codes): 82
+
+Changed type of partition 'Extended' to 'Linux swap / Solaris'.
+
+Command (m for help): p
+Disk /dev/vda: 10 GiB, 10737418240 bytes, 20971520 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos
+Disk identifier: 0x12345678
+
+Device     Boot   Start      End  Sectors Size Id Type
+/dev/vda1  *       2048  2099199  2097152   1G 83 Linux
+/dev/vda2       2099200 20971519 18872320   9G 8e Linux LVM
+/dev/vda3      20971520 22323199  1351680 754M 82 Linux swap / Solaris
+
+Command (m for help): w
+The partition table has been altered.
+Calling ioctl() to re-read partition table.
+Syncing disks.`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `fdisk: invalid option '${args.join(' ')}'`;
+        },
+        
+        'mkswap': (args) => {
+            if (args.length === 1 && args[0] === '/dev/vda5') {
+                if (currentStep === 3 || currentStep > 3) {
+                    if (configState.partition) {
+                        configState.mkswap = true;
+                        updateRequirements();
+                        completeStep(3);
+                        return "Setting up swapspace version 1, size = 754 MiB (790626304 bytes)\nno label, UUID=abcd1234-5678-90ef-ghij-klmnopqrstuv";
+                    } else {
+                        return "Partition not created. Please create the partition first.";
+                    }
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `mkswap: invalid option '${args.join(' ')}'`;
+        },
+        
+        'swapon': (args) => {
+            if (args.length === 1 && args[0] === '/dev/vda5') {
+                if (currentStep === 4 || currentStep > 4) {
+                    if (configState.mkswap) {
+                        configState.swapon = true;
+                        updateRequirements();
+                        return "Swap partition /dev/vda5 activated successfully";
+                    } else {
+                        return "Swap partition not formatted. Please run mkswap first.";
+                    }
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args.length === 1 && args[0] === '-s') {
+                if (configState.swapon) {
+                    return "Filename\t\t\tType\t\tSize\tUsed\tPriority\n/dev/dm-1                               partition\t1048572\t0\t-2\n/dev/vda5                               partition\t771068\t0\t-3";
+                } else {
+                    return "Filename\t\t\tType\t\tSize\tUsed\tPriority\n/dev/dm-1                               partition\t1048572\t0\t-2";
+                }
+            } else if (args.length === 1 && args[0] === '--show') {
+                if (configState.swapon) {
+                    return "NAME      TYPE SIZE USED PRIO\n/dev/dm-1 partition 1G 0B -2\n/dev/vda5 partition 754M 0B -3";
+                } else {
+                    return "NAME      TYPE SIZE USED PRIO\n/dev/dm-1 partition 1G 0B -2";
+                }
+            }
+            return `swapon: invalid option '${args.join(' ')}'`;
+        },
+        
+        'free': (args) => {
+            if (args.length === 1 && args[0] === '-h') {
+                if (configState.swapon) {
+                    configState.verification = true;
+                    updateRequirements();
+                    completeStep(6);
+                    return "              total        used        free      shared  buff/cache   available\nMem:           1.8G        214M        1.2G        8.6M        412M        1.4G\nSwap:          1.7G          0B        1.7G";
+                } else {
+                    return "              total        used        free      shared  buff/cache   available\nMem:           1.8G        214M        1.2G        8.6M        412M        1.4G\nSwap:          1.0G          0B        1.0G";
+                }
+            }
+            return `free: invalid option '${args.join(' ')}'`;
+        },
+        
+        'cat': (args) => {
+            if (args.length === 1 && args[0] === '/proc/swaps') {
+                if (configState.swapon) {
+                    return "Filename\t\t\tType\t\tSize\tUsed\tPriority\n/dev/dm-1                               partition\t1048572\t0\t-2\n/dev/vda5                               partition\t771068\t0\t-3";
+                } else {
+                    return "Filename\t\t\tType\t\tSize\tUsed\tPriority\n/dev/dm-1                               partition\t1048572\t0\t-2";
+                }
+            } else if (args.length === 1 && args[0] === '/etc/fstab') {
+                return fstabContent;
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        
+        'vim': (args) => {
+            if (args.length === 0) {
+                return "vim: Please specify a file to edit";
+            }
+            
+            const file = args[0];
+            let content = '';
+            
+            if (file === "/etc/fstab") {
+                content = fstabContent;
+                if (currentStep === 5 || currentStep > 5) {
+                    const result = openVimEditor(file, content, 'fstab');
+                    return result;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            
+            return `vim: cannot open ${file} for writing: No such file or directory`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: fdisk, mkswap, swapon, free, cat, vim, clear, help";
+        }
+    };
+    
+    // Function to open the Vim editor
+    function openVimEditor(filename, content, fileType) {
+        vimState.file = filename;
+        vimState.content = content;
+        vimState.fileType = fileType;
+        vimState.mode = 'command';
+        vimState.isEditing = true;
+        
+        // Set the filename in the editor
+        vimFilename.textContent = filename;
+        
+        // Set the content in the textarea
+        vimTextarea.value = content;
+        
+        // Set up instructions based on file type
+        if (fileType === 'fstab') {
+            vimInstructionsContent.innerHTML = `
+                <p>Edit the fstab file to make the swap partition persistent.</p>
+                <p>Add this line to the file:</p>
+                <div class="file-content">/dev/vda5 swap swap defaults 0 0</div>
+                <p><strong>Vim Commands:</strong></p>
+                <ul>
+                    <li>Press <code>i</code> to enter Insert mode</li>
+                    <li>Type the required configuration at the end of the file</li>
+                    <li>Press <code>ESC</code> to return to Command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
+                </ul>
+            `;
+        }
+        
+        // Show the Vim overlay
+        vimOverlay.style.display = 'flex';
+        
+        // Start in command mode
+        vimState.mode = 'command';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        
+        // Focus the vim input (command line)
+        setTimeout(() => {
+            vimInput.focus();
+            updateVimCursorPosition();
+        }, 100);
+        
+        return `Opening ${filename} in Vim editor...`;
+    }
+    
+    // Function to handle Vim commands
+    function handleVimCommand(command) {
+        if (command === 'w' || command === 'write') {
+            // Save the file
+            if (vimState.file === "/etc/fstab") {
+                fstabContent = vimTextarea.value;
+                if (fstabContent.includes("/dev/vda5 swap swap defaults 0 0")) {
+                    configState.fstab = true;
+                    updateRequirements();
+                    completeStep(5);
+                }
+            }
+            return "File saved";
+        } else if (command === 'q' || command === 'quit') {
+            // Close the editor
+            closeVimEditor();
+            return "";
+        } else if (command === 'wq') {
+            // Save and quit
+            const saveMsg = handleVimCommand('w');
+            closeVimEditor();
+            return saveMsg + " and exiting";
+        } else if (command === 'q!') {
+            // Quit without saving
+            closeVimEditor();
+            return "Exiting without saving";
+        }
+        return `Not an editor command: ${command}`;
+    }
+    
+    // Function to close the Vim editor
+    function closeVimEditor() {
+        vimOverlay.style.display = 'none';
+        vimState.isEditing = false;
+        commandInput.focus();
+    }
+    
+    // Function to update Vim cursor position display
+    function updateVimCursorPosition() {
+        const text = vimTextarea.value;
+        const cursorPos = vimTextarea.selectionStart;
+        const lines = text.substring(0, cursorPos).split('\n');
+        const line = lines.length;
+        const column = lines[lines.length - 1].length + 1;
+        vimCursorPosition.textContent = `${line},${column}`;
+    }
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.partition) {
+            document.getElementById('req-partition').classList.add('completed');
+            document.getElementById('req-partition').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.mkswap) {
+            document.getElementById('req-mkswap').classList.add('completed');
+            document.getElementById('req-mkswap').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.swapon) {
+            document.getElementById('req-swapon').classList.add('completed');
+            document.getElementById('req-swapon').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.fstab) {
+            document.getElementById('req-fstab').classList.add('completed');
+            document.getElementById('req-fstab').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.verification) {
+            document.getElementById('req-verification').classList.add('completed');
+            document.getElementById('req-verification').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[root@station ~]# Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep][0]}`);
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Vim editor event listeners
+    vimCloseBtn.addEventListener('click', () => {
+        closeVimEditor();
+    });
+    
+    vimEscButton.addEventListener('click', () => {
+        vimState.mode = 'command';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        vimTextarea.blur();
+        vimInput.focus();
+        updateVimCursorPosition();
+    });
+    
+    vimInsertButton.addEventListener('click', () => {
+        vimState.mode = 'insert';
+        vimModeIndicator.textContent = 'INSERT MODE';
+        vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+        vimInput.blur();
+        vimTextarea.focus();
+        updateVimCursorPosition();
+    });
+    
+    // Handle vim mode switching with keyboard
+    vimTextarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            vimState.mode = 'command';
+            vimModeIndicator.textContent = 'COMMAND MODE';
+            vimModeIndicator.className = 'vim-mode-indicator command-mode';
+            vimTextarea.blur();
+            vimInput.focus();
+        }
+        updateVimCursorPosition();
+    });
+    
+    // Handle vim command input
+    vimInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const command = vimInput.value.trim();
+            if (command === 'i') {
+                // Switch to insert mode
+                vimState.mode = 'insert';
+                vimModeIndicator.textContent = 'INSERT MODE';
+                vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+                vimInput.blur();
+                vimTextarea.focus();
+                vimInput.value = '';
+            } else if (command.startsWith(':')) {
+                // Handle colon commands
+                const actualCommand = command.substring(1);
+                const result = handleVimCommand(actualCommand);
+                if (result) {
+                    addTerminalOutput(result);
+                }
+                vimInput.value = '';
+            } else if (command) {
+                // Other vim commands
+                vimInput.value = '';
+            }
+        } else if (e.key === 'i' && vimInput.value === '' && vimState.mode === 'command') {
+            // Quick insert mode switch
+            e.preventDefault();
+            vimState.mode = 'insert';
+            vimModeIndicator.textContent = 'INSERT MODE';
+            vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+            vimInput.blur();
+            vimTextarea.focus();
+        }
+    });
+    
+    vimTextarea.addEventListener('click', () => {
+        if (vimState.mode === 'command') {
+            // In command mode, clicking textarea should focus command input instead
+            vimInput.focus();
+        } else {
+            updateVimCursorPosition();
+        }
+    });
+    
+    vimTextarea.addEventListener('keyup', () => {
+        if (vimState.mode === 'insert') {
+            updateVimCursorPosition();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>

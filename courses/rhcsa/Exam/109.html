@@ -1,10 +1,1043 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Lab 109</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab: String Search and File Operations</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
 <body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab: String Search and File Operations</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Find all lines containing the string "seismic" in the file /usr/share/dict/words and save them to /root/wordlist while preserving original order and format.</p>
+                <p><strong>Time Estimate:</strong> 5-10 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
 
+            <div class="requirements-panel">
+                <h4>String Search Requirements</h4>
+                <div class="requirement-item" id="req-verify-source">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify source file <code>/usr/share/dict/words</code> exists</span>
+                </div>
+                <div class="requirement-item" id="req-grep-search">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Search for lines containing "seismic" using <code>grep</code></span>
+                </div>
+                <div class="requirement-item" id="req-output-redirect">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Redirect output to <code>/root/wordlist</code></span>
+                </div>
+                <div class="requirement-item" id="req-verify-result">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify output file contains correct lines in original order</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA String Search and File Operations Lab. In this lab, you will search for specific text patterns in a file and save the results to a new file.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Verify Source File
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's verify that the source file exists and check its contents.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ls -l /usr/share/dict/words
+                </div>
+                
+                <p>This will show us the file details and confirm it exists.</p>
+                
+                <div class="concept">
+                    <h4>Understanding the words File</h4>
+                    <p>The <code>/usr/share/dict/words</code> file is a standard dictionary file on Linux systems containing English words.</p>
+                    <p>It's commonly used for spell checking and text processing tasks.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Search for String "seismic"
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's search for lines containing the string "seismic" in the dictionary file.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    grep seismic /usr/share/dict/words
+                </div>
+                
+                <p>This will display all lines from the dictionary file that contain the word "seismic".</p>
+                
+                <div class="concept">
+                    <h4>Understanding grep Command</h4>
+                    <p>The <code>grep</code> command searches for patterns in files:</p>
+                    <ul>
+                        <li><code>grep pattern file</code> - Basic search syntax</li>
+                        <li>By default, grep displays matching lines to stdout</li>
+                        <li>It preserves the original order of lines in the file</li>
+                        <li>No blank lines are added to the output</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Save Results to File
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's save the search results to the target file <code>/root/wordlist</code>.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    grep seismic /usr/share/dict/words > /root/wordlist
+                </div>
+                
+                <p>The <code>></code> operator redirects the output to a file instead of displaying it on screen.</p>
+                
+                <div class="concept">
+                    <h4>Understanding Output Redirection</h4>
+                    <p>Linux provides several ways to redirect output:</p>
+                    <ul>
+                        <li><code>> file</code> - Redirects stdout to file (overwrites)</li>
+                        <li><code>>> file</code> - Redirects stdout to file (appends)</li>
+                        <li><code>2> file</code> - Redirects stderr to file</li>
+                        <li><code>&> file</code> - Redirects both stdout and stderr</li>
+                    </ul>
+                    <p>The <code>></code> operator will create the file if it doesn't exist.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Verify the Results
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's verify that the operation was successful and the output file contains the correct content.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ls -l /root/wordlist
+                </div>
+                <p>Should show the file exists with appropriate permissions</p>
+                
+                <div class="command-hint">
+                    wc -l /root/wordlist
+                </div>
+                <p>Should show the number of lines in the output file</p>
+                
+                <div class="command-hint">
+                    cat /root/wordlist
+                </div>
+                <p>Should display all lines containing "seismic" in original order</p>
+
+                <div class="concept">
+                    <h4>Verification Commands</h4>
+                    <p>After creating files with redirected output, always verify:</p>
+                    <ul>
+                        <li><code>ls -l</code> - Confirms file creation and permissions</li>
+                        <li><code>wc -l</code> - Counts lines to ensure all matches were captured</li>
+                        <li><code>cat</code> - Displays file contents for visual verification</li>
+                        <li><code>head/tail</code> - Shows beginning/end of file for large outputs</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All string search and file operation requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab: String Search and File Operations</div>
+                <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Verify Source File</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>ls -l /usr/share/dict/words</code></div>
+                <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@station ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'ls', 'grep', 'cat', 'wc', 'head', 'tail', 'clear', 'help'
+    ];
+    
+    // Track configuration state
+    const configState = {
+        verifySource: false,
+        grepSearch: false,
+        outputRedirect: false,
+        verifyResult: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['ls -l /usr/share/dict/words'],
+        2: ['grep seismic /usr/share/dict/words'],
+        3: ['grep seismic /usr/share/dict/words > /root/wordlist'],
+        4: ['ls -l /root/wordlist', 'wc -l /root/wordlist', 'cat /root/wordlist']
+    };
+    
+    // Simulated dictionary content with "seismic" matches
+    const seismicMatches = [
+        "aseismic",
+        "antiseismic",
+        "microseismic", 
+        "paleoseismic",
+        "postseismic",
+        "preseismic",
+        "seismic",
+        "seismical",
+        "seismically",
+        "seismicity",
+        "seismogram",
+        "seismograph",
+        "seismographic",
+        "seismographical",
+        "seismographically",
+        "seismography",
+        "seismologic",
+        "seismological",
+        "seismologically",
+        "seismologist",
+        "seismology",
+        "seismometer",
+        "seismometric",
+        "seismometrical",
+        "seismometry"
+    ];
+    
+    const commands = {
+        'ls': (args) => {
+            if (args.length === 2 && args[0] === '-l' && args[1] === '/usr/share/dict/words') {
+                if (currentStep === 1 || currentStep > 1) {
+                    configState.verifySource = true;
+                    updateRequirements();
+                    completeStep(1);
+                    return "-rw-r--r--. 1 root root 4953699 Oct 15  2021 /usr/share/dict/words";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args.length === 2 && args[0] === '-l' && args[1] === '/root/wordlist') {
+                if (configState.outputRedirect) {
+                    configState.verifyResult = true;
+                    updateRequirements();
+                    completeStep(4);
+                    return "-rw-r--r--. 1 root root 256 Mar 23 11:45 /root/wordlist";
+                } else {
+                    return "ls: cannot access '/root/wordlist': No such file or directory";
+                }
+            }
+            return `ls: cannot access '${args.join(' ')}': No such file or directory`;
+        },
+        
+        'grep': (args) => {
+            if (args.length === 2 && args[0] === 'seismic' && args[1] === '/usr/share/dict/words') {
+                if (currentStep === 2 || currentStep > 2) {
+                    if (configState.verifySource) {
+                        configState.grepSearch = true;
+                        updateRequirements();
+                        completeStep(2);
+                        let output = "Lines containing 'seismic':\n";
+                        seismicMatches.forEach(match => {
+                            output += match + "\n";
+                        });
+                        output += `\nTotal: ${seismicMatches.length} matches found`;
+                        return output;
+                    } else {
+                        return "Source file not verified. Please check /usr/share/dict/words first.";
+                    }
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args.length === 3 && args[0] === 'seismic' && args[1] === '/usr/share/dict/words' && 
+                      args[2] === '>') {
+                if (currentStep === 3 || currentStep > 3) {
+                    if (configState.grepSearch) {
+                        configState.outputRedirect = true;
+                        updateRequirements();
+                        completeStep(3);
+                        return `Results saved to /root/wordlist\n${seismicMatches.length} lines written`;
+                    } else {
+                        return "Search not performed. Please run grep search first.";
+                    }
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `grep: invalid option '${args.join(' ')}'`;
+        },
+        
+        'wc': (args) => {
+            if (args.length === 2 && args[0] === '-l' && args[1] === '/root/wordlist') {
+                if (configState.outputRedirect) {
+                    return seismicMatches.length.toString();
+                } else {
+                    return "wc: /root/wordlist: No such file or directory";
+                }
+            }
+            return `wc: invalid option '${args.join(' ')}'`;
+        },
+        
+        'cat': (args) => {
+            if (args.length === 1 && args[0] === '/root/wordlist') {
+                if (configState.outputRedirect) {
+                    return seismicMatches.join('\n');
+                } else {
+                    return "cat: /root/wordlist: No such file or directory";
+                }
+            } else if (args.length === 1 && args[0] === '/usr/share/dict/words') {
+                return "Displaying first 20 lines of /usr/share/dict/words:\n" +
+                       "A\nA's\nAA's\nAB's\nABM's\nAC's\nACTH's\nAI's\nAIDS's\nAM's\n" +
+                       "AOL\nAOL's\nASCII's\nASL's\nATM's\nATP's\nAWOL's\nAZ's\n" +
+                       "Aa\nAachen";
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        
+        'head': (args) => {
+            if (args.length === 2 && args[0] === '-5' && args[1] === '/root/wordlist') {
+                if (configState.outputRedirect) {
+                    return seismicMatches.slice(0, 5).join('\n');
+                } else {
+                    return "head: cannot open '/root/wordlist' for reading: No such file or directory";
+                }
+            }
+            return `head: invalid option '${args.join(' ')}'`;
+        },
+        
+        'tail': (args) => {
+            if (args.length === 2 && args[0] === '-5' && args[1] === '/root/wordlist') {
+                if (configState.outputRedirect) {
+                    return seismicMatches.slice(-5).join('\n');
+                } else {
+                    return "tail: cannot open '/root/wordlist' for reading: No such file or directory";
+                }
+            }
+            return `tail: invalid option '${args.join(' ')}'`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: ls, grep, cat, wc, head, tail, clear, help";
+        }
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.verifySource) {
+            document.getElementById('req-verify-source').classList.add('completed');
+            document.getElementById('req-verify-source').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.grepSearch) {
+            document.getElementById('req-grep-search').classList.add('completed');
+            document.getElementById('req-grep-search').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.outputRedirect) {
+            document.getElementById('req-output-redirect').classList.add('completed');
+            document.getElementById('req-output-redirect').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.verifyResult) {
+            document.getElementById('req-verify-result').classList.add('completed');
+            document.getElementById('req-verify-result').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[root@station ~]# Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep][0]}`);
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
 </body>
 </html>
