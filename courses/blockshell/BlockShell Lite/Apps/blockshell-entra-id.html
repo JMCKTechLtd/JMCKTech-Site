@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockShell – Entra ID</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <style>
+    :root {
+      --primary-color: #0078d4;
+      --text-color: #2c3e50;
+      --light-bg: #f8f9fa;
+      --border-color: #eaecef;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(to bottom, var(--light-bg), #eef1f5);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-color);
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    header {
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 120, 212, 0.1);
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      color: #0078d4;
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, #0078d4, #00a4ef);
+      border-radius: 2px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-top: 8px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    #blockly-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #blocklyDiv {
+      height: calc(100% - 60px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #buttons {
+      padding: 10px 20px;
+      display: flex;
+      gap: 10px;
+      background-color: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 120, 212, 0.3);
+    }
+
+    button.danger {
+      background-color: #d13438;
+    }
+
+    button.danger:hover {
+      background-color: #b32d30;
+    }
+
+    .blocklyToolboxDiv {
+      border-right: 1px solid var(--border-color) !important;
+    }
+
+    .blocklyMainBackground {
+      stroke-width: 0;
+    }
+
+    .blocklyFlyoutBackground {
+      fill: var(--light-bg);
+    }
+
+    .modal {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--text-color);
+      font-size: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .code-block {
+      background-color: var(--light-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 15px;
+      overflow-x: auto;
+      font-family: Consolas, Monaco, "Andale Mono", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      z-index: 1000;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .zoom-btn {
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+
+    .zoom-btn:hover {
+      background-color: var(--light-bg);
+    }
+
+    .zoom-btn:first-child {
+      border-bottom: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <h1>BlockShell – Entra ID</h1>
+      <div class="subtitle">Visual PowerShell Script Builder for Microsoft Entra ID</div>
+    </header>
+
+    <div id="blockly-container">
+      <div id="buttons">
+        <button onclick="simulate()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 10 4 15 9 20"></polyline>
+            <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+          </svg>
+          Show Script
+        </button>
+        <button onclick="download()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Script
+        </button>
+        <button class="danger" onclick="clearWorkspace()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Clear Workspace
+        </button>
+      </div>
+      <div id="blocklyDiv"></div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+        <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+      </div>
+    </div>
+  </div>
+
+  <xml id="toolbox" style="display:none">
+    <category name="User Management" colour="180">
+      <block type="create_entra_user">
+        <tooltip>Creates a new Entra ID user account. PowerShell: New-MgUser</tooltip>
+      </block>
+      <block type="get_entra_user">
+        <tooltip>Retrieves information about an Entra ID user. PowerShell: Get-MgUser</tooltip>
+      </block>
+      <block type="remove_entra_user">
+        <tooltip>Deletes an Entra ID user account. PowerShell: Remove-MgUser</tooltip>
+      </block>
+      <block type="set_user_properties">
+        <tooltip>Sets common user properties like email and department. PowerShell: Update-MgUser</tooltip>
+      </block>
+      <block type="invite_external_user">
+        <tooltip>Invites an external user to the organization. PowerShell: New-MgInvitation</tooltip>
+      </block>
+      <block type="create_user_from_template">
+        <tooltip>Creates a new user based on an existing template user.</tooltip>
+      </block>
+    </category>
+    <category name="Group Management" colour="210">
+      <block type="create_entra_group">
+        <tooltip>Creates a new Microsoft 365 or security group. PowerShell: New-MgGroup</tooltip>
+      </block>
+      <block type="add_user_to_group">
+        <tooltip>Adds a user to an Entra ID group. PowerShell: New-MgGroupMember</tooltip>
+      </block>
+      <block type="remove_user_from_group">
+        <tooltip>Removes a user from an Entra ID group. PowerShell: Remove-MgGroupMemberByRef</tooltip>
+      </block>
+      <block type="copy_group_members">
+        <tooltip>Copies all members from one group to another.</tooltip>
+      </block>
+      <block type="get_group_members">
+        <tooltip>Lists all members of a group. PowerShell: Get-MgGroupMember</tooltip>
+      </block>
+      <block type="create_dynamic_group">
+        <tooltip>Creates a dynamic group with membership rules.</tooltip>
+      </block>
+    </category>
+    <category name="Application Management" colour="160">
+      <block type="register_application">
+        <tooltip>Registers a new application in Entra ID. PowerShell: New-MgApplication</tooltip>
+      </block>
+      <block type="get_application">
+        <tooltip>Retrieves application information. PowerShell: Get-MgApplication</tooltip>
+      </block>
+      <block type="add_app_owner">
+        <tooltip>Adds an owner to an application. PowerShell: New-MgApplicationOwnerByRef</tooltip>
+      </block>
+      <block type="create_service_principal">
+        <tooltip>Creates a service principal for an application. PowerShell: New-MgServicePrincipal</tooltip>
+      </block>
+      <block type="configure_app_roles">
+        <tooltip>Configures application roles for an app.</tooltip>
+      </block>
+    </category>
+    <category name="Security" colour="230">
+      <block type="set_user_password">
+        <tooltip>Sets a user's password. PowerShell: Update-MgUser</tooltip>
+      </block>
+      <block type="force_password_change">
+        <tooltip>Forces user to change password at next login.</tooltip>
+      </block>
+      <block type="enable_user">
+        <tooltip>Enables a user account. PowerShell: Update-MgUser</tooltip>
+      </block>
+      <block type="disable_user">
+        <tooltip>Disables a user account. PowerShell: Update-MgUser</tooltip>
+      </block>
+      <block type="export_group_membership">
+        <tooltip>Exports a user's group memberships to CSV.</tooltip>
+      </block>
+      <block type="check_signin_activity">
+        <tooltip>Checks user sign-in activity and risk.</tooltip>
+      </block>
+      <block type="enable_mfa">
+        <tooltip>Enables MFA for a user.</tooltip>
+      </block>
+      <block type="configure_conditional_access">
+        <tooltip>Configures conditional access policies.</tooltip>
+      </block>
+    </category>
+    <category name="Reports" colour="130">
+      <block type="generate_user_report">
+        <tooltip>Generates user reports in various formats.</tooltip>
+      </block>
+      <block type="audit_log_report">
+        <tooltip>Generates audit log reports.</tooltip>
+      </block>
+      <block type="signin_report">
+        <tooltip>Generates sign-in activity reports.</tooltip>
+      </block>
+    </category>
+  </xml>
+
+  <script>
+    // Declare workspace variable at the top level
+    let workspace;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize Blockly workspace
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        trashcan: true,
+        grid: {
+          spacing: 25,
+          length: 3,
+          colour: '#e0e0e0',
+          snap: true
+        },
+        zoom: {
+          controls: true,
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2
+        },
+        theme: {
+          'blockStyles': {
+            'colour_blocks': { 'colourPrimary': '#CF63CF', 'colourSecondary': '#C94FC9', 'colourTertiary': '#BD42BD' },
+            'list_blocks': { 'colourPrimary': '#9966FF', 'colourSecondary': '#855CD6', 'colourTertiary': '#774DCB' },
+            'logic_blocks': { 'colourPrimary': '#4C97FF', 'colourSecondary': '#4280D7', 'colourTertiary': '#3373CC' },
+            'loop_blocks': { 'colourPrimary': '#0fBD8C', 'colourSecondary': '#0DA57A', 'colourTertiary': '#0B8E69' },
+            'math_blocks': { 'colourPrimary': '#59C059', 'colourSecondary': '#46B946', 'colourTertiary': '#389438' },
+            'procedure_blocks': { 'colourPrimary': '#FF6680', 'colourSecondary': '#FF4D6A', 'colourTertiary': '#FF3355' },
+            'text_blocks': { 'colourPrimary': '#FFBF00', 'colourSecondary': '#E6AC00', 'colourTertiary': '#CC9900' },
+            'variable_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' },
+            'variable_dynamic_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' }
+          },
+          'componentStyles': {
+            'workspaceBackgroundColour': '#F9FAFB',
+            'toolboxBackgroundColour': '#FFFFFF',
+            'toolboxForegroundColour': '#1E293B',
+            'flyoutBackgroundColour': '#F1F5F9',
+            'flyoutForegroundColour': '#1E293B',
+            'flyoutOpacity': 0.9,
+            'scrollbarColour': '#CCCCCC',
+            'scrollbarOpacity': 0.6
+          }
+        }
+      });
+
+      // Define all blocks with enhanced tooltips
+      Blockly.defineBlocksWithJsonArray([
+        {
+          "type": "create_entra_user",
+          "message0": "Create Entra ID User (Display Name: %1 User Principal Name: %2)",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "John Doe" },
+            { "type": "field_input", "name": "UPN", "text": "jdoe@contoso.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Creates a new Entra ID user account.\n\nPowerShell: New-MgUser -DisplayName \"value\" -UserPrincipalName \"value\" -AccountEnabled -PasswordProfile",
+          "helpUrl": ""
+        },
+        {
+          "type": "remove_entra_user",
+          "message0": "Remove Entra ID User (User Principal Name: %1)",
+          "args0": [{ "type": "field_input", "name": "UPN", "text": "jdoe@contoso.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Deletes an Entra ID user account.\n\nPowerShell: Remove-MgUser -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_entra_group",
+          "message0": "Create Entra ID Group (Display Name: %1 Type: %2)",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "Marketing Team" },
+            { "type": "field_dropdown", "name": "GROUP_TYPE", "options": [
+              ["Microsoft 365", "Unified"],
+              ["Security", "Security"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Creates a new Microsoft 365 or security group in Entra ID.\n\nPowerShell: New-MgGroup -DisplayName \"value\" -MailEnabled $false -SecurityEnabled $true -GroupTypes",
+          "helpUrl": ""
+        },
+        {
+          "type": "add_user_to_group",
+          "message0": "Add User %1 to Group %2",
+          "args0": [
+            { "type": "field_input", "name": "USER_UPN", "text": "jdoe@contoso.com" },
+            { "type": "field_input", "name": "GROUP_NAME", "text": "Marketing Team" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Adds a user to an Entra ID group.\n\nPowerShell: New-MgGroupMember -GroupId (group_id) -DirectoryObjectId (user_id)",
+          "helpUrl": ""
+        },
+        {
+          "type": "remove_user_from_group",
+          "message0": "Remove User %1 from Group %2",
+          "args0": [
+            { "type": "field_input", "name": "USER_UPN", "text": "jdoe@contoso.com" },
+            { "type": "field_input", "name": "GROUP_NAME", "text": "Marketing Team" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Removes a user from an Entra ID group.\n\nPowerShell: Remove-MgGroupMemberByRef -GroupId (group_id) -DirectoryObjectId (user_id)",
+          "helpUrl": ""
+        },
+        {
+          "type": "register_application",
+          "message0": "Register Application (Display Name: %1)",
+          "args0": [{ "type": "field_input", "name": "APP_NAME", "text": "My Custom App" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Registers a new application in Entra ID.\n\nPowerShell: New-MgApplication -DisplayName \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_user_password",
+          "message0": "Set User Password (User: %1 Password: %2)",
+          "args0": [
+            { "type": "field_input", "name": "USER_UPN", "text": "jdoe@contoso.com" },
+            { "type": "field_input", "name": "PASSWORD", "text": "P@ssword123" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Sets a user's Entra ID password.\n\nPowerShell: Update-MgUser -UserId \"user\" -PasswordProfile",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_user",
+          "message0": "Enable User Account (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER_UPN", "text": "jdoe@contoso.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Enables a user account in Entra ID.\n\nPowerShell: Update-MgUser -UserId \"user\" -AccountEnabled $true",
+          "helpUrl": ""
+        },
+        {
+          "type": "disable_user",
+          "message0": "Disable User Account (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER_UPN", "text": "jdoe@contoso.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Disables a user account in Entra ID.\n\nPowerShell: Update-MgUser -UserId \"user\" -AccountEnabled $false",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_entra_user",
+          "message0": "Get Entra ID User Info (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER_UPN", "text": "jdoe@contoso.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Retrieves information about an Entra ID user.\n\nPowerShell: Get-MgUser -UserId \"user\" -Property *",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_user_properties",
+          "message0": "Set User Properties (User: %1 Job Title: %2 Department: %3)",
+          "args0": [
+            { "type": "field_input", "name": "USER_UPN", "text": "jdoe@contoso.com" },
+            { "type": "field_input", "name": "JOB_TITLE", "text": "Software Engineer" },
+            { "type": "field_input", "name": "DEPARTMENT", "text": "IT" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Sets common properties for an Entra ID user.\n\nPowerShell: Update-MgUser -UserId \"user\" -JobTitle \"title\" -Department \"dept\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "copy_group_members",
+          "message0": "Copy Members from Group %1 to Group %2",
+          "args0": [
+            { "type": "field_input", "name": "SOURCE_GROUP", "text": "Source Group" },
+            { "type": "field_input", "name": "TARGET_GROUP", "text": "Target Group" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Copies all members from one group to another.\n\nPowerShell: Get-MgGroupMember -GroupId (source) | ForEach-Object { New-MgGroupMember -GroupId (target) -DirectoryObjectId $_.Id }",
+          "helpUrl": ""
+        },
+        {
+          "type": "force_password_change",
+          "message0": "Force Password Change at Next Login (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER_UPN", "text": "jdoe@contoso.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Forces user to change password at next login.\n\nPowerShell: Update-MgUser -UserId \"user\" -PasswordProfile @{ForceChangePasswordNextSignIn = $true}",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_group_members",
+          "message0": "Get Members of Group %1 Export to CSV? %2",
+          "args0": [
+            { "type": "field_input", "name": "GROUP_NAME", "text": "Marketing Team" },
+            { "type": "field_checkbox", "name": "EXPORT", "checked": false }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Lists all members of an Entra ID group with option to export to CSV.\n\nPowerShell: Get-MgGroupMember -GroupId (group_id) | Export-Csv (if enabled)",
+          "helpUrl": ""
+        },
+        {
+          "type": "invite_external_user",
+          "message0": "Invite External User (Email: %1 Display Name: %2)",
+          "args0": [
+            { "type": "field_input", "name": "EMAIL", "text": "external@example.com" },
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "External User" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Invites an external user to the organization.\n\nPowerShell: New-MgInvitation -InvitedUserEmailAddress \"email\" -InvitedUserDisplayName \"name\" -SendInvitationMessage $true -InviteRedirectUrl \"https://myapps.microsoft.com\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "export_group_membership",
+          "message0": "Export User %1 Group Memberships to CSV",
+          "args0": [
+            { "type": "field_input", "name": "USER_UPN", "text": "jdoe@contoso.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Exports all group memberships for a user to CSV file.\n\nPowerShell: Get-MgUserMemberOf -UserId \"user\" | Export-Csv",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_user_from_template",
+          "message0": "Create User From Template (New User: %1 Template User: %2)",
+          "args0": [
+            { "type": "field_input", "name": "NEW_USER_UPN", "text": "jsmith@contoso.com" },
+            { "type": "field_input", "name": "TEMPLATE_USER_UPN", "text": "jdoe@contoso.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Creates a new user by copying properties from a template user.\n\nPowerShell: Copies properties and group memberships from template",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_dynamic_group",
+          "message0": "Create Dynamic Group (Display Name: %1 Rule: %2)",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "All Sales Users" },
+            { "type": "field_input", "name": "RULE", "text": "(user.department -eq \"Sales\")" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Creates a dynamic group with membership rules.\n\nPowerShell: New-MgGroup -DisplayName \"value\" -GroupTypes \"DynamicMembership\" -MembershipRule \"rule\" -MembershipRuleProcessingState \"On\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_application",
+          "message0": "Get Application Info (Display Name: %1)",
+          "args0": [
+            { "type": "field_input", "name": "APP_NAME", "text": "My Custom App" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Retrieves application information from Entra ID.\n\nPowerShell: Get-MgApplication -Filter \"displayName eq 'value'\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "add_app_owner",
+          "message0": "Add Owner to Application (App: %1 Owner: %2)",
+          "args0": [
+            { "type": "field_input", "name": "APP_NAME", "text": "My Custom App" },
+            { "type": "field_input", "name": "OWNER_UPN", "text": "jdoe@contoso.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Adds an owner to an application.\n\nPowerShell: New-MgApplicationOwnerByRef -ApplicationId (app_id) -BodyParameter @{\"@odata.id\" = \"https://graph.microsoft.com/v1.0/directoryObjects/(user_id)\"}",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_service_principal",
+          "message0": "Create Service Principal (App: %1)",
+          "args0": [
+            { "type": "field_input", "name": "APP_NAME", "text": "My Custom App" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Creates a service principal for an application.\n\nPowerShell: New-MgServicePrincipal -AppId (app_id)",
+          "helpUrl": ""
+        },
+        {
+          "type": "check_signin_activity",
+          "message0": "Check Sign-in Activity (User: %1 Days: %2)",
+          "args0": [
+            { "type": "field_input", "name": "USER_UPN", "text": "jdoe@contoso.com" },
+            { "type": "field_number", "name": "DAYS", "value": 7, "min": 1, "max": 90 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Checks user sign-in activity and risk.\n\nPowerShell: Get-MgAuditLogSignIn -Filter \"userPrincipalName eq 'value' and createdDateTime ge (date)\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_mfa",
+          "message0": "Enable MFA for User (User: %1 Method: %2)",
+          "args0": [
+            { "type": "field_input", "name": "USER_UPN", "text": "jdoe@contoso.com" },
+            { "type": "field_dropdown", "name": "MFA_METHOD", "options": [
+              ["Phone", "Phone"],
+              ["Authenticator App", "SoftwareOath"],
+              ["Hardware Token", "HardwareOath"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Enables MFA for a user with specified method.\n\nPowerShell: New-MgUserAuthenticationPhoneMethod -UserId \"user\" -PhoneType \"Mobile\" -PhoneNumber \"+1xxx\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_app_roles",
+          "message0": "Configure App Roles (App: %1)",
+          "args0": [
+            { "type": "field_input", "name": "APP_NAME", "text": "My Custom App" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Configures application roles for an app.\n\nPowerShell: Updates app roles for an application",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_conditional_access",
+          "message0": "Configure Conditional Access Policy (Name: %1)",
+          "args0": [
+            { "type": "field_input", "name": "POLICY_NAME", "text": "Require MFA for Admins" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Configures conditional access policies.\n\nPowerShell: New-MgIdentityConditionalAccessPolicy -DisplayName \"value\" -State \"enabled\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "generate_user_report",
+          "message0": "Generate User Report Type: %1 Output to: %2",
+          "args0": [
+            { "type": "field_dropdown", "name": "REPORTTYPE", "options": [
+              ["Account Status", "AccountStatus"],
+              ["License Status", "LicenseStatus"],
+              ["Sign-in Activity", "SignInActivity"],
+              ["Group Memberships", "Groups"]
+            ]},
+            { "type": "field_dropdown", "name": "OUTPUT", "options": [
+              ["CSV", "CSV"],
+              ["HTML", "HTML"],
+              ["Console", "Console"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Generates a comprehensive user report for auditing and compliance.\n\nPowerShell: Custom report based on selected type and output format",
+          "helpUrl": ""
+        },
+        {
+          "type": "audit_log_report",
+          "message0": "Generate Audit Log Report Days: %1",
+          "args0": [
+            { "type": "field_number", "name": "DAYS", "value": 30, "min": 1, "max": 365 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Generates audit log reports.\n\nPowerShell: Get-MgAuditLogDirectoryAudit -Filter \"activityDateTime ge (date)\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "signin_report",
+          "message0": "Generate Sign-in Report Days: %1 Include Risk? %2",
+          "args0": [
+            { "type": "field_number", "name": "DAYS", "value": 7, "min": 1, "max": 90 },
+            { "type": "field_checkbox", "name": "INCLUDE_RISK", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Generates sign-in activity reports.\n\nPowerShell: Get-MgAuditLogSignIn -Filter \"createdDateTime ge (date)\"",
+          "helpUrl": ""
+        }
+      ]);
+
+      // Setup event listeners
+      document.getElementById('zoom-in').addEventListener('click', function() {
+        workspace.zoomCenter(1.2);
+      });
+
+      document.getElementById('zoom-out').addEventListener('click', function() {
+        workspace.zoomCenter(0.8);
+      });
+
+      window.clearWorkspace = function() {
+        if (confirm('Are you sure you want to clear the workspace? All blocks will be deleted.')) {
+          workspace.clear();
+          showNotification('Workspace cleared');
+        }
+      };
+
+      function generatePowerShellCode() {
+        const blocks = workspace.getTopBlocks(true);
+        let code = "";
+        
+        // Add header
+        code += `# Generated by BlockShell Entra ID Tool\n`;
+        code += `# Date: ${new Date().toISOString()}\n`;
+        code += `# Requires: Microsoft.Graph PowerShell module\n`;
+        code += `# Connect-MgGraph -Scopes "User.ReadWrite.All", "Group.ReadWrite.All", "Application.ReadWrite.All", "Directory.ReadWrite.All", "AuditLog.Read.All"\n`;
+        code += `\n`;
+        
+        // Generate code from blocks
+        for (const block of blocks) {
+          code += generateBlockCodeRecursive(block);
+        }
+        
+        return code.trim();
+      }
+
+      function generateBlockCodeRecursive(block) {
+        if (!block) return "";
+        let code = "";
+
+        switch (block.type) {
+          case "create_entra_user":
+            code += `# Create new Entra ID user\n`;
+            code += `$passwordProfile = @{\n`;
+            code += `    Password = "TempPassword123!"\n`;
+            code += `    ForceChangePasswordNextSignIn = $true\n`;
+            code += `}\n`;
+            code += `New-MgUser -DisplayName "${block.getFieldValue('DISPLAY_NAME')}" -UserPrincipalName "${block.getFieldValue('UPN')}" -AccountEnabled $true -MailNickname "${block.getFieldValue('DISPLAY_NAME').replace(/\s+/g, '')}" -PasswordProfile $passwordProfile\n`;
+            break;
+          case "remove_entra_user":
+            code += `# Remove Entra ID user\n`;
+            code += `Remove-MgUser -UserId "${block.getFieldValue('UPN')}" -Confirm:$false\n`;
+            break;
+          case "create_entra_group":
+            const groupType = block.getFieldValue('GROUP_TYPE');
+            if (groupType === 'Unified') {
+              code += `# Create Microsoft 365 group\n`;
+              code += `New-MgGroup -DisplayName "${block.getFieldValue('DISPLAY_NAME')}" -MailEnabled $true -SecurityEnabled $false -GroupTypes "Unified"\n`;
+            } else {
+              code += `# Create security group\n`;
+              code += `New-MgGroup -DisplayName "${block.getFieldValue('DISPLAY_NAME')}" -MailEnabled $false -SecurityEnabled $true\n`;
+            }
+            break;
+          case "add_user_to_group":
+            code += `# Add user to group\n`;
+            code += `$groupId = (Get-MgGroup -Filter "displayName eq '${block.getFieldValue('GROUP_NAME')}'").Id\n`;
+            code += `$userId = (Get-MgUser -Filter "userPrincipalName eq '${block.getFieldValue('USER_UPN')}'").Id\n`;
+            code += `New-MgGroupMember -GroupId $groupId -DirectoryObjectId $userId\n`;
+            break;
+          case "remove_user_from_group":
+            code += `# Remove user from group\n`;
+            code += `$groupId = (Get-MgGroup -Filter "displayName eq '${block.getFieldValue('GROUP_NAME')}'").Id\n`;
+            code += `$userId = (Get-MgUser -Filter "userPrincipalName eq '${block.getFieldValue('USER_UPN')}'").Id\n`;
+            code += `Remove-MgGroupMemberByRef -GroupId $groupId -DirectoryObjectId $userId\n`;
+            break;
+          case "register_application":
+            code += `# Register new application\n`;
+            code += `New-MgApplication -DisplayName "${block.getFieldValue('APP_NAME')}" -SignInAudience "AzureADMyOrg"\n`;
+            break;
+          case "set_user_password":
+            code += `# Set user password\n`;
+            code += `$passwordProfile = @{\n`;
+            code += `    Password = "${block.getFieldValue('PASSWORD')}"\n`;
+            code += `    ForceChangePasswordNextSignIn = $false\n`;
+            code += `}\n`;
+            code += `Update-MgUser -UserId "${block.getFieldValue('USER_UPN')}" -PasswordProfile $passwordProfile\n`;
+            break;
+          case "enable_user":
+            code += `# Enable user account\n`;
+            code += `Update-MgUser -UserId "${block.getFieldValue('USER_UPN')}" -AccountEnabled $true\n`;
+            break;
+          case "disable_user":
+            code += `# Disable user account\n`;
+            code += `Update-MgUser -UserId "${block.getFieldValue('USER_UPN')}" -AccountEnabled $false\n`;
+            break;
+          case "get_entra_user":
+            code += `# Get user information\n`;
+            code += `Get-MgUser -UserId "${block.getFieldValue('USER_UPN')}" -Property "DisplayName,UserPrincipalName,JobTitle,Department,OfficeLocation,AccountEnabled,CreatedDateTime,LastPasswordChangeDateTime" | Format-List\n`;
+            break;
+          case "set_user_properties":
+            code += `# Set user properties\n`;
+            code += `Update-MgUser -UserId "${block.getFieldValue('USER_UPN')}" -JobTitle "${block.getFieldValue('JOB_TITLE')}" -Department "${block.getFieldValue('DEPARTMENT')}"\n`;
+            break;
+          case "copy_group_members":
+            code += `# Copy group members\n`;
+            code += `$sourceGroupId = (Get-MgGroup -Filter "displayName eq '${block.getFieldValue('SOURCE_GROUP')}'").Id\n`;
+            code += `$targetGroupId = (Get-MgGroup -Filter "displayName eq '${block.getFieldValue('TARGET_GROUP')}'").Id\n`;
+            code += `$members = Get-MgGroupMember -GroupId $sourceGroupId\n`;
+            code += `foreach ($member in $members) {\n`;
+            code += `    New-MgGroupMember -GroupId $targetGroupId -DirectoryObjectId $member.Id\n`;
+            code += `}\n`;
+            break;
+          case "force_password_change":
+            code += `# Force password change at next login\n`;
+            code += `$passwordProfile = @{\n`;
+            code += `    ForceChangePasswordNextSignIn = $true\n`;
+            code += `}\n`;
+            code += `Update-MgUser -UserId "${block.getFieldValue('USER_UPN')}" -PasswordProfile $passwordProfile\n`;
+            break;
+          case "get_group_members":
+            if (block.getFieldValue('EXPORT') === 'TRUE') {
+              code += `# Get group members and export to CSV\n`;
+              code += `$groupId = (Get-MgGroup -Filter "displayName eq '${block.getFieldValue('GROUP_NAME')}'").Id\n`;
+              code += `Get-MgGroupMember -GroupId $groupId | Get-MgUser -Property "DisplayName,UserPrincipalName,JobTitle,Department" | Select-Object DisplayName,UserPrincipalName,JobTitle,Department | Export-Csv -Path "./${block.getFieldValue('GROUP_NAME')}_members.csv" -NoTypeInformation\n`;
+            } else {
+              code += `# Get group members\n`;
+              code += `$groupId = (Get-MgGroup -Filter "displayName eq '${block.getFieldValue('GROUP_NAME')}'").Id\n`;
+              code += `Get-MgGroupMember -GroupId $groupId | Get-MgUser -Property "DisplayName,UserPrincipalName,JobTitle" | Format-Table DisplayName,UserPrincipalName,JobTitle\n`;
+            }
+            break;
+          case "invite_external_user":
+            code += `# Invite external user\n`;
+            code += `New-MgInvitation -InvitedUserEmailAddress "${block.getFieldValue('EMAIL')}" -InvitedUserDisplayName "${block.getFieldValue('DISPLAY_NAME')}" -SendInvitationMessage $true -InviteRedirectUrl "https://myapps.microsoft.com"\n`;
+            break;
+          case "export_group_membership":
+            code += `# Export user group memberships to CSV\n`;
+            code += `Get-MgUserMemberOf -UserId "${block.getFieldValue('USER_UPN')}" | Select-Object @{Name="GroupName";Expression={$_.AdditionalProperties.displayName}}, @{Name="GroupType";Expression={$_.AdditionalProperties.groupTypes}} | Export-Csv -Path "./${block.getFieldValue('USER_UPN')}_groups.csv" -NoTypeInformation\n`;
+            break;
+          case "create_user_from_template":
+            code += `# Create user from template\n`;
+            code += `$templateUser = Get-MgUser -UserId "${block.getFieldValue('TEMPLATE_USER_UPN')}" -Property "DisplayName,JobTitle,Department,OfficeLocation"\n`;
+            code += `$passwordProfile = @{\n`;
+            code += `    Password = "TempPassword123!"\n`;
+            code += `    ForceChangePasswordNextSignIn = $true\n`;
+            code += `}\n`;
+            code += `New-MgUser -DisplayName "${block.getFieldValue('NEW_USER_UPN')}" -UserPrincipalName "${block.getFieldValue('NEW_USER_UPN')}" -AccountEnabled $true -MailNickname "${block.getFieldValue('NEW_USER_UPN').split('@')[0]}" -PasswordProfile $passwordProfile -JobTitle $templateUser.JobTitle -Department $templateUser.Department -OfficeLocation $templateUser.OfficeLocation\n`;
+            break;
+          case "create_dynamic_group":
+            code += `# Create dynamic group\n`;
+            code += `New-MgGroup -DisplayName "${block.getFieldValue('DISPLAY_NAME')}" -MailEnabled $false -SecurityEnabled $true -GroupTypes "DynamicMembership" -MembershipRule "${block.getFieldValue('RULE')}" -MembershipRuleProcessingState "On"\n`;
+            break;
+          case "get_application":
+            code += `# Get application information\n`;
+            code += `Get-MgApplication -Filter "displayName eq '${block.getFieldValue('APP_NAME')}'" -Property "DisplayName,AppId,SignInAudience,PublisherDomain" | Format-List\n`;
+            break;
+          case "add_app_owner":
+            code += `# Add owner to application\n`;
+            code += `$appId = (Get-MgApplication -Filter "displayName eq '${block.getFieldValue('APP_NAME')}'").Id\n`;
+            code += `$userId = (Get-MgUser -Filter "userPrincipalName eq '${block.getFieldValue('OWNER_UPN')}'").Id\n`;
+            code += `New-MgApplicationOwnerByRef -ApplicationId $appId -BodyParameter @{"@odata.id" = "https://graph.microsoft.com/v1.0/directoryObjects/$userId"}\n`;
+            break;
+          case "create_service_principal":
+            code += `# Create service principal\n`;
+            code += `$appId = (Get-MgApplication -Filter "displayName eq '${block.getFieldValue('APP_NAME')}'").AppId\n`;
+            code += `New-MgServicePrincipal -AppId $appId\n`;
+            break;
+          case "check_signin_activity":
+            code += `# Check sign-in activity\n`;
+            code += `$daysAgo = (Get-Date).AddDays(-${block.getFieldValue('DAYS')}).ToString("yyyy-MM-dd")\n`;
+            code += `Get-MgAuditLogSignIn -Filter "userPrincipalName eq '${block.getFieldValue('USER_UPN')}' and createdDateTime ge $daysAgo" -All | Select-Object UserDisplayName, UserPrincipalName, CreatedDateTime, AppDisplayName, IpAddress, Status, RiskDetail | Format-Table\n`;
+            break;
+          case "enable_mfa":
+            code += `# Enable MFA for user\n`;
+            code += `Write-Host "MFA configuration for ${block.getFieldValue('USER_UPN')} with method: ${block.getFieldValue('MFA_METHOD')}"\n`;
+            code += `Write-Host "Note: This requires additional configuration in the Entra ID admin center or using Microsoft Graph API with appropriate permissions."\n`;
+            break;
+          case "configure_app_roles":
+            code += `# Configure app roles\n`;
+            code += `Write-Host "Configuring app roles for ${block.getFieldValue('APP_NAME')}"\n`;
+            code += `Write-Host "Note: This requires updating the application manifest with appropriate app roles."\n`;
+            break;
+          case "configure_conditional_access":
+            code += `# Configure conditional access policy\n`;
+            code += `Write-Host "Creating conditional access policy: ${block.getFieldValue('POLICY_NAME')}"\n`;
+            code += `Write-Host "Note: This requires additional configuration with specific conditions and controls."\n`;
+            break;
+          case "generate_user_report":
+            const reportType = block.getFieldValue('REPORTTYPE');
+            const outputFormat = block.getFieldValue('OUTPUT');
+            
+            code += `# Generate comprehensive user report\n`;
+            code += `$reportDate = Get-Date -Format "yyyy-MM-dd"\n`;
+            code += `$reportName = "${reportType}_Report_$reportDate"\n`;
+            code += `$users = Get-MgUser -All -Property "DisplayName,UserPrincipalName,AccountEnabled,JobTitle,Department,OfficeLocation,CreatedDateTime,AssignedLicenses"\n\n`;
+            code += `Write-Host "Generating ${reportType} report for all users..."\n\n`;
+
+            if (reportType === 'AccountStatus') {
+              code += `$processedUsers = $users | Select-Object DisplayName,UserPrincipalName,AccountEnabled,JobTitle,Department,CreatedDateTime,@{
+    Name = "AccountAge"
+    Expression = { [math]::Round((New-TimeSpan -Start $_.CreatedDateTime -End (Get-Date)).TotalDays) }
+} | Sort-Object AccountAge -Descending
+`;
+            } else if (reportType === 'LicenseStatus') {
+              code += `$processedUsers = $users | Select-Object DisplayName,UserPrincipalName,AccountEnabled,@{
+    Name = "Licensed"
+    Expression = { if ($_.AssignedLicenses.Count -gt 0) { "Yes" } else { "No" } }
+},JobTitle,Department
+`;
+            } else if (reportType === 'SignInActivity') {
+              code += `$processedUsers = @()
+foreach ($user in $users) {
+    $signIns = Get-MgAuditLogSignIn -Filter "userPrincipalName eq '$($user.UserPrincipalName)'" -Top 1
+    $lastSignIn = if ($signIns) { $signIns.CreatedDateTime } else { "Never" }
+    
+    $processedUsers += [PSCustomObject]@{
+        DisplayName = $user.DisplayName
+        UserPrincipalName = $user.UserPrincipalName
+        LastSignIn = $lastSignIn
+        AccountEnabled = $user.AccountEnabled
+        Department = $user.Department
+    }
+}
+$processedUsers = $processedUsers | Sort-Object LastSignIn -Descending
+`;
+            } else if (reportType === 'Groups') {
+              code += `$processedUsers = @()
+foreach ($user in $users) {
+    $groups = Get-MgUserMemberOf -UserId $user.UserPrincipalName
+    $groupCount = ($groups | Measure-Object).Count
+    
+    $processedUsers += [PSCustomObject]@{
+        DisplayName = $user.DisplayName
+        UserPrincipalName = $user.UserPrincipalName
+        Department = $user.Department
+        GroupCount = $groupCount
+    }
+}
+$processedUsers = $processedUsers | Sort-Object GroupCount -Descending
+`;
+            }
+
+            if (outputFormat === 'CSV') {
+              code += `$processedUsers | Export-Csv -Path "./$reportName.csv" -NoTypeInformation\n`;
+              code += `Write-Host "Report exported to ./$reportName.csv"\n`;
+            } else if (outputFormat === 'HTML') {
+              code += `$htmlHeader = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>$reportName</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { text-align: left; padding: 8px; border: 1px solid #ddd; }
+        th { background-color: #0078d4; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        h1 { color: #0078d4; }
+    </style>
+</head>
+<body>
+    <h1>$reportName</h1>
+    <p>Generated: $(Get-Date)</p>
+"@
+
+$htmlFooter = @"
+</body>
+</html>
+"@
+
+$htmlBody = $processedUsers | ConvertTo-Html -Fragment
+
+$htmlHeader + $htmlBody + $htmlFooter | Out-File "./$reportName.html"
+Write-Host "Report exported to ./$reportName.html"
+`;
+            } else {
+              code += `$processedUsers | Format-Table\n`;
+              code += `Write-Host "Report generated and displayed in console"\n`;
+            }
+            
+            break;
+          case "audit_log_report":
+            code += `# Generate audit log report\n`;
+            code += `$daysAgo = (Get-Date).AddDays(-${block.getFieldValue('DAYS')}).ToString("yyyy-MM-dd")\n`;
+            code += `$auditLogs = Get-MgAuditLogDirectoryAudit -Filter "activityDateTime ge $daysAgo" -All\n`;
+            code += `if ($auditLogs) {\n`;
+            code += `    Write-Host "Found $(($auditLogs | Measure-Object).Count) audit log entries from the last ${block.getFieldValue('DAYS')} days:"\n`;
+            code += `    $auditLogs | Select-Object ActivityDateTime, ActivityDisplayName, LoggedByService, InitiatedBy, TargetResources | Format-Table\n`;
+            code += `    \n`;
+            code += `    # Export to CSV\n`;
+            code += `    $date = Get-Date -Format "yyyy-MM-dd"\n`;
+            code += `    $auditLogs | Select-Object ActivityDateTime, ActivityDisplayName, LoggedByService, InitiatedBy, TargetResources | Export-Csv -Path "./AuditLogs_${block.getFieldValue('DAYS')}days_$date.csv" -NoTypeInformation\n`;
+            code += `    Write-Host "Exported results to ./AuditLogs_${block.getFieldValue('DAYS')}days_$date.csv"\n`;
+            code += `} else {\n`;
+            code += `    Write-Host "No audit log entries found for the specified period."\n`;
+            code += `}\n`;
+            break;
+          case "signin_report":
+            code += `# Generate sign-in report\n`;
+            code += `$daysAgo = (Get-Date).AddDays(-${block.getFieldValue('DAYS')}).ToString("yyyy-MM-dd")\n`;
+            code += `$signIns = Get-MgAuditLogSignIn -Filter "createdDateTime ge $daysAgo" -All\n`;
+            code += `if ($signIns) {\n`;
+            code += `    Write-Host "Found $(($signIns | Measure-Object).Count) sign-in events from the last ${block.getFieldValue('DAYS')} days:"\n`;
+            if (block.getFieldValue('INCLUDE_RISK') === 'TRUE') {
+              code += `    $signIns | Select-Object UserDisplayName, UserPrincipalName, CreatedDateTime, AppDisplayName, IpAddress, Status, RiskDetail, RiskLevelAggregated | Format-Table\n`;
+            } else {
+              code += `    $signIns | Select-Object UserDisplayName, UserPrincipalName, CreatedDateTime, AppDisplayName, IpAddress, Status | Format-Table\n`;
+            }
+            code += `    \n`;
+            code += `    # Export to CSV\n`;
+            code += `    $date = Get-Date -Format "yyyy-MM-dd"\n`;
+            if (block.getFieldValue('INCLUDE_RISK') === 'TRUE') {
+              code += `    $signIns | Select-Object UserDisplayName, UserPrincipalName, CreatedDateTime, AppDisplayName, IpAddress, Status, RiskDetail, RiskLevelAggregated | Export-Csv -Path "./SignInReport_${block.getFieldValue('DAYS')}days_$date.csv" -NoTypeInformation\n`;
+            } else {
+              code += `    $signIns | Select-Object UserDisplayName, UserPrincipalName, CreatedDateTime, AppDisplayName, IpAddress, Status | Export-Csv -Path "./SignInReport_${block.getFieldValue('DAYS')}days_$date.csv" -NoTypeInformation\n`;
+            }
+            code += `    Write-Host "Exported results to ./SignInReport_${block.getFieldValue('DAYS')}days_$date.csv"\n`;
+            code += `} else {\n`;
+            code += `    Write-Host "No sign-in events found for the specified period."\n`;
+            code += `}\n`;
+            break;
+        }
+
+        const nextBlock = block.getNextBlock();
+        if (nextBlock) {
+          code += generateBlockCodeRecursive(nextBlock);
+        }
+        return code;
+      }
+
+      function createModal(title) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        
+        const content = document.createElement('div');
+        content.className = 'modal-content';
+        
+        const header = document.createElement('div');
+        header.className = 'modal-header';
+        
+        const titleElement = document.createElement('h3');
+        titleElement.className = 'modal-title';
+        titleElement.textContent = title;
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'close-btn';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = function() {
+          document.body.removeChild(modal);
+        };
+        
+        header.appendChild(titleElement);
+        header.appendChild(closeBtn);
+        content.appendChild(header);
+        modal.appendChild(content);
+        
+        return modal;
+      }
+
+      window.simulate = function simulate() {
+        const code = generatePowerShellCode();
+        if (!code) {
+          showNotification("No script to show. Please add some blocks first.");
+          return;
+        }
+        
+        const modal = createModal('Generated PowerShell Script');
+        
+        const codeBlock = document.createElement('div');
+        codeBlock.className = 'code-block';
+        const pre = document.createElement('pre');
+        pre.textContent = code;
+        hljs.highlightElement(pre);
+        codeBlock.appendChild(pre);
+        
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = 'Copy to Clipboard';
+        copyBtn.style.marginTop = '15px';
+        copyBtn.onclick = function() {
+          navigator.clipboard.writeText(code).then(() => {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy to Clipboard';
+            }, 2000);
+          });
+        };
+        
+        modal.querySelector('.modal-content').appendChild(codeBlock);
+        modal.querySelector('.modal-content').appendChild(copyBtn);
+        
+        document.body.appendChild(modal);
+      };
+
+      window.download = function download() {
+        const code = generatePowerShellCode();
+        if (!code) {
+          showNotification("Nothing to download. Please add some blocks first.");
+          return;
+        }
+        
+        const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'entra_id_script.ps1';
+        link.click();
+        
+        showNotification("Script downloaded successfully!");
+      };
+      
+      function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+          notification.style.opacity = '1';
+        }, 10);
+        
+        // Animate out after 3 seconds
+        setTimeout(() => {
+          notification.style.opacity = '0';
+          setTimeout(() => {
+            document.body.removeChild(notification);
+          }, 500);
+        }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>

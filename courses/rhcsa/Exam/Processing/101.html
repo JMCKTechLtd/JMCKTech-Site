@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 101: User and Group Management</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 101: User and Group Management</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Create users, groups, and group memberships as specified. Configure collaborative directory permissions with proper group ownership and SGID bit settings.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>User and Group Requirements</h4>
+                <div class="requirement-item" id="req-group">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create adminuser group</span>
+                </div>
+                <div class="requirement-item" id="req-users">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create users natasha and harry with adminuser as secondary group</span>
+                </div>
+                <div class="requirement-item" id="req-sarah">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create user sarah with non-interactive shell, not in adminuser</span>
+                </div>
+                <div class="requirement-item" id="req-passwords">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set passwords to 'redhat' for all users</span>
+                </div>
+                <div class="requirement-item" id="req-directory">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create /home/admins directory with proper permissions and SGID bit</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA User and Group Management Lab. In this lab, you will create users and groups with specific requirements and configure directory permissions.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Create Admin Group
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's create the adminuser group.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    groupadd adminuser
+                </div>
+                
+                <p>This creates a new group called adminuser that we'll use for our collaborative directory.</p>
+
+                <div class="concept">
+                    <h4>Understanding Linux Groups</h4>
+                    <p>Groups in Linux are used to organize users and manage permissions. Key points:</p>
+                    <ul>
+                        <li>Each user has a primary group</li>
+                        <li>Users can belong to multiple secondary groups</li>
+                        <li>Group membership controls file and directory access</li>
+                        <li>Groups are defined in <code>/etc/group</code></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Create Users with Group Membership
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create users natasha and harry with adminuser as their secondary group.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    useradd -G adminuser natasha
+                </div>
+                
+                <div class="command-hint">
+                    useradd -G adminuser harry
+                </div>
+                
+                <p>The <code>-G</code> option specifies secondary groups for the user.</p>
+                
+                <div class="concept">
+                    <h4>User Creation Options</h4>
+                    <p><code>useradd</code> command options:</p>
+                    <ul>
+                        <li><code>-G</code> - Specify secondary groups</li>
+                        <li><code>-s</code> - Specify login shell</li>
+                        <li><code>-m</code> - Create home directory (default in most distributions)</li>
+                        <li><code>-u</code> - Specify user ID</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Create User with Non-Interactive Shell
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create user sarah with a non-interactive shell and ensure she's not in the adminuser group.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    useradd -s /sbin/nologin sarah
+                </div>
+                
+                <p>The <code>/sbin/nologin</code> shell prevents interactive login while still allowing system account functionality.</p>
+                
+                <div class="concept">
+                    <h4>Non-Interactive Shells</h4>
+                    <p>Using <code>/sbin/nologin</code> or <code>/bin/false</code> as a login shell:</p>
+                    <ul>
+                        <li>Prevents interactive login via SSH, console, etc.</li>
+                        <li>Allows system services to run under the account</li>
+                        <li>Useful for service accounts and system users</li>
+                        <li>Users can still access resources via other means (FTP, Samba, etc.)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Set User Passwords
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's set the passwords for all users to 'redhat'.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    echo "redhat" | passwd --stdin natasha
+                </div>
+                
+                <div class="command-hint">
+                    echo "redhat" | passwd --stdin harry
+                </div>
+                
+                <div class="command-hint">
+                    echo "redhat" | passwd --stdin sarah
+                </div>
+                
+                <p>Using <code>--stdin</code> allows setting the password non-interactively.</p>
+                
+                <div class="concept">
+                    <h4>Password Management</h4>
+                    <p>Password security considerations:</p>
+                    <ul>
+                        <li>Use strong passwords in production</li>
+                        <li><code>passwd --stdin</code> is convenient for labs but shows password in command history</li>
+                        <li>In production, use interactive <code>passwd</code> command</li>
+                        <li>Passwords are stored encrypted in <code>/etc/shadow</code></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Create Collaborative Directory
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's create the collaborative directory with proper permissions.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    mkdir /home/admins
+                </div>
+                
+                <div class="command-hint">
+                    chgrp adminuser /home/admins
+                </div>
+                
+                <div class="command-hint">
+                    chmod 2770 /home/admins
+                </div>
+                
+                <p>The <code>2770</code> permissions set read/write/execute for owner and group, plus the SGID bit.</p>
+
+                <div class="concept">
+                    <h4>Directory Permissions and SGID</h4>
+                    <p>Special permission bits:</p>
+                    <ul>
+                        <li><strong>SUID (4000)</strong> - Execute with owner's privileges</li>
+                        <li><strong>SGID (2000)</strong> - Files inherit group ownership of directory</li>
+                        <li><strong>Sticky (1000)</strong> - Only owner can delete files</li>
+                        <li><code>chmod 2770</code> = rwxrws--- (owner: rwx, group: rws, others: ---)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All user and group management requirements have been met.</p>
+                <p>Users natasha and harry can collaborate in /home/admins with proper group permissions.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 101: User and Group Management</div>
+                <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Create Admin Group</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>groupadd adminuser</code></div>
+                <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@station ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'groupadd', 'useradd', 'passwd', 'mkdir', 'chgrp', 'chmod', 'id', 'ls', 'cat', 'clear', 'help'
+    ];
+    
+    // Track configuration state
+    const configState = {
+        group: false,
+        users: false,
+        sarah: false,
+        passwords: false,
+        directory: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['groupadd adminuser'],
+        2: ['useradd -G adminuser natasha', 'useradd -G adminuser harry'],
+        3: ['useradd -s /sbin/nologin sarah'],
+        4: ['echo "redhat" | passwd --stdin natasha', 'echo "redhat" | passwd --stdin harry', 'echo "redhat" | passwd --stdin sarah'],
+        5: ['mkdir /home/admins', 'chgrp adminuser /home/admins', 'chmod 2770 /home/admins']
+    };
+    
+    const commands = {
+        'groupadd': (args) => {
+            if (args[0] === "adminuser") {
+                if (currentStep === 1 || currentStep > 1) {
+                    configState.group = true;
+                    updateRequirements();
+                    completeStep(1);
+                    return "Group 'adminuser' created successfully.";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `groupadd: invalid group name '${args[0]}'`;
+        },
+        
+        'useradd': (args) => {
+            if (args[0] === "-G" && args[1] === "adminuser" && args[2] === "natasha") {
+                if (currentStep === 2 || currentStep > 2) {
+                    return "User 'natasha' created successfully.";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "-G" && args[1] === "adminuser" && args[2] === "harry") {
+                if (currentStep === 2 || currentStep > 2) {
+                    configState.users = true;
+                    updateRequirements();
+                    completeStep(2);
+                    return "User 'harry' created successfully.";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "-s" && args[1] === "/sbin/nologin" && args[2] === "sarah") {
+                if (currentStep === 3 || currentStep > 3) {
+                    configState.sarah = true;
+                    updateRequirements();
+                    completeStep(3);
+                    return "User 'sarah' created successfully.";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `useradd: invalid option '${args.join(' ')}'`;
+        },
+        
+        'passwd': (args) => {
+            if (args[0] === "--stdin" && args[1] === "natasha") {
+                if (currentStep === 4 || currentStep > 4) {
+                    return "Changing password for user natasha.\npasswd: all authentication tokens updated successfully.";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "--stdin" && args[1] === "harry") {
+                if (currentStep === 4 || currentStep > 4) {
+                    return "Changing password for user harry.\npasswd: all authentication tokens updated successfully.";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "--stdin" && args[1] === "sarah") {
+                if (currentStep === 4 || currentStep > 4) {
+                    configState.passwords = true;
+                    updateRequirements();
+                    completeStep(4);
+                    return "Changing password for user sarah.\npasswd: all authentication tokens updated successfully.";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `passwd: invalid option '${args.join(' ')}'`;
+        },
+        
+        'mkdir': (args) => {
+            if (args[0] === "/home/admins") {
+                if (currentStep === 5 || currentStep > 5) {
+                    return "Directory '/home/admins' created successfully.";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `mkdir: cannot create directory '${args[0]}'`;
+        },
+        
+        'chgrp': (args) => {
+            if (args[0] === "adminuser" && args[1] === "/home/admins") {
+                if (currentStep === 5 || currentStep > 5) {
+                    return "Group ownership of '/home/admins' changed to 'adminuser'.";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `chgrp: invalid group '${args[0]}'`;
+        },
+        
+        'chmod': (args) => {
+            if (args[0] === "2770" && args[1] === "/home/admins") {
+                if (currentStep === 5 || currentStep > 5) {
+                    configState.directory = true;
+                    updateRequirements();
+                    completeStep(5);
+                    return "Permissions of '/home/admins' set to 2770 (drwxrws---).";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `chmod: invalid mode '${args[0]}'`;
+        },
+        
+        'id': (args) => {
+            if (args[0] === "natasha") {
+                return "uid=1001(natasha) gid=1001(natasha) groups=1001(natasha),1002(adminuser)";
+            } else if (args[0] === "harry") {
+                return "uid=1002(harry) gid=1002(harry) groups=1002(harry),1002(adminuser)";
+            } else if (args[0] === "sarah") {
+                return "uid=1003(sarah) gid=1003(sarah) groups=1003(sarah)";
+            }
+            return `id: '${args[0]}': no such user`;
+        },
+        
+        'ls': (args) => {
+            if (args[0] === "-ld" && args[1] === "/home/admins") {
+                return "drwxrws--- 2 root adminuser 4096 Dec  5 14:23 /home/admins";
+            }
+            return `ls: cannot access '${args[0]}': No such file or directory`;
+        },
+        
+        'cat': (args) => {
+            if (args[0] === "/etc/group" && args[1] === "|" && args[2] === "grep" && args[3] === "adminuser") {
+                return "adminuser:x:1002:natasha,harry";
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: groupadd, useradd, passwd, mkdir, chgrp, chmod, id, ls, cat, clear, help";
+        }
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.group) {
+            document.getElementById('req-group').classList.add('completed');
+            document.getElementById('req-group').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.users) {
+            document.getElementById('req-users').classList.add('completed');
+            document.getElementById('req-users').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.sarah) {
+            document.getElementById('req-sarah').classList.add('completed');
+            document.getElementById('req-sarah').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.passwords) {
+            document.getElementById('req-passwords').classList.add('completed');
+            document.getElementById('req-passwords').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.directory) {
+            document.getElementById('req-directory').classList.add('completed');
+            document.getElementById('req-directory').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[root@station ~]# Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep][0]}`);
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // Hide tab completion for other cases
+        hideTabCompletion();
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            parts[parts.length - 1] = suggestion;
+            commandInput.value = parts.join(' ') + ' ';
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
+</body>
+</html>

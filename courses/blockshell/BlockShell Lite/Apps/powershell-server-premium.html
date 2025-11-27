@@ -1,0 +1,2034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PowerShell – Server Administration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <style>
+    :root {
+      --primary-color: #0078d7;
+      --text-color: #2c3e50;
+      --light-bg: #f8f9fa;
+      --border-color: #eaecef;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(to bottom, var(--light-bg), #eef1f5);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-color);
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    header {
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 120, 215, 0.1);
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      color: #0078d7;
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, #0078d7, #00a4ef);
+      border-radius: 2px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-top: 8px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    #blockly-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #blocklyDiv {
+      height: calc(100% - 60px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #buttons {
+      padding: 10px 20px;
+      display: flex;
+      gap: 10px;
+      background-color: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 120, 215, 0.3);
+    }
+
+    button.danger {
+      background-color: #d13438;
+    }
+
+    button.danger:hover {
+      background-color: #b32d30;
+    }
+
+    .blocklyToolboxDiv {
+      border-right: 1px solid var(--border-color) !important;
+    }
+
+    .blocklyMainBackground {
+      stroke-width: 0;
+    }
+
+    .blocklyFlyoutBackground {
+      fill: var(--light-bg);
+    }
+
+    .modal {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--text-color);
+      font-size: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .code-block {
+      background-color: var(--light-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 15px;
+      overflow-x: auto;
+      font-family: Consolas, Monaco, "Andale Mono", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      z-index: 1000;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .zoom-btn {
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+
+    .zoom-btn:hover {
+      background-color: var(--light-bg);
+    }
+
+    .zoom-btn:first-child {
+      border-bottom: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <h1>PowerShell – Server Administration</h1>
+      <div class="subtitle">BlockShell - The Visual Script Builder</div>
+    </header>
+
+    <div id="blockly-container">
+      <div id="buttons">
+        <button onclick="simulate()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 10 4 15 9 20"></polyline>
+            <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+          </svg>
+          Show Script
+        </button>
+        <button onclick="download()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Script
+        </button>
+        <button class="danger" onclick="clearWorkspace()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Clear Workspace
+        </button>
+      </div>
+      <div id="blocklyDiv"></div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+        <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+      </div>
+    </div>
+  </div>
+
+  <xml id="toolbox" style="display:none">
+    <category name="Server Configuration" colour="290">
+      <block type="rename_server">
+        <tooltip>Renames the server. PowerShell: Rename-Computer</tooltip>
+      </block>
+      <block type="configure_static_ip">
+        <tooltip>Configures a static IP address. PowerShell: New-NetIPAddress</tooltip>
+      </block>
+      <block type="set_timezone">
+        <tooltip>Sets the server timezone. PowerShell: Set-TimeZone</tooltip>
+      </block>
+      <block type="configure_rdp">
+        <tooltip>Configures Remote Desktop settings. PowerShell: Set-ItemProperty</tooltip>
+      </block>
+      <block type="create_admin_user">
+        <tooltip>Creates a new local admin user. PowerShell: New-LocalUser</tooltip>
+      </block>
+      <block type="install_file_server">
+        <tooltip>Installs File Server role. PowerShell: Install-WindowsFeature</tooltip>
+      </block>
+      <block type="create_folder">
+        <tooltip>Creates a new folder. PowerShell: New-Item</tooltip>
+      </block>
+      <block type="share_folder">
+        <tooltip>Shares a folder. PowerShell: New-SmbShare</tooltip>
+      </block>
+      <block type="install_iis">
+        <tooltip>Installs IIS web server. PowerShell: Install-WindowsFeature</tooltip>
+      </block>
+      <block type="create_iis_site">
+        <tooltip>Creates a new IIS website. PowerShell: New-WebSite</tooltip>
+      </block>
+      <block type="install_hyperv">
+        <tooltip>Installs Hyper-V role. PowerShell: Install-WindowsFeature</tooltip>
+      </block>
+      <block type="create_vm">
+        <tooltip>Creates a new virtual machine. PowerShell: New-VM</tooltip>
+      </block>
+      <block type="install_ad_ds">
+        <tooltip>Installs AD DS feature. PowerShell: Install-WindowsFeature</tooltip>
+      </block>
+      <block type="promote_domain_controller">
+        <tooltip>Promotes server to domain controller. PowerShell: Install-ADDSForest</tooltip>
+      </block>
+      <block type="install_dns">
+        <tooltip>Installs DNS server. PowerShell: Install-WindowsFeature</tooltip>
+      </block>
+    </category>
+    
+    <category name="Networking" colour="210">
+      <block type="set_ip_address">
+        <tooltip>Sets IP address on an interface. PowerShell: Set-NetIPAddress</tooltip>
+      </block>
+      <block type="set_dns_server">
+        <tooltip>Sets DNS server. PowerShell: Set-DnsClientServerAddress</tooltip>
+      </block>
+      <block type="install_dhcp_role">
+        <tooltip>Installs DHCP role. PowerShell: Install-WindowsFeature</tooltip>
+      </block>
+      <block type="new_dhcp_scope">
+        <tooltip>Creates DHCP scope. PowerShell: Add-DhcpServerv4Scope</tooltip>
+      </block>
+      <block type="configure_firewall_rule">
+        <tooltip>Configures firewall rule. PowerShell: New-NetFirewallRule</tooltip>
+      </block>
+      <block type="enable_network_adapter">
+        <tooltip>Enables network adapter. PowerShell: Enable-NetAdapter</tooltip>
+      </block>
+      <block type="disable_network_adapter">
+        <tooltip>Disables network adapter. PowerShell: Disable-NetAdapter</tooltip>
+      </block>
+      <block type="test_network_connectivity">
+        <tooltip>Tests network connection. PowerShell: Test-Connection</tooltip>
+      </block>
+      <block type="add_dns_forwarder">
+        <tooltip>Adds DNS forwarder. PowerShell: Add-DnsServerForwarder</tooltip>
+      </block>
+      <block type="configure_default_gateway">
+        <tooltip>Configures default gateway. PowerShell: New-NetRoute</tooltip>
+      </block>
+      <block type="create_vlan">
+        <tooltip>Creates VLAN. PowerShell: New-VirtualNetwork</tooltip>
+      </block>
+      <block type="set_nic_teaming">
+        <tooltip>Configures NIC teaming. PowerShell: New-NetLbfoTeam</tooltip>
+      </block>
+      <block type="configure_nat">
+        <tooltip>Configures NAT. PowerShell: New-NetNat</tooltip>
+      </block>
+    </category>
+
+    <category name="Storage" colour="120">
+      <block type="initialize_disk">
+        <tooltip>Initializes disk. PowerShell: Initialize-Disk</tooltip>
+      </block>
+      <block type="create_volume">
+        <tooltip>Creates volume. PowerShell: New-Partition</tooltip>
+      </block>
+      <block type="format_volume">
+        <tooltip>Formats volume. PowerShell: Format-Volume</tooltip>
+      </block>
+      <block type="create_storage_pool">
+        <tooltip>Creates storage pool. PowerShell: New-StoragePool</tooltip>
+      </block>
+      <block type="add_disk_to_pool">
+        <tooltip>Adds disk to pool. PowerShell: Add-PhysicalDisk</tooltip>
+      </block>
+      <block type="create_virtual_disk">
+        <tooltip>Creates virtual disk. PowerShell: New-VirtualDisk</tooltip>
+      </block>
+      <block type="set_disk_quota">
+        <tooltip>Sets disk quota. PowerShell: fsutil quota</tooltip>
+      </block>
+      <block type="enable_deduplication">
+        <tooltip>Enables deduplication. PowerShell: Enable-DedupVolume</tooltip>
+      </block>
+      <block type="configure_iscsi_target">
+        <tooltip>Configures iSCSI target. PowerShell: New-IscsiVirtualDisk</tooltip>
+      </block>
+    </category>
+
+    <category name="Security" colour="30">
+      <block type="enable_bitlocker">
+        <tooltip>Enables BitLocker. PowerShell: Enable-BitLocker</tooltip>
+      </block>
+      <block type="configure_audit_policy">
+        <tooltip>Configures audit policy. PowerShell: auditpol</tooltip>
+      </block>
+      <block type="set_password_policy">
+        <tooltip>Sets password policy. PowerShell: Set-ADDefaultDomainPasswordPolicy</tooltip>
+      </block>
+      <block type="create_certificate">
+        <tooltip>Creates certificate. PowerShell: New-SelfSignedCertificate</tooltip>
+      </block>
+      <block type="install_certificate">
+        <tooltip>Installs certificate. PowerShell: Import-PfxCertificate</tooltip>
+      </block>
+      <block type="enable_windows_defender">
+        <tooltip>Enables Windows Defender. PowerShell: Set-MpPreference</tooltip>
+      </block>
+      <block type="configure_antivirus">
+        <tooltip>Configures antivirus. PowerShell: Set-MpPreference</tooltip>
+      </block>
+      <block type="enable_firewall">
+        <tooltip>Enables firewall. PowerShell: Set-NetFirewallProfile</tooltip>
+      </block>
+      <block type="configure_jit_access">
+        <tooltip>Configures JIT access. PowerShell: Set-AzJitNetworkAccessPolicy</tooltip>
+      </block>
+    </category>
+
+    <category name="Monitoring" colour="330">
+      <block type="create_perf_monitor">
+        <tooltip>Creates performance monitor. PowerShell: PLA.DataCollectorSet</tooltip>
+      </block>
+      <block type="configure_event_log">
+        <tooltip>Configures event log. PowerShell: Limit-EventLog</tooltip>
+      </block>
+      <block type="enable_remote_management">
+        <tooltip>Enables remote management. PowerShell: Enable-PSRemoting</tooltip>
+      </block>
+      <block type="install_scom_agent">
+        <tooltip>Installs SCOM agent. PowerShell: Start-Process</tooltip>
+      </block>
+      <block type="configure_alert">
+        <tooltip>Configures alert. PowerShell: Get-Counter</tooltip>
+      </block>
+      <block type="set_log_retention">
+        <tooltip>Sets log retention. PowerShell: wevtutil</tooltip>
+      </block>
+      <block type="enable_advanced_logging">
+        <tooltip>Enables advanced logging. PowerShell: auditpol</tooltip>
+      </block>
+    </category>
+
+    <category name="Automation" colour="60">
+      <block type="create_scheduled_task">
+        <tooltip>Creates scheduled task. PowerShell: Register-ScheduledTask</tooltip>
+      </block>
+      <block type="create_powershell_script">
+        <tooltip>Creates PowerShell script. PowerShell: Set-Content</tooltip>
+      </block>
+      <block type="set_startup_script">
+        <tooltip>Sets startup script. PowerShell: Set-ItemProperty</tooltip>
+      </block>
+      <block type="configure_dsc">
+        <tooltip>Configures DSC. PowerShell: Start-DscConfiguration</tooltip>
+      </block>
+      <block type="create_webhook">
+        <tooltip>Creates webhook. PowerShell: New-WebhookSubscription</tooltip>
+      </block>
+      <block type="enable_winrm">
+        <tooltip>Enables WinRM. PowerShell: winrm quickconfig</tooltip>
+      </block>
+    </category>
+  </xml>
+
+  <script>
+    // Declare workspace variable at the top level
+    let workspace;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize Blockly workspace
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        trashcan: true,
+        grid: {
+          spacing: 25,
+          length: 3,
+          colour: '#e0e0e0',
+          snap: true
+        },
+        zoom: {
+          controls: true,
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2
+        },
+        theme: {
+          'blockStyles': {
+            'colour_blocks': { 'colourPrimary': '#CF63CF', 'colourSecondary': '#C94FC9', 'colourTertiary': '#BD42BD' },
+            'list_blocks': { 'colourPrimary': '#9966FF', 'colourSecondary': '#855CD6', 'colourTertiary': '#774DCB' },
+            'logic_blocks': { 'colourPrimary': '#4C97FF', 'colourSecondary': '#4280D7', 'colourTertiary': '#3373CC' },
+            'loop_blocks': { 'colourPrimary': '#0fBD8C', 'colourSecondary': '#0DA57A', 'colourTertiary': '#0B8E69' },
+            'math_blocks': { 'colourPrimary': '#59C059', 'colourSecondary': '#46B946', 'colourTertiary': '#389438' },
+            'procedure_blocks': { 'colourPrimary': '#FF6680', 'colourSecondary': '#FF4D6A', 'colourTertiary': '#FF3355' },
+            'text_blocks': { 'colourPrimary': '#FFBF00', 'colourSecondary': '#E6AC00', 'colourTertiary': '#CC9900' },
+            'variable_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' },
+            'variable_dynamic_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' }
+          },
+          'componentStyles': {
+            'workspaceBackgroundColour': '#F9FAFB',
+            'toolboxBackgroundColour': '#FFFFFF',
+            'toolboxForegroundColour': '#1E293B',
+            'flyoutBackgroundColour': '#F1F5F9',
+            'flyoutForegroundColour': '#1E293B',
+            'flyoutOpacity': 0.9,
+            'scrollbarColour': '#CCCCCC',
+            'scrollbarOpacity': 0.6
+          }
+        }
+      });
+
+      // Define all blocks with enhanced tooltips
+      Blockly.defineBlocksWithJsonArray([
+        // Server Configuration Blocks
+        {
+          "type": "configure_static_ip",
+          "message0": "Configure Static IP (IP: %1 Mask: %2 Gateway: %3)",
+          "args0": [
+            { "type": "field_input", "name": "IP", "text": "192.168.1.10" },
+            { "type": "field_input", "name": "MASK", "text": "255.255.255.0" },
+            { "type": "field_input", "name": "GATEWAY", "text": "192.168.1.1" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Set a static IP address on the server.\n\nPowerShell: New-NetIPAddress -IPAddress [IP] -PrefixLength 24 -DefaultGateway [GATEWAY]",
+          "helpUrl": ""
+        },
+        {
+          "type": "rename_server",
+          "message0": "Rename Server (New Name: %1 Restart: %2)",
+          "args0": [
+            { "type": "field_input", "name": "NEW_NAME", "text": "NewServerName" },
+            { "type": "field_checkbox", "name": "RESTART", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Rename the server with option to restart.\n\nPowerShell: Rename-Computer -NewName \"[NEW_NAME]\" -Force [-Restart]",
+          "helpUrl": ""
+        },
+        {
+          "type": "install_file_server",
+          "message0": "Install File Server Role",
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Install File Services role.\n\nPowerShell: Install-WindowsFeature -Name FS-FileServer -IncludeManagementTools",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_folder",
+          "message0": "Create New Folder (Path: %1)",
+          "args0": [{ "type": "field_input", "name": "FOLDER_PATH", "text": "C:\\SharedFolder" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Create a new directory.\n\nPowerShell: New-Item -Path \"[FOLDER_PATH]\" -ItemType Directory -Force",
+          "helpUrl": ""
+        },
+        {
+          "type": "share_folder",
+          "message0": "Share Folder (Path: %1 Share Name: %2 Permissions: %3)",
+          "args0": [
+            { "type": "field_input", "name": "SHARE_PATH", "text": "C:\\SharedFolder" },
+            { "type": "field_input", "name": "SHARE_NAME", "text": "ShareName" },
+            { 
+              "type": "field_dropdown", 
+              "name": "PERMISSIONS", 
+              "options": [
+                ["Read Only", "Read"],
+                ["Read/Write", "Change"],
+                ["Full Control", "Full"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Share a folder via SMB with specified permissions.\n\nPowerShell: New-SmbShare -Name \"[SHARE_NAME]\" -Path \"[SHARE_PATH]\" -FullAccess Administrators",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_rdp",
+          "message0": "Configure Remote Desktop (Enable: %1 Allow NLA: %2)",
+          "args0": [
+            { "type": "field_checkbox", "name": "ENABLE", "checked": true },
+            { "type": "field_checkbox", "name": "NLA", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Configure Remote Desktop settings.\n\nPowerShell: Set-ItemProperty -Path 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' -Name 'fDenyTSConnections' -Value 0\nEnable-NetFirewallRule -DisplayGroup 'Remote Desktop'",
+          "helpUrl": ""
+        },
+        {
+          "type": "install_ad_ds",
+          "message0": "Install AD DS Feature",
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Install Active Directory Domain Services.\n\nPowerShell: Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools",
+          "helpUrl": ""
+        },
+        {
+          "type": "promote_domain_controller",
+          "message0": "Promote to Domain Controller (Domain: %1 Install DNS: %2)",
+          "args0": [
+            { "type": "field_input", "name": "DOMAIN", "text": "example.com" },
+            { "type": "field_checkbox", "name": "INSTALL_DNS", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Promote server to domain controller.\n\nPowerShell: Install-ADDSForest -DomainName \"[DOMAIN]\" -InstallDns:[INSTALL_DNS] -Force",
+          "helpUrl": ""
+        },
+        {
+          "type": "install_dns",
+          "message0": "Install DNS Server Feature",
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Install DNS server.\n\nPowerShell: Install-WindowsFeature -Name DNS -IncludeManagementTools",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_admin_user",
+          "message0": "Create Admin User (Username: %1 Password: %2 Add to Admins: %3)",
+          "args0": [
+            { "type": "field_input", "name": "USERNAME", "text": "adminuser" },
+            { "type": "field_input", "name": "PASSWORD", "text": "P@ssword123" },
+            { "type": "field_checkbox", "name": "ADD_TO_ADMINS", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Create a new administrative user.\n\nPowerShell: New-LocalUser -Name \"[USERNAME]\" -Password (ConvertTo-SecureString \"[PASSWORD]\" -AsPlainText -Force)\nAdd-LocalGroupMember -Group \"Administrators\" -Member \"[USERNAME]\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_timezone",
+          "message0": "Set Timezone to %1",
+          "args0": [
+            { 
+              "type": "field_dropdown", 
+              "name": "TIMEZONE", 
+              "options": [
+                ["Eastern Standard Time", "Eastern Standard Time"],
+                ["Central Standard Time", "Central Standard Time"],
+                ["Mountain Standard Time", "Mountain Standard Time"],
+                ["Pacific Standard Time", "Pacific Standard Time"],
+                ["UTC", "UTC"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Configure server timezone.\n\nPowerShell: Set-TimeZone -Id \"[TIMEZONE]\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "install_iis",
+          "message0": "Install IIS Web Server (Include Tools: %1)",
+          "args0": [
+            { "type": "field_checkbox", "name": "INCLUDE_TOOLS", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Install Internet Information Services.\n\nPowerShell: Install-WindowsFeature -Name Web-Server -IncludeManagementTools:[INCLUDE_TOOLS]",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_iis_site",
+          "message0": "Create IIS Site (Name: %1 Path: %2 Port: %3 Protocol: %4)",
+          "args0": [
+            { "type": "field_input", "name": "SITE_NAME", "text": "MyWebSite" },
+            { "type": "field_input", "name": "PHYSICAL_PATH", "text": "C:\\inetpub\\wwwroot" },
+            { "type": "field_number", "name": "PORT", "value": 80 },
+            { 
+              "type": "field_dropdown", 
+              "name": "PROTOCOL", 
+              "options": [
+                ["HTTP", "http"],
+                ["HTTPS", "https"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Create a new IIS website.\n\nPowerShell: New-WebSite -Name \"[SITE_NAME]\" -PhysicalPath \"[PHYSICAL_PATH]\" -Port [PORT]",
+          "helpUrl": ""
+        },
+        {
+          "type": "install_hyperv",
+          "message0": "Install Hyper-V Role (Include Tools: %1 Restart: %2)",
+          "args0": [
+            { "type": "field_checkbox", "name": "INCLUDE_TOOLS", "checked": true },
+            { "type": "field_checkbox", "name": "RESTART", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Install Hyper-V virtualization.\n\nPowerShell: Install-WindowsFeature -Name Hyper-V -IncludeManagementTools:[INCLUDE_TOOLS] -Restart:[RESTART]",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_vm",
+          "message0": "Create VM (Name: %1 Memory: %2 GB Disk: %3 GB Generation: %4)",
+          "args0": [
+            { "type": "field_input", "name": "VM_NAME", "text": "NewVM" },
+            { "type": "field_number", "name": "MEMORY", "value": 4, "min": 1, "max": 256 },
+            { "type": "field_number", "name": "DISK_SIZE", "value": 50, "min": 10, "max": 64000 },
+            { 
+              "type": "field_dropdown", 
+              "name": "GENERATION", 
+              "options": [
+                ["Generation 1", "1"],
+                ["Generation 2", "2"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 290,
+          "tooltip": "Create a new virtual machine.\n\nPowerShell: New-VM -Name \"[VM_NAME]\" -MemoryStartupBytes $([MEMORY]GB) -NewVHDPath \"C:\\VMs\\[VM_NAME]\\disk.vhdx\" -NewVHDSizeBytes $([DISK_SIZE]GB) -Generation [GENERATION]",
+          "helpUrl": ""
+        },
+        
+        // Networking Blocks
+        {
+          "type": "set_ip_address",
+          "message0": "Set IP address %1 to %2 on interface %3",
+          "args0": [
+            { "type": "input_dummy" },
+            { "type": "field_input", "name": "IP", "text": "192.168.1.100" },
+            { "type": "field_input", "name": "INTERFACE", "text": "Ethernet0" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Set IP address on a specific network interface.\n\nPowerShell: Set-NetIPAddress -InterfaceAlias \"[INTERFACE]\" -IPAddress \"[IP]\" -PrefixLength 24",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_dns_server",
+          "message0": "Set DNS server to %1 on interface %2",
+          "args0": [
+            { "type": "field_input", "name": "DNS_IP", "text": "8.8.8.8" },
+            { "type": "field_input", "name": "INTERFACE", "text": "Ethernet0" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Set DNS server for a network interface.\n\nPowerShell: Set-DnsClientServerAddress -InterfaceAlias \"[INTERFACE]\" -ServerAddresses \"[DNS_IP]\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "install_dhcp_role",
+          "message0": "Install DHCP role (Include Tools: %1)",
+          "args0": [
+            { "type": "field_checkbox", "name": "INCLUDE_TOOLS", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Install DHCP server role.\n\nPowerShell: Install-WindowsFeature -Name DHCP -IncludeManagementTools:[INCLUDE_TOOLS]\nAdd-DhcpServerInDC",
+          "helpUrl": ""
+        },
+        {
+          "type": "new_dhcp_scope",
+          "message0": "Create DHCP scope %1 Start: %2 End: %3 Mask: %4 Gateway: %5 DNS: %6",
+          "args0": [
+            { "type": "field_input", "name": "SCOPE_NAME", "text": "OfficeLAN" },
+            { "type": "field_input", "name": "START_IP", "text": "192.168.1.50" },
+            { "type": "field_input", "name": "END_IP", "text": "192.168.1.200" },
+            { "type": "field_input", "name": "MASK", "text": "255.255.255.0" },
+            { "type": "field_input", "name": "GATEWAY", "text": "192.168.1.1" },
+            { "type": "field_input", "name": "DNS", "text": "192.168.1.10" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Create a new DHCP scope.\n\nPowerShell: Add-DhcpServerv4Scope -Name \"[SCOPE_NAME]\" -StartRange \"[START_IP]\" -EndRange \"[END_IP]\" -SubnetMask \"[MASK]\"\nSet-DhcpServerv4OptionValue -Router \"[GATEWAY]\" -DnsServer \"[DNS]\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_firewall_rule",
+          "message0": "Configure firewall rule %1 for port %2 Direction: %3 Action: %4",
+          "args0": [
+            { "type": "field_input", "name": "RULE_NAME", "text": "Allow Web Traffic" },
+            { "type": "field_number", "name": "PORT", "value": 80 },
+            { 
+              "type": "field_dropdown", 
+              "name": "DIRECTION", 
+              "options": [
+                ["Inbound", "Inbound"],
+                ["Outbound", "Outbound"]
+              ]
+            },
+            { 
+              "type": "field_dropdown", 
+              "name": "ACTION", 
+              "options": [
+                ["Allow", "Allow"],
+                ["Block", "Block"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Configure firewall rule.\n\nPowerShell: New-NetFirewallRule -DisplayName \"[RULE_NAME]\" -Direction [DIRECTION] -Action [ACTION] -Protocol TCP -LocalPort [PORT]",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_network_adapter",
+          "message0": "Enable network adapter %1",
+          "args0": [
+            { "type": "field_input", "name": "ADAPTER_NAME", "text": "Ethernet0" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Enable a network adapter.\n\nPowerShell: Enable-NetAdapter -Name \"[ADAPTER_NAME]\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "disable_network_adapter",
+          "message0": "Disable network adapter %1",
+          "args0": [
+            { "type": "field_input", "name": "ADAPTER_NAME", "text": "Ethernet0" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Disable a network adapter.\n\nPowerShell: Disable-NetAdapter -Name \"[ADAPTER_NAME]\" -Confirm:$false",
+          "helpUrl": ""
+        },
+        {
+          "type": "test_network_connectivity",
+          "message0": "Test connection to %1 Count: %2 Timeout: %3 ms",
+          "args0": [
+            { "type": "field_input", "name": "TARGET", "text": "google.com" },
+            { "type": "field_number", "name": "COUNT", "value": 4, "min": 1, "max": 100 },
+            { "type": "field_number", "name": "TIMEOUT", "value": 1000, "min": 100, "max": 10000 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Test network connectivity.\n\nPowerShell: Test-Connection \"[TARGET]\" -Count [COUNT] -Timeout [TIMEOUT]",
+          "helpUrl": ""
+        },
+        {
+          "type": "add_dns_forwarder",
+          "message0": "Add DNS forwarder %1",
+          "args0": [
+            { "type": "field_input", "name": "FORWARDER_IP", "text": "8.8.8.8" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Add DNS forwarder.\n\nPowerShell: Add-DnsServerForwarder -IPAddress \"[FORWARDER_IP]\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_default_gateway",
+          "message0": "Configure default gateway %1 on interface %2",
+          "args0": [
+            { "type": "field_input", "name": "GATEWAY", "text": "192.168.1.1" },
+            { "type": "field_input", "name": "INTERFACE", "text": "Ethernet0" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Configure default gateway.\n\nPowerShell: Set-NetIPInterface -InterfaceAlias \"[INTERFACE]\" -Dhcp Disabled\nNew-NetRoute -DestinationPrefix \"0.0.0.0/0\" -InterfaceAlias \"[INTERFACE]\" -NextHop \"[GATEWAY]\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_vlan",
+          "message0": "Create VLAN %1 ID: %2 on switch %3",
+          "args0": [
+            { "type": "field_input", "name": "VLAN_NAME", "text": "VLAN10" },
+            { "type": "field_number", "name": "VLAN_ID", "value": 10, "min": 1, "max": 4094 },
+            { "type": "field_input", "name": "SWITCH_NAME", "text": "VSwitch" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Create VLAN.\n\nPowerShell: New-VirtualSwitch -Name \"[SWITCH_NAME]\" -NetAdapterName \"Ethernet0\"\nNew-VirtualNetwork -Name \"[VLAN_NAME]\" -SwitchName \"[SWITCH_NAME]\" -VlanId [VLAN_ID]",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_nic_teaming",
+          "message0": "Configure NIC Teaming (Team Name: %1 Mode: %2 Load Balancing: %3)",
+          "args0": [
+            { "type": "field_input", "name": "TEAM_NAME", "text": "NICTeam1" },
+            { 
+              "type": "field_dropdown", 
+              "name": "TEAM_MODE", 
+              "options": [
+                ["Switch Independent", "SwitchIndependent"],
+                ["LACP", "LACP"],
+                ["Static", "Static"]
+              ]
+            },
+            { 
+              "type": "field_dropdown", 
+              "name": "LB_MODE", 
+              "options": [
+                ["Dynamic", "Dynamic"],
+                ["Hyper-V Port", "HyperVPort"],
+                ["Transport Ports", "TransportPorts"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Configure NIC Teaming.\n\nPowerShell: New-NetLbfoTeam -Name \"[TEAM_NAME]\" -TeamMembers \"Ethernet0\",\"Ethernet1\" -TeamingMode \"[TEAM_MODE]\" -LoadBalancingAlgorithm \"[LB_MODE]\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_nat",
+          "message0": "Configure NAT (Name: %1 Internal: %2 External: %3)",
+          "args0": [
+            { "type": "field_input", "name": "NAT_NAME", "text": "NAT_Config" },
+            { "type": "field_input", "name": "INTERNAL_IP", "text": "192.168.0.0" },
+            { "type": "field_input", "name": "EXTERNAL_IP", "text": "203.0.113.1" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Configure NAT.\n\nPowerShell: New-NetNat -Name \"[NAT_NAME]\" -InternalIPInterfaceAddressPrefix \"[INTERNAL_IP]/24\" -ExternalIPInterfaceAddressPrefix \"[EXTERNAL_IP]/24\"",
+          "helpUrl": ""
+        },
+
+        // Storage Blocks
+        {
+          "type": "initialize_disk",
+          "message0": "Initialize Disk %1 as %2",
+          "args0": [
+            { "type": "field_input", "name": "DISK_NUMBER", "text": "1" },
+            { 
+              "type": "field_dropdown", 
+              "name": "PARTITION_STYLE", 
+              "options": [
+                ["MBR", "MBR"],
+                ["GPT", "GPT"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Initialize disk.\n\nPowerShell: Initialize-Disk -Number [DISK_NUMBER] -PartitionStyle [PARTITION_STYLE]",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_volume",
+          "message0": "Create Volume (Size: %1 GB Drive: %2 Label: %3)",
+          "args0": [
+            { "type": "field_number", "name": "SIZE", "value": 50, "min": 1, "max": 64000 },
+            { "type": "field_input", "name": "DRIVE_LETTER", "text": "E" },
+            { "type": "field_input", "name": "LABEL", "text": "Data" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Create volume.\n\nPowerShell: New-Partition -DiskNumber 1 -UseMaximumSize -DriveLetter [DRIVE_LETTER] -AssignDriveLetter\nSet-Volume -DriveLetter [DRIVE_LETTER] -NewFileSystemLabel \"[LABEL]\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "format_volume",
+          "message0": "Format Volume %1 as %2 Label: %3 Allocation: %4 KB",
+          "args0": [
+            { "type": "field_input", "name": "DRIVE_LETTER", "text": "E" },
+            { 
+              "type": "field_dropdown", 
+              "name": "FS_TYPE", 
+              "options": [
+                ["NTFS", "NTFS"],
+                ["ReFS", "ReFS"],
+                ["FAT32", "FAT32"]
+              ]
+            },
+            { "type": "field_input", "name": "LABEL", "text": "Data" },
+            { "type": "field_number", "name": "ALLOCATION", "value": 4096, "min": 512, "max": 65536 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Format volume.\n\nPowerShell: Format-Volume -DriveLetter [DRIVE_LETTER] -FileSystem [FS_TYPE] -NewFileSystemLabel \"[LABEL]\" -AllocationUnitSize [ALLOCATION] -Confirm:$false",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_storage_pool",
+          "message0": "Create Storage Pool %1",
+          "args0": [
+            { "type": "field_input", "name": "POOL_NAME", "text": "StoragePool1" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Create storage pool.\n\nPowerShell: New-StoragePool -FriendlyName \"[POOL_NAME]\" -StorageSubsystemFriendlyName \"Windows Storage*\" -PhysicalDisks (Get-PhysicalDisk -CanPool $true)",
+          "helpUrl": ""
+        },
+        {
+          "type": "add_disk_to_pool",
+          "message0": "Add Disk %1 to Pool %2",
+          "args0": [
+            { "type": "field_input", "name": "DISK_NUMBER", "text": "1" },
+            { "type": "field_input", "name": "POOL_NAME", "text": "StoragePool1" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Add disk to pool.\n\nPowerShell: Add-PhysicalDisk -StoragePoolFriendlyName \"[POOL_NAME]\" -PhysicalDisks (Get-PhysicalDisk -DeviceNumber [DISK_NUMBER])",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_virtual_disk",
+          "message0": "Create Virtual Disk (Name: %1 Size: %2 GB Pool: %3 Type: %4)",
+          "args0": [
+            { "type": "field_input", "name": "DISK_NAME", "text": "VirtualDisk1" },
+            { "type": "field_number", "name": "SIZE", "value": 100, "min": 1, "max": 64000 },
+            { "type": "field_input", "name": "POOL_NAME", "text": "StoragePool1" },
+            { 
+              "type": "field_dropdown", 
+              "name": "DISK_TYPE", 
+              "options": [
+                ["Simple", "Simple"],
+                ["Mirror", "Mirror"],
+                ["Parity", "Parity"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Create virtual disk.\n\nPowerShell: New-VirtualDisk -StoragePoolFriendlyName \"[POOL_NAME]\" -FriendlyName \"[DISK_NAME]\" -Size [SIZE]GB -ResiliencySettingName [DISK_TYPE]",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_disk_quota",
+          "message0": "Set Disk Quota (Path: %1 Limit: %2 GB Warning: %3 GB)",
+          "args0": [
+            { "type": "field_input", "name": "PATH", "text": "E:\\" },
+            { "type": "field_number", "name": "LIMIT", "value": 10, "min": 1, "max": 10000 },
+            { "type": "field_number", "name": "WARNING", "value": 8, "min": 1, "max": 10000 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Set disk quota.\n\nPowerShell: fsutil quota modify [PATH] [WARNING]GB [LIMIT]GB Administrators",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_deduplication",
+          "message0": "Enable Deduplication on %1 Type: %2",
+          "args0": [
+            { "type": "field_input", "name": "VOLUME", "text": "E:" },
+            { 
+              "type": "field_dropdown", 
+              "name": "USAGE_TYPE", 
+              "options": [
+                ["Default", "Default"],
+                ["Hyper-V", "HyperV"],
+                ["Backup", "Backup"],
+                ["Virtual Desktop", "VirtualDesktop"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Enable deduplication.\n\nPowerShell: Enable-DedupVolume -Volume [VOLUME] -UsageType [USAGE_TYPE]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_iscsi_target",
+          "message0": "Configure iSCSI Target (Name: %1 Size: %2 GB Path: %3)",
+          "args0": [
+            { "type": "field_input", "name": "TARGET_NAME", "text": "iSCSITarget1" },
+            { "type": "field_number", "name": "SIZE", "value": 100, "min": 1, "max": 64000 },
+            { "type": "field_input", "name": "PATH", "text": "C:\\iSCSI" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Configure iSCSI target.\n\nPowerShell: New-IscsiVirtualDisk -Path \"[PATH]\\[TARGET_NAME].vhdx\" -Size [SIZE]GB\nNew-IscsiServerTarget -TargetName \"[TARGET_NAME]\" -InitiatorId IPAddress:0.0.0.0",
+          "helpUrl": ""
+        },
+
+        // Security Blocks
+        {
+          "type": "enable_bitlocker",
+          "message0": "Enable BitLocker on %1 Method: %2",
+          "args0": [
+            { "type": "field_input", "name": "DRIVE", "text": "C:" },
+            { 
+              "type": "field_dropdown", 
+              "name": "METHOD", 
+              "options": [
+                ["Password", "Password"],
+                ["TPM", "Tpm"],
+                ["TPM + PIN", "TpmPin"],
+                ["Startup Key", "StartupKey"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 30,
+          "tooltip": "Enable BitLocker.\n\nPowerShell: Enable-BitLocker -MountPoint \"[DRIVE]\" -EncryptionMethod Aes256 -UsedSpaceOnly -SkipHardwareTest\nAdd-BitLockerKeyProtector -MountPoint \"[DRIVE]\" -[METHOD]Protector",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_audit_policy",
+          "message0": "Configure Audit Policy (Category: %1 Setting: %2)",
+          "args0": [
+            { 
+              "type": "field_dropdown", 
+              "name": "CATEGORY", 
+              "options": [
+                ["Account Logon", "Account Logon"],
+                ["Logon/Logoff", "Logon/Logoff"],
+                ["Object Access", "Object Access"],
+                ["Policy Change", "Policy Change"],
+                ["Privilege Use", "Privilege Use"],
+                ["Detailed Tracking", "Detailed Tracking"],
+                ["System", "System"]
+              ]
+            },
+            { 
+              "type": "field_dropdown", 
+              "name": "SETTING", 
+              "options": [
+                ["Success", "Success"],
+                ["Failure", "Failure"],
+                ["Success and Failure", "Success and Failure"],
+                ["No Auditing", "No Auditing"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 30,
+          "tooltip": "Configure audit policy.\n\nPowerShell: auditpol /set /subcategory:\"[CATEGORY]\" /success:[SETTING] /failure:[SETTING]",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_password_policy",
+          "message0": "Set Password Policy (Length: %1 Age: %2 days History: %3 Complexity: %4)",
+          "args0": [
+            { "type": "field_number", "name": "LENGTH", "value": 12, "min": 1, "max": 128 },
+            { "type": "field_number", "name": "AGE", "value": 90, "min": 1, "max": 999 },
+            { "type": "field_number", "name": "HISTORY", "value": 5, "min": 0, "max": 24 },
+            { "type": "field_checkbox", "name": "COMPLEXITY", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 30,
+          "tooltip": "Set password policy.\n\nPowerShell: Set-ADDefaultDomainPasswordPolicy -Identity $env:USERDOMAIN -MinPasswordLength [LENGTH] -MaxPasswordAge [AGE].00:00:00 -PasswordHistoryCount [HISTORY] -ComplexityEnabled:[COMPLEXITY]",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_certificate",
+          "message0": "Create Certificate (Subject: %1 Expires: %2 years Store: %3)",
+          "args0": [
+            { "type": "field_input", "name": "SUBJECT", "text": "CN=server.example.com" },
+            { "type": "field_number", "name": "YEARS", "value": 5, "min": 1, "max": 20 },
+            { 
+              "type": "field_dropdown", 
+              "name": "STORE", 
+              "options": [
+                ["Local Machine - Personal", "LocalMachine\\My"],
+                ["Local Machine - Trusted Root", "LocalMachine\\Root"],
+                ["Current User - Personal", "CurrentUser\\My"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 30,
+          "tooltip": "Create certificate.\n\nPowerShell: New-SelfSignedCertificate -Subject \"[SUBJECT]\" -NotAfter (Get-Date).AddYears([YEARS]) -CertStoreLocation cert:\\[STORE]",
+          "helpUrl": ""
+        },
+        {
+          "type": "install_certificate",
+          "message0": "Install Certificate (Path: %1 Store: %2 Password: %3)",
+          "args0": [
+            { "type": "field_input", "name": "PATH", "text": "C:\\cert.pfx" },
+            { 
+              "type": "field_dropdown", 
+              "name": "STORE", 
+              "options": [
+                ["Personal", "My"],
+                ["Trusted Root", "Root"],
+                ["Intermediate", "CA"]
+              ]
+            },
+            { "type": "field_input", "name": "PASSWORD", "text": "P@ssword123" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 30,
+          "tooltip": "Install certificate.\n\nPowerShell: Import-PfxCertificate -FilePath \"[PATH]\" -CertStoreLocation Cert:\\LocalMachine\\[STORE] -Password (ConvertTo-SecureString -String \"[PASSWORD]\" -Force -AsPlainText)",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_windows_defender",
+          "message0": "Enable Windows Defender (Realtime: %1 Cloud: %2)",
+          "args0": [
+            { "type": "field_checkbox", "name": "REALTIME", "checked": true },
+            { "type": "field_checkbox", "name": "CLOUD", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 30,
+          "tooltip": "Enable Windows Defender.\n\nPowerShell: Set-MpPreference -DisableRealtimeMonitoring $![REALTIME] -EnableCloudProtection $[CLOUD]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_antivirus",
+          "message0": "Configure Antivirus (Scan: %1 Day: %2 Time: %3 Action: %4)",
+          "args0": [
+            { 
+              "type": "field_dropdown", 
+              "name": "SCAN_TYPE", 
+              "options": [
+                ["Quick", "Quick"],
+                ["Full", "Full"],
+                ["Custom", "Custom"]
+              ]
+            },
+            { 
+              "type": "field_dropdown", 
+              "name": "DAY", 
+              "options": [
+                ["Sunday", "Sunday"],
+                ["Monday", "Monday"],
+                ["Tuesday", "Tuesday"],
+                ["Wednesday", "Wednesday"],
+                ["Thursday", "Thursday"],
+                ["Friday", "Friday"],
+                ["Saturday", "Saturday"]
+              ]
+            },
+            { "type": "field_input", "name": "TIME", "text": "02:00" },
+            { 
+              "type": "field_dropdown", 
+              "name": "ACTION", 
+              "options": [
+                ["Clean", "Clean"],
+                ["Quarantine", "Quarantine"],
+                ["Remove", "Remove"],
+                ["Allow", "Allow"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 30,
+          "tooltip": "Configure antivirus.\n\nPowerShell: Set-MpPreference -ScanParameters [SCAN_TYPE] -ScanScheduleDay [DAY] -ScanScheduleTime [TIME] -RemediationScheduleDay [DAY] -RemediationScheduleTime [TIME] -DefaultAction [ACTION]",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_firewall",
+          "message0": "Enable Firewall (Profile: %1 State: %2)",
+          "args0": [
+            { 
+              "type": "field_dropdown", 
+              "name": "PROFILE", 
+              "options": [
+                ["Domain", "Domain"],
+                ["Private", "Private"],
+                ["Public", "Public"]
+              ]
+            },
+            { 
+              "type": "field_dropdown", 
+              "name": "STATE", 
+              "options": [
+                ["On", "True"],
+                ["Off", "False"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 30,
+          "tooltip": "Enable firewall.\n\nPowerShell: Set-NetFirewallProfile -Name [PROFILE] -Enabled [STATE]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_jit_access",
+          "message0": "Configure JIT Access (Port: %1 Duration: %2 hours Source: %3)",
+          "args0": [
+            { "type": "field_number", "name": "PORT", "value": 3389, "min": 1, "max": 65535 },
+            { "type": "field_number", "name": "DURATION", "value": 4, "min": 1, "max": 24 },
+            { "type": "field_input", "name": "SOURCE", "text": "192.168.1.0/24" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 30,
+          "tooltip": "Configure JIT access.\n\nPowerShell: Set-AzJitNetworkAccessPolicy -ResourceGroupName \"myRG\" -Location \"westus\" -Name \"default\" -VirtualMachine @{Id=\"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myRG/providers/Microsoft.Compute/virtualMachines/myVM\"; Ports=@{number=[PORT]; maxRequestAccessDuration=\"PT[DURATION]H\"; allowedSourceAddressPrefix=\"[SOURCE]\"}}",
+          "helpUrl": ""
+        },
+
+        // Monitoring Blocks
+        {
+          "type": "create_perf_monitor",
+          "message0": "Create Perf Monitor (Counter: %1 Interval: %2 sec Log: %3)",
+          "args0": [
+            { "type": "field_input", "name": "COUNTER", "text": "\\Processor(_Total)\\% Processor Time" },
+            { "type": "field_number", "name": "INTERVAL", "value": 5, "min": 1, "max": 3600 },
+            { "type": "field_input", "name": "LOG_NAME", "text": "PerfLog" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 330,
+          "tooltip": "Create performance monitor.\n\nPowerShell: $DataCollectorSet = New-Object -ComObject PLA.DataCollectorSet\n$DataCollectorSet.DisplayName = \"Performance Monitor\"\n$DataCollector = $DataCollectorSet.DataCollectors.CreateDataCollector(0)\n$DataCollector.FileName = \"[LOG_NAME]\"\n$DataCollector.FileNameFormat = 1\n$DataCollector.SampleInterval = [INTERVAL]\n$DataCollector.LogFileFormat = 3\n$DataCollector.PerformanceCounters = @(\"[COUNTER]\")\n$DataCollectorSet.Commit(\"[LOG_NAME]\", $null, 0x0003)\n$DataCollectorSet.Start($true)",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_event_log",
+          "message0": "Configure Event Log (Log: %1 Size: %2 MB Retention: %3 days)",
+          "args0": [
+            { "type": "field_input", "name": "LOG_NAME", "text": "Application" },
+            { "type": "field_number", "name": "SIZE", "value": 1024, "min": 20, "max": 4096 },
+            { "type": "field_number", "name": "DAYS", "value": 30, "min": 1, "max": 365 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 330,
+          "tooltip": "Configure event log.\n\nPowerShell: Limit-EventLog -LogName \"[LOG_NAME]\" -MaximumSize [SIZE]MB\nwevtutil sl \"[LOG_NAME]\" /ms:[SIZE]000000 /rt:false /e:false",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_remote_management",
+          "message0": "Enable Remote Management (WinRM: %1 WSMan: %2)",
+          "args0": [
+            { "type": "field_checkbox", "name": "WINRM", "checked": true },
+            { "type": "field_checkbox", "name": "WSMAN", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 330,
+          "tooltip": "Enable remote management.\n\nPowerShell: Enable-PSRemoting -Force\nSet-NetFirewallRule -Name \"WINRM-HTTP-In-TCP\" -RemoteAddress Any\nwinrm quickconfig -quiet",
+          "helpUrl": ""
+        },
+        {
+          "type": "install_scom_agent",
+          "message0": "Install SCOM Agent (Server: %1 Group: %2)",
+          "args0": [
+            { "type": "field_input", "name": "SERVER", "text": "scomserver.example.com" },
+            { "type": "field_input", "name": "GROUP", "text": "SCOMGroup" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 330,
+          "tooltip": "Install SCOM agent.\n\nPowerShell: Start-Process -FilePath \"\\\\[SERVER]\\install\\Agent.msi\" -ArgumentList \"/qn USE_SETTINGS_FROM_AD=0 MANAGEMENT_SERVER_DNS=[SERVER] MANAGEMENT_GROUP=[GROUP]\" -Wait",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_alert",
+          "message0": "Configure Alert (Name: %1 Threshold: %2 Action: %3)",
+          "args0": [
+            { "type": "field_input", "name": "ALERT_NAME", "text": "High CPU" },
+            { "type": "field_number", "name": "THRESHOLD", "value": 90, "min": 1, "max": 100 },
+            { "type": "field_input", "name": "ACTION", "text": "Send-EmailAlert" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 330,
+          "tooltip": "Configure alert.\n\nPowerShell: $counter = Get-Counter \"\\Processor(_Total)\\% Processor Time\"\nif ($counter.CounterSamples.CookedValue -gt [THRESHOLD]) { & \"[ACTION]\" -Message \"[ALERT_NAME] alert triggered!\" }",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_log_retention",
+          "message0": "Set Log Retention (Days: %1 Overwrite: %2)",
+          "args0": [
+            { "type": "field_number", "name": "DAYS", "value": 30, "min": 1, "max": 365 },
+            { "type": "field_checkbox", "name": "OVERWRITE", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 330,
+          "tooltip": "Set log retention.\n\nPowerShell: wevtutil sl /e:$[OVERWRITE] /rt:false /ms:$([DAYS]*86400000000)",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_advanced_logging",
+          "message0": "Enable Advanced Logging (Process: %1 Network: %2)",
+          "args0": [
+            { "type": "field_checkbox", "name": "PROCESS", "checked": true },
+            { "type": "field_checkbox", "name": "NETWORK", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 330,
+          "tooltip": "Enable advanced logging.\n\nPowerShell: auditpol /set /subcategory:\"Detailed Tracking\" /success:$[PROCESS] /failure:$[PROCESS]\nauditpol /set /subcategory:\"Network Connection\" /success:$[NETWORK] /failure:$[NETWORK]",
+          "helpUrl": ""
+        },
+
+        // Automation Blocks
+        {
+          "type": "create_scheduled_task",
+          "message0": "Create Scheduled Task (Name: %1 Command: %2 Schedule: %3 User: %4)",
+          "args0": [
+            { "type": "field_input", "name": "TASK_NAME", "text": "Backup Script" },
+            { "type": "field_input", "name": "COMMAND", "text": "C:\\scripts\\backup.ps1" },
+            { 
+              "type": "field_dropdown", 
+              "name": "SCHEDULE", 
+              "options": [
+                ["Daily", "Daily"],
+                ["Weekly", "Weekly"],
+                ["Monthly", "Monthly"],
+                ["At Startup", "AtStartup"],
+                ["At Logon", "AtLogon"]
+              ]
+            },
+            { "type": "field_input", "name": "USER", "text": "SYSTEM" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 60,
+          "tooltip": "Create scheduled task.\n\nPowerShell: $action = New-ScheduledTaskAction -Execute \"PowerShell.exe\" -Argument \"-File [COMMAND]\"\n$trigger = New-ScheduledTaskTrigger -[SCHEDULE] -At 2am\nRegister-ScheduledTask -TaskName \"[TASK_NAME]\" -Action $action -Trigger $trigger -RunLevel Highest -User \"[USER]\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_powershell_script",
+          "message0": "Create PowerShell Script (Path: %1 Content: %2)",
+          "args0": [
+            { "type": "field_input", "name": "PATH", "text": "C:\\scripts\\task.ps1" },
+            { "type": "field_multilinetext", "name": "CONTENT", "text": "# Your script here" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 60,
+          "tooltip": "Create PowerShell script.\n\nPowerShell: Set-Content -Path \"[PATH]\" -Value \"[CONTENT]\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_startup_script",
+          "message0": "Set Startup Script (Path: %1)",
+          "args0": [
+            { "type": "field_input", "name": "PATH", "text": "C:\\scripts\\startup.ps1" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 60,
+          "tooltip": "Set startup script.\n\nPowerShell: Set-ItemProperty -Path \"HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\" -Name \"StartupScript\" -Value \"powershell.exe -File [PATH]\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_dsc",
+          "message0": "Configure DSC (Config: %1 Mode: %2)",
+          "args0": [
+            { "type": "field_input", "name": "CONFIG_PATH", "text": "C:\\dsc\\config.ps1" },
+            { 
+              "type": "field_dropdown", 
+              "name": "MODE", 
+              "options": [
+                ["Apply", "Apply"],
+                ["Test", "Test"],
+                ["ApplyAndMonitor", "ApplyAndMonitor"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 60,
+          "tooltip": "Configure DSC.\n\nPowerShell: Start-DscConfiguration -Path \"[CONFIG_PATH]\" -Wait -Force -Verbose -Mode [MODE]",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_webhook",
+          "message0": "Create Webhook (Name: %1 URI: %2 Method: %3)",
+          "args0": [
+            { "type": "field_input", "name": "NAME", "text": "AlertWebhook" },
+            { "type": "field_input", "name": "URI", "text": "https://example.com/webhook" },
+            { 
+              "type": "field_dropdown", 
+              "name": "METHOD", 
+              "options": [
+                ["POST", "POST"],
+                ["GET", "GET"],
+                ["PUT", "PUT"]
+              ]
+            }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 60,
+          "tooltip": "Create webhook.\n\nPowerShell: $webhook = @{Name=\"[NAME]\"; Uri=\"[URI]\"; Method=\"[METHOD]\"}\nRegister-WebhookSubscription @webhook",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_winrm",
+          "message0": "Enable WinRM (HTTPS: %1 Certificate: %2)",
+          "args0": [
+            { "type": "field_checkbox", "name": "HTTPS", "checked": true },
+            { "type": "field_input", "name": "CERT_THUMBPRINT", "text": "" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 60,
+          "tooltip": "Enable WinRM.\n\nPowerShell: winrm quickconfig -quiet\nif ($[HTTPS]) { winrm create winrm/config/Listener?Address=*+Transport=HTTPS @{Hostname=\"$env:COMPUTERNAME\"; CertificateThumbprint=\"[CERT_THUMBPRINT]\" } }",
+          "helpUrl": ""
+        }
+      ]);
+
+      // Setup event listeners
+      document.getElementById('zoom-in').addEventListener('click', function() {
+        workspace.zoomCenter(1.2);
+      });
+
+      document.getElementById('zoom-out').addEventListener('click', function() {
+        workspace.zoomCenter(0.8);
+      });
+
+      window.clearWorkspace = function() {
+        if (confirm('Are you sure you want to clear the workspace? All blocks will be deleted.')) {
+          workspace.clear();
+          showNotification('Workspace cleared');
+        }
+      };
+
+      function generatePowerShellCode() {
+        const blocks = workspace.getTopBlocks(true);
+        let code = "";
+        
+        // Add header
+        code += `# Generated by BlockShell Server Administration Tool\n`;
+        code += `# Date: ${new Date().toISOString()}\n`;
+        code += `# Warning: Review all commands before executing on production systems\n`;
+        code += `\n`;
+        
+        // Generate code from blocks
+        for (const block of blocks) {
+          code += generateBlockCodeRecursive(block);
+        }
+        
+        return code.trim();
+      }
+
+      function generateBlockCodeRecursive(block) {
+        if (!block) return "";
+        let code = "";
+
+        switch (block.type) {
+          // Server Configuration Commands
+          case "configure_static_ip":
+            code += `# Configure static IP address\n`;
+            code += `New-NetIPAddress -IPAddress ${block.getFieldValue('IP')} -PrefixLength 24 -DefaultGateway ${block.getFieldValue('GATEWAY')}\n\n`;
+            break;
+          case "rename_server":
+            code += `# Rename server\n`;
+            const restartFlag = block.getFieldValue('RESTART') === 'TRUE' ? ' -Restart' : '';
+            code += `Rename-Computer -NewName "${block.getFieldValue('NEW_NAME')}" -Force${restartFlag}\n\n`;
+            break;
+          case "install_file_server":
+            code += `# Install File Server role\n`;
+            code += "Install-WindowsFeature -Name FS-FileServer -IncludeManagementTools\n\n";
+            break;
+          case "create_folder":
+            code += `# Create new folder\n`;
+            code += `New-Item -Path "${block.getFieldValue('FOLDER_PATH')}" -ItemType Directory -Force\n\n`;
+            break;
+          case "share_folder":
+            code += `# Share folder\n`;
+            const perm = block.getFieldValue('PERMISSIONS');
+            let permParam = '';
+            if (perm === 'Read') permParam = '-ReadAccess "Users"';
+            else if (perm === 'Change') permParam = '-ChangeAccess "Users"';
+            else if (perm === 'Full') permParam = '-FullAccess "Users"';
+            
+            code += `New-SmbShare -Name "${block.getFieldValue('SHARE_NAME')}" -Path "${block.getFieldValue('SHARE_PATH')}" -FullAccess Administrators ${permParam}\n\n`;
+            break;
+          case "configure_rdp":
+            code += `# Configure Remote Desktop\n`;
+            const enableValue = block.getFieldValue('ENABLE') === 'TRUE' ? '0' : '1';
+            const nlaValue = block.getFieldValue('NLA') === 'TRUE' ? '1' : '0';
+            code += `Set-ItemProperty -Path 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' -Name 'fDenyTSConnections' -Value ${enableValue}\n`;
+            code += `Set-ItemProperty -Path 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp' -Name 'UserAuthentication' -Value ${nlaValue}\n`;
+            code += "Enable-NetFirewallRule -DisplayGroup 'Remote Desktop'\n\n";
+            break;
+          case "install_ad_ds":
+            code += `# Install AD DS feature\n`;
+            code += "Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools\n\n";
+            break;
+          case "promote_domain_controller":
+            code += `# Promote to Domain Controller\n`;
+            const dnsFlag = block.getFieldValue('INSTALL_DNS') === 'TRUE' ? ' -InstallDns' : '';
+            code += `Install-ADDSForest -DomainName "${block.getFieldValue('DOMAIN')}"${dnsFlag} -Force\n\n`;
+            break;
+          case "install_dns":
+            code += `# Install DNS Server\n`;
+            code += "Install-WindowsFeature -Name DNS -IncludeManagementTools\n\n";
+            break;
+          case "create_admin_user":
+            code += `# Create admin user\n`;
+            code += `$password = ConvertTo-SecureString "${block.getFieldValue('PASSWORD')}" -AsPlainText -Force\n`;
+            code += `New-LocalUser -Name "${block.getFieldValue('USERNAME')}" -Password $password -AccountNeverExpires\n`;
+            if (block.getFieldValue('ADD_TO_ADMINS') === 'TRUE') {
+              code += `Add-LocalGroupMember -Group "Administrators" -Member "${block.getFieldValue('USERNAME')}"\n`;
+            }
+            code += `\n`;
+            break;
+          case "set_timezone":
+            code += `# Set timezone\n`;
+            code += `Set-TimeZone -Id "${block.getFieldValue('TIMEZONE')}"\n\n`;
+            break;
+          case "install_iis":
+            code += `# Install IIS\n`;
+            const toolsFlag = block.getFieldValue('INCLUDE_TOOLS') === 'TRUE' ? ' -IncludeManagementTools' : '';
+            code += `Install-WindowsFeature -Name Web-Server${toolsFlag}\n\n`;
+            break;
+          case "create_iis_site":
+            code += `# Create IIS site\n`;
+            code += `New-Item -Path "${block.getFieldValue('PHYSICAL_PATH')}" -ItemType Directory -Force\n`;
+            code += `New-WebSite -Name "${block.getFieldValue('SITE_NAME')}" -PhysicalPath "${block.getFieldValue('PHYSICAL_PATH')}" -Port ${block.getFieldValue('PORT')}\n`;
+            if (block.getFieldValue('PROTOCOL') === 'https') {
+              code += `# Note: You'll need to configure SSL certificate for HTTPS\n`;
+            }
+            code += `\n`;
+            break;
+          case "install_hyperv":
+            code += `# Install Hyper-V\n`;
+            const hypervToolsFlag = block.getFieldValue('INCLUDE_TOOLS') === 'TRUE' ? ' -IncludeManagementTools' : '';
+            const hypervRestartFlag = block.getFieldValue('RESTART') === 'TRUE' ? ' -Restart' : '';
+            code += `Install-WindowsFeature -Name Hyper-V${hypervToolsFlag}${hypervRestartFlag}\n\n`;
+            break;
+          case "create_vm":
+            code += `# Create VM\n`;
+            code += `New-VM -Name "${block.getFieldValue('VM_NAME')}" -MemoryStartupBytes $(${block.getFieldValue('MEMORY')}GB) -NewVHDPath "C:\\VMs\\${block.getFieldValue('VM_NAME')}\\disk.vhdx" -NewVHDSizeBytes $(${block.getFieldValue('DISK_SIZE')}GB) -Generation ${block.getFieldValue('GENERATION')}\n\n`;
+            break;
+            
+          // Networking Commands
+          case "set_ip_address":
+            code += `# Set IP address\n`;
+            code += `Set-NetIPAddress -InterfaceAlias "${block.getFieldValue('INTERFACE')}" -IPAddress "${block.getFieldValue('IP')}" -PrefixLength 24\n\n`;
+            break;
+          case "set_dns_server":
+            code += `# Set DNS server\n`;
+            code += `Set-DnsClientServerAddress -InterfaceAlias "${block.getFieldValue('INTERFACE')}" -ServerAddresses "${block.getFieldValue('DNS_IP')}"\n\n`;
+            break;
+          case "install_dhcp_role":
+            code += `# Install DHCP role\n`;
+            const dhcpToolsFlag = block.getFieldValue('INCLUDE_TOOLS') === 'TRUE' ? ' -IncludeManagementTools' : '';
+            code += `Install-WindowsFeature -Name DHCP${dhcpToolsFlag}\n`;
+            code += "Add-DhcpServerInDC\n\n";
+            break;
+          case "new_dhcp_scope":
+            code += `# Create DHCP scope\n`;
+            code += `Add-DhcpServerv4Scope -Name "${block.getFieldValue('SCOPE_NAME')}" -StartRange "${block.getFieldValue('START_IP')}" -EndRange "${block.getFieldValue('END_IP')}" -SubnetMask "${block.getFieldValue('MASK')}"\n`;
+            code += `Set-DhcpServerv4OptionValue -Router "${block.getFieldValue('GATEWAY')}" -DnsServer "${block.getFieldValue('DNS')}"\n\n`;
+            break;
+          case "configure_firewall_rule":
+            code += `# Configure firewall rule\n`;
+            code += `New-NetFirewallRule -DisplayName "${block.getFieldValue('RULE_NAME')}" -Direction ${block.getFieldValue('DIRECTION')} -Action ${block.getFieldValue('ACTION')} -Protocol TCP -LocalPort ${block.getFieldValue('PORT')}\n\n`;
+            break;
+          case "enable_network_adapter":
+            code += `# Enable network adapter\n`;
+            code += `Enable-NetAdapter -Name "${block.getFieldValue('ADAPTER_NAME')}"\n\n`;
+            break;
+          case "disable_network_adapter":
+            code += `# Disable network adapter\n`;
+            code += `Disable-NetAdapter -Name "${block.getFieldValue('ADAPTER_NAME')}" -Confirm:$false\n\n`;
+            break;
+          case "test_network_connectivity":
+            code += `# Test network connectivity\n`;
+            code += `Test-Connection "${block.getFieldValue('TARGET')}" -Count ${block.getFieldValue('COUNT')} -Timeout ${block.getFieldValue('TIMEOUT')}\n\n`;
+            break;
+          case "add_dns_forwarder":
+            code += `# Add DNS forwarder\n`;
+            code += `Add-DnsServerForwarder -IPAddress "${block.getFieldValue('FORWARDER_IP')}"\n\n`;
+            break;
+          case "configure_default_gateway":
+            code += `# Configure default gateway\n`;
+            code += `Set-NetIPInterface -InterfaceAlias "${block.getFieldValue('INTERFACE')}" -Dhcp Disabled\n`;
+            code += `New-NetRoute -DestinationPrefix "0.0.0.0/0" -InterfaceAlias "${block.getFieldValue('INTERFACE')}" -NextHop "${block.getFieldValue('GATEWAY')}"\n\n`;
+            break;
+          case "create_vlan":
+            code += `# Create VLAN\n`;
+            code += `New-VirtualSwitch -Name "${block.getFieldValue('SWITCH_NAME')}" -NetAdapterName "Ethernet0"\n`;
+            code += `New-VirtualNetwork -Name "${block.getFieldValue('VLAN_NAME')}" -SwitchName "${block.getFieldValue('SWITCH_NAME')}" -VlanId ${block.getFieldValue('VLAN_ID')}\n\n`;
+            break;
+          case "set_nic_teaming":
+            code += `# Configure NIC Teaming\n`;
+            code += `New-NetLbfoTeam -Name "${block.getFieldValue('TEAM_NAME')}" -TeamMembers "Ethernet0","Ethernet1" -TeamingMode "${block.getFieldValue('TEAM_MODE')}" -LoadBalancingAlgorithm "${block.getFieldValue('LB_MODE')}"\n\n`;
+            break;
+          case "configure_nat":
+            code += `# Configure NAT\n`;
+            code += `New-NetNat -Name "${block.getFieldValue('NAT_NAME')}" -InternalIPInterfaceAddressPrefix "${block.getFieldValue('INTERNAL_IP')}/24" -ExternalIPInterfaceAddressPrefix "${block.getFieldValue('EXTERNAL_IP')}/24"\n\n`;
+            break;
+
+          // Storage Commands
+          case "initialize_disk":
+            code += `# Initialize disk\n`;
+            code += `Initialize-Disk -Number ${block.getFieldValue('DISK_NUMBER')} -PartitionStyle ${block.getFieldValue('PARTITION_STYLE')}\n\n`;
+            break;
+          case "create_volume":
+            code += `# Create volume\n`;
+            code += `New-Partition -DiskNumber 1 -UseMaximumSize -DriveLetter ${block.getFieldValue('DRIVE_LETTER')} -AssignDriveLetter\n`;
+            code += `Set-Volume -DriveLetter ${block.getFieldValue('DRIVE_LETTER')} -NewFileSystemLabel "${block.getFieldValue('LABEL')}"\n\n`;
+            break;
+          case "format_volume":
+            code += `# Format volume\n`;
+            code += `Format-Volume -DriveLetter ${block.getFieldValue('DRIVE_LETTER')} -FileSystem ${block.getFieldValue('FS_TYPE')} -NewFileSystemLabel "${block.getFieldValue('LABEL')}" -AllocationUnitSize ${block.getFieldValue('ALLOCATION')} -Confirm:$false\n\n`;
+            break;
+          case "create_storage_pool":
+            code += `# Create storage pool\n`;
+            code += `New-StoragePool -FriendlyName "${block.getFieldValue('POOL_NAME')}" -StorageSubsystemFriendlyName "Windows Storage*" -PhysicalDisks (Get-PhysicalDisk -CanPool $true)\n\n`;
+            break;
+          case "add_disk_to_pool":
+            code += `# Add disk to pool\n`;
+            code += `Add-PhysicalDisk -StoragePoolFriendlyName "${block.getFieldValue('POOL_NAME')}" -PhysicalDisks (Get-PhysicalDisk -DeviceNumber ${block.getFieldValue('DISK_NUMBER')})\n\n`;
+            break;
+          case "create_virtual_disk":
+            code += `# Create virtual disk\n`;
+            code += `New-VirtualDisk -StoragePoolFriendlyName "${block.getFieldValue('POOL_NAME')}" -FriendlyName "${block.getFieldValue('DISK_NAME')}" -Size ${block.getFieldValue('SIZE')}GB -ResiliencySettingName ${block.getFieldValue('DISK_TYPE')}\n\n`;
+            break;
+          case "set_disk_quota":
+            code += `# Set disk quota\n`;
+            code += `fsutil quota modify ${block.getFieldValue('PATH')} ${block.getFieldValue('WARNING')}GB ${block.getFieldValue('LIMIT')}GB Administrators\n\n`;
+            break;
+          case "enable_deduplication":
+            code += `# Enable deduplication\n`;
+            code += `Enable-DedupVolume -Volume ${block.getFieldValue('VOLUME')} -UsageType ${block.getFieldValue('USAGE_TYPE')}\n\n`;
+            break;
+          case "configure_iscsi_target":
+            code += `# Configure iSCSI target\n`;
+            code += `New-Item -Path "${block.getFieldValue('PATH')}" -ItemType Directory -Force\n`;
+            code += `New-IscsiVirtualDisk -Path "${block.getFieldValue('PATH')}\\${block.getFieldValue('TARGET_NAME')}.vhdx" -Size ${block.getFieldValue('SIZE')}GB\n`;
+            code += `New-IscsiServerTarget -TargetName "${block.getFieldValue('TARGET_NAME')}" -InitiatorId IPAddress:0.0.0.0\n\n`;
+            break;
+
+          // Security Commands
+          case "enable_bitlocker":
+            code += `# Enable BitLocker\n`;
+            const method = block.getFieldValue('METHOD');
+            code += `Enable-BitLocker -MountPoint "${block.getFieldValue('DRIVE')}" -EncryptionMethod Aes256 -UsedSpaceOnly -SkipHardwareTest\n`;
+            
+            if (method === 'Password') {
+              code += `$password = ConvertTo-SecureString -String "YourPassword123!" -AsPlainText -Force\n`;
+              code += `Add-BitLockerKeyProtector -MountPoint "${block.getFieldValue('DRIVE')}" -PasswordProtector -Password $password\n`;
+            } else if (method === 'Tpm') {
+              code += `Add-BitLockerKeyProtector -MountPoint "${block.getFieldValue('DRIVE')}" -TpmProtector\n`;
+            } else if (method === 'TpmPin') {
+              code += `$password = ConvertTo-SecureString -String "YourPIN123!" -AsPlainText -Force\n`;
+              code += `Add-BitLockerKeyProtector -MountPoint "${block.getFieldValue('DRIVE')}" -TpmAndPinProtector -Pin $password\n`;
+            } else if (method === 'StartupKey') {
+              code += `$startupKeyPath = "A:\\StartupKey.bek"\n`;
+              code += `Add-BitLockerKeyProtector -MountPoint "${block.getFieldValue('DRIVE')}" -StartupKeyProtector -StartupKeyPath $startupKeyPath\n`;
+            }
+            
+            code += `\n`;
+            break;
+          case "configure_audit_policy":
+            code += `# Configure audit policy\n`;
+            const setting = block.getFieldValue('SETTING');
+            const successFlag = setting.includes('Success') ? 'enable' : 'disable';
+            const failureFlag = setting.includes('Failure') ? 'enable' : 'disable';
+            code += `auditpol /set /subcategory:"${block.getFieldValue('CATEGORY')}" /success:${successFlag} /failure:${failureFlag}\n\n`;
+            break;
+          case "set_password_policy":
+            code += `# Set password policy\n`;
+            const complexityFlag = block.getFieldValue('COMPLEXITY') === 'TRUE' ? ' -ComplexityEnabled $true' : ' -ComplexityEnabled $false';
+            code += `Set-ADDefaultDomainPasswordPolicy -Identity $env:USERDOMAIN -MinPasswordLength ${block.getFieldValue('LENGTH')} -MaxPasswordAge ${block.getFieldValue('AGE')}.00:00:00 -PasswordHistoryCount ${block.getFieldValue('HISTORY')}${complexityFlag}\n\n`;
+            break;
+          case "create_certificate":
+            code += `# Create certificate\n`;
+            code += `$cert = New-SelfSignedCertificate -Subject "${block.getFieldValue('SUBJECT')}" -NotAfter (Get-Date).AddYears(${block.getFieldValue('YEARS')}) -CertStoreLocation cert:\\${block.getFieldValue('STORE')}\n`;
+            code += `Write-Host "Certificate created with thumbprint: $($cert.Thumbprint)"\n\n`;
+            break;
+          case "install_certificate":
+            code += `# Install certificate\n`;
+            code += `$password = ConvertTo-SecureString -String "${block.getFieldValue('PASSWORD')}" -Force -AsPlainText\n`;
+            code += `Import-PfxCertificate -FilePath "${block.getFieldValue('PATH')}" -CertStoreLocation Cert:\\LocalMachine\\${block.getFieldValue('STORE')} -Password $password\n\n`;
+            break;
+          case "enable_windows_defender":
+            code += `# Enable Windows Defender\n`;
+            const realtimeFlag = block.getFieldValue('REALTIME') === 'TRUE' ? '$false' : '$true';
+            const cloudFlag = block.getFieldValue('CLOUD') === 'TRUE' ? '$true' : '$false';
+            code += `Set-MpPreference -DisableRealtimeMonitoring ${realtimeFlag} -EnableCloudProtection ${cloudFlag}\n\n`;
+            break;
+          case "configure_antivirus":
+            code += `# Configure antivirus\n`;
+            code += `Set-MpPreference -ScanParameters ${block.getFieldValue('SCAN_TYPE')}\n`;
+            code += `Set-MpPreference -ScanScheduleDay ${block.getFieldValue('DAY')}\n`;
+            code += `Set-MpPreference -ScanScheduleTime ${block.getFieldValue('TIME')}\n`;
+            
+            const action = block.getFieldValue('ACTION');
+            if (action === 'Clean') code += `Set-MpPreference -DefaultAction LowThreatDefaultAction Clean\n`;
+            else if (action === 'Quarantine') code += `Set-MpPreference -DefaultAction LowThreatDefaultAction Quarantine\n`;
+            else if (action === 'Remove') code += `Set-MpPreference -DefaultAction LowThreatDefaultAction Remove\n`;
+            else if (action === 'Allow') code += `Set-MpPreference -DefaultAction LowThreatDefaultAction Allow\n`;
+            
+            code += `\n`;
+            break;
+          case "enable_firewall":
+            code += `# Enable firewall\n`;
+            const state = block.getFieldValue('STATE') === 'True' ? '$true' : '$false';
+            code += `Set-NetFirewallProfile -Name ${block.getFieldValue('PROFILE')} -Enabled ${state}\n\n`;
+            break;
+          case "configure_jit_access":
+            code += `# Configure JIT access\n`;
+            code += `Set-AzJitNetworkAccessPolicy -ResourceGroupName "myRG" -Location "westus" -Name "default" -VirtualMachine @{Id="/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myRG/providers/Microsoft.Compute/virtualMachines/myVM"; Ports=@{number=${block.getFieldValue('PORT')}; maxRequestAccessDuration="PT${block.getFieldValue('DURATION')}H"; allowedSourceAddressPrefix="${block.getFieldValue('SOURCE')}"}}\n\n`;
+            break;
+
+          // Monitoring Commands
+          case "create_perf_monitor":
+            code += `# Create performance monitor\n`;
+            code += `$DataCollectorSet = New-Object -ComObject PLA.DataCollectorSet\n`;
+            code += `$DataCollectorSet.DisplayName = "Performance Monitor"\n`;
+            code += `$DataCollector = $DataCollectorSet.DataCollectors.CreateDataCollector(0)\n`;
+            code += `$DataCollector.FileName = "${block.getFieldValue('LOG_NAME')}"\n`;
+            code += `$DataCollector.FileNameFormat = 1\n`;
+            code += `$DataCollector.SampleInterval = ${block.getFieldValue('INTERVAL')}\n`;
+            code += `$DataCollector.LogFileFormat = 3\n`;
+            code += `$DataCollector.PerformanceCounters = @("${block.getFieldValue('COUNTER')}")\n`;
+            code += `$DataCollectorSet.Commit("${block.getFieldValue('LOG_NAME')}", $null, 0x0003)\n`;
+            code += `$DataCollectorSet.Start($true)\n\n`;
+            break;
+          case "configure_event_log":
+            code += `# Configure event log\n`;
+            code += `Limit-EventLog -LogName "${block.getFieldValue('LOG_NAME')}" -MaximumSize ${block.getFieldValue('SIZE')}MB\n`;
+            code += `wevtutil sl "${block.getFieldValue('LOG_NAME')}" /ms:${block.getFieldValue('SIZE')}000000 /rt:false /e:false\n\n`;
+            break;
+          case "enable_remote_management":
+            code += `# Enable remote management\n`;
+            if (block.getFieldValue('WINRM') === 'TRUE') {
+              code += `Enable-PSRemoting -Force\n`;
+              code += `Set-NetFirewallRule -Name "WINRM-HTTP-In-TCP" -RemoteAddress Any\n`;
+            }
+            if (block.getFieldValue('WSMAN') === 'TRUE') {
+              code += `winrm quickconfig -quiet\n`;
+            }
+            code += `\n`;
+            break;
+          case "install_scom_agent":
+            code += `# Install SCOM agent\n`;
+            code += `Start-Process -FilePath "\\\\${block.getFieldValue('SERVER')}\\install\\Agent.msi" -ArgumentList "/qn USE_SETTINGS_FROM_AD=0 MANAGEMENT_SERVER_DNS=${block.getFieldValue('SERVER')} MANAGEMENT_GROUP=${block.getFieldValue('GROUP')}" -Wait\n\n`;
+            break;
+          case "configure_alert":
+            code += `# Configure alert\n`;
+            code += `Add-Type -AssemblyName System.Windows.Forms\n`;
+            code += `if ((Get-Counter "\\Processor(_Total)\\% Processor Time").CounterSamples.CookedValue -gt ${block.getFieldValue('THRESHOLD')}) { \n`;
+            code += `    [System.Windows.Forms.MessageBox]::Show("${block.getFieldValue('ALERT_NAME')} alert triggered!")\n`;
+            code += `    try { & "${block.getFieldValue('ACTION')}" -Message "${block.getFieldValue('ALERT_NAME')} alert triggered!" } catch { Write-Warning "Alert action failed: $_" }\n`;
+            code += `}\n\n`;
+            break;
+          case "set_log_retention":
+            code += `# Set log retention\n`;
+            const overwriteFlag = block.getFieldValue('OVERWRITE') === 'TRUE' ? '$true' : '$false';
+            code += `wevtutil sl /e:${overwriteFlag} /rt:false /ms:$(${block.getFieldValue('DAYS')}*86400000000)\n\n`;
+            break;
+          case "enable_advanced_logging":
+            code += `# Enable advanced logging\n`;
+            const processFlag = block.getFieldValue('PROCESS') === 'TRUE' ? 'enable' : 'disable';
+            const networkFlag = block.getFieldValue('NETWORK') === 'TRUE' ? 'enable' : 'disable';
+            code += `auditpol /set /subcategory:"Detailed Tracking" /success:${processFlag} /failure:${processFlag}\n`;
+            code += `auditpol /set /subcategory:"Network Connection" /success:${networkFlag} /failure:${networkFlag}\n\n`;
+            break;
+
+          // Automation Commands
+          case "create_scheduled_task":
+            code += `# Create scheduled task\n`;
+            code += `$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-File ${block.getFieldValue('COMMAND')}"\n`;
+            code += `$trigger = New-ScheduledTaskTrigger -${block.getFieldValue('SCHEDULE')} -At 2am\n`;
+            code += `Register-ScheduledTask -TaskName "${block.getFieldValue('TASK_NAME')}" -Action $action -Trigger $trigger -RunLevel Highest -User "${block.getFieldValue('USER')}"\n\n`;
+            break;
+          case "create_powershell_script":
+            code += `# Create PowerShell script\n`;
+            code += `Set-Content -Path "${block.getFieldValue('PATH')}" -Value @'\n${block.getFieldValue('CONTENT')}\n'@\n\n`;
+            break;
+          case "set_startup_script":
+            code += `# Set startup script\n`;
+            code += `Set-ItemProperty -Path "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" -Name "StartupScript" -Value "powershell.exe -File ${block.getFieldValue('PATH')}"\n\n`;
+            break;
+          case "configure_dsc":
+            code += `# Configure DSC\n`;
+            code += `Start-DscConfiguration -Path "${block.getFieldValue('CONFIG_PATH')}" -Wait -Force -Verbose -Mode ${block.getFieldValue('MODE')}\n\n`;
+            break;
+          case "create_webhook":
+            code += `# Create webhook\n`;
+            code += `$webhook = @{\n`;
+            code += `    Name = "${block.getFieldValue('NAME')}"\n`;
+            code += `    Uri = "${block.getFieldValue('URI')}"\n`;
+            code += `    Method = "${block.getFieldValue('METHOD')}"\n`;
+            code += `}\n`;
+            code += `Register-WebhookSubscription @webhook\n\n`;
+            break;
+          case "enable_winrm":
+            code += `# Enable WinRM\n`;
+            code += `winrm quickconfig -quiet\n`;
+            if (block.getFieldValue('HTTPS') === 'TRUE') {
+              code += `if ("${block.getFieldValue('CERT_THUMBPRINT')}" -ne "") {\n`;
+              code += `    winrm create winrm/config/Listener?Address=*+Transport=HTTPS @{Hostname="$env:COMPUTERNAME"; CertificateThumbprint="${block.getFieldValue('CERT_THUMBPRINT')}" }\n`;
+              code += `} else {\n`;
+              code += `    Write-Warning "No certificate thumbprint provided for HTTPS listener"\n`;
+              code += `}\n`;
+            }
+            code += `\n`;
+            break;
+        }
+
+        const nextBlock = block.getNextBlock();
+        if (nextBlock) {
+          code += generateBlockCodeRecursive(nextBlock);
+        }
+        return code;
+      }
+
+      function createModal(title) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        
+        const content = document.createElement('div');
+        content.className = 'modal-content';
+        
+        const header = document.createElement('div');
+        header.className = 'modal-header';
+        
+        const titleElement = document.createElement('h3');
+        titleElement.className = 'modal-title';
+        titleElement.textContent = title;
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'close-btn';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = function() {
+          document.body.removeChild(modal);
+        };
+        
+        header.appendChild(titleElement);
+        header.appendChild(closeBtn);
+        content.appendChild(header);
+        modal.appendChild(content);
+        
+        return modal;
+      }
+
+      window.simulate = function simulate() {
+        const code = generatePowerShellCode();
+        if (!code) {
+          showNotification("No script to show. Please add some blocks first.");
+          return;
+        }
+        
+        const modal = createModal('Generated PowerShell Script');
+        
+        const codeBlock = document.createElement('div');
+        codeBlock.className = 'code-block';
+        const pre = document.createElement('pre');
+        pre.textContent = code;
+        hljs.highlightElement(pre);
+        codeBlock.appendChild(pre);
+        
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = 'Copy to Clipboard';
+        copyBtn.style.marginTop = '15px';
+        copyBtn.onclick = function() {
+          navigator.clipboard.writeText(code).then(() => {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy to Clipboard';
+            }, 2000);
+          });
+        };
+        
+        modal.querySelector('.modal-content').appendChild(codeBlock);
+        modal.querySelector('.modal-content').appendChild(copyBtn);
+        
+        document.body.appendChild(modal);
+      };
+
+      window.download = function download() {
+        const code = generatePowerShellCode();
+        if (!code) {
+          showNotification("Nothing to download. Please add some blocks first.");
+          return;
+        }
+        
+        const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'server_script.ps1';
+        link.click();
+        
+        showNotification("Script downloaded successfully!");
+      };
+      
+      function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+          notification.style.opacity = '1';
+        }, 10);
+        
+        // Animate out after 3 seconds
+        setTimeout(() => {
+          notification.style.opacity = '0';
+          setTimeout(() => {
+            document.body.removeChild(notification);
+          }, 500);
+        }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>

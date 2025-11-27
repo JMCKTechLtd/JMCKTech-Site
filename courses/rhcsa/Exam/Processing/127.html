@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 127: Persistent Journaling & Container Log Storage</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step-bg: #3a3a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--redhat-dark);
+        }
+
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: normal;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--redhat-accent);
+            transition: width 0.3s ease;
+        }
+
+        #progress-text {
+            font-size: 0.9em;
+            margin-top: 5px;
+            color: #ccc;
+        }
+
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .requirement-checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            border: 1px solid #666;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 0.8em;
+        }
+
+        .requirement-item.completed {
+            color: var(--redhat-accent);
+        }
+
+        .requirement-item.completed .requirement-checkbox {
+            background: var(--redhat-accent);
+            border-color: var(--redhat-accent);
+            color: #fff;
+        }
+
+        .requirement-label {
+            flex: 1;
+        }
+
+        .guide-step {
+            background: #2c2c2c;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #555;
+        }
+
+        .guide-step.current {
+            background: var(--current-step-bg);
+            border-left-color: var(--redhat-blue);
+        }
+
+        .guide-step.completed {
+            border-left-color: var(--redhat-accent);
+            opacity: 0.9;
+        }
+
+        .guide-step h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+
+        .hint-box {
+            background: rgba(0, 122, 204, 0.1);
+            padding: 8px 10px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-blue);
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+
+        .file-content {
+            background: #1f1f1f;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .completion-message {
+            background: rgba(76, 175, 80, 0.15);
+            border-left: 4px solid var(--redhat-accent);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .completion-message h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .warning {
+            color: #ffcc00;
+            font-size: 0.9em;
+        }
+
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+        }
+
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+        }
+
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+
+        .success {
+            color: var(--redhat-accent);
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .guide-panel,
+            .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 127: Persistent Journaling &amp; Container Log Storage</h1>
+    </div>
+
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>
+                    Configure your host journal to store all logs
+                    <strong>across reboot</strong>, copy the journal files into a
+                    directory under <code>/home/shangrila</code>, and mount that
+                    directory as <code>/var/log</code> inside the
+                    <code>logserver</code> container.
+                </p>
+                <p>
+                    This corresponds to:
+                    <strong>Task 16 [Running Containers]</strong> on
+                    <strong>node1.domain15.example.com</strong>.
+                </p>
+                <p><strong>Time Estimate:</strong> 15–20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Configuration Requirements</h4>
+                <div class="requirement-item" id="req-journal-persistent">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        Host journald configured for persistent logging
+                        (<code>/var/log/journal</code> created and journald restarted)
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-logdir-created">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        Directory <code>/home/shangrila/container-logserver</code> created
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-logs-copied">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        Journal files copied from <code>/var/log/journal/</code> to
+                        <code>/home/shangrila/container-logserver</code>
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-container-running">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        Container <code>logserver</code> started from
+                        <code>registry.domain15.example.com:5000/rhel8/rsyslog</code>
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-mount-verified">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        Host directory <code>/home/shangrila/container-logserver</code>
+                        mounted as <code>/var/log</code> inside the container
+                    </span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>
+                    In the previous task, you configured a rootless container
+                    <code>logserver</code> managed by user systemd. This lab
+                    extends that configuration so that the container writes logs
+                    to a persistent directory under
+                    <code>/home/shangrila</code>, populated with host
+                    <code>journald</code> logs.
+                </p>
+                <p>
+                    Follow the steps in order. The terminal on the right
+                    simulates the commands needed to complete the task.
+                </p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Enable persistent journald storage
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>
+                    Ensure that the host journal is stored persistently across
+                    reboots by creating <code>/var/log/journal</code> and
+                    restarting <code>systemd-journald</code>.
+                </p>
+                <div class="hint-box">
+                    <strong>Run these commands in sequence:</strong>
+                </div>
+                <div class="command-hint">
+                    mkdir -p /var/log/journal
+                </div>
+                <div class="command-hint">
+                    systemctl restart systemd-journald
+                </div>
+                <div class="concept">
+                    <h4>Persistent journald</h4>
+                    <p>
+                        When <code>/var/log/journal</code> exists and storage is
+                        not forced to <code>volatile</code>, journald writes logs
+                        there, keeping them across reboot.
+                    </p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Create the container log directory
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Create the directory that will hold journald files and be
+                    mounted into the container as <code>/var/log</code>.
+                </p>
+                <div class="command-hint">
+                    mkdir -p /home/shangrila/container-logserver
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Copy host journal files into the log directory
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Copy all current journal files into the new directory.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    cp -a /var/log/journal/* /home/shangrila/container-logserver/
+                </div>
+                <p class="warning">
+                    In a real system you might need <code>sudo</code> to read
+                    <code>/var/log/journal</code>. This lab simulates the copy.
+                </p>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Start logserver with the persistent log mount
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Start (or re-create) the <code>logserver</code> container so
+                    that it mounts the host directory as <code>/var/log</code>.
+                </p>
+                <div class="command-hint">
+                    podman run -d --name logserver -v /home/shangrila/container-logserver:/var/log registry.domain15.example.com:5000/rhel8/rsyslog
+                </div>
+                <div class="concept">
+                    <h4>Bind mounts for container logs</h4>
+                    <p>
+                        The <code>-v</code> option binds a host directory into
+                        the container, making container logs persistent on the
+                        host filesystem.
+                    </p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Verify the mount inside logserver
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Confirm that the container has the host directory mounted as
+                    <code>/var/log</code> by inspecting the container.
+                </p>
+                <div class="command-hint">
+                    podman inspect logserver --format "{{ .Mounts }}"
+                </div>
+                <div class="concept">
+                    <h4>RHCSA-style verification</h4>
+                    <p>
+                        Inspecting the container ensures that the required
+                        volume mount is present and correctly mapped.
+                    </p>
+                </div>
+            </div>
+
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>
+                    You have configured persistent journald storage, copied
+                    journal files into
+                    <code>/home/shangrila/container-logserver</code>, and
+                    started the <code>logserver</code> container with that
+                    directory mounted as <code>/var/log</code>.
+                </p>
+                <p>
+                    This completes the RHCSA-style task:
+                    <strong>Task 16 [Running Containers]</strong> for
+                    persistent container log storage.
+                </p>
+                <p>You can now move on to the next lab.</p>
+            </div>
+        </div>
+
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[shangrila@node1 ~]$</span> Welcome to RHCSA Lab 127: Persistent Journaling &amp; Container Log Storage</div>
+                <div><span class="prompt">[shangrila@node1 ~]$</span> Follow the steps on the left. Commands are simulated for this lab.</div>
+                <div><span class="prompt">[shangrila@node1 ~]$</span> Current step: enable persistent journald storage</div>
+                <div><span class="prompt">[shangrila@node1 ~]$</span> Type: <code>mkdir -p /var/log/journal</code></div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[shangrila@node1 ~]$</span>
+                <input id="command-input" type="text" placeholder="Type the command shown in the current step." autofocus/>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+
+    // Lab state
+    const configState = {
+        journalPersistent: false,
+        logDirCreated: false,
+        logsCopied: false,
+        containerRunning: false,
+        mountVerified: false
+    };
+
+    let journalDirExists = false;
+    let journaldRestarted = false;
+    let logDirExists = false;
+    let logsCopied = false;
+    let containerRunning = false;
+    let mountCorrect = false;
+
+    const stepCommands = {
+        1: ['mkdir -p /var/log/journal', 'systemctl restart systemd-journald'],
+        2: ['mkdir -p /home/shangrila/container-logserver'],
+        3: ['cp -a /var/log/journal/* /home/shangrila/container-logserver/'],
+        4: ['podman run -d --name logserver -v /home/shangrila/container-logserver:/var/log registry.domain15.example.com:5000/rhel8/rsyslog'],
+        5: ['podman inspect logserver --format "{{ .Mounts }}"']
+    };
+
+    function addTerminalOutput(text) {
+        const line = document.createElement('div');
+        line.innerHTML = text;
+        terminalOutput.appendChild(line);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    function updateRequirements() {
+        if (configState.journalPersistent) {
+            const item = document.getElementById('req-journal-persistent');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.logDirCreated) {
+            const item = document.getElementById('req-logdir-created');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.logsCopied) {
+            const item = document.getElementById('req-logs-copied');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.containerRunning) {
+            const item = document.getElementById('req-container-running');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.mountVerified) {
+            const item = document.getElementById('req-mount-verified');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        const completedCount = Object.values(configState).filter(Boolean).length;
+        const total = Object.keys(configState).length;
+        const percent = (completedCount / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.textContent = Math.round(percent) + '% Complete';
+
+        if (completedCount === total) {
+            completionMessage.style.display = 'block';
+        }
+    }
+
+    function completeStep(step) {
+        if (step !== currentStep) return;
+
+        const stepElement = document.getElementById('step' + step);
+        if (!stepElement) return;
+
+        stepElement.classList.remove('current');
+        stepElement.classList.add('completed');
+        const statusSpan = stepElement.querySelector('.step-status');
+        statusSpan.textContent = 'Completed';
+        statusSpan.className = 'step-status status-completed';
+
+        currentStep++;
+        const nextStep = document.getElementById('step' + currentStep);
+        if (nextStep) {
+            nextStep.classList.add('current');
+            const nextStatus = nextStep.querySelector('.step-status');
+            nextStatus.textContent = 'Current Step';
+            nextStatus.className = 'step-status status-current';
+            addTerminalOutput(
+                `<span class="prompt">[shangrila@node1 ~]$</span> Step ${step} completed. Moving to step ${currentStep}.`
+            );
+            const hintList = stepCommands[currentStep];
+            if (hintList && hintList.length > 0) {
+                addTerminalOutput(
+                    `<span class="prompt">[shangrila@node1 ~]$</span> Next: <code>${hintList[0]}</code>`
+                );
+            }
+        } else {
+            addTerminalOutput(
+                `<span class="prompt">[shangrila@node1 ~]$</span> All steps completed. Review the summary on the left.`
+            );
+        }
+    }
+
+    const commands = {
+        mkdir: (args) => {
+            const full = ['mkdir'].concat(args).join(' ');
+            if (full === 'mkdir -p /var/log/journal') {
+                if (currentStep !== 1) {
+                    return '<span class="error">This command belongs to Step 1. Please follow the steps in order.</span>';
+                }
+                journalDirExists = true;
+                // Do not complete step until journald restart
+                return '';
+            }
+            if (full === 'mkdir -p /home/shangrila/container-logserver') {
+                if (currentStep < 2) {
+                    return '<span class="error">Complete the journald configuration first.</span>';
+                }
+                logDirExists = true;
+                configState.logDirCreated = true;
+                updateRequirements();
+                completeStep(2);
+                return '';
+            }
+            return 'For this lab, use:<br><code>mkdir -p /var/log/journal</code><br>or<br><code>mkdir -p /home/shangrila/container-logserver</code>';
+        },
+
+        systemctl: (args) => {
+            const full = ['systemctl'].concat(args).join(' ');
+            if (full === 'systemctl restart systemd-journald') {
+                if (currentStep !== 1) {
+                    return '<span class="error">Restart systemd-journald as part of Step 1 after creating /var/log/journal.</span>';
+                }
+                if (!journalDirExists) {
+                    return '<span class="error">Create /var/log/journal before restarting systemd-journald.</span>';
+                }
+                journaldRestarted = true;
+                configState.journalPersistent = true;
+                updateRequirements();
+                completeStep(1);
+                return '';
+            }
+            return 'For this lab, use:<br><code>systemctl restart systemd-journald</code>';
+        },
+
+        cp: (args) => {
+            const full = ['cp'].concat(args).join(' ');
+            const expected = 'cp -a /var/log/journal/* /home/shangrila/container-logserver/';
+            if (full === expected) {
+                if (currentStep < 3) {
+                    return '<span class="error">Complete the earlier steps before copying journal files.</span>';
+                }
+                if (!journalDirExists || !journaldRestarted) {
+                    return '<span class="error">Make sure journald is configured for persistent logging first.</span>';
+                }
+                if (!logDirExists) {
+                    return '<span class="error">Create /home/shangrila/container-logserver before copying files.</span>';
+                }
+                logsCopied = true;
+                configState.logsCopied = true;
+                updateRequirements();
+                completeStep(3);
+                return `[simulated] Copying journal files from /var/log/journal/ to /home/shangrila/container-logserver/`;
+            }
+            return 'For this lab, use:<br><code>cp -a /var/log/journal/* /home/shangrila/container-logserver/</code>';
+        },
+
+        podman: (args) => {
+            const full = ['podman'].concat(args).join(' ');
+
+            const runCmd = stepCommands[4][0];
+            const inspectCmd = stepCommands[5][0];
+
+            if (full === runCmd) {
+                if (currentStep < 4) {
+                    return '<span class="error">Complete the earlier steps before starting the container.</span>';
+                }
+                if (!logDirExists || !logsCopied) {
+                    return '<span class="error">Make sure the host log directory exists and contains journal files before starting the container.</span>';
+                }
+                containerRunning = true;
+                configState.containerRunning = true;
+                updateRequirements();
+                completeStep(4);
+                return 'e3b1c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  [simulated container ID]';
+            }
+
+            if (full === inspectCmd) {
+                if (currentStep < 5) {
+                    return '<span class="error">Start the container with the volume mount before inspecting it.</span>';
+                }
+                if (!containerRunning) {
+                    return '<span class="error">logserver is not running yet. Start it before inspecting.</span>';
+                }
+                mountCorrect = true;
+                configState.mountVerified = true;
+                updateRequirements();
+                completeStep(5);
+                return `[{"Type":"bind","Source":"/home/shangrila/container-logserver","Destination":"/var/log","Driver":"","Mode":"","RW":true,"Propagation":"rprivate"}]`;
+            }
+
+            return 'For this lab, use:<br><code>' + runCmd + '</code><br>or<br><code>' + inspectCmd + '</code>';
+        },
+
+        clear: () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+
+        help: () => {
+            return `Available commands in this lab:
+- mkdir -p /var/log/journal
+- systemctl restart systemd-journald
+- mkdir -p /home/shangrila/container-logserver
+- cp -a /var/log/journal/* /home/shangrila/container-logserver/
+- podman run -d --name logserver -v /home/shangrila/container-logserver:/var/log registry.domain15.example.com:5000/rhel8/rsyslog
+- podman inspect logserver --format "{{ .Mounts }}"
+- clear
+- help`;
+        }
+    };
+
+    function executeCommand(input) {
+        const trimmed = input.trim();
+        if (!trimmed) return;
+
+        commandHistory.push(trimmed);
+        historyIndex = commandHistory.length;
+
+        addTerminalOutput(`<span class="prompt">[shangrila@node1 ~]$</span> ${trimmed}`);
+
+        const parts = trimmed.split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+
+        if (commands[cmd]) {
+            const result = commands[cmd](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${cmd}: command not found`);
+            addTerminalOutput('Type "help" to see the simulated commands available in this lab.');
+        }
+    }
+
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) historyIndex--;
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex] || '';
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        }
+    });
+
+    // Init progress UI
+    updateRequirements();
+</script>
+</body>
+</html>

@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockShell – Azure Terraform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <style>
+    :root { --primary-color: #0078d7; --text-color: #2c3e50; --light-bg: #f8f9fa; --border-color: #eaecef; }
+    html, body { height: 100%; margin: 0; overflow: hidden; background: linear-gradient(to bottom, var(--light-bg), #eef1f5); font-family: 'Segoe UI', sans-serif; color: var(--text-color); }
+    #app-container { display: flex; flex-direction: column; height: 100%; }
+    header { padding: 20px; background-color: white; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); text-align: center; border-bottom: 1px solid rgba(0, 120, 215, 0.1); }
+    h1 { margin: 0; font-weight: 700; color: #0078d7; font-size: 28px; }
+    .subtitle { font-size: 16px; color: #666; margin-top: 8px; }
+    #blockly-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #blocklyDiv { height: calc(100% - 60px); width: 100%; overflow: hidden; }
+    #buttons { padding: 10px 20px; display: flex; gap: 10px; background-color: white; border-bottom: 1px solid var(--border-color); }
+    button { padding: 10px 16px; font-size: 14px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; font-weight: 500; }
+    button:hover { background-color: #005fa3; transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0, 120, 215, 0.3); }
+    button.danger { background-color: #d13438; }
+    button.danger:hover { background-color: #b32d30; }
+    .modal { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-content { background-color: white; padding: 30px; border-radius: 8px; width: 80%; max-width: 800px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .modal-title { margin: 0; color: var(--text-color); font-size: 20px; }
+    .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; }
+    .code-block { background-color: var(--light-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 15px; overflow-x: auto; font-family: monospace; font-size: 14px; line-height: 1.5; margin-bottom: 15px; }
+    .notification { position: fixed; bottom: 20px; right: 20px; background-color: #333; color: white; padding: 12px 20px; border-radius: 4px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); transition: opacity 0.5s; opacity: 0; z-index: 1000; }
+    .zoom-controls { position: absolute; bottom: 20px; right: 20px; background-color: white; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 50; display: flex; flex-direction: column; }
+    .zoom-btn { padding: 8px 12px; background: none; border: none; cursor: pointer; color: var(--text-color); }
+    .terraform-keyword { color: #7c3aed; }
+    .terraform-resource { color: #059669; }
+    .terraform-string { color: #0f766e; }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <h1>BlockShell – Azure Terraform</h1>
+      <div class="subtitle">Visual Terraform Builder for Azure Entra ID & Resources</div>
+    </header>
+    <div id="blockly-container">
+      <div id="buttons">
+        <button onclick="simulate()">Show Terraform</button>
+        <button onclick="download()">Download Terraform</button>
+        <button class="danger" onclick="clearWorkspace()">Clear Workspace</button>
+      </div>
+      <div id="blocklyDiv"></div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+        <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+      </div>
+    </div>
+  </div>
+
+  <xml id="toolbox" style="display:none">
+    <category name="Core Configuration" colour="260">
+      <block type="terraform_provider"></block>
+      <block type="terraform_variable"></block>
+      <block type="terraform_output"></block>
+      <block type="terraform_data_source"></block>
+      <block type="terraform_module"></block>
+    </category>
+    <category name="Users & Authentication" colour="180">
+      <block type="azuread_user"></block>
+      <block type="azuread_user_password"></block>
+      <block type="azuread_user_license"></block>
+      <block type="azuread_user_invitation"></block>
+      <block type="azuread_user_flow_attribute"></block>
+      <block type="azuread_custom_claim"></block>
+      <block type="azuread_named_location"></block>
+    </category>
+    <category name="Groups & Membership" colour="210">
+      <block type="azuread_group"></block>
+      <block type="azuread_group_member"></block>
+      <block type="azuread_group_owner"></block>
+      <block type="azuread_dynamic_group"></block>
+      <block type="azuread_group_lifecycle"></block>
+    </category>
+    <category name="Applications & API" colour="160">
+      <block type="azuread_application"></block>
+      <block type="azuread_application_password"></block>
+      <block type="azuread_application_certificate"></block>
+      <block type="azuread_service_principal"></block>
+      <block type="azuread_service_principal_password"></block>
+      <block type="azuread_app_role"></block>
+      <block type="azuread_app_role_assignment"></block>
+      <block type="azuread_application_federated_identity"></block>
+      <block type="azuread_application_api_access"></block>
+    </category>
+    <category name="Administrative Units" colour="230">
+      <block type="azuread_administrative_unit"></block>
+      <block type="azuread_administrative_unit_member"></block>
+      <block type="azuread_administrative_unit_role"></block>
+    </category>
+    <category name="Security & Policies" colour="130">
+      <block type="azuread_conditional_access_policy"></block>
+      <block type="azuread_claims_mapping_policy"></block>
+      <block type="azuread_directory_role"></block>
+      <block type="azuread_directory_role_assignment"></block>
+      <block type="azuread_authentication_strength_policy"></block>
+      <block type="azuread_security_defaults"></block>
+    </category>
+    <category name="Device Management" colour="280">
+      <block type="azuread_device"></block>
+      <block type="azuread_device_registration"></block>
+    </category>
+    <category name="Azure Resources" colour="300">
+      <block type="azurerm_resource_group"></block>
+      <block type="azurerm_role_assignment"></block>
+      <block type="azurerm_key_vault"></block>
+      <block type="azurerm_key_vault_secret"></block>
+      <block type="azurerm_key_vault_access_policy"></block>
+      <block type="azurerm_log_analytics_workspace"></block>
+    </category>
+    <category name="Advanced Scenarios" colour="320">
+      <block type="azuread_application_pre_authorized"></block>
+      <block type="azuread_synchronization_job"></block>
+      <block type="azuread_access_package"></block>
+      <block type="azuread_identity_provider"></block>
+    </category>
+  </xml>
+
+  <script>
+    let workspace;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        trashcan: true,
+        zoom: { controls: true, wheel: true, startScale: 1.0, maxScale: 3, minScale: 0.3 }
+      });
+
+      // Define all blocks
+      Blockly.defineBlocksWithJsonArray([
+        {
+          "type": "terraform_provider",
+          "message0": "Configure AzureAD Provider",
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 260
+        },
+        {
+          "type": "terraform_variable",
+          "message0": "Variable: %1 Type: %2 Default: %3 Description: %4",
+          "args0": [
+            { "type": "field_input", "name": "NAME", "text": "resource_group" },
+            { "type": "field_dropdown", "name": "TYPE", "options": [
+              ["string", "string"],
+              ["number", "number"],
+              ["bool", "bool"],
+              ["list", "list"],
+              ["map", "map"]
+            ]},
+            { "type": "field_input", "name": "DEFAULT", "text": "rg-example" },
+            { "type": "field_input", "name": "DESCRIPTION", "text": "Resource group name" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 260
+        },
+        {
+          "type": "terraform_output",
+          "message0": "Output: %1 Value: %2 Description: %3",
+          "args0": [
+            { "type": "field_input", "name": "NAME", "text": "user_id" },
+            { "type": "field_input", "name": "VALUE", "text": "azuread_user.example.id" },
+            { "type": "field_input", "name": "DESCRIPTION", "text": "User object ID" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 260
+        },
+        {
+          "type": "terraform_data_source",
+          "message0": "Data Source: %1 Name: %2 Filter: %3",
+          "args0": [
+            { "type": "field_dropdown", "name": "TYPE", "options": [
+              ["AzureAD User", "azuread_user"],
+              ["AzureAD Group", "azuread_group"],
+              ["AzureAD Application", "azuread_application"],
+              ["AzureAD Client Config", "azuread_client_config"]
+            ]},
+            { "type": "field_input", "name": "NAME", "text": "current_user" },
+            { "type": "field_input", "name": "FILTER", "text": "user_principal_name = \"user@domain.com\"" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 260
+        },
+        {
+          "type": "terraform_module",
+          "message0": "Module: %1 Source: %2",
+          "args0": [
+            { "type": "field_input", "name": "NAME", "text": "entra_id" },
+            { "type": "field_input", "name": "SOURCE", "text": "./modules/entra-id" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 260
+        },
+        {
+          "type": "azuread_user",
+          "message0": "AzureAD User Display Name: %1 UPN: %2 Mail: %3 Department: %4",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "John Doe" },
+            { "type": "field_input", "name": "USER_PRINCIPAL_NAME", "text": "john.doe@example.com" },
+            { "type": "field_input", "name": "MAIL", "text": "john.doe@example.com" },
+            { "type": "field_input", "name": "DEPARTMENT", "text": "Engineering" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180
+        },
+        {
+          "type": "azuread_user_password",
+          "message0": "User Password Resource: %1 Password: %2",
+          "args0": [
+            { "type": "field_input", "name": "USER_RESOURCE", "text": "azuread_user.example" },
+            { "type": "field_input", "name": "PASSWORD", "text": "ComplexPassword123!" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180
+        },
+        {
+          "type": "azuread_user_license",
+          "message0": "Assign License to User: %1 SKU ID: %2",
+          "args0": [
+            { "type": "field_input", "name": "USER_RESOURCE", "text": "azuread_user.example" },
+            { "type": "field_input", "name": "SKU_ID", "text": "ENTERPRISEPACK" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180
+        },
+        {
+          "type": "azuread_user_invitation",
+          "message0": "User Invitation Email: %1 Redirect URL: %2",
+          "args0": [
+            { "type": "field_input", "name": "EMAIL", "text": "guest@example.com" },
+            { "type": "field_input", "name": "REDIRECT_URL", "text": "https://myapp.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180
+        },
+        {
+          "type": "azuread_user_flow_attribute",
+          "message0": "User Flow Attribute Display Name: %1 Data Type: %2",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "LoyaltyNumber" },
+            { "type": "field_dropdown", "name": "DATA_TYPE", "options": [
+              ["string", "string"],
+              ["boolean", "boolean"],
+              ["int64", "int64"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180
+        },
+        {
+          "type": "azuread_custom_claim",
+          "message0": "Custom Claim Display Name: %1 Source: %2",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "CustomRole" },
+            { "type": "field_input", "name": "SOURCE", "text": "user" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180
+        },
+        {
+          "type": "azuread_named_location",
+          "message0": "Named Location Display Name: %1 IP Ranges: %2",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "Corporate Network" },
+            { "type": "field_input", "name": "IP_RANGES", "text": "192.168.1.0/24" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180
+        },
+        {
+          "type": "azuread_group",
+          "message0": "AzureAD Group Display Name: %1 Type: %2",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "Developers" },
+            { "type": "field_dropdown", "name": "GROUP_TYPE", "options": [
+              ["Security", "Security"],
+              ["Microsoft 365", "Unified"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210
+        },
+        {
+          "type": "azuread_group_member",
+          "message0": "Add Group Member Group: %1 Member: %2",
+          "args0": [
+            { "type": "field_input", "name": "GROUP_RESOURCE", "text": "azuread_group.example" },
+            { "type": "field_input", "name": "MEMBER_RESOURCE", "text": "azuread_user.example" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210
+        },
+        {
+          "type": "azuread_group_owner",
+          "message0": "Add Group Owner Group: %1 Owner: %2",
+          "args0": [
+            { "type": "field_input", "name": "GROUP_RESOURCE", "text": "azuread_group.example" },
+            { "type": "field_input", "name": "OWNER_RESOURCE", "text": "azuread_user.example" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210
+        },
+        {
+          "type": "azuread_dynamic_group",
+          "message0": "Dynamic Group Display Name: %1 Rule: %2",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "All Employees" },
+            { "type": "field_input", "name": "RULE", "text": "user.department -eq \"Sales\"" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210
+        },
+        {
+          "type": "azuread_group_lifecycle",
+          "message0": "Group Lifecycle Policy Group: %1 Expire After: %2 days",
+          "args0": [
+            { "type": "field_input", "name": "GROUP_RESOURCE", "text": "azuread_group.example" },
+            { "type": "field_number", "name": "EXPIRY_DAYS", "value": 365, "min": 1, "max": 3650 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210
+        },
+        {
+          "type": "azuread_application",
+          "message0": "AzureAD App Display Name: %1 Sign-in Audience: %2",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "My Application" },
+            { "type": "field_dropdown", "name": "AUDIENCE", "options": [
+              ["AzureADMyOrg", "AzureADMyOrg"],
+              ["AzureADMultipleOrgs", "AzureADMultipleOrgs"],
+              ["AzureADandPersonalMicrosoftAccount", "AzureADandPersonalMicrosoftAccount"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "azuread_application_password",
+          "message0": "App Password Resource: %1 Display Name: %2",
+          "args0": [
+            { "type": "field_input", "name": "APP_RESOURCE", "text": "azuread_application.example" },
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "My App Password" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "azuread_application_certificate",
+          "message0": "App Certificate Resource: %1 Type: %2",
+          "args0": [
+            { "type": "field_input", "name": "APP_RESOURCE", "text": "azuread_application.example" },
+            { "type": "field_dropdown", "name": "CERT_TYPE", "options": [
+              ["Generated", "generated"],
+              ["Uploaded", "uploaded"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "azuread_service_principal",
+          "message0": "Service Principal Application ID: %1",
+          "args0": [
+            { "type": "field_input", "name": "APPLICATION_ID", "text": "azuread_application.example.application_id" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "azuread_service_principal_password",
+          "message0": "Service Principal Password Resource: %1 Display Name: %2",
+          "args0": [
+            { "type": "field_input", "name": "SP_RESOURCE", "text": "azuread_service_principal.example" },
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "SP Password" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "azuread_app_role",
+          "message0": "App Role Resource: %1 Value: %2 Display Name: %3",
+          "args0": [
+            { "type": "field_input", "name": "APP_RESOURCE", "text": "azuread_application.example" },
+            { "type": "field_input", "name": "VALUE", "text": "Admin" },
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "Application Administrator" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "azuread_app_role_assignment",
+          "message0": "App Role Assignment Principal: %1 Resource: %2 Role: %3",
+          "args0": [
+            { "type": "field_input", "name": "PRINCIPAL_RESOURCE", "text": "azuread_user.example" },
+            { "type": "field_input", "name": "RESOURCE_RESOURCE", "text": "azuread_service_principal.example" },
+            { "type": "field_input", "name": "ROLE_ID", "text": "00000000-0000-0000-0000-000000000000" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "azuread_application_federated_identity",
+          "message0": "Federated Identity Resource: %1 Subject: %2 Issuer: %3",
+          "args0": [
+            { "type": "field_input", "name": "APP_RESOURCE", "text": "azuread_application.example" },
+            { "type": "field_input", "name": "SUBJECT", "text": "my-subject" },
+            { "type": "field_input", "name": "ISSUER", "text": "https://token.actions.githubusercontent.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "azuread_application_api_access",
+          "message0": "API Access Resource: %1 Resource App ID: %2",
+          "args0": [
+            { "type": "field_input", "name": "APP_RESOURCE", "text": "azuread_application.example" },
+            { "type": "field_input", "name": "RESOURCE_APP_ID", "text": "00000003-0000-0000-c000-000000000000" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "azuread_administrative_unit",
+          "message0": "Administrative Unit Display Name: %1 Description: %2",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "IT Department" },
+            { "type": "field_input", "name": "DESCRIPTION", "text": "IT Department Administrative Unit" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230
+        },
+        {
+          "type": "azuread_administrative_unit_member",
+          "message0": "Add AU Member Unit: %1 Member: %2",
+          "args0": [
+            { "type": "field_input", "name": "UNIT_RESOURCE", "text": "azuread_administrative_unit.example" },
+            { "type": "field_input", "name": "MEMBER_RESOURCE", "text": "azuread_user.example" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230
+        },
+        {
+          "type": "azuread_administrative_unit_role",
+          "message0": "AU Role Assignment Unit: %1 Role: %2 Member: %3",
+          "args0": [
+            { "type": "field_input", "name": "UNIT_RESOURCE", "text": "azuread_administrative_unit.example" },
+            { "type": "field_input", "name": "ROLE_ID", "text": "62e90394-69f5-4237-9190-012177145e10" },
+            { "type": "field_input", "name": "MEMBER_RESOURCE", "text": "azuread_user.example" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230
+        },
+        {
+          "type": "azuread_conditional_access_policy",
+          "message0": "Conditional Access Policy Display Name: %1 State: %2",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "Require MFA for Admins" },
+            { "type": "field_dropdown", "name": "STATE", "options": [
+              ["Enabled", "enabled"],
+              ["Disabled", "disabled"],
+              ["Enabled for Reporting", "enabledForReportingButNotEnforced"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130
+        },
+        {
+          "type": "azuread_claims_mapping_policy",
+          "message0": "Claims Mapping Policy Display Name: %1",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "Custom Claims Policy" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130
+        },
+        {
+          "type": "azuread_directory_role",
+          "message0": "Directory Role Template ID: %1",
+          "args0": [
+            { "type": "field_input", "name": "TEMPLATE_ID", "text": "62e90394-69f5-4237-9190-012177145e10" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130
+        },
+        {
+          "type": "azuread_directory_role_assignment",
+          "message0": "Directory Role Assignment Role: %1 Principal: %2",
+          "args0": [
+            { "type": "field_input", "name": "ROLE_RESOURCE", "text": "azuread_directory_role.example" },
+            { "type": "field_input", "name": "PRINCIPAL_RESOURCE", "text": "azuread_user.example" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130
+        },
+        {
+          "type": "azuread_authentication_strength_policy",
+          "message0": "Authentication Strength Policy Display Name: %1",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "MFA Required Policy" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130
+        },
+        {
+          "type": "azuread_security_defaults",
+          "message0": "Security Defaults Enabled: %1",
+          "args0": [
+            { "type": "field_checkbox", "name": "ENABLED", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130
+        },
+        {
+          "type": "azuread_device",
+          "message0": "AzureAD Device Display Name: %1",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "Corporate Laptop" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 280
+        },
+        {
+          "type": "azuread_device_registration",
+          "message0": "Device Registration Policy Allowed Users: %1",
+          "args0": [
+            { "type": "field_dropdown", "name": "ALLOWED_USERS", "options": [
+              ["All", "all"],
+              ["Selected", "selected"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 280
+        },
+        {
+          "type": "azurerm_resource_group",
+          "message0": "Resource Group Name: %1 Location: %2",
+          "args0": [
+            { "type": "field_input", "name": "NAME", "text": "rg-example" },
+            { "type": "field_input", "name": "LOCATION", "text": "East US" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 300
+        },
+        {
+          "type": "azurerm_role_assignment",
+          "message0": "Role Assignment Scope: %1 Principal: %2 Role: %3",
+          "args0": [
+            { "type": "field_input", "name": "SCOPE", "text": "azurerm_resource_group.example.id" },
+            { "type": "field_input", "name": "PRINCIPAL_RESOURCE", "text": "azuread_user.example" },
+            { "type": "field_input", "name": "ROLE", "text": "Contributor" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 300
+        },
+        {
+          "type": "azurerm_key_vault",
+          "message0": "Key Vault Name: %1 Resource Group: %2",
+          "args0": [
+            { "type": "field_input", "name": "NAME", "text": "kv-example" },
+            { "type": "field_input", "name": "RESOURCE_GROUP", "text": "azurerm_resource_group.example.name" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 300
+        },
+        {
+          "type": "azurerm_key_vault_secret",
+          "message0": "Key Vault Secret Vault: %1 Name: %2 Value: %3",
+          "args0": [
+            { "type": "field_input", "name": "VAULT_RESOURCE", "text": "azurerm_key_vault.example" },
+            { "type": "field_input", "name": "NAME", "text": "database-password" },
+            { "type": "field_input", "name": "VALUE", "text": "secret-value" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 300
+        },
+        {
+          "type": "azurerm_key_vault_access_policy",
+          "message0": "Key Vault Access Policy Vault: %1 Principal: %2 Permissions: %3",
+          "args0": [
+            { "type": "field_input", "name": "VAULT_RESOURCE", "text": "azurerm_key_vault.example" },
+            { "type": "field_input", "name": "PRINCIPAL_RESOURCE", "text": "azuread_user.example" },
+            { "type": "field_input", "name": "PERMISSIONS", "text": "[\"get\", \"list\"]" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 300
+        },
+        {
+          "type": "azurerm_log_analytics_workspace",
+          "message0": "Log Analytics Workspace Name: %1 Resource Group: %2",
+          "args0": [
+            { "type": "field_input", "name": "NAME", "text": "law-example" },
+            { "type": "field_input", "name": "RESOURCE_GROUP", "text": "azurerm_resource_group.example.name" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 300
+        },
+        {
+          "type": "azuread_application_pre_authorized",
+          "message0": "Pre-authorized Application Resource: %1 Authorized App ID: %2",
+          "args0": [
+            { "type": "field_input", "name": "APP_RESOURCE", "text": "azuread_application.example" },
+            { "type": "field_input", "name": "AUTHORIZED_APP_ID", "text": "00000000-0000-0000-0000-000000000000" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 320
+        },
+        {
+          "type": "azuread_synchronization_job",
+          "message0": "Synchronization Job Service Principal: %1 Template: %2",
+          "args0": [
+            { "type": "field_input", "name": "SERVICE_PRINCIPAL_RESOURCE", "text": "azuread_service_principal.example" },
+            { "type": "field_input", "name": "TEMPLATE_ID", "text": "Azure2Azure" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 320
+        },
+        {
+          "type": "azuread_access_package",
+          "message0": "Access Package Display Name: %1 Catalog: %2",
+          "args0": [
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "Sales Resources" },
+            { "type": "field_input", "name": "CATALOG_RESOURCE", "text": "azuread_access_package_catalog.example" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 320
+        },
+        {
+          "type": "azuread_identity_provider",
+          "message0": "Identity Provider Type: %1 Display Name: %2",
+          "args0": [
+            { "type": "field_dropdown", "name": "TYPE", "options": [
+              ["Google", "Google"],
+              ["Facebook", "Facebook"],
+              ["Microsoft", "Microsoft"],
+              ["Twitter", "Twitter"]
+            ]},
+            { "type": "field_input", "name": "DISPLAY_NAME", "text": "Google" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 320
+        }
+      ]);
+
+      // Event listeners
+      document.getElementById('zoom-in').addEventListener('click', () => workspace.zoomCenter(1.2));
+      document.getElementById('zoom-out').addEventListener('click', () => workspace.zoomCenter(0.8));
+
+      window.clearWorkspace = function() {
+        if (confirm('Clear workspace?')) {
+          workspace.clear();
+          showNotification('Workspace cleared');
+        }
+      };
+
+      function generateTerraformCode() {
+        const blocks = workspace.getTopBlocks(false);
+        let code = `# Generated by BlockShell Azure Terraform Tool\n# Date: ${new Date().toISOString()}\n\n`;
+        
+        // Add provider blocks first
+        let azureadProviderAdded = false;
+        let azurermProviderAdded = false;
+        
+        blocks.forEach(block => {
+          if (block.type === "terraform_provider") {
+            code += generateBlockCode(block);
+            azureadProviderAdded = true;
+          }
+        });
+        
+        // Check if we need AzureRM provider
+        blocks.forEach(block => {
+          if (block.type && block.type.startsWith('azurerm_')) {
+            azurermProviderAdded = true;
+          }
+        });
+        
+        // Add default providers if not explicitly added
+        if (!azureadProviderAdded) {
+          code += `terraform {\n  required_providers {\n    azuread = {\n      source  = "hashicorp/azuread"\n      version = "~> 2.0"\n    }\n  }\n}\n\nprovider "azuread" {\n  # Configure the AzureAD Provider\n}\n\n`;
+        }
+        
+        if (azurermProviderAdded && !azureadProviderAdded) {
+          code += `terraform {\n  required_providers {\n    azurerm = {\n      source  = "hashicorp/azurerm"\n      version = "~> 3.0"\n    }\n  }\n}\n\nprovider "azurerm" {\n  features {}\n}\n\n`;
+        }
+        
+        // Process all other blocks
+        blocks.forEach(block => {
+          if (block.type !== "terraform_provider") {
+            let currentBlock = block;
+            while (currentBlock) {
+              code += generateBlockCode(currentBlock);
+              currentBlock = currentBlock.getNextBlock();
+            }
+          }
+        });
+        
+        return code.trim();
+      }
+
+      function generateBlockCode(block) {
+        if (!block) return "";
+        const getField = (name) => block.getFieldValue(name) || "";
+        let code = "";
+
+        switch (block.type) {
+          case "terraform_provider":
+            code += `terraform {\n  required_providers {\n    azuread = {\n      source  = "hashicorp/azuread"\n      version = "~> 2.0"\n    }\n  }\n}\n\nprovider "azuread" {\n  # Configure the AzureAD Provider\n}\n\n`;
+            break;
+          case "terraform_variable":
+            code += `variable "${getField('NAME')}" {\n  type        = ${getField('TYPE')}\n  default     = "${getField('DEFAULT')}"\n  description = "${getField('DESCRIPTION')}"\n}\n\n`;
+            break;
+          case "terraform_output":
+            code += `output "${getField('NAME')}" {\n  value       = ${getField('VALUE')}\n  description = "${getField('DESCRIPTION')}"\n}\n\n`;
+            break;
+          case "terraform_data_source":
+            code += `data "${getField('TYPE')}" "${getField('NAME')}" {\n  ${getField('FILTER')}\n}\n\n`;
+            break;
+          case "terraform_module":
+            code += `module "${getField('NAME')}" {\n  source = "${getField('SOURCE')}"\n}\n\n`;
+            break;
+          case "azuread_user":
+            const userVarName = getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_');
+            code += `resource "azuread_user" "${userVarName}" {\n  display_name        = "${getField('DISPLAY_NAME')}"\n  user_principal_name = "${getField('USER_PRINCIPAL_NAME')}"\n  mail                = "${getField('MAIL')}"\n  department          = "${getField('DEPARTMENT')}"\n  mail_nickname       = "${getField('DISPLAY_NAME').split(' ')[0].toLowerCase()}"\n  password            = "ComplexPassword123!"\n}\n\n`;
+            break;
+          case "azuread_user_password":
+            code += `resource "azuread_user_password" "${getField('USER_RESOURCE').split('.')[1]}_password" {\n  user_object_id = ${getField('USER_RESOURCE')}.object_id\n  password       = "${getField('PASSWORD')}"\n}\n\n`;
+            break;
+          case "azuread_user_license":
+            code += `resource "azuread_user_license" "${getField('USER_RESOURCE').split('.')[1]}_license" {\n  user_object_id = ${getField('USER_RESOURCE')}.object_id\n  sku_id         = "${getField('SKU_ID')}"\n}\n\n`;
+            break;
+          case "azuread_user_invitation":
+            const invitationVarName = getField('EMAIL').split('@')[0].replace(/[^a-zA-Z0-9]/g, '_');
+            code += `resource "azuread_invitation" "${invitationVarName}" {\n  user_email_address = "${getField('EMAIL')}"\n  redirect_url       = "${getField('REDIRECT_URL')}"\n}\n\n`;
+            break;
+          case "azuread_user_flow_attribute":
+            code += `resource "azuread_user_flow_attribute" "${getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_')}" {\n  display_name = "${getField('DISPLAY_NAME')}"\n  data_type    = "${getField('DATA_TYPE')}"\n}\n\n`;
+            break;
+          case "azuread_custom_claim":
+            code += `resource "azuread_custom_claim" "${getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_')}" {\n  display_name = "${getField('DISPLAY_NAME')}"\n  source       = "${getField('SOURCE')}"\n}\n\n`;
+            break;
+          case "azuread_named_location":
+            code += `resource "azuread_named_location" "${getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_')}" {\n  display_name = "${getField('DISPLAY_NAME')}"\n  ip {\n    ip_ranges = ["${getField('IP_RANGES')}"]\n  }\n}\n\n`;
+            break;
+          case "azuread_group":
+            const groupVarName = getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_');
+            const securityEnabled = getField('GROUP_TYPE') === 'Security';
+            code += `resource "azuread_group" "${groupVarName}" {\n  display_name     = "${getField('DISPLAY_NAME')}"\n  security_enabled = ${securityEnabled}\n  types            = ${securityEnabled ? '["Unified"]' : '["Unified"]'}\n}\n\n`;
+            break;
+          case "azuread_group_member":
+            const memberVarName = `${getField('GROUP_RESOURCE').split('.')[1]}_${getField('MEMBER_RESOURCE').split('.')[1]}_member`;
+            code += `resource "azuread_group_member" "${memberVarName}" {\n  group_object_id  = ${getField('GROUP_RESOURCE')}.object_id\n  member_object_id = ${getField('MEMBER_RESOURCE')}.object_id\n}\n\n`;
+            break;
+          case "azuread_group_owner":
+            const ownerVarName = `${getField('GROUP_RESOURCE').split('.')[1]}_${getField('OWNER_RESOURCE').split('.')[1]}_owner`;
+            code += `resource "azuread_group_owner" "${ownerVarName}" {\n  group_object_id = ${getField('GROUP_RESOURCE')}.object_id\n  owner_object_id = ${getField('OWNER_RESOURCE')}.object_id\n}\n\n`;
+            break;
+          case "azuread_dynamic_group":
+            const dynamicGroupVarName = getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_');
+            code += `resource "azuread_group" "${dynamicGroupVarName}" {\n  display_name     = "${getField('DISPLAY_NAME')}"\n  security_enabled = true\n  types            = ["DynamicMembership"]\n  dynamic_membership {\n    enabled = true\n    rule    = "${getField('RULE')}"\n  }\n}\n\n`;
+            break;
+          case "azuread_group_lifecycle":
+            code += `resource "azuread_group_lifecycle_policy" "${getField('GROUP_RESOURCE').split('.')[1]}_lifecycle" {\n  group_object_id = ${getField('GROUP_RESOURCE')}.object_id\n  alternate_notification_emails = []\n  expire_after_days = ${getField('EXPIRY_DAYS')}\n}\n\n`;
+            break;
+          case "azuread_application":
+            const appVarName = getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_');
+            code += `resource "azuread_application" "${appVarName}" {\n  display_name = "${getField('DISPLAY_NAME')}"\n  sign_in_audience = "${getField('AUDIENCE')}"\n}\n\n`;
+            break;
+          case "azuread_application_password":
+            const passwordVarName = `${getField('APP_RESOURCE').split('.')[1]}_password`;
+            code += `resource "azuread_application_password" "${passwordVarName}" {\n  application_object_id = ${getField('APP_RESOURCE')}.object_id\n  display_name          = "${getField('DISPLAY_NAME')}"\n}\n\n`;
+            break;
+          case "azuread_application_certificate":
+            const certVarName = `${getField('APP_RESOURCE').split('.')[1]}_certificate`;
+            code += `resource "azuread_application_certificate" "${certVarName}" {\n  application_object_id = ${getField('APP_RESOURCE')}.object_id\n  type                  = "${getField('CERT_TYPE')}"\n}\n\n`;
+            break;
+          case "azuread_service_principal":
+            const spVarName = `${getField('APPLICATION_ID').split('.')[1]}_sp`;
+            code += `resource "azuread_service_principal" "${spVarName}" {\n  application_id = ${getField('APPLICATION_ID')}\n}\n\n`;
+            break;
+          case "azuread_service_principal_password":
+            const spPasswordVarName = `${getField('SP_RESOURCE').split('.')[1]}_password`;
+            code += `resource "azuread_service_principal_password" "${spPasswordVarName}" {\n  service_principal_id = ${getField('SP_RESOURCE')}.object_id\n  display_name         = "${getField('DISPLAY_NAME')}"\n}\n\n`;
+            break;
+          case "azuread_app_role":
+            code += `resource "azuread_application_role" "${getField('APP_RESOURCE').split('.')[1]}_${getField('VALUE').toLowerCase()}" {\n  application_object_id = ${getField('APP_RESOURCE')}.object_id\n  value                 = "${getField('VALUE')}"\n  display_name          = "${getField('DISPLAY_NAME')}"\n}\n\n`;
+            break;
+          case "azuread_app_role_assignment":
+            const assignmentVarName = `${getField('PRINCIPAL_RESOURCE').split('.')[1]}_${getField('RESOURCE_RESOURCE').split('.')[1]}_assignment`;
+            code += `resource "azuread_app_role_assignment" "${assignmentVarName}" {\n  principal_object_id = ${getField('PRINCIPAL_RESOURCE')}.object_id\n  resource_object_id  = ${getField('RESOURCE_RESOURCE')}.object_id\n  app_role_id         = "${getField('ROLE_ID')}"\n}\n\n`;
+            break;
+          case "azuread_application_federated_identity":
+            const fedIdentityVarName = `${getField('APP_RESOURCE').split('.')[1]}_federated_identity`;
+            code += `resource "azuread_application_federated_identity_credential" "${fedIdentityVarName}" {\n  application_object_id = ${getField('APP_RESOURCE')}.object_id\n  display_name          = "${getField('SUBJECT')}"\n  subject               = "${getField('SUBJECT')}"\n  issuer                = "${getField('ISSUER')}"\n}\n\n`;
+            break;
+          case "azuread_application_api_access":
+            code += `resource "azuread_application_api_access" "${getField('APP_RESOURCE').split('.')[1]}_api_access" {\n  application_object_id = ${getField('APP_RESOURCE')}.object_id\n  resource_access {\n    resource_app_id = "${getField('RESOURCE_APP_ID')}"\n  }\n}\n\n`;
+            break;
+          case "azuread_administrative_unit":
+            const auVarName = getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_');
+            code += `resource "azuread_administrative_unit" "${auVarName}" {\n  display_name = "${getField('DISPLAY_NAME')}"\n  description  = "${getField('DESCRIPTION')}"\n}\n\n`;
+            break;
+          case "azuread_administrative_unit_member":
+            const auMemberVarName = `${getField('UNIT_RESOURCE').split('.')[1]}_${getField('MEMBER_RESOURCE').split('.')[1]}_member`;
+            code += `resource "azuread_administrative_unit_member" "${auMemberVarName}" {\n  administrative_unit_object_id = ${getField('UNIT_RESOURCE')}.object_id\n  member_object_id              = ${getField('MEMBER_RESOURCE')}.object_id\n}\n\n`;
+            break;
+          case "azuread_administrative_unit_role":
+            const auRoleVarName = `${getField('UNIT_RESOURCE').split('.')[1]}_${getField('MEMBER_RESOURCE').split('.')[1]}_role`;
+            code += `resource "azuread_administrative_unit_role_assignment" "${auRoleVarName}" {\n  administrative_unit_object_id = ${getField('UNIT_RESOURCE')}.object_id\n  role_id                       = "${getField('ROLE_ID')}"\n  principal_object_id           = ${getField('MEMBER_RESOURCE')}.object_id\n}\n\n`;
+            break;
+          case "azuread_conditional_access_policy":
+            const policyVarName = getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_');
+            code += `resource "azuread_conditional_access_policy" "${policyVarName}" {\n  display_name = "${getField('DISPLAY_NAME')}"\n  state        = "${getField('STATE')}"\n}\n\n`;
+            break;
+          case "azuread_claims_mapping_policy":
+            const claimsPolicyVarName = getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_');
+            code += `resource "azuread_claims_mapping_policy" "${claimsPolicyVarName}" {\n  display_name = "${getField('DISPLAY_NAME')}"\n}\n\n`;
+            break;
+          case "azuread_directory_role":
+            const roleVarName = `role_${getField('TEMPLATE_ID').split('-')[0]}`;
+            code += `resource "azuread_directory_role" "${roleVarName}" {\n  template_id = "${getField('TEMPLATE_ID')}"\n}\n\n`;
+            break;
+          case "azuread_directory_role_assignment":
+            const dirRoleAssignmentVarName = `${getField('ROLE_RESOURCE').split('.')[1]}_${getField('PRINCIPAL_RESOURCE').split('.')[1]}_assignment`;
+            code += `resource "azuread_directory_role_assignment" "${dirRoleAssignmentVarName}" {\n  role_id             = ${getField('ROLE_RESOURCE')}.object_id\n  principal_object_id = ${getField('PRINCIPAL_RESOURCE')}.object_id\n}\n\n`;
+            break;
+          case "azuread_authentication_strength_policy":
+            const authStrengthVarName = getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_');
+            code += `resource "azuread_authentication_strength_policy" "${authStrengthVarName}" {\n  display_name = "${getField('DISPLAY_NAME')}"\n}\n\n`;
+            break;
+          case "azuread_security_defaults":
+            code += `resource "azuread_security_defaults" "defaults" {\n  enabled = ${getField('ENABLED')}\n}\n\n`;
+            break;
+          case "azuread_device":
+            const deviceVarName = getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_');
+            code += `resource "azuread_device" "${deviceVarName}" {\n  display_name = "${getField('DISPLAY_NAME')}"\n}\n\n`;
+            break;
+          case "azuread_device_registration":
+            code += `resource "azuread_device_registration_policy" "registration_policy" {\n  allowed_users = "${getField('ALLOWED_USERS')}"\n}\n\n`;
+            break;
+          case "azurerm_resource_group":
+            const rgVarName = getField('NAME').toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
+            code += `resource "azurerm_resource_group" "${rgVarName}" {\n  name     = "${getField('NAME')}"\n  location = "${getField('LOCATION')}"\n}\n\n`;
+            break;
+          case "azurerm_role_assignment":
+            const roleAssignmentVarName = `${getField('PRINCIPAL_RESOURCE').split('.')[1]}_${getField('ROLE').toLowerCase()}`;
+            code += `resource "azurerm_role_assignment" "${roleAssignmentVarName}" {\n  scope                = ${getField('SCOPE')}\n  principal_id         = ${getField('PRINCIPAL_RESOURCE')}.object_id\n  role_definition_name = "${getField('ROLE')}"\n}\n\n`;
+            break;
+          case "azurerm_key_vault":
+            const kvVarName = getField('NAME').toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
+            code += `resource "azurerm_key_vault" "${kvVarName}" {\n  name                = "${getField('NAME')}"\n  resource_group_name = ${getField('RESOURCE_GROUP')}\n  location            = azurerm_resource_group.${getField('RESOURCE_GROUP').split('.')[1]}.location\n  tenant_id           = data.azuread_client_config.current.tenant_id\n  sku_name            = "standard"\n}\n\n`;
+            break;
+          case "azurerm_key_vault_secret":
+            const secretVarName = getField('NAME').toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
+            code += `resource "azurerm_key_vault_secret" "${secretVarName}" {\n  name         = "${getField('NAME')}"\n  value        = "${getField('VALUE')}"\n  key_vault_id = ${getField('VAULT_RESOURCE')}.id\n}\n\n`;
+            break;
+          case "azurerm_key_vault_access_policy":
+            const accessPolicyVarName = `${getField('VAULT_RESOURCE').split('.')[1]}_${getField('PRINCIPAL_RESOURCE').split('.')[1]}_access`;
+            code += `resource "azurerm_key_vault_access_policy" "${accessPolicyVarName}" {\n  key_vault_id = ${getField('VAULT_RESOURCE')}.id\n  tenant_id    = data.azuread_client_config.current.tenant_id\n  object_id    = ${getField('PRINCIPAL_RESOURCE')}.object_id\n  \n  secret_permissions = ${getField('PERMISSIONS')}\n}\n\n`;
+            break;
+          case "azurerm_log_analytics_workspace":
+            const lawVarName = getField('NAME').toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
+            code += `resource "azurerm_log_analytics_workspace" "${lawVarName}" {\n  name                = "${getField('NAME')}"\n  resource_group_name = ${getField('RESOURCE_GROUP')}\n  location            = azurerm_resource_group.${getField('RESOURCE_GROUP').split('.')[1]}.location\n  sku                 = "PerGB2018"\n}\n\n`;
+            break;
+          case "azuread_application_pre_authorized":
+            const preAuthVarName = `${getField('APP_RESOURCE').split('.')[1]}_pre_auth`;
+            code += `resource "azuread_application_pre_authorized" "${preAuthVarName}" {\n  application_object_id = ${getField('APP_RESOURCE')}.object_id\n  authorized_client_id  = "${getField('AUTHORIZED_APP_ID')}"\n}\n\n`;
+            break;
+          case "azuread_synchronization_job":
+            const syncJobVarName = `${getField('SERVICE_PRINCIPAL_RESOURCE').split('.')[1]}_sync_job`;
+            code += `resource "azuread_synchronization_job" "${syncJobVarName}" {\n  service_principal_id = ${getField('SERVICE_PRINCIPAL_RESOURCE')}.object_id\n  template_id          = "${getField('TEMPLATE_ID')}"\n}\n\n`;
+            break;
+          case "azuread_access_package":
+            const accessPackageVarName = getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_');
+            code += `resource "azuread_access_package" "${accessPackageVarName}" {\n  display_name = "${getField('DISPLAY_NAME')}"\n  catalog_id   = ${getField('CATALOG_RESOURCE')}.id\n}\n\n`;
+            break;
+          case "azuread_identity_provider":
+            const idpVarName = getField('DISPLAY_NAME').toLowerCase().replace(/\s+/g, '_');
+            code += `resource "azuread_identity_provider" "${idpVarName}" {\n  display_name = "${getField('DISPLAY_NAME')}"\n  identity_provider_type = "${getField('TYPE')}"\n}\n\n`;
+            break;
+        }
+
+        return code;
+      }
+
+      function createModal(title, content) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title">${title}</h3>
+              <button class="close-btn">&times;</button>
+            </div>
+            ${content}
+          </div>
+        `;
+        
+        modal.querySelector('.close-btn').onclick = () => document.body.removeChild(modal);
+        document.body.appendChild(modal);
+        return modal;
+      }
+
+      window.simulate = function() {
+        const code = generateTerraformCode();
+        if (!code || code.trim() === '# Generated by BlockShell Azure Terraform Tool\n# Date: ' + new Date().toISOString()) {
+          return showNotification("No Terraform to show");
+        }
+        
+        const modal = createModal('Generated Terraform Configuration', `
+          <div class="code-block"><pre>${code}</pre></div>
+          <button onclick="copyCode()" style="margin-top:15px">Copy to Clipboard</button>
+        `);
+        
+        window.copyCode = () => {
+          navigator.clipboard.writeText(code);
+          showNotification('Terraform code copied to clipboard!');
+        };
+      };
+
+      window.download = function() {
+        const code = generateTerraformCode();
+        if (!code || code.trim() === '# Generated by BlockShell Azure Terraform Tool\n# Date: ' + new Date().toISOString()) {
+          return showNotification("Nothing to download");
+        }
+        
+        const blob = new Blob([code], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'azuread_terraform.tf';
+        link.click();
+        showNotification("Terraform configuration downloaded!");
+      };
+      
+      function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => notification.style.opacity = '1', 10);
+        setTimeout(() => {
+          notification.style.opacity = '0';
+          setTimeout(() => document.body.removeChild(notification), 500);
+        }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>

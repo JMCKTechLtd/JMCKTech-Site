@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab: Web Server Configuration</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .vim-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .vim-container {
+            display: flex;
+            width: 90%;
+            height: 80%;
+            gap: 20px;
+        }
+        
+        .vim-instructions {
+            width: 30%;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+        
+        .vim-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .vim-editor {
+            width: 70%;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .vim-header {
+            background: #333;
+            padding: 5px 10px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .vim-content {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+            white-space: pre;
+            color: #ccc;
+            position: relative;
+        }
+        
+        .vim-command-line {
+            display: flex;
+            background: #333;
+            padding: 5px;
+            border-top: 1px solid #444;
+        }
+        
+        .vim-prompt {
+            color: #4CAF50;
+            padding: 0 5px;
+        }
+        
+        .vim-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+        }
+        
+        .vim-status {
+            background: #333;
+            padding: 3px 10px;
+            color: #ccc;
+            font-size: 0.9em;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .vim-mode-indicator {
+            color: #FFD700;
+        }
+        
+        .vim-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #ccc;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        
+        .vim-esc-button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .vim-esc-button:hover {
+            background: #666;
+        }
+        
+        .vim-command-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .vim-command-button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .vim-command-button:hover {
+            background: #555;
+        }
+        
+        .vim-mode-indicator.command-mode {
+            color: #FFD700;
+        }
+        
+        .vim-mode-indicator.insert-mode {
+            color: #4CAF50;
+        }
+        
+        .vim-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+            
+            .vim-container {
+                width: 95%;
+                height: 90%;
+                flex-direction: column;
+            }
+            
+            .vim-instructions, .vim-editor {
+                width: 100%;
+            }
+            
+            .vim-instructions {
+                height: 30%;
+            }
+            
+            .vim-editor {
+                height: 70%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab: Web Server Configuration</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Configure your web services, download from http://instructor.example.com/pub/serverX.html and ensure the services are still running after system rebooting.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Web Server Requirements</h4>
+                <div class="requirement-item" id="req-install">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Install httpd package</span>
+                </div>
+                <div class="requirement-item" id="req-download">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Download web page from instructor server</span>
+                </div>
+                <div class="requirement-item" id="req-configure">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Configure as index.html</span>
+                </div>
+                <div class="requirement-item" id="req-start">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Start and enable httpd service</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Web Server Configuration Lab. In this lab, you will install and configure an Apache web server with a custom web page.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Install Apache Web Server
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's install the Apache HTTP server package.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    yum install -y httpd
+                </div>
+                
+                <p>This will download and install the httpd package along with any dependencies.</p>
+
+                <div class="concept">
+                    <h4>Understanding Apache Web Server</h4>
+                    <p>Apache HTTP Server (httpd) is the most widely used web server software. It serves web content over HTTP and HTTPS protocols.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Navigate to Web Directory
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's navigate to the web server's document root directory.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    cd /var/www/html
+                </div>
+                
+                <p>This is the default directory where Apache serves web content from.</p>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Download Web Page
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's download the web page from the instructor's server.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    wget http://instructor.example.com/pub/serverX.html
+                </div>
+                
+                <p>This will download the serverX.html file to the current directory.</p>
+                
+                <div class="concept">
+                    <h4>About wget</h4>
+                    <p>wget is a command-line utility for downloading files from the web. It supports HTTP, HTTPS, and FTP protocols.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Configure as Index Page
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's rename the downloaded file to index.html so it serves as the default page.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    mv serverX.html index.html
+                </div>
+                
+                <p>This renames the file so Apache will serve it as the default page when someone visits your web server.</p>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Start and Enable Web Service
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's start the Apache web service and enable it to start automatically at boot.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    systemctl start httpd
+                </div>
+                
+                <div class="command-hint">
+                    systemctl enable httpd
+                </div>
+                
+                <p>This starts the service immediately and ensures it will start automatically after system reboot.</p>
+            </div>
+
+            <div class="guide-step" id="step6">
+                <h3>
+                    <span class="step-number">6</span>
+                    Verify Configuration
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's verify that our web server is running and configured correctly.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    systemctl status httpd
+                </div>
+                <p>Should show: <code>active (running)</code></p>
+                
+                <div class="command-hint">
+                    systemctl is-enabled httpd
+                </div>
+                <p>Should show: <code>enabled</code></p>
+                
+                <div class="command-hint">
+                    ls -l /var/www/html/
+                </div>
+                <p>Should show: <code>index.html</code></p>
+
+                <div class="concept">
+                    <h4>Verification Commands</h4>
+                    <p>After configuring services, always verify with these commands:</p>
+                    <ul>
+                        <li><code>systemctl status</code> - Shows service status</li>
+                        <li><code>systemctl is-enabled</code> - Checks if service starts at boot</li>
+                        <li><code>ls -l</code> - Verifies files are in place</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All web server configuration requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab: Web Server Configuration</div>
+                <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Install Apache Web Server</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>yum install -y httpd</code></div>
+                <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@station ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vim Editor Overlay -->
+<div id="vim-overlay" class="vim-overlay" style="display: none;">
+    <div class="vim-container">
+        <div class="vim-instructions" id="vim-instructions">
+            <h3>Vim Editor Instructions</h3>
+            <div id="vim-instructions-content"></div>
+        </div>
+        
+        <div class="vim-editor">
+            <div class="vim-header">
+                <span id="vim-filename">filename</span>
+                <div class="vim-command-buttons">
+                    <button class="vim-command-button" id="vim-insert-button">i (Insert)</button>
+                    <button class="vim-esc-button" id="vim-esc-button">ESC</button>
+                    <span id="vim-close-btn" style="cursor: pointer; margin-left: 10px;">×</span>
+                </div>
+            </div>
+            <div class="vim-content" id="vim-content">
+                <textarea id="vim-textarea" class="vim-textarea" spellcheck="false"></textarea>
+            </div>
+            <div class="vim-command-line">
+                <input type="text" class="vim-input" id="vim-input" placeholder="Type :wq to save and exit"/>
+            </div>
+            <div class="vim-status">
+                <span class="vim-mode-indicator command-mode" id="vim-mode-indicator">COMMAND MODE</span>
+                <span id="vim-cursor-position">1,1</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    // Vim editor elements
+    const vimOverlay = document.getElementById('vim-overlay');
+    const vimInstructions = document.getElementById('vim-instructions');
+    const vimInstructionsContent = document.getElementById('vim-instructions-content');
+    const vimFilename = document.getElementById('vim-filename');
+    const vimContent = document.getElementById('vim-content');
+    const vimTextarea = document.getElementById('vim-textarea');
+    const vimInput = document.getElementById('vim-input');
+    const vimModeIndicator = document.getElementById('vim-mode-indicator');
+    const vimCursorPosition = document.getElementById('vim-cursor-position');
+    const vimCloseBtn = document.getElementById('vim-close-btn');
+    const vimEscButton = document.getElementById('vim-esc-button');
+    const vimInsertButton = document.getElementById('vim-insert-button');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'yum', 'systemctl', 'cd', 'wget', 'mv', 'ls', 'clear', 'help'
+    ];
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/var/': ['www/', 'log/'],
+        '/var/www/': ['html/'],
+        '/var/www/html/': ['index.html', 'serverX.html']
+    };
+    
+    // Track configuration state
+    const configState = {
+        install: false,
+        download: false,
+        configure: false,
+        start: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['yum install -y httpd'],
+        2: ['cd /var/www/html'],
+        3: ['wget http://instructor.example.com/pub/serverX.html'],
+        4: ['mv serverX.html index.html'],
+        5: ['systemctl start httpd', 'systemctl enable httpd'],
+        6: ['systemctl status httpd', 'systemctl is-enabled httpd', 'ls -l /var/www/html/']
+    };
+    
+    // Simulated file contents
+    let serverXContent = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Server X</title>
+</head>
+<body>
+    <h1>Welcome to Server X</h1>
+    <p>This is the custom web page for Server X.</p>
+    <p>RHCSA Exam - Web Server Configuration</p>
+</body>
+</html>`;
+    
+    // Vim editor state
+    let vimState = {
+        file: '',
+        content: '',
+        cursorPos: 0,
+        mode: 'command', // 'command' or 'insert'
+        isEditing: false,
+        fileType: ''
+    };
+    
+    const commands = {
+        'yum': (args) => {
+            if (args[0] === "install" && args[1] === "-y" && args[2] === "httpd") {
+                if (currentStep === 1 || currentStep > 1) {
+                    configState.install = true;
+                    updateRequirements();
+                    completeStep(1);
+                    return "Loaded plugins: fastestmirror, langpacks\nLoading mirror speeds from cached hostfile\nResolving Dependencies\n--> Running transaction check\n---> Package httpd.x86_64 0:2.4.6-90.el7 will be installed\n--> Processing Dependency: httpd-tools = 2.4.6-90.el7 for package: httpd-2.4.6-90.el7.x86_64\n--> Running transaction check\n---> Package httpd-tools.x86_64 0:2.4.6-90.el7 will be installed\n--> Finished Dependency Resolution\n\nInstalling:\n httpd x86_64 2.4.6-90.el7 2.7 M\n httpd-tools x86_64 2.4.6-90.el7 84 k\n\nTransaction Summary\nInstall 2 Packages\n\nTotal download size: 2.8 M\nInstalled size: 9.6 M\nDownloading packages:\nRunning transaction check\nRunning transaction test\nTransaction test succeeded\nRunning transaction\n  Installing : httpd-tools-2.4.6-90.el7.x86_64 1/2 \n  Installing : httpd-2.4.6-90.el7.x86_64 2/2 \n  Verifying  : httpd-2.4.6-90.el7.x86_64 1/2 \n  Verifying  : httpd-tools-2.4.6-90.el7.x86_64 2/2 \n\nInstalled:\n  httpd.x86_64 0:2.4.6-90.el7  httpd-tools.x86_64 0:2.4.6-90.el7 \n\nComplete!";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `yum: invalid command '${args.join(' ')}'`;
+        },
+        
+        'cd': (args) => {
+            if (args.length === 0 || args[0] === "~") {
+                return ""; // Stay in home directory
+            } else if (args[0] === "/var/www/html") {
+                if (currentStep === 2 || currentStep > 2) {
+                    completeStep(2);
+                    return ""; // Successfully changed directory
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `bash: cd: ${args[0]}: No such file or directory`;
+        },
+        
+        'wget': (args) => {
+            if (args[0] === "http://instructor.example.com/pub/serverX.html") {
+                if (currentStep === 3 || currentStep > 3) {
+                    configState.download = true;
+                    updateRequirements();
+                    completeStep(3);
+                    return `--2023-11-14 10:45:32--  http://instructor.example.com/pub/serverX.html
+Resolving instructor.example.com (instructor.example.com)... 192.168.1.100
+Connecting to instructor.example.com (instructor.example.com)|192.168.1.100|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 245 [text/html]
+Saving to: 'serverX.html'
+
+100%[======================================>] 245         --.-K/s   in 0s      
+
+2023-11-14 10:45:32 (25.4 MB/s) - 'serverX.html' saved [245/245]`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `wget: invalid URL '${args[0]}'`;
+        },
+        
+        'mv': (args) => {
+            if (args[0] === "serverX.html" && args[1] === "index.html") {
+                if (currentStep === 4 || currentStep > 4) {
+                    configState.configure = true;
+                    updateRequirements();
+                    completeStep(4);
+                    return "";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `mv: cannot stat '${args[0]}': No such file or directory`;
+        },
+        
+        'systemctl': (args) => {
+            if (args[0] === "start" && args[1] === "httpd") {
+                if (currentStep === 5 || currentStep > 5) {
+                    return "";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "enable" && args[1] === "httpd") {
+                if (currentStep === 5 || currentStep > 5) {
+                    configState.start = true;
+                    updateRequirements();
+                    completeStep(5);
+                    return "Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "status" && args[1] === "httpd") {
+                if (configState.start) {
+                    return `● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
+   Active: active (running) since Tue 2023-11-14 10:46:12 EST; 5min ago
+     Docs: man:httpd(8)
+           man:apachectl(8)
+ Main PID: 2345 (httpd)
+   Status: "Total requests: 0; Current requests/sec: 0; Current traffic:   0 B/sec"
+   CGroup: /system.slice/httpd.service
+           ├─2345 /usr/sbin/httpd -DFOREGROUND
+           ├─2346 /usr/sbin/httpd -DFOREGROUND
+           ├─2347 /usr/sbin/httpd -DFOREGROUND
+           ├─2348 /usr/sbin/httpd -DFOREGROUND
+           ├─2349 /usr/sbin/httpd -DFOREGROUND
+           └─2350 /usr/sbin/httpd -DFOREGROUND
+
+Nov 14 10:46:12 station systemd[1]: Starting The Apache HTTP Server...
+Nov 14 10:46:12 station systemd[1]: Started The Apache HTTP Server.`;
+                } else {
+                    return `● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabled)
+   Active: inactive (dead)`;
+                }
+            } else if (args[0] === "is-enabled" && args[1] === "httpd") {
+                if (configState.start) {
+                    return "enabled";
+                } else {
+                    return "disabled";
+                }
+            }
+            return `Unknown operation '${args[0]}'.`;
+        },
+        
+        'ls': (args) => {
+            if ((args.length === 0 && currentStep >= 2) || 
+                (args[0] === "-l" && args[1] === "/var/www/html/")) {
+                if (configState.configure) {
+                    return "-rw-r--r--. 1 root root 245 Nov 14 10:45 index.html";
+                } else if (configState.download) {
+                    return "-rw-r--r--. 1 root root 245 Nov 14 10:45 serverX.html";
+                } else {
+                    return ""; // Empty directory
+                }
+            }
+            return `ls: cannot access '${args[0]}': No such file or directory`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: yum, systemctl, cd, wget, mv, ls, clear, help";
+        }
+    };
+    
+    // Function to open the Vim editor
+    function openVimEditor(filename, content, fileType) {
+        vimState.file = filename;
+        vimState.content = content;
+        vimState.fileType = fileType;
+        vimState.mode = 'command';
+        vimState.isEditing = true;
+        
+        // Set the filename in the editor
+        vimFilename.textContent = filename;
+        
+        // Set the content in the textarea
+        vimTextarea.value = content;
+        
+        // Set up instructions based on file type
+        if (fileType === 'config') {
+            vimInstructionsContent.innerHTML = `
+                <p>Edit the configuration file.</p>
+                <p><strong>Vim Commands:</strong></p>
+                <ul>
+                    <li>Press <code>i</code> to enter Insert mode</li>
+                    <li>Make the necessary changes</li>
+                    <li>Press <code>ESC</code> to return to Command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
+                </ul>
+            `;
+        }
+        
+        // Show the Vim overlay
+        vimOverlay.style.display = 'flex';
+        
+        // Start in command mode
+        vimState.mode = 'command';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        
+        // Focus the vim input (command line)
+        setTimeout(() => {
+            vimInput.focus();
+            updateVimCursorPosition();
+        }, 100);
+        
+        return `Opening ${filename} in Vim editor...`;
+    }
+    
+    // Function to handle Vim commands
+    function handleVimCommand(command) {
+        if (command === 'w' || command === 'write') {
+            // Save the file
+            return "File saved";
+        } else if (command === 'q' || command === 'quit') {
+            // Close the editor
+            closeVimEditor();
+            return "";
+        } else if (command === 'wq') {
+            // Save and quit
+            const saveMsg = handleVimCommand('w');
+            closeVimEditor();
+            return saveMsg + " and exiting";
+        } else if (command === 'q!') {
+            // Quit without saving
+            closeVimEditor();
+            return "Exiting without saving";
+        }
+        return `Not an editor command: ${command}`;
+    }
+    
+    // Function to close the Vim editor
+    function closeVimEditor() {
+        vimOverlay.style.display = 'none';
+        vimState.isEditing = false;
+        commandInput.focus();
+    }
+    
+    // Function to update Vim cursor position display
+    function updateVimCursorPosition() {
+        const text = vimTextarea.value;
+        const cursorPos = vimTextarea.selectionStart;
+        const lines = text.substring(0, cursorPos).split('\n');
+        const line = lines.length;
+        const column = lines[lines.length - 1].length + 1;
+        vimCursorPosition.textContent = `${line},${column}`;
+    }
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.install) {
+            document.getElementById('req-install').classList.add('completed');
+            document.getElementById('req-install').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.download) {
+            document.getElementById('req-download').classList.add('completed');
+            document.getElementById('req-download').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.configure) {
+            document.getElementById('req-configure').classList.add('completed');
+            document.getElementById('req-configure').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.start) {
+            document.getElementById('req-start').classList.add('completed');
+            document.getElementById('req-start').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[root@station ~]# Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep][0]}`);
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Vim editor event listeners
+    vimCloseBtn.addEventListener('click', () => {
+        closeVimEditor();
+    });
+    
+    vimEscButton.addEventListener('click', () => {
+        vimState.mode = 'command';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        vimTextarea.blur();
+        vimInput.focus();
+        updateVimCursorPosition();
+    });
+    
+    vimInsertButton.addEventListener('click', () => {
+        vimState.mode = 'insert';
+        vimModeIndicator.textContent = 'INSERT MODE';
+        vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+        vimInput.blur();
+        vimTextarea.focus();
+        updateVimCursorPosition();
+    });
+    
+    // Handle vim mode switching with keyboard
+    vimTextarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            vimState.mode = 'command';
+            vimModeIndicator.textContent = 'COMMAND MODE';
+            vimModeIndicator.className = 'vim-mode-indicator command-mode';
+            vimTextarea.blur();
+            vimInput.focus();
+        }
+        updateVimCursorPosition();
+    });
+    
+    // Handle vim command input
+    vimInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const command = vimInput.value.trim();
+            if (command === 'i') {
+                // Switch to insert mode
+                vimState.mode = 'insert';
+                vimModeIndicator.textContent = 'INSERT MODE';
+                vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+                vimInput.blur();
+                vimTextarea.focus();
+                vimInput.value = '';
+            } else if (command.startsWith(':')) {
+                // Handle colon commands
+                const actualCommand = command.substring(1);
+                const result = handleVimCommand(actualCommand);
+                if (result) {
+                    addTerminalOutput(result);
+                }
+                vimInput.value = '';
+            } else if (command) {
+                // Other vim commands
+                vimInput.value = '';
+            }
+        } else if (e.key === 'i' && vimInput.value === '' && vimState.mode === 'command') {
+            // Quick insert mode switch
+            e.preventDefault();
+            vimState.mode = 'insert';
+            vimModeIndicator.textContent = 'INSERT MODE';
+            vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+            vimInput.blur();
+            vimTextarea.focus();
+        }
+    });
+    
+    vimTextarea.addEventListener('click', () => {
+        if (vimState.mode === 'command') {
+            // In command mode, clicking textarea should focus command input instead
+            vimInput.focus();
+        } else {
+            updateVimCursorPosition();
+        }
+    });
+    
+    vimTextarea.addEventListener('keyup', () => {
+        if (vimState.mode === 'insert') {
+            updateVimCursorPosition();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
+</body>
+</html>

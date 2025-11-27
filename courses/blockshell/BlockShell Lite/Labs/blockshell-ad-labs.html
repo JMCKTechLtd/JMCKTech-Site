@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockShell AD: Active Directory Labs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <style>
+    :root {
+      --primary-color: #0078d7;
+      --secondary-color: #107c10;
+      --accent-color: #8661c5;
+      --danger-color: #d13438;
+      --warning-color: #ffb900;
+      --text-color: #2c3e50;
+      --light-bg: #f8f9fa;
+      --border-color: #eaecef;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(to bottom, var(--light-bg), #eef1f5);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-color);
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    header {
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 120, 215, 0.1);
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+      border-radius: 2px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-top: 8px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    #lab-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #lab-header {
+      background: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .lab-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .lab-progress {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-bar {
+      width: 200px;
+      height: 8px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: var(--primary-color);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    #lab-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #instructions-panel {
+      width: 300px;
+      background: white;
+      padding: 20px;
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.03);
+    }
+
+    #blockly-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #blockly-toolbar {
+      padding: 10px 20px;
+      display: flex;
+      gap: 10px;
+      background-color: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    #blocklyDiv {
+      height: calc(100% - 60px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 120, 215, 0.3);
+    }
+
+    button.secondary {
+      background-color: var(--secondary-color);
+    }
+
+    button.secondary:hover {
+      background-color: #0a6b0a;
+    }
+
+    button.danger {
+      background-color: var(--danger-color);
+    }
+
+    button.danger:hover {
+      background-color: #b32d30;
+    }
+
+    button.warning {
+      background-color: var(--warning-color);
+      color: #333;
+    }
+
+    button.warning:hover {
+      background-color: #e6a200;
+    }
+
+    .lab-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .lab-tab {
+      padding: 8px 16px;
+      background: #f1f5f9;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .lab-tab.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .task {
+      background: #f1f5f9;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border-left: 3px solid var(--primary-color);
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .task.completed {
+      background: #e6f7e6;
+      border-left-color: var(--secondary-color);
+    }
+
+    .task h4 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .task p {
+      margin: 0;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .task-icon {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: white;
+      font-size: 12px;
+    }
+
+    .task.completed .task-icon {
+      background: var(--secondary-color);
+    }
+
+    #feedback {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      background: #f8f9fa;
+      border: 1px solid var(--border-color);
+    }
+
+    .feedback-success {
+      background: #e6f7e6;
+      border-color: var(--secondary-color);
+      color: #0a6b0a;
+    }
+
+    .feedback-warning {
+      background: #fff8e6;
+      border-color: var(--warning-color);
+      color: #856404;
+    }
+
+    .feedback-error {
+      background: #fdeaea;
+      border-color: var(--danger-color);
+      color: #b32d30;
+    }
+
+    .blocklyToolboxDiv {
+      border-right: 1px solid var(--border-color) !important;
+    }
+
+    .blocklyMainBackground {
+      stroke-width: 0;
+    }
+
+    .blocklyFlyoutBackground {
+      fill: var(--light-bg);
+    }
+
+    .modal {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--text-color);
+      font-size: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .code-block {
+      background-color: var(--light-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 15px;
+      overflow-x: auto;
+      font-family: Consolas, Monaco, "Andale Mono", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      z-index: 1000;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .zoom-btn {
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+
+    .zoom-btn:hover {
+      background-color: var(--light-bg);
+    }
+
+    .zoom-btn:first-child {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Confirmation dialog styles */
+    .confirmation-dialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .confirmation-content {
+      background-color: white;
+      padding: 25px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .confirmation-title {
+      margin: 0 0 15px 0;
+      color: var(--text-color);
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .confirmation-message {
+      margin: 0 0 20px 0;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .confirmation-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .confirmation-buttons button {
+      min-width: 80px;
+    }
+
+    .app-notification {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transition: all 0.3s ease;
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    .app-notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .app-notification.success {
+      background-color: var(--secondary-color);
+    }
+
+    .app-notification.warning {
+      background-color: var(--warning-color);
+      color: #333;
+    }
+
+    .app-notification.error {
+      background-color: var(--danger-color);
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <h1>BlockShell AD: Active Directory Labs</h1>
+      <div class="subtitle">Visual PowerShell Script Builder for AD Administration</div>
+    </header>
+
+    <div id="lab-container">
+      <div id="lab-header">
+        <div class="lab-title">Lab 1: User Account Management</div>
+        <div class="lab-progress">
+          <span>Progress:</span>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+          <span id="progress-text">0/4</span>
+        </div>
+      </div>
+
+      <div id="lab-content">
+        <div id="instructions-panel">
+          <div class="lab-tabs">
+            <div class="lab-tab active" onclick="switchLab('lab1')">Lab 1</div>
+            <div class="lab-tab" onclick="switchLab('lab2')">Lab 2</div>
+            <div class="lab-tab" onclick="switchLab('lab3')">Lab 3</div>
+            <div class="lab-tab" onclick="switchLab('lab4')">Lab 4</div>
+          </div>
+
+          <div id="lab1-instructions" class="lab-instructions">
+            <h3>🔐 User Account Management</h3>
+            <p>Learn how to create, configure, and manage Active Directory user accounts.</p>
+            
+            <div class="task" id="lab1-task1">
+              <h4><span class="task-icon">1</span> Create a New User</h4>
+              <p>Use the <strong>Create AD User</strong> block to create a user named <code>jdoe</code> with the display name "John Doe".</p>
+            </div>
+            
+            <div class="task" id="lab1-task2">
+              <h4><span class="task-icon">2</span> Set User Properties</h4>
+              <p>Configure the user's email address as <code>jdoe@company.com</code> and department as "IT" using the <strong>Set User Properties</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab1-task3">
+              <h4><span class="task-icon">3</span> Set Password</h4>
+              <p>Set a secure password for the user and force password change at next login using the <strong>Set User Password</strong> and <strong>Force Password Change</strong> blocks.</p>
+            </div>
+            
+            <div class="task" id="lab1-task4">
+              <h4><span class="task-icon">4</span> Enable Account</h4>
+              <p>Ensure the account is enabled using the <strong>Enable AD Account</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="lab2-instructions" class="lab-instructions" style="display: none;">
+            <h3>👥 Group Management</h3>
+            <p>Learn how to create and manage Active Directory groups and memberships.</p>
+            
+            <div class="task" id="lab2-task1">
+              <h4><span class="task-icon">1</span> Create a Security Group</h4>
+              <p>Use the <strong>Create AD Group</strong> block to create a security group named <code>IT_Admins</code>.</p>
+            </div>
+            
+            <div class="task" id="lab2-task2">
+              <h4><span class="task-icon">2</span> Add User to Group</h4>
+              <p>Add the user <code>jdoe</code> to the <code>IT_Admins</code> group using the <strong>Add User to Group</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab2-task3">
+              <h4><span class="task-icon">3</span> Copy Group Members</h4>
+              <p>Copy all members from an existing group to a new group using the <strong>Copy AD Group Members</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab2-task4">
+              <h4><span class="task-icon">4</span> Export Group Membership</h4>
+              <p>Export the group membership of a user to a CSV file using the <strong>Export Group Membership</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="lab3-instructions" class="lab-instructions" style="display: none;">
+            <h3>🏢 Organizational Units</h3>
+            <p>Learn how to create and manage Organizational Units (OUs) in Active Directory.</p>
+            
+            <div class="task" id="lab3-task1">
+              <h4><span class="task-icon">1</span> Create an OU</h4>
+              <p>Use the <strong>Create OU</strong> block to create an Organizational Unit named <code>IT_Staff</code>.</p>
+            </div>
+            
+            <div class="task" id="lab3-task2">
+              <h4><span class="task-icon">2</span> Move User to OU</h4>
+              <p>Move the user <code>jdoe</code> to the <code>IT_Staff</code> OU using the <strong>Move AD User</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab3-task3">
+              <h4><span class="task-icon">3</span> Search AD Objects</h4>
+              <p>Search for all users in the IT_Staff OU using the <strong>Search AD Objects</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab3-task4">
+              <h4><span class="task-icon">4</span> Create User from Template</h4>
+              <p>Create a new user based on an existing template user using the <strong>Create User from Template</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="lab4-instructions" class="lab-instructions" style="display: none;">
+            <h3>🔒 Security & Reporting</h3>
+            <p>Learn how to implement security measures and generate reports in Active Directory.</p>
+            
+            <div class="task" id="lab4-task1">
+              <h4><span class="task-icon">1</span> Check Password Expiry</h4>
+              <p>Check if a user's password will expire within 14 days using the <strong>Check Password Expiry</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab4-task2">
+              <h4><span class="task-icon">2</span> Find Locked Accounts</h4>
+              <p>Search for locked accounts in a specific OU using the <strong>Check Locked Accounts</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab4-task3">
+              <h4><span class="task-icon">3</span> Reset Account Lockout</h4>
+              <p>Reset the account lockout counter for a user using the <strong>Reset Account Lockout</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab4-task4">
+              <h4><span class="task-icon">4</span> Generate User Report</h4>
+              <p>Generate a comprehensive user report in HTML format using the <strong>Generate User Report</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="feedback"></div>
+        </div>
+
+        <div id="blockly-area">
+          <div id="blockly-toolbar">
+            <button onclick="simulate()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 10 4 15 9 20"></polyline>
+                <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+              </svg>
+              Show Script
+            </button>
+            <button class="secondary" onclick="checkProgress()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              Check Progress
+            </button>
+            <button class="danger" onclick="clearWorkspace()" style="margin-left: auto;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Clear Workspace
+            </button>
+          </div>
+          <div id="blocklyDiv"></div>
+          <div class="zoom-controls">
+            <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+            <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <div id="confirmationDialog" class="confirmation-dialog" style="display: none;">
+    <div class="confirmation-content">
+      <h3 class="confirmation-title">Clear Workspace</h3>
+      <p class="confirmation-message">Are you sure you want to clear the workspace? All blocks will be deleted.</p>
+      <div class="confirmation-buttons">
+        <button class="danger" onclick="confirmClearWorkspace()">Clear</button>
+        <button class="secondary" onclick="cancelClearWorkspace()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Notification -->
+  <div id="appNotification" class="app-notification" style="display: none;"></div>
+
+  <xml id="toolbox" style="display:none">
+    <category name="User Management" colour="180">
+      <block type="create_ad_user"></block>
+      <block type="get_ad_user"></block>
+      <block type="remove_ad_user"></block>
+      <block type="set_user_properties"></block>
+      <block type="move_ad_user"></block>
+      <block type="rename_ad_user"></block>
+      <block type="create_user_from_template"></block>
+    </category>
+    <category name="Group Management" colour="210">
+      <block type="create_ad_group"></block>
+      <block type="add_user_to_group"></block>
+      <block type="remove_user_from_group"></block>
+      <block type="copy_ad_group_members"></block>
+      <block type="get_group_members"></block>
+      <block type="nested_group_membership"></block>
+    </category>
+    <category name="Organization" colour="160">
+      <block type="create_ou"></block>
+      <block type="search_ad_objects"></block>
+      <block type="get_inactive_computers"></block>
+    </category>
+    <category name="Security" colour="230">
+      <block type="set_user_password"></block>
+      <block type="force_password_change"></block>
+      <block type="unlock_ad_account"></block>
+      <block type="enable_ad_account"></block>
+      <block type="disable_ad_account"></block>
+      <block type="export_group_membership"></block>
+      <block type="check_password_expiry"></block>
+      <block type="check_locked_accounts"></block>
+      <block type="reset_account_lockout"></block>
+    </category>
+    <category name="Reports" colour="130">
+      <block type="generate_user_report"></block>
+    </category>
+  </xml>
+
+  <script>
+    // Declare workspace variable at the top level
+    let workspace;
+    let currentLab = 'lab1';
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize Blockly workspace
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        trashcan: true,
+        grid: {
+          spacing: 25,
+          length: 3,
+          colour: '#e0e0e0',
+          snap: true
+        },
+        zoom: {
+          controls: true,
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2
+        },
+        theme: {
+          'blockStyles': {
+            'colour_blocks': { 'colourPrimary': '#CF63CF', 'colourSecondary': '#C94FC9', 'colourTertiary': '#BD42BD' },
+            'list_blocks': { 'colourPrimary': '#9966FF', 'colourSecondary': '#855CD6', 'colourTertiary': '#774DCB' },
+            'logic_blocks': { 'colourPrimary': '#4C97FF', 'colourSecondary': '#4280D7', 'colourTertiary': '#3373CC' },
+            'loop_blocks': { 'colourPrimary': '#0fBD8C', 'colourSecondary': '#0DA57A', 'colourTertiary': '#0B8E69' },
+            'math_blocks': { 'colourPrimary': '#59C059', 'colourSecondary': '#46B946', 'colourTertiary': '#389438' },
+            'procedure_blocks': { 'colourPrimary': '#FF6680', 'colourSecondary': '#FF4D6A', 'colourTertiary': '#FF3355' },
+            'text_blocks': { 'colourPrimary': '#FFBF00', 'colourSecondary': '#E6AC00', 'colourTertiary': '#CC9900' },
+            'variable_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' },
+            'variable_dynamic_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' }
+          },
+          'componentStyles': {
+            'workspaceBackgroundColour': '#F9FAFB',
+            'toolboxBackgroundColour': '#FFFFFF',
+            'toolboxForegroundColour': '#1E293B',
+            'flyoutBackgroundColour': '#F1F5F9',
+            'flyoutForegroundColour': '#1E293B',
+            'flyoutOpacity': 0.9,
+            'scrollbarColour': '#CCCCCC',
+            'scrollbarOpacity': 0.6
+          }
+        }
+      });
+
+      // Define all blocks
+      Blockly.Blocks['create_ad_user'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create AD User (Name:")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField("Display Name:")
+              .appendField(new Blockly.FieldTextInput("John Doe"), "DISPLAYNAME")
+              .appendField(")");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Creates a new Active Directory user account.\n\nPowerShell: New-ADUser -Name \"value\" -DisplayName \"value\" -Enabled $true");
+        }
+      };
+
+      Blockly.Blocks['get_ad_user'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Get AD User Info (User:")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField(")");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Retrieves information about an Active Directory user.\n\nPowerShell: Get-ADUser -Identity \"user\" -Properties * | Format-List");
+        }
+      };
+
+      Blockly.Blocks['remove_ad_user'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Remove AD User (Name:")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField(")");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Deletes an Active Directory user account.\n\nPowerShell: Remove-ADUser -Identity \"value\" -Confirm:$false");
+        }
+      };
+
+      Blockly.Blocks['set_user_properties'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set User Properties (User:")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField("Email:")
+              .appendField(new Blockly.FieldTextInput("jdoe@company.com"), "EMAIL")
+              .appendField("Department:")
+              .appendField(new Blockly.FieldTextInput("IT"), "DEPARTMENT")
+              .appendField(")");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Sets common properties for an Active Directory user.\n\nPowerShell: Set-ADUser -Identity \"user\" -EmailAddress \"email\" -Department \"dept\"");
+        }
+      };
+
+      Blockly.Blocks['move_ad_user'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Move AD User")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField("to OU")
+              .appendField(new Blockly.FieldTextInput("IT_Staff"), "OU");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Moves a user to a different Organizational Unit.\n\nPowerShell: Get-ADUser \"user\" | Move-ADObject -TargetPath \"OU=value,DC=domain,DC=com\"");
+        }
+      };
+
+      Blockly.Blocks['rename_ad_user'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Rename AD User")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "OLDNAME")
+              .appendField("to")
+              .appendField(new Blockly.FieldTextInput("johndoe"), "NEWNAME");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Renames an existing Active Directory user account.\n\nPowerShell: Rename-ADObject -Identity (Get-ADUser \"oldname\").DistinguishedName -NewName \"newname\"");
+        }
+      };
+
+      Blockly.Blocks['create_user_from_template'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create User From Template (New User:")
+              .appendField(new Blockly.FieldTextInput("jsmith"), "NEWUSER")
+              .appendField("Template User:")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "TEMPLATEUSER")
+              .appendField(")");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Creates a new user by copying properties from a template user.\n\nPowerShell: Copies properties and group memberships from template");
+        }
+      };
+
+      Blockly.Blocks['create_ad_group'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create AD Group (Name:")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUP")
+              .appendField(")");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Creates a new security or distribution group in Active Directory.\n\nPowerShell: New-ADGroup -Name \"value\" -GroupScope Global -GroupCategory Security");
+        }
+      };
+
+      Blockly.Blocks['add_user_to_group'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Add User")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField("to Group")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUP");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Adds a user to an Active Directory group.\n\nPowerShell: Add-ADGroupMember -Identity \"group\" -Members \"user\"");
+        }
+      };
+
+      Blockly.Blocks['remove_user_from_group'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Remove User")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField("from Group")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUP");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Removes a user from an Active Directory group.\n\nPowerShell: Remove-ADGroupMember -Identity \"group\" -Members \"user\" -Confirm:$false");
+        }
+      };
+
+      Blockly.Blocks['copy_ad_group_members'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Copy Members from Group")
+              .appendField(new Blockly.FieldTextInput("SourceGroup"), "SOURCE_GROUP")
+              .appendField("to Group")
+              .appendField(new Blockly.FieldTextInput("TargetGroup"), "TARGET_GROUP");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Copies all members from one group to another.\n\nPowerShell: Get-ADGroupMember -Identity \"source\" | ForEach-Object { Add-ADGroupMember -Identity \"target\" -Members $_.distinguishedName }");
+        }
+      };
+
+      Blockly.Blocks['get_group_members'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Get Members of Group")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUP")
+              .appendField("Export to CSV?")
+              .appendField(new Blockly.FieldCheckbox("FALSE"), "EXPORT");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Lists all members of an Active Directory group with option to export to CSV.\n\nPowerShell: Get-ADGroupMember -Identity \"group\" | Export-Csv (if enabled)");
+        }
+      };
+
+      Blockly.Blocks['nested_group_membership'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Get Nested Group Membership for")
+              .appendField(new Blockly.FieldTextInput("ITGroup"), "GROUP")
+              .appendField("Include Transitive?")
+              .appendField(new Blockly.FieldCheckbox("TRUE"), "TRANSITIVE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Gets all nested groups within a group, including transitive memberships.\n\nPowerShell: Recursively checks MemberOf property");
+        }
+      };
+
+      Blockly.Blocks['create_ou'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create OU (Name:")
+              .appendField(new Blockly.FieldTextInput("IT_Staff"), "OU")
+              .appendField(")");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(160);
+          this.setTooltip("Creates a new Organizational Unit in Active Directory.\n\nPowerShell: New-ADOrganizationalUnit -Name \"value\"");
+        }
+      };
+
+      Blockly.Blocks['search_ad_objects'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Search AD for")
+              .appendField(new Blockly.FieldTextInput("*Smith*"), "SEARCHTERM")
+              .appendField("Filter by")
+              .appendField(new Blockly.FieldDropdown([["All Objects","All"],["Users","User"],["Groups","Group"],["Computers","Computer"],["OUs","OrganizationalUnit"]]), "OBJECTTYPE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(160);
+          this.setTooltip("Searches Active Directory for objects matching a pattern.\n\nPowerShell: Get-ADObject -Filter \"Name -like 'pattern'\"");
+        }
+      };
+
+      Blockly.Blocks['get_inactive_computers'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Find Inactive Computer Accounts Days Inactive:")
+              .appendField(new Blockly.FieldNumber(90, 1, 365), "DAYS");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(160);
+          this.setTooltip("Finds computer accounts that haven't been active for a specified number of days.\n\nPowerShell: Get-ADComputer with LastLogonTimeStamp filter");
+        }
+      };
+
+      Blockly.Blocks['set_user_password'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set AD User Password (User:")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField("Password:")
+              .appendField(new Blockly.FieldTextInput("P@ssword123"), "PASSWORD")
+              .appendField(")");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Sets a user's Active Directory password.\n\nPowerShell: Set-ADAccountPassword -Identity \"user\" -NewPassword (ConvertTo-SecureString \"password\" -AsPlainText -Force)");
+        }
+      };
+
+      Blockly.Blocks['force_password_change'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Force Password Change at Next Login (User:")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField(")");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Forces user to change password at next login.\n\nPowerShell: Set-ADUser -Identity \"user\" -ChangePasswordAtLogon $true");
+        }
+      };
+
+      Blockly.Blocks['unlock_ad_account'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Unlock AD Account (User:")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField(")");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Unlocks a locked user account.\n\nPowerShell: Unlock-ADAccount -Identity \"user\"");
+        }
+      };
+
+      Blockly.Blocks['enable_ad_account'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Enable AD Account (User:")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField(")");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Enables a disabled user account.\n\nPowerShell: Enable-ADAccount -Identity \"user\"");
+        }
+      };
+
+      Blockly.Blocks['disable_ad_account'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Disable AD Account (User:")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField(")");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Disables a user account in Active Directory.\n\nPowerShell: Disable-ADAccount -Identity \"user\"");
+        }
+      };
+
+      Blockly.Blocks['export_group_membership'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Export User")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField("Group Memberships to CSV");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Exports all group memberships for a user to CSV file.\n\nPowerShell: Get-ADPrincipalGroupMembership -Identity \"user\" | Export-Csv");
+        }
+      };
+
+      Blockly.Blocks['check_password_expiry'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Check Password Expiry for")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER")
+              .appendField("Days Until Expiry:")
+              .appendField(new Blockly.FieldNumber(14, 0, 90), "DAYS");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Checks if user password will expire within specified days.\n\nPowerShell: Checks msDS-UserPasswordExpiryTimeComputed attribute");
+        }
+      };
+
+      Blockly.Blocks['check_locked_accounts'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Check for Locked Accounts Filter by OU:")
+              .appendField(new Blockly.FieldTextInput("IT_Staff"), "OU");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Finds all locked user accounts in a specific OU.\n\nPowerShell: Search-ADAccount -LockedOut -SearchBase \"OU=value\"");
+        }
+      };
+
+      Blockly.Blocks['reset_account_lockout'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Reset Account Lockout Counter for")
+              .appendField(new Blockly.FieldTextInput("jdoe"), "USER");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Resets the bad password attempt counter for a user.\n\nPowerShell: Set-ADUser -Replace @{badPwdCount=0}");
+        }
+      };
+
+      Blockly.Blocks['generate_user_report'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Generate User Report Type:")
+              .appendField(new Blockly.FieldDropdown([["Last Logon","LastLogon"],["Account Status","AccountStatus"],["Password Age","PasswordAge"],["Group Memberships","Groups"]]), "REPORTTYPE")
+              .appendField("Output to:")
+              .appendField(new Blockly.FieldDropdown([["CSV","CSV"],["HTML","HTML"],["Console","Console"]]), "OUTPUT");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(130);
+          this.setTooltip("Generates a comprehensive user report for auditing and compliance.\n\nPowerShell: Custom report based on selected type and output format");
+        }
+      };
+
+      // Setup event listeners
+      document.getElementById('zoom-in').addEventListener('click', function() {
+        workspace.zoomCenter(1.2);
+      });
+
+      document.getElementById('zoom-out').addEventListener('click', function() {
+        workspace.zoomCenter(0.8);
+      });
+
+      // Add example block for first lab
+      const exampleXml = `<xml>
+        <block type="create_ad_user" x="50" y="50">
+          <field name="USER">jdoe</field>
+          <field name="DISPLAYNAME">John Doe</field>
+        </block>
+      </xml>`;
+      
+      try {
+        const dom = Blockly.Xml.textToDom(exampleXml);
+        Blockly.Xml.domToWorkspace(dom, workspace);
+      } catch (e) {
+        console.log('Error loading example block:', e);
+      }
+    });
+
+    // Lab switching function
+    function switchLab(labId) {
+      // Update current lab
+      currentLab = labId;
+      
+      // Update lab title
+      const labTitles = {
+        'lab1': 'Lab 1: User Account Management',
+        'lab2': 'Lab 2: Group Management',
+        'lab3': 'Lab 3: Organizational Units',
+        'lab4': 'Lab 4: Security & Reporting'
+      };
+      document.querySelector('.lab-title').textContent = labTitles[labId];
+      
+      // Update tab buttons
+      document.querySelectorAll('.lab-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Show/hide instructions
+      document.querySelectorAll('.lab-instructions').forEach(instructions => {
+        instructions.style.display = 'none';
+      });
+      document.getElementById(labId + '-instructions').style.display = 'block';
+      
+      // Clear feedback when switching labs
+      document.getElementById('feedback').innerHTML = '';
+      document.getElementById('feedback').className = '';
+      
+      // Reset progress
+      updateProgress(0, 4);
+    }
+
+    // Progress checking
+    function checkProgress() {
+      const blocks = workspace.getAllBlocks();
+      const feedback = document.getElementById('feedback');
+      
+      let tasks = {};
+      
+      // Define tasks for each lab
+      if (currentLab === 'lab1') {
+        tasks = {
+          task1: blocks.some(b => b.type === "create_ad_user" && 
+                 b.getFieldValue('USER') === 'jdoe' && 
+                 b.getFieldValue('DISPLAYNAME') === 'John Doe'),
+          task2: blocks.some(b => b.type === "set_user_properties" && 
+                 b.getFieldValue('USER') === 'jdoe' && 
+                 b.getFieldValue('EMAIL') === 'jdoe@company.com' &&
+                 b.getFieldValue('DEPARTMENT') === 'IT'),
+          task3: blocks.some(b => (b.type === "set_user_password" && 
+                 b.getFieldValue('USER') === 'jdoe') ||
+                 (b.type === "force_password_change" && 
+                 b.getFieldValue('USER') === 'jdoe')),
+          task4: blocks.some(b => b.type === "enable_ad_account" && 
+                 b.getFieldValue('USER') === 'jdoe')
+        };
+      } else if (currentLab === 'lab2') {
+        tasks = {
+          task1: blocks.some(b => b.type === "create_ad_group" && 
+                 b.getFieldValue('GROUP') === 'IT_Admins'),
+          task2: blocks.some(b => b.type === "add_user_to_group" && 
+                 b.getFieldValue('USER') === 'jdoe' && 
+                 b.getFieldValue('GROUP') === 'IT_Admins'),
+          task3: blocks.some(b => b.type === "copy_ad_group_members" && 
+                 b.getFieldValue('SOURCE_GROUP') && 
+                 b.getFieldValue('TARGET_GROUP')),
+          task4: blocks.some(b => b.type === "export_group_membership" && 
+                 b.getFieldValue('USER') === 'jdoe')
+        };
+      } else if (currentLab === 'lab3') {
+        tasks = {
+          task1: blocks.some(b => b.type === "create_ou" && 
+                 b.getFieldValue('OU') === 'IT_Staff'),
+          task2: blocks.some(b => b.type === "move_ad_user" && 
+                 b.getFieldValue('USER') === 'jdoe' && 
+                 b.getFieldValue('OU') === 'IT_Staff'),
+          task3: blocks.some(b => b.type === "search_ad_objects" && 
+                 b.getFieldValue('OBJECTTYPE') === 'User'),
+          task4: blocks.some(b => b.type === "create_user_from_template" && 
+                 b.getFieldValue('NEWUSER') && 
+                 b.getFieldValue('TEMPLATEUSER'))
+        };
+      } else if (currentLab === 'lab4') {
+        tasks = {
+          task1: blocks.some(b => b.type === "check_password_expiry" && 
+                 b.getFieldValue('USER') === 'jdoe' && 
+                 b.getFieldValue('DAYS') === '14'),
+          task2: blocks.some(b => b.type === "check_locked_accounts" && 
+                 b.getFieldValue('OU') === 'IT_Staff'),
+          task3: blocks.some(b => b.type === "reset_account_lockout" && 
+                 b.getFieldValue('USER') === 'jdoe'),
+          task4: blocks.some(b => b.type === "generate_user_report" && 
+                 b.getFieldValue('OUTPUT') === 'HTML')
+        };
+      }
+      
+      // Update UI
+      Object.keys(tasks).forEach(taskId => {
+        document.getElementById(currentLab + '-' + taskId).classList.toggle('completed', tasks[taskId]);
+      });
+      
+      // Update progress
+      const completed = Object.values(tasks).filter(Boolean).length;
+      updateProgress(completed, 4);
+      
+      // Show feedback
+      if (completed === 4) {
+        feedback.innerHTML = '<div style="color:green;">✅ All tasks completed! Ready to generate your script.</div>';
+        feedback.className = 'feedback-success';
+      } else if (completed > 0) {
+        feedback.innerHTML = `<div style="color:#d35400;">⏳ Progress: ${completed}/4 tasks done</div>`;
+        feedback.className = 'feedback-warning';
+      } else {
+        feedback.innerHTML = '<div>Start building your script by dragging blocks from the toolbox on the left.</div>';
+        feedback.className = '';
+      }
+    }
+
+    // Update progress bar
+    function updateProgress(completed, total) {
+      const percentage = (completed / total) * 100;
+      document.querySelector('.progress-fill').style.width = `${percentage}%`;
+      document.getElementById('progress-text').textContent = `${completed}/${total}`;
+    }
+
+    // Generate PowerShell code
+    function generatePowerShellCode() {
+      const blocks = workspace.getTopBlocks(true);
+      let code = "";
+      
+      // Add header
+      code += `# Generated by BlockShell AD Tool\n`;
+      code += `# Lab: ${document.querySelector('.lab-title').textContent}\n`;
+      code += `# Date: ${new Date().toISOString()}\n`;
+      code += `\n`;
+      
+      // Generate code from blocks
+      for (const block of blocks) {
+        code += generateBlockCodeRecursive(block);
+      }
+      
+      return code.trim();
+    }
+
+    function generateBlockCodeRecursive(block) {
+      if (!block) return "";
+      let code = "";
+
+      switch (block.type) {
+        case "create_ad_user":
+          code += `New-ADUser -Name "${block.getFieldValue('USER')}" -DisplayName "${block.getFieldValue('DISPLAYNAME')}" -Enabled $true\n`;
+          break;
+        case "remove_ad_user":
+          code += `Remove-ADUser -Identity "${block.getFieldValue('USER')}" -Confirm:$false\n`;
+          break;
+        case "create_ad_group":
+          code += `New-ADGroup -Name "${block.getFieldValue('GROUP')}" -GroupScope Global -GroupCategory Security\n`;
+          break;
+        case "add_user_to_group":
+          code += `Add-ADGroupMember -Identity "${block.getFieldValue('GROUP')}" -Members "${block.getFieldValue('USER')}"\n`;
+          break;
+        case "remove_user_from_group":
+          code += `Remove-ADGroupMember -Identity "${block.getFieldValue('GROUP')}" -Members "${block.getFieldValue('USER')}" -Confirm:$false\n`;
+          break;
+        case "create_ou":
+          code += `New-ADOrganizationalUnit -Name "${block.getFieldValue('OU')}"\n`;
+          break;
+        case "move_ad_user":
+          code += `Get-ADUser "${block.getFieldValue('USER')}" | Move-ADObject -TargetPath "OU=${block.getFieldValue('OU')},DC=example,DC=com"\n`;
+          break;
+        case "set_user_password":
+          code += `Set-ADAccountPassword -Identity "${block.getFieldValue('USER')}" -NewPassword (ConvertTo-SecureString "${block.getFieldValue('PASSWORD')}" -AsPlainText -Force)\n`;
+          break;
+        case "unlock_ad_account":
+          code += `Unlock-ADAccount -Identity "${block.getFieldValue('USER')}"\n`;
+          break;
+        case "enable_ad_account":
+          code += `Enable-ADAccount -Identity "${block.getFieldValue('USER')}"\n`;
+          break;
+        case "get_ad_user":
+          code += `Get-ADUser -Identity "${block.getFieldValue('USER')}" -Properties * | Format-List\n`;
+          break;
+        case "set_user_properties":
+          code += `Set-ADUser -Identity "${block.getFieldValue('USER')}" -EmailAddress "${block.getFieldValue('EMAIL')}" -Department "${block.getFieldValue('DEPARTMENT')}"\n`;
+          break;
+        case "disable_ad_account":
+          code += `Disable-ADAccount -Identity "${block.getFieldValue('USER')}"\n`;
+          break;
+        case "copy_ad_group_members":
+          code += `Get-ADGroupMember -Identity "${block.getFieldValue('SOURCE_GROUP')}" | ForEach-Object { Add-ADGroupMember -Identity "${block.getFieldValue('TARGET_GROUP')}" -Members $_.distinguishedName }\n`;
+          break;
+        case "force_password_change":
+          code += `Set-ADUser -Identity "${block.getFieldValue('USER')}" -ChangePasswordAtLogon $true\n`;
+          break;
+        case "rename_ad_user":
+          code += `Rename-ADObject -Identity (Get-ADUser "${block.getFieldValue('OLDNAME')}").DistinguishedName -NewName "${block.getFieldValue('NEWNAME')}"\n`;
+          break;
+        case "get_group_members":
+          if (block.getFieldValue('EXPORT') === 'TRUE') {
+            code += `Get-ADGroupMember -Identity "${block.getFieldValue('GROUP')}" | Get-ADUser -Properties Name,SamAccountName,EmailAddress,Department | Select-Object Name,SamAccountName,EmailAddress,Department | Export-Csv -Path "./${block.getFieldValue('GROUP')}_members.csv" -NoTypeInformation\n`;
+          } else {
+            code += `Get-ADGroupMember -Identity "${block.getFieldValue('GROUP')}" | Get-ADUser -Properties Name,SamAccountName,EmailAddress | Format-Table Name,SamAccountName,EmailAddress\n`;
+          }
+          break;
+        case "search_ad_objects":
+          const objectType = block.getFieldValue('OBJECTTYPE');
+          if (objectType === 'All') {
+            code += `Get-ADObject -Filter "Name -like '${block.getFieldValue('SEARCHTERM')}'" -Properties * | Format-Table Name,ObjectClass,DistinguishedName\n`;
+          } else {
+            code += `Get-ADObject -Filter "Name -like '${block.getFieldValue('SEARCHTERM')}'" -Properties * | Where-Object { $_.ObjectClass -eq '${objectType}' } | Format-Table Name,DistinguishedName\n`;
+          }
+          break;
+        case "export_group_membership":
+          code += `Get-ADPrincipalGroupMembership -Identity "${block.getFieldValue('USER')}" | Select-Object Name,GroupCategory,GroupScope | Export-Csv -Path "./${block.getFieldValue('USER')}_groups.csv" -NoTypeInformation\n`;
+          break;
+        case "check_password_expiry":
+          code += `$user = Get-ADUser -Identity "${block.getFieldValue('USER')}" -Properties "PasswordLastSet","PasswordNeverExpires","msDS-UserPasswordExpiryTimeComputed"
+$expireDate = [datetime]::FromFileTime($user."msDS-UserPasswordExpiryTimeComputed")
+$today = Get-Date
+$daysUntilExpiry = ($expireDate - $today).Days
+
+if ($user.PasswordNeverExpires) {
+    Write-Host "Password for ${block.getFieldValue('USER')} never expires."
+} elseif ($daysUntilExpiry -le ${block.getFieldValue('DAYS')}) {
+    Write-Host "WARNING: Password for ${block.getFieldValue('USER')} will expire in $daysUntilExpiry days on $expireDate"
+} else {
+    Write-Host "Password for ${block.getFieldValue('USER')} will expire in $daysUntilExpiry days on $expireDate"
+}\n`;
+          break;
+        case "create_user_from_template":
+          code += `# Get template user properties
+$templateUser = Get-ADUser -Identity "${block.getFieldValue('TEMPLATEUSER')}" -Properties *
+$newUserParams = @{
+    Name = "${block.getFieldValue('NEWUSER')}"
+    SamAccountName = "${block.getFieldValue('NEWUSER')}"
+    Path = $templateUser.DistinguishedName.Substring($templateUser.DistinguishedName.IndexOf(',') + 1)
+    Department = $templateUser.Department
+    Company = $templateUser.Company
+    Title = $templateUser.Title
+    Manager = $templateUser.Manager
+    Office = $templateUser.Office
+    Enabled = $true
+}
+# Create the new user
+New-ADUser @newUserParams
+
+# Copy group memberships
+Get-ADPrincipalGroupMembership -Identity "${block.getFieldValue('TEMPLATEUSER')}" | 
+    Where-Object { $_.Name -ne "Domain Users" } | 
+    ForEach-Object { Add-ADGroupMember -Identity $_ -Members "${block.getFieldValue('NEWUSER')}" }\n`;
+          break;
+        case "nested_group_membership":
+          if (block.getFieldValue('TRANSITIVE') === 'TRUE') {
+            code += `# Get all groups that this group is a member of (transitive)
+Get-ADGroup -Identity "${block.getFieldValue('GROUP')}" -Properties MemberOf | 
+    Select-Object -ExpandProperty MemberOf | 
+    Get-ADObject -Properties * | 
+    ForEach-Object { 
+        $groupDN = $_
+        # Recursively get parent groups
+        function Get-ParentGroups {
+            param($DN)
+            Get-ADObject -Identity $DN -Properties MemberOf | 
+                Select-Object -ExpandProperty MemberOf | 
+                ForEach-Object {
+                    Get-ADObject -Identity $_ -Properties Name,ObjectClass | 
+                        Select-Object Name,ObjectClass,DistinguishedName
+                    Get-ParentGroups -DN $_
+                }
+        }
+        Get-ADObject -Identity $groupDN -Properties Name,ObjectClass | 
+            Select-Object Name,ObjectClass,DistinguishedName
+        Get-ParentGroups -DN $groupDN
+    } | Sort-Object Name -Unique | Format-Table Name,ObjectClass\n`;
+          } else {
+            code += `# Get direct group memberships only
+Get-ADGroup -Identity "${block.getFieldValue('GROUP')}" -Properties MemberOf | 
+    Select-Object -ExpandProperty MemberOf | 
+    Get-ADObject -Properties Name,ObjectClass | 
+    Select-Object Name,ObjectClass,DistinguishedName | 
+    Format-Table Name,ObjectClass\n`;
+          }
+          break;
+        case "check_locked_accounts":
+          code += `# Find locked accounts in specified OU
+$searchBase = "OU=${block.getFieldValue('OU')},DC=example,DC=com"
+$lockedAccounts = Search-ADAccount -LockedOut -SearchBase $searchBase
+if ($lockedAccounts) {
+    Write-Host "Found $(($lockedAccounts | Measure-Object).Count) locked accounts:"
+    $lockedAccounts | Select-Object Name,SamAccountName,LockedOut,LastLogonDate | Format-Table
+    
+    # Export to CSV for reporting
+    $date = Get-Date -Format "yyyy-MM-dd-HHmm"
+    $lockedAccounts | Select-Object Name,SamAccountName,LockedOut,LastLogonDate | 
+        Export-Csv -Path "./Locked_Accounts_$date.csv" -NoTypeInformation
+    Write-Host "Exported results to ./Locked_Accounts_$date.csv"
+} else {
+    Write-Host "No locked accounts found in OU: ${block.getFieldValue('OU')}"
+}\n`;
+          break;
+        case "get_inactive_computers":
+          code += `# Find inactive computer accounts
+$cutoffDate = (Get-Date).AddDays(-${block.getFieldValue('DAYS')})
+$inactiveComputers = Get-ADComputer -Filter {LastLogonTimeStamp -lt $cutoffDate -and Enabled -eq $true} -Properties Name,LastLogonTimeStamp,OperatingSystem,Description,Location
+
+if ($inactiveComputers) {
+    Write-Host "Found $(($inactiveComputers | Measure-Object).Count) inactive computer accounts (not logged in for ${block.getFieldValue('DAYS')}+ days):"
+    $inactiveComputers | ForEach-Object {
+        # Convert LastLogonTimestamp to readable date
+        $_ | Add-Member -MemberType NoteProperty -Name "LastLogon" -Value ([datetime]::FromFileTime($_.lastLogonTimestamp))
+        $_
+    } | Select-Object Name,LastLogon,OperatingSystem,Description | Format-Table
+    
+    # Export to CSV for reporting
+    $date = Get-Date -Format "yyyy-MM-dd"
+    $inactiveComputers | Select-Object Name,DistinguishedName,Enabled,LastLogon,OperatingSystem,Description |
+        Export-Csv -Path "./InactiveComputers_${block.getFieldValue('DAYS')}days_$date.csv" -NoTypeInformation
+    Write-Host "Exported results to ./InactiveComputers_${block.getFieldValue('DAYS')}days_$date.csv"
+} else {
+    Write-Host "No inactive computer accounts found."
+}\n`;
+          break;
+        case "generate_user_report":
+          const reportType = block.getFieldValue('REPORTTYPE');
+          const outputFormat = block.getFieldValue('OUTPUT');
+          
+          code += `# Generate comprehensive user report
+$reportDate = Get-Date -Format "yyyy-MM-dd"
+$reportName = "${reportType}_Report_$reportDate"
+$users = Get-ADUser -Filter * -Properties Name,SamAccountName,Enabled,PasswordLastSet,LastLogonDate,PasswordNeverExpires,LockedOut,EmailAddress,Department,Title,Manager,MemberOf
+
+Write-Host "Generating ${reportType} report for all users..."
+
+`;
+
+          if (reportType === 'LastLogon') {
+            code += `$processedUsers = $users | Select-Object Name,SamAccountName,Enabled,LastLogonDate,@{
+    Name = "DaysSinceLogon"
+    Expression = { if ($_.LastLogonDate) { 
+        [math]::Round((New-TimeSpan -Start $_.LastLogonDate -End (Get-Date)).TotalDays) 
+    } else { "Never" } }
+} | Sort-Object DaysSinceLogon -Descending
+`;
+          } else if (reportType === 'AccountStatus') {
+            code += `$processedUsers = $users | Select-Object Name,SamAccountName,Enabled,LockedOut,@{
+    Name = "AccountStatus"
+    Expression = { 
+        if (-not $_.Enabled) { "Disabled" }
+        elseif ($_.LockedOut) { "Locked" }
+        else { "Active" }
+    }
+},EmailAddress,Department,Title
+`;
+          } else if (reportType === 'PasswordAge') {
+            code += `$processedUsers = $users | Select-Object Name,SamAccountName,PasswordLastSet,PasswordNeverExpires,@{
+    Name = "PasswordAge"
+    Expression = { if ($_.PasswordLastSet) { 
+        [math]::Round((New-TimeSpan -Start $_.PasswordLastSet -End (Get-Date)).TotalDays) 
+    } else { "Never" } }
+},@{
+    Name = "Status"
+    Expression = { 
+        if ($_.PasswordNeverExpires) { "Never Expires" }
+        elseif (-not $_.PasswordLastSet) { "Password Not Set" }
+        elseif ([math]::Round((New-TimeSpan -Start $_.PasswordLastSet -End (Get-Date)).TotalDays) -gt 90) { "Expired" }
+        else { "Valid" }
+    }
+} | Sort-Object PasswordAge -Descending
+`;
+          } else if (reportType === 'Groups') {
+            code += `$processedUsers = @()
+foreach ($user in $users) {
+    $groups = Get-ADPrincipalGroupMembership -Identity $user.SamAccountName | Select-Object -ExpandProperty Name
+    $groupsString = $groups -join "; "
+    
+    $processedUsers += [PSCustomObject]@{
+        Name = $user.Name
+        SamAccountName = $user.SamAccountName
+        Department = $user.Department
+        Title = $user.Title
+        GroupCount = $groups.Count
+        Groups = $groupsString
+    }
+}
+$processedUsers = $processedUsers | Sort-Object GroupCount -Descending
+`;
+          }
+
+          if (outputFormat === 'CSV') {
+            code += `$processedUsers | Export-Csv -Path "./$reportName.csv" -NoTypeInformation
+Write-Host "Report exported to ./$reportName.csv"
+`;
+          } else if (outputFormat === 'HTML') {
+            code += `$htmlHeader = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>$reportName</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { text-align: left; padding: 8px; border: 1px solid #ddd; }
+        th { background-color: #0078d7; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        h1 { color: #0078d7; }
+    </style>
+</head>
+<body>
+    <h1>$reportName</h1>
+    <p>Generated: $(Get-Date)</p>
+"@
+
+$htmlFooter = @"
+</body>
+</html>
+"@
+
+$htmlBody = $processedUsers | ConvertTo-Html -Fragment
+
+$htmlHeader + $htmlBody + $htmlFooter | Out-File "./$reportName.html"
+Write-Host "Report exported to ./$reportName.html"
+`;
+          } else {
+            code += `$processedUsers | Format-Table
+Write-Host "Report generated and displayed in console"
+`;
+          }
+          
+          break;
+        case "reset_account_lockout":
+          code += `# Reset the account lockout counter for a user
+$PDC = (Get-ADDomain).PDCEmulator
+$user = Get-ADUser "${block.getFieldValue('USER')}"
+Set-ADUser -Identity $user.DistinguishedName -Replace @{badPwdCount=0} -Server $PDC
+Write-Host "Reset bad password count for ${block.getFieldValue('USER')}"
+
+$userAfter = Get-ADUser "${block.getFieldValue('USER')}" -Properties LockedOut
+if ($userAfter.LockedOut) {
+    Unlock-ADAccount -Identity $user.DistinguishedName
+    Write-Host "Unlocked account for ${block.getFieldValue('USER')}"
+} else {
+    Write-Host "Account was not locked."
+}
+
+Write-Host "Account lockout counter has been reset for ${block.getFieldValue('USER')}"
+\n`;
+          break;
+      }
+
+      const nextBlock = block.getNextBlock();
+      if (nextBlock) {
+        code += generateBlockCodeRecursive(nextBlock);
+      }
+      return code;
+    }
+
+    function createModal(title) {
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      
+      const content = document.createElement('div');
+      content.className = 'modal-content';
+      
+      const header = document.createElement('div');
+      header.className = 'modal-header';
+      
+      const titleElement = document.createElement('h3');
+      titleElement.className = 'modal-title';
+      titleElement.textContent = title;
+      
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'close-btn';
+      closeBtn.innerHTML = '&times;';
+      closeBtn.onclick = function() {
+        document.body.removeChild(modal);
+      };
+      
+      header.appendChild(titleElement);
+      header.appendChild(closeBtn);
+      content.appendChild(header);
+      modal.appendChild(content);
+      
+      return modal;
+    }
+
+    window.simulate = function simulate() {
+      const code = generatePowerShellCode();
+      if (!code || code.trim() === "# Generated by BlockShell AD Tool\n# Lab: Lab 1: User Account Management\n# Date:") {
+        showAppNotification("No script to show. Please add some blocks first.", "warning");
+        return;
+      }
+      
+      const modal = createModal('Generated PowerShell Script');
+      
+      const codeBlock = document.createElement('div');
+      codeBlock.className = 'code-block';
+      const pre = document.createElement('pre');
+      pre.textContent = code;
+      hljs.highlightElement(pre);
+      codeBlock.appendChild(pre);
+      
+      const copyBtn = document.createElement('button');
+      copyBtn.textContent = 'Copy to Clipboard';
+      copyBtn.style.marginTop = '15px';
+      copyBtn.onclick = function() {
+        navigator.clipboard.writeText(code).then(() => {
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyBtn.textContent = 'Copy to Clipboard';
+          }, 2000);
+        });
+      };
+      
+      modal.querySelector('.modal-content').appendChild(codeBlock);
+      modal.querySelector('.modal-content').appendChild(copyBtn);
+      
+      document.body.appendChild(modal);
+    };
+
+    window.download = function download() {
+      const code = generatePowerShellCode();
+      if (!code || code.trim() === "# Generated by BlockShell AD Tool\n# Lab: Lab 1: User Account Management\n# Date:") {
+        showAppNotification("Nothing to download. Please add some blocks first.", "warning");
+        return;
+      }
+      
+      const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'ad_script.ps1';
+      link.click();
+      
+      showAppNotification("Script downloaded successfully!", "success");
+    };
+    
+    // Clear workspace functions
+    window.clearWorkspace = function() {
+      document.getElementById('confirmationDialog').style.display = 'flex';
+    };
+    
+    function confirmClearWorkspace() {
+      workspace.clear();
+      document.getElementById('confirmationDialog').style.display = 'none';
+      showAppNotification('Workspace cleared', 'success');
+      checkProgress(); // Reset progress
+    }
+    
+    function cancelClearWorkspace() {
+      document.getElementById('confirmationDialog').style.display = 'none';
+    }
+    
+    // App notification function
+    function showAppNotification(message, type = 'info') {
+      const notification = document.getElementById('appNotification');
+      notification.textContent = message;
+      notification.className = 'app-notification';
+      notification.classList.add(type);
+      notification.style.display = 'block';
+      
+      // Animate in
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 10);
+      
+      // Animate out after 3 seconds
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+          notification.style.display = 'none';
+        }, 300);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

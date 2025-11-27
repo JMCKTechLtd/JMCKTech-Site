@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 130: Configure YUM Repositories on node2</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step-bg: #3a3a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--redhat-dark);
+        }
+
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: normal;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--redhat-accent);
+            transition: width 0.3s ease;
+        }
+
+        #progress-text {
+            font-size: 0.9em;
+            margin-top: 5px;
+            color: #ccc;
+        }
+
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .requirement-checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            border: 1px solid #666;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 0.8em;
+        }
+
+        .requirement-item.completed {
+            color: var(--redhat-accent);
+        }
+
+        .requirement-item.completed .requirement-checkbox {
+            background: var(--redhat-accent);
+            border-color: var(--redhat-accent);
+            color: #fff;
+        }
+
+        .requirement-label {
+            flex: 1;
+        }
+
+        .guide-step {
+            background: #2c2c2c;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #555;
+        }
+
+        .guide-step.current {
+            background: var(--current-step-bg);
+            border-left-color: var(--redhat-blue);
+        }
+
+        .guide-step.completed {
+            border-left-color: var(--redhat-accent);
+            opacity: 0.9;
+        }
+
+        .guide-step h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            background: #444;
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+
+        .hint-box {
+            background: rgba(0, 122, 204, 0.1);
+            padding: 8px 10px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-blue);
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+
+        .file-content {
+            background: #1f1f1f;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .completion-message {
+            background: rgba(76, 175, 80, 0.15);
+            border-left: 4px solid var(--redhat-accent);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .completion-message h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+        }
+
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+        }
+
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+
+        .success {
+            color: var(--redhat-accent);
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .guide-panel,
+            .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 130: Configure YUM Repositories on node2</h1>
+    </div>
+
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>
+                    On <strong>node2.domain15.example.com</strong> (Part 2 –
+                    Task 2 <em>[Installing and Updating Software Packages]</em>),
+                    configure your system to use the following HTTP repositories:
+                </p>
+                <ul>
+                    <li><code>http://utility.domain15.example.com/BaseOS</code></li>
+                    <li><code>http://utility.domain15.example.com/AppStream</code></li>
+                </ul>
+                <p>
+                    Also configure the GPG key for both repositories:
+                </p>
+                <ul>
+                    <li><code>http://utility.domain15.example.com/RPM-GPG-KEY-redhat-release</code></li>
+                </ul>
+                <p>
+                    In the real exam, this is done by editing
+                    <code>/etc/yum.repos.d/redhat.repo</code>.
+                </p>
+                <p><strong>Time Estimate:</strong> 5–10 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Configuration Requirements</h4>
+                <div class="requirement-item" id="req-baseos-appstream">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>BaseOS</code> and <code>AppStream</code> repos
+                        defined in <code>/etc/yum.repos.d/redhat.repo</code>
+                        with correct <code>baseurl</code> values
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-gpgkey">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>gpgcheck=1</code> enabled and
+                        <code>gpgkey</code> set to
+                        <code>http://utility.domain15.example.com/RPM-GPG-KEY-redhat-release</code>
+                        for both repos
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-yum-clean">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>yum clean all</code> executed to refresh metadata
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-yum-repolist">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>yum repolist</code> run and shows
+                        <code>BaseOS</code> and <code>AppStream</code> enabled
+                    </span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>
+                    This lab mirrors RHCSA <strong>Question 130</strong> /
+                    <strong>Task 2 [Installing and Updating Software Packages]</strong>
+                    on <strong>node2</strong>.
+                </p>
+                <p>
+                    In the real exam, you would typically edit
+                    <code>/etc/yum.repos.d/redhat.repo</code> with
+                    <code>vim</code> or another text editor.
+                </p>
+                <p>
+                    The simulated terminal on the right validates the key
+                    commands you must run.
+                </p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Edit /etc/yum.repos.d/redhat.repo
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>
+                    Use <code>vim</code> to create or edit
+                    <code>/etc/yum.repos.d/redhat.repo</code> so it defines
+                    the <code>BaseOS</code> and <code>AppStream</code>
+                    repositories with the required URLs and GPG key.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command:</strong>
+                </div>
+                <div class="command-hint">
+                    vim /etc/yum.repos.d/redhat.repo
+                </div>
+                <p>Inside the editor, ensure the file contains at least:</p>
+                <div class="file-content">
+[BaseOS]
+name=BaseOS
+baseurl=http://utility.domain15.example.com/BaseOS
+enabled=1
+gpgcheck=1
+gpgkey=http://utility.domain15.example.com/RPM-GPG-KEY-redhat-release
+
+[AppStream]
+name=AppStream
+baseurl=http://utility.domain15.example.com/AppStream
+enabled=1
+gpgcheck=1
+gpgkey=http://utility.domain15.example.com/RPM-GPG-KEY-redhat-release
+                </div>
+                <div class="concept">
+                    <h4>Repo configuration file</h4>
+                    <p>
+                        Files under <code>/etc/yum.repos.d/</code> define YUM /
+                        DNF repositories. Each section configures a named repo
+                        with <code>baseurl</code>, <code>enabled</code>,
+                        <code>gpgcheck</code> and <code>gpgkey</code>.
+                    </p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Clean YUM metadata
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    After changing repo configuration, clean any cached metadata
+                    so the system uses the new URLs:
+                </p>
+                <div class="command-hint">
+                    yum clean all
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Verify enabled repositories
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Verify that the new repositories are enabled and reachable:
+                </p>
+                <div class="command-hint">
+                    yum repolist
+                </div>
+                <div class="concept">
+                    <h4>RHCSA-style verification</h4>
+                    <p>
+                        In the exam, running <code>yum repolist</code> is a
+                        quick way to prove that your repository configuration is
+                        valid and that required repos are enabled.
+                    </p>
+                </div>
+            </div>
+
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>
+                    You have:
+                </p>
+                <ul>
+                    <li>Configured <code>/etc/yum.repos.d/redhat.repo</code> on <strong>node2</strong> with <code>BaseOS</code> and <code>AppStream</code> repositories.</li>
+                    <li>Set <code>gpgcheck=1</code> and configured the GPG key URL for both repos.</li>
+                    <li>Cleaned YUM metadata and verified the repositories using <code>yum repolist</code>.</li>
+                </ul>
+                <p>
+                    This completes RHCSA-style
+                    <strong>Question 130 – Task 2 [Installing and Updating Software Packages]</strong>.
+                </p>
+                <p>You can now move on to the next lab.</p>
+            </div>
+        </div>
+
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@node2 ~]#</span> Welcome to RHCSA Lab 130: Configure YUM Repositories on node2</div>
+                <div><span class="prompt">[root@node2 ~]#</span> Follow the steps on the left. Commands are simulated for this lab.</div>
+                <div><span class="prompt">[root@node2 ~]#</span> Current step: edit /etc/yum.repos.d/redhat.repo</div>
+                <div><span class="prompt">[root@node2 ~]#</span> Type: <code>vim /etc/yum.repos.d/redhat.repo</code></div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@node2 ~]#</span>
+                <input id="command-input" type="text" placeholder="Type the command shown in the current step." autofocus/>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+
+    // Lab state
+    const configState = {
+        reposConfigured: false,
+        gpgConfigured: false,
+        yumCleaned: false,
+        repolistChecked: false
+    };
+
+    const stepCommands = {
+        1: ['vim /etc/yum.repos.d/redhat.repo'],
+        2: ['yum clean all'],
+        3: ['yum repolist']
+    };
+
+    function addTerminalOutput(text) {
+        const line = document.createElement('div');
+        line.innerHTML = text;
+        terminalOutput.appendChild(line);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    function updateRequirements() {
+        if (configState.reposConfigured) {
+            const item = document.getElementById('req-baseos-appstream');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.gpgConfigured) {
+            const item = document.getElementById('req-gpgkey');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.yumCleaned) {
+            const item = document.getElementById('req-yum-clean');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.repolistChecked) {
+            const item = document.getElementById('req-yum-repolist');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        const completedCount = Object.values(configState).filter(Boolean).length;
+        const total = Object.keys(configState).length;
+        const percent = (completedCount / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.textContent = Math.round(percent) + '% Complete';
+
+        if (completedCount === total) {
+            completionMessage.style.display = 'block';
+        }
+    }
+
+    function completeStep(step) {
+        if (step !== currentStep) return;
+
+        const stepElement = document.getElementById('step' + step);
+        if (!stepElement) return;
+
+        stepElement.classList.remove('current');
+        stepElement.classList.add('completed');
+        const statusSpan = stepElement.querySelector('.step-status');
+        statusSpan.textContent = 'Completed';
+        statusSpan.className = 'step-status status-completed';
+
+        currentStep++;
+        const nextStep = document.getElementById('step' + currentStep);
+        if (nextStep) {
+            nextStep.classList.add('current');
+            const nextStatus = nextStep.querySelector('.step-status');
+            nextStatus.textContent = 'Current Step';
+            nextStatus.className = 'step-status status-current';
+            addTerminalOutput(
+                `<span class="prompt">[root@node2 ~]#</span> Step ${step} completed. Moving to step ${currentStep}.`
+            );
+            const hints = stepCommands[currentStep];
+            if (hints && hints.length > 0) {
+                addTerminalOutput(
+                    `<span class="prompt">[root@node2 ~]#</span> Next: <code>${hints[0]}</code>`
+                );
+            }
+        } else {
+            addTerminalOutput(
+                `<span class="prompt">[root@node2 ~]#</span> All steps completed. Review the summary on the left.`
+            );
+        }
+    }
+
+    const commands = {
+        vim: (args) => {
+            const full = ['vim'].concat(args).join(' ');
+            if (full === stepCommands[1][0]) {
+                if (currentStep !== 1) {
+                    return '<span class="error">This command belongs to Step 1. Please follow the steps in order.</span>';
+                }
+                // Assume user edited the repo file correctly
+                configState.reposConfigured = true;
+                configState.gpgConfigured = true;
+                updateRequirements();
+                completeStep(1);
+                return `[simulated] Opened /etc/yum.repos.d/redhat.repo in vim.
+[simulated] Repo file now contains BaseOS and AppStream entries with correct baseurl, gpgcheck=1 and gpgkey.`;
+            }
+            return 'For this lab, use:<br><code>vim /etc/yum.repos.d/redhat.repo</code>';
+        },
+
+        yum: (args) => {
+            const full = ['yum'].concat(args).join(' ');
+            if (full === stepCommands[2][0]) {
+                if (currentStep < 2) {
+                    return '<span class="error">Configure the repositories first before cleaning metadata.</span>';
+                }
+                configState.yumCleaned = true;
+                updateRequirements();
+                completeStep(2);
+                return `Loaded plugins: fastestmirror
+Cleaning repos: BaseOS AppStream
+Cleaning up list of fastest mirrors`;
+            }
+            if (full === stepCommands[3][0]) {
+                if (currentStep < 3) {
+                    return '<span class="error">Run <code>yum clean all</code> before verifying the repository list.</span>';
+                }
+                configState.repolistChecked = true;
+                updateRequirements();
+                completeStep(3);
+                return `Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+repo id       repo name
+BaseOS        BaseOS
+AppStream     AppStream
+repolist: 4305`;
+            }
+            return 'For this lab, use:<br><code>yum clean all</code><br>or<br><code>yum repolist</code>';
+        },
+
+        clear: () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+
+        help: () => {
+            return `Available commands in this lab:
+- vim /etc/yum.repos.d/redhat.repo
+- yum clean all
+- yum repolist
+- clear
+- help`;
+        }
+    };
+
+    function executeCommand(input) {
+        const trimmed = input.trim();
+        if (!trimmed) return;
+
+        commandHistory.push(trimmed);
+        historyIndex = commandHistory.length;
+
+        addTerminalOutput(`<span class="prompt">[root@node2 ~]#</span> ${trimmed}`);
+
+        const parts = trimmed.split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+
+        if (commands[cmd]) {
+            const result = commands[cmd](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${cmd}: command not found`);
+            addTerminalOutput('Type "help" to see the simulated commands available in this lab.');
+        }
+    }
+
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) historyIndex--;
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex] || '';
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        }
+    });
+
+    // Initialise progress UI
+    updateRequirements();
+</script>
+</body>
+</html>
+0

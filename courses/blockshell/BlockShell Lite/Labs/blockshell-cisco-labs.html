@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockShell Cisco: IOS Networking Labs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <style>
+    :root {
+      --primary-color: #0078d7;
+      --secondary-color: #107c10;
+      --accent-color: #8661c5;
+      --danger-color: #d13438;
+      --warning-color: #ffb900;
+      --text-color: #2c3e50;
+      --light-bg: #f8f9fa;
+      --border-color: #eaecef;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(to bottom, var(--light-bg), #eef1f5);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-color);
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    header {
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 120, 215, 0.1);
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+      border-radius: 2px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-top: 8px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    #lab-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #lab-header {
+      background: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .lab-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .lab-progress {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-bar {
+      width: 200px;
+      height: 8px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: var(--primary-color);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    #lab-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #instructions-panel {
+      width: 300px;
+      background: white;
+      padding: 20px;
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.03);
+    }
+
+    #blockly-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #blockly-toolbar {
+      padding: 10px 20px;
+      display: flex;
+      gap: 10px;
+      background-color: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    #blocklyDiv {
+      height: calc(100% - 60px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 120, 215, 0.3);
+    }
+
+    button.secondary {
+      background-color: var(--secondary-color);
+    }
+
+    button.secondary:hover {
+      background-color: #0a6b0a;
+    }
+
+    button.danger {
+      background-color: var(--danger-color);
+    }
+
+    button.danger:hover {
+      background-color: #b32d30;
+    }
+
+    button.warning {
+      background-color: var(--warning-color);
+      color: #333;
+    }
+
+    button.warning:hover {
+      background-color: #e6a200;
+    }
+
+    .lab-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .lab-tab {
+      padding: 8px 16px;
+      background: #f1f5f9;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .lab-tab.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .task {
+      background: #f1f5f9;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border-left: 3px solid var(--primary-color);
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .task.completed {
+      background: #e6f7e6;
+      border-left-color: var(--secondary-color);
+    }
+
+    .task h4 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .task p {
+      margin: 0;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .task-icon {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: white;
+      font-size: 12px;
+    }
+
+    .task.completed .task-icon {
+      background: var(--secondary-color);
+    }
+
+    #feedback {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      background: #f8f9fa;
+      border: 1px solid var(--border-color);
+    }
+
+    .feedback-success {
+      background: #e6f7e6;
+      border-color: var(--secondary-color);
+      color: #0a6b0a;
+    }
+
+    .feedback-warning {
+      background: #fff8e6;
+      border-color: var(--warning-color);
+      color: #856404;
+    }
+
+    .feedback-error {
+      background: #fdeaea;
+      border-color: var(--danger-color);
+      color: #b32d30;
+    }
+
+    .blocklyToolboxDiv {
+      border-right: 1px solid var(--border-color) !important;
+    }
+
+    .blocklyMainBackground {
+      stroke-width: 0;
+    }
+
+    .blocklyFlyoutBackground {
+      fill: var(--light-bg);
+    }
+
+    .modal {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--text-color);
+      font-size: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .code-block {
+      background-color: var(--light-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 15px;
+      overflow-x: auto;
+      font-family: Consolas, Monaco, "Andale Mono", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      z-index: 1000;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .zoom-btn {
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+
+    .zoom-btn:hover {
+      background-color: var(--light-bg);
+    }
+
+    .zoom-btn:first-child {
+      border-bottom: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <h1>BlockShell Cisco: IOS Networking Labs</h1>
+      <div class="subtitle">Visual Cisco IOS Configuration Builder for Network Administration</div>
+    </header>
+
+    <div id="lab-container">
+      <div id="lab-header">
+        <div class="lab-title">Lab 1: Basic Device Configuration</div>
+        <div class="lab-progress">
+          <span>Progress:</span>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+          <span id="progress-text">0/4</span>
+        </div>
+      </div>
+
+      <div id="lab-content">
+        <div id="instructions-panel">
+          <div class="lab-tabs">
+            <div class="lab-tab active" onclick="switchLab('lab1')">Lab 1</div>
+            <div class="lab-tab" onclick="switchLab('lab2')">Lab 2</div>
+            <div class="lab-tab" onclick="switchLab('lab3')">Lab 3</div>
+            <div class="lab-tab" onclick="switchLab('lab4')">Lab 4</div>
+          </div>
+
+          <div id="lab1-instructions" class="lab-instructions">
+            <h3>🔧 Basic Device Configuration</h3>
+            <p>Learn how to configure basic settings on Cisco devices.</p>
+            
+            <div class="task" id="lab1-task1">
+              <h4><span class="task-icon">1</span> Configure Hostname</h4>
+              <p>Use the <strong>Set Hostname</strong> block to set the device hostname to <code>Router1</code>.</p>
+            </div>
+            
+            <div class="task" id="lab1-task2">
+              <h4><span class="task-icon">2</span> Set Banner</h4>
+              <p>Configure a MOTD banner with the message "Unauthorized Access Prohibited" using the <strong>Set Banner</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab1-task3">
+              <h4><span class="task-icon">3</span> Configure Interface</h4>
+              <p>Configure interface GigabitEthernet0/1 with IP address 192.168.1.1/24 and enable it using the <strong>Configure Interface</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab1-task4">
+              <h4><span class="task-icon">4</span> Save Configuration</h4>
+              <p>Save the running configuration to startup configuration using the <strong>Save Configuration</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="lab2-instructions" class="lab-instructions" style="display: none;">
+            <h3>🔄 Routing Configuration</h3>
+            <p>Learn how to configure routing protocols on Cisco devices.</p>
+            
+            <div class="task" id="lab2-task1">
+              <h4><span class="task-icon">1</span> Configure Static Route</h4>
+              <p>Use the <strong>Configure Static Route</strong> block to create a static route for network 10.0.0.0/8 with next hop 192.168.1.254.</p>
+            </div>
+            
+            <div class="task" id="lab2-task2">
+              <h4><span class="task-icon">2</span> Configure OSPF</h4>
+              <p>Configure OSPF process 1 with network 192.168.1.0/24 in area 0 using the <strong>Configure OSPF</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab2-task3">
+              <h4><span class="task-icon">3</span> Configure EIGRP</h4>
+              <p>Configure EIGRP AS 100 with network 192.168.1.0 using the <strong>Configure EIGRP</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab2-task4">
+              <h4><span class="task-icon">4</span> Show Routing Table</h4>
+              <p>Display the IP routing table using the <strong>Show IP Route</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="lab3-instructions" class="lab-instructions" style="display: none;">
+            <h3>🔒 Security Configuration</h3>
+            <p>Learn how to implement security measures on Cisco devices.</p>
+            
+            <div class="task" id="lab3-task1">
+              <h4><span class="task-icon">1</span> Configure SSH</h4>
+              <p>Use the <strong>Configure SSH</strong> block to set up SSH version 2 with domain "example.com".</p>
+            </div>
+            
+            <div class="task" id="lab3-task2">
+              <h4><span class="task-icon">2</span> Configure Access List</h4>
+              <p>Create an extended access list 100 to permit TCP traffic from any source to any destination using the <strong>Configure Access List</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab3-task3">
+              <h4><span class="task-icon">3</span> Configure Port Security</h4>
+              <p>Configure port security on interface GigabitEthernet0/1 with a maximum of 1 MAC address using the <strong>Configure Port Security</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab3-task4">
+              <h4><span class="task-icon">4</span> Configure AAA</h4>
+              <p>Set up AAA authentication with a RADIUS server at 192.168.1.100 using the <strong>Configure AAA</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="lab4-instructions" class="lab-instructions" style="display: none;">
+            <h3>🔄 Switching Configuration</h3>
+            <p>Learn how to configure switching features on Cisco devices.</p>
+            
+            <div class="task" id="lab4-task1">
+              <h4><span class="task-icon">1</span> Configure VLAN</h4>
+              <p>Use the <strong>Configure VLAN</strong> block to create VLAN 10 with name "Management".</p>
+            </div>
+            
+            <div class="task" id="lab4-task2">
+              <h4><span class="task-icon">2</span> Configure VLAN Access Port</h4>
+              <p>Configure interface GigabitEthernet0/2 as an access port in VLAN 10 using the <strong>Configure VLAN Access</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab4-task3">
+              <h4><span class="task-icon">3</span> Configure VLAN Trunk</h4>
+              <p>Configure interface GigabitEthernet0/3 as a trunk port with native VLAN 1 using the <strong>Configure VLAN Trunk</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab4-task4">
+              <h4><span class="task-icon">4</span> Show VLAN Information</h4>
+              <p>Display VLAN brief information using the <strong>Show VLAN Brief</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="feedback"></div>
+        </div>
+
+        <div id="blockly-area">
+          <div id="blockly-toolbar">
+            <button onclick="simulate()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 10 4 15 9 20"></polyline>
+                <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+              </svg>
+              Show Script
+            </button>
+            <button onclick="download()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download Script
+            </button>
+            <button class="secondary" onclick="checkProgress()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              Check Progress
+            </button>
+            <button class="danger" onclick="clearWorkspace()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Clear Workspace
+            </button>
+          </div>
+          <div id="blocklyDiv"></div>
+          <div class="zoom-controls">
+            <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+            <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <xml id="toolbox" style="display:none">
+    <category name="Device Basics" colour="180">
+      <block type="enable_privileged_mode">
+        <tooltip>Enable privileged (enable) mode with password. Command: enable secret</tooltip>
+      </block>
+      <block type="configure_terminal">
+        <tooltip>Enter global configuration mode. Command: configure terminal</tooltip>
+      </block>
+      <block type="set_hostname">
+        <tooltip>Set device hostname. Command: hostname</tooltip>
+      </block>
+      <block type="set_banner">
+        <tooltip>Set banner message of the day. Command: banner motd</tooltip>
+      </block>
+      <block type="save_config">
+        <tooltip>Save running configuration to startup configuration. Command: write memory</tooltip>
+      </block>
+      <block type="reload_device">
+        <tooltip>Reload the device (reboot). Command: reload</tooltip>
+      </block>
+      <block type="show_version">
+        <tooltip>Display device hardware and software information. Command: show version</tooltip>
+      </block>
+      <block type="show_running_config">
+        <tooltip>Display current running configuration. Command: show running-config</tooltip>
+      </block>
+      <block type="show_startup_config">
+        <tooltip>Display saved startup configuration. Command: show startup-config</tooltip>
+      </block>
+      <block type="show_clock">
+        <tooltip>Display device date and time. Command: show clock</tooltip>
+      </block>
+    </category>
+    <category name="Interface Config" colour="210">
+      <block type="configure_interface">
+        <tooltip>Configure interface IP address and state. Commands: interface, ip address, shutdown/no shutdown</tooltip>
+      </block>
+      <block type="configure_vlan">
+        <tooltip>Create and configure VLAN. Commands: vlan, interface vlan</tooltip>
+      </block>
+      <block type="configure_port_channel">
+        <tooltip>Configure port-channel (EtherChannel). Commands: interface port-channel, channel-group</tooltip>
+      </block>
+      <block type="configure_subinterface">
+        <tooltip>Configure subinterface with VLAN encapsulation. Commands: interface, encapsulation dot1Q</tooltip>
+      </block>
+      <block type="configure_loopback">
+        <tooltip>Configure loopback interface. Commands: interface loopback</tooltip>
+      </block>
+      <block type="show_interfaces">
+        <tooltip>Show detailed interface information. Command: show interfaces</tooltip>
+      </block>
+      <block type="show_ip_interface_brief">
+        <tooltip>Show brief IP interface status. Command: show ip interface brief</tooltip>
+      </block>
+      <block type="show_interface_status">
+        <tooltip>Show interface status summary. Command: show interface status</tooltip>
+      </block>
+      <block type="show_vlan_brief">
+        <tooltip>Show VLAN brief information. Command: show vlan brief</tooltip>
+      </block>
+      <block type="show_spanning_tree">
+        <tooltip>Show spanning tree information. Command: show spanning-tree</tooltip>
+      </block>
+    </category>
+    <category name="IP Routing" colour="160">
+      <block type="configure_static_route">
+        <tooltip>Configure static route. Command: ip route</tooltip>
+      </block>
+      <block type="configure_ospf">
+        <tooltip>Configure OSPF routing protocol. Commands: router ospf, network</tooltip>
+      </block>
+      <block type="configure_eigrp">
+        <tooltip>Configure EIGRP routing protocol. Commands: router eigrp, network</tooltip>
+      </block>
+      <block type="configure_bgp">
+        <tooltip>Configure BGP routing protocol. Commands: router bgp, neighbor</tooltip>
+      </block>
+      <block type="configure_rip">
+        <tooltip>Configure RIP routing protocol. Commands: router rip, network</tooltip>
+      </block>
+      <block type="show_ip_route">
+        <tooltip>Show IP routing table. Command: show ip route</tooltip>
+      </block>
+      <block type="show_ip_protocols">
+        <tooltip>Show active IP routing protocols. Command: show ip protocols</tooltip>
+      </block>
+      <block type="show_ip_ospf_neighbor">
+        <tooltip>Show OSPF neighbor information. Command: show ip ospf neighbor</tooltip>
+      </block>
+      <block type="show_ip_bgp_summary">
+        <tooltip>Show BGP summary information. Command: show ip bgp summary</tooltip>
+      </block>
+      <block type="show_ip_eigrp_neighbors">
+        <tooltip>Show EIGRP neighbor information. Command: show ip eigrp neighbors</tooltip>
+      </block>
+    </category>
+    <category name="Security" colour="230">
+      <block type="configure_access_list">
+        <tooltip>Configure access control list. Command: access-list</tooltip>
+      </block>
+      <block type="configure_nat">
+        <tooltip>Configure Network Address Translation. Commands: ip nat inside/outside</tooltip>
+      </block>
+      <block type="configure_ssh">
+        <tooltip>Configure SSH server. Commands: ip domain-name, crypto key generate, ip ssh</tooltip>
+      </block>
+      <block type="configure_telnet">
+        <tooltip>Configure telnet access. Commands: line vty, password, transport input</tooltip>
+      </block>
+      <block type="configure_aaa">
+        <tooltip>Configure AAA (Authentication, Authorization, Accounting). Commands: aaa new-model, radius-server</tooltip>
+      </block>
+      <block type="configure_port_security">
+        <tooltip>Configure port security on interface. Commands: switchport port-security</tooltip>
+      </block>
+      <block type="show_access_lists">
+        <tooltip>Show configured access lists. Command: show access-list</tooltip>
+      </block>
+      <block type="show_ssh_sessions">
+        <tooltip>Show active SSH sessions. Command: show ssh</tooltip>
+      </block>
+      <block type="show_telnet_sessions">
+        <tooltip>Show active telnet sessions. Command: show users</tooltip>
+      </block>
+      <block type="show_port_security">
+        <tooltip>Show port security configuration. Command: show port-security</tooltip>
+      </block>
+    </category>
+    <category name="Switching" colour="130">
+      <block type="configure_vtp">
+        <tooltip>Configure VLAN Trunking Protocol. Commands: vtp domain, vtp mode</tooltip>
+      </block>
+      <block type="configure_stp">
+        <tooltip>Configure Spanning Tree Protocol. Commands: spanning-tree mode</tooltip>
+      </block>
+      <block type="configure_etherchannel">
+        <tooltip>Configure EtherChannel settings. Commands: interface port-channel, channel-protocol</tooltip>
+      </block>
+      <block type="configure_vlan_access">
+        <tooltip>Configure interface as access port. Commands: switchport mode access</tooltip>
+      </block>
+      <block type="configure_vlan_trunk">
+        <tooltip>Configure interface as trunk port. Commands: switchport mode trunk</tooltip>
+      </block>
+      <block type="show_mac_address_table">
+        <tooltip>Show MAC address table. Command: show mac address-table</tooltip>
+      </block>
+      <block type="show_arp_table">
+        <tooltip>Show ARP table. Command: show arp</tooltip>
+      </block>
+      <block type="show_vtp_status">
+        <tooltip>Show VTP status information. Command: show vtp status</tooltip>
+      </block>
+      <block type="show_etherchannel_summary">
+        <tooltip>Show EtherChannel summary. Command: show etherchannel summary</tooltip>
+      </block>
+      <block type="show_cdp_neighbors">
+        <tooltip>Show CDP neighbor information. Command: show cdp neighbors</tooltip>
+      </block>
+    </category>
+    <category name="Troubleshooting" colour="90">
+      <block type="ping_test">
+        <tooltip>Test connectivity with ping. Command: ping</tooltip>
+      </block>
+      <block type="traceroute_test">
+        <tooltip>Trace route to destination. Command: traceroute</tooltip>
+      </block>
+      <block type="debug_commands">
+        <tooltip>Enable debugging for specific protocol. Command: debug</tooltip>
+      </block>
+      <block type="show_logs">
+        <tooltip>Show system logs. Command: show logging</tooltip>
+      </block>
+      <block type="show_processes">
+        <tooltip>Show system processes. Command: show processes</tooltip>
+      </block>
+      <block type="show_tech_support">
+        <tooltip>Show technical support information. Command: show tech-support</tooltip>
+      </block>
+      <block type="clear_counters">
+        <tooltip>Clear interface counters. Command: clear counters</tooltip>
+      </block>
+      <block type="clear_arp_cache">
+        <tooltip>Clear ARP cache. Command: clear arp-cache</tooltip>
+      </block>
+      <block type="test_connectivity">
+        <tooltip>Test TCP connectivity to specific port. Command: telnet</tooltip>
+      </block>
+      <block type="capture_packets">
+        <tooltip>Capture packets on interface. Commands: monitor capture</tooltip>
+      </block>
+    </category>
+  </xml>
+
+  <script>
+    // Declare workspace variable at the top level
+    let workspace;
+    let currentLab = 'lab1';
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize Blockly workspace
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        trashcan: true,
+        grid: {
+          spacing: 25,
+          length: 3,
+          colour: '#e0e0e0',
+          snap: true
+        },
+        zoom: {
+          controls: true,
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2
+        },
+        theme: {
+          'blockStyles': {
+            'colour_blocks': { 'colourPrimary': '#CF63CF', 'colourSecondary': '#C94FC9', 'colourTertiary': '#BD42BD' },
+            'list_blocks': { 'colourPrimary': '#9966FF', 'colourSecondary': '#855CD6', 'colourTertiary': '#774DCB' },
+            'logic_blocks': { 'colourPrimary': '#4C97FF', 'colourSecondary': '#4280D7', 'colourTertiary': '#3373CC' },
+            'loop_blocks': { 'colourPrimary': '#0fBD8C', 'colourSecondary': '#0DA57A', 'colourTertiary': '#0B8E69' },
+            'math_blocks': { 'colourPrimary': '#59C059', 'colourSecondary': '#46B946', 'colourTertiary': '#389438' },
+            'procedure_blocks': { 'colourPrimary': '#FF6680', 'colourSecondary': '#FF4D6A', 'colourTertiary': '#FF3355' },
+            'text_blocks': { 'colourPrimary': '#FFBF00', 'colourSecondary': '#E6AC00', 'colourTertiary': '#CC9900' },
+            'variable_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' },
+            'variable_dynamic_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' }
+          },
+          'componentStyles': {
+            'workspaceBackgroundColour': '#F9FAFB',
+            'toolboxBackgroundColour': '#FFFFFF',
+            'toolboxForegroundColour': '#1E293B',
+            'flyoutBackgroundColour': '#F1F5F9',
+            'flyoutForegroundColour': '#1E293B',
+            'flyoutOpacity': 0.9,
+            'scrollbarColour': '#CCCCCC',
+            'scrollbarOpacity': 0.6
+          }
+        }
+      });
+
+      // Define all blocks with enhanced tooltips
+      Blockly.defineBlocksWithJsonArray([
+        // Device Basics
+        {
+          "type": "enable_privileged_mode",
+          "message0": "Enable Privileged Mode Password: %1",
+          "args0": [
+            {"type": "field_input", "name": "PASSWORD", "text": "cisco"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 180,
+          "tooltip": "Enable privileged (enable) mode with password.\n\nCommand: enable secret [password]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_terminal",
+          "message0": "Configure Terminal",
+          "previousStatement": null, "nextStatement": null, "colour": 180,
+          "tooltip": "Enter global configuration mode.\n\nCommand: configure terminal",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_hostname",
+          "message0": "Set Hostname %1",
+          "args0": [
+            {"type": "field_input", "name": "HOSTNAME", "text": "Router1"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 180,
+          "tooltip": "Set device hostname.\n\nCommand: hostname [name]",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_banner",
+          "message0": "Set Banner %1 Type: %2",
+          "args0": [
+            {"type": "field_input", "name": "MESSAGE", "text": "Unauthorized Access Prohibited"},
+            {"type": "field_dropdown", "name": "TYPE", "options": [
+              ["MOTD", "motd"], ["Login", "login"], ["Exec", "exec"]
+            ]}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 180,
+          "tooltip": "Set banner message of the day.\n\nCommand: banner [type] ^ [message] ^",
+          "helpUrl": ""
+        },
+        {
+          "type": "save_config",
+          "message0": "Save Configuration",
+          "previousStatement": null, "nextStatement": null, "colour": 180,
+          "tooltip": "Save running configuration to startup configuration.\n\nCommand: write memory",
+          "helpUrl": ""
+        },
+        {
+          "type": "reload_device",
+          "message0": "Reload Device Confirm: %1",
+          "args0": [
+            {"type": "field_checkbox", "name": "CONFIRM", "checked": false}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 180,
+          "tooltip": "Reload the device (reboot).\n\nCommand: reload",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_version",
+          "message0": "Show Version",
+          "previousStatement": null, "nextStatement": null, "colour": 180,
+          "tooltip": "Display device hardware and software information.\n\nCommand: show version",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_running_config",
+          "message0": "Show Running Config",
+          "previousStatement": null, "nextStatement": null, "colour": 180,
+          "tooltip": "Display current running configuration.\n\nCommand: show running-config",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_startup_config",
+          "message0": "Show Startup Config",
+          "previousStatement": null, "nextStatement": null, "colour": 180,
+          "tooltip": "Display saved startup configuration.\n\nCommand: show startup-config",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_clock",
+          "message0": "Show Clock",
+          "previousStatement": null, "nextStatement": null, "colour": 180,
+          "tooltip": "Display device date and time.\n\nCommand: show clock",
+          "helpUrl": ""
+        },
+
+        // Interface Configuration
+        {
+          "type": "configure_interface",
+          "message0": "Configure Interface %1 IP: %2 Mask: %3 State: %4",
+          "args0": [
+            {"type": "field_input", "name": "INTERFACE", "text": "GigabitEthernet0/1"},
+            {"type": "field_input", "name": "IP", "text": "192.168.1.1"},
+            {"type": "field_input", "name": "MASK", "text": "255.255.255.0"},
+            {"type": "field_dropdown", "name": "STATE", "options": [
+              ["Up", "up"], ["Down", "down"]
+            ]}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 210,
+          "tooltip": "Configure interface IP address and state.\n\nCommands:\ninterface [name]\nip address [ip] [mask]\n[no] shutdown",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_vlan",
+          "message0": "Configure VLAN %1 Name: %2 IP: %3 Mask: %4",
+          "args0": [
+            {"type": "field_number", "name": "VLAN", "value": 10},
+            {"type": "field_input", "name": "NAME", "text": "Management"},
+            {"type": "field_input", "name": "IP", "text": ""},
+            {"type": "field_input", "name": "MASK", "text": ""}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 210,
+          "tooltip": "Create and configure VLAN.\n\nCommands:\nvlan [number]\nname [name]\ninterface vlan [number]\nip address [ip] [mask]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_port_channel",
+          "message0": "Configure Port-Channel %1 Protocol: %2 Interfaces: %3",
+          "args0": [
+            {"type": "field_number", "name": "CHANNEL", "value": 1},
+            {"type": "field_dropdown", "name": "PROTOCOL", "options": [
+              ["LACP", "lacp"], ["PAgP", "pagp"], ["Static", "on"]
+            ]},
+            {"type": "field_input", "name": "INTERFACES", "text": "Gig0/1-2"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 210,
+          "tooltip": "Configure port-channel (EtherChannel).\n\nCommands:\ninterface port-channel [number]\ninterface [name]\nchannel-group [number] mode [protocol]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_subinterface",
+          "message0": "Configure Subinterface %1.%2 IP: %3 Mask: %4 VLAN: %5",
+          "args0": [
+            {"type": "field_input", "name": "INTERFACE", "text": "GigabitEthernet0/1"},
+            {"type": "field_number", "name": "SUBNUM", "value": 1},
+            {"type": "field_input", "name": "IP", "text": "192.168.1.1"},
+            {"type": "field_input", "name": "MASK", "text": "255.255.255.0"},
+            {"type": "field_number", "name": "VLAN", "value": 10}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 210,
+          "tooltip": "Configure subinterface with VLAN encapsulation.\n\nCommands:\ninterface [name].[number]\nencapsulation dot1Q [vlan]\nip address [ip] [mask]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_loopback",
+          "message0": "Configure Loopback %1 IP: %2 Mask: %3",
+          "args0": [
+            {"type": "field_number", "name": "NUMBER", "value": 0},
+            {"type": "field_input", "name": "IP", "text": "1.1.1.1"},
+            {"type": "field_input", "name": "MASK", "text": "255.255.255.255"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 210,
+          "tooltip": "Configure loopback interface.\n\nCommands:\ninterface loopback [number]\nip address [ip] [mask]",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_interfaces",
+          "message0": "Show Interface %1",
+          "args0": [
+            {"type": "field_input", "name": "INTERFACE", "text": ""}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 210,
+          "tooltip": "Show detailed interface information.\n\nCommand: show interfaces [name]",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_ip_interface_brief",
+          "message0": "Show IP Interface Brief",
+          "previousStatement": null, "nextStatement": null, "colour": 210,
+          "tooltip": "Show brief IP interface status.\n\nCommand: show ip interface brief",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_interface_status",
+          "message0": "Show Interface Status",
+          "previousStatement": null, "nextStatement": null, "colour": 210,
+          "tooltip": "Show interface status summary.\n\nCommand: show interface status",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_vlan_brief",
+          "message0": "Show VLAN Brief",
+          "previousStatement": null, "nextStatement": null, "colour": 210,
+          "tooltip": "Show VLAN brief information.\n\nCommand: show vlan brief",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_spanning_tree",
+          "message0": "Show Spanning Tree %1",
+          "args0": [
+            {"type": "field_input", "name": "VLAN", "text": ""}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 210,
+          "tooltip": "Show spanning tree information.\n\nCommand: show spanning-tree [vlan]",
+          "helpUrl": ""
+        },
+
+        // IP Routing
+        {
+          "type": "configure_static_route",
+          "message0": "Configure Static Route Network: %1 Mask: %2 Next Hop: %3",
+          "args0": [
+            {"type": "field_input", "name": "NETWORK", "text": "10.0.0.0"},
+            {"type": "field_input", "name": "MASK", "text": "255.0.0.0"},
+            {"type": "field_input", "name": "NEXTHOP", "text": "192.168.1.254"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 160,
+          "tooltip": "Configure static route.\n\nCommand: ip route [network] [mask] [next-hop]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_ospf",
+          "message0": "Configure OSPF Process ID: %1 Network: %2 Area: %3",
+          "args0": [
+            {"type": "field_number", "name": "PROCESS_ID", "value": 1},
+            {"type": "field_input", "name": "NETWORK", "text": "192.168.1.0"},
+            {"type": "field_input", "name": "AREA", "text": "0"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 160,
+          "tooltip": "Configure OSPF routing protocol.\n\nCommands:\nrouter ospf [process-id]\nnetwork [network] [wildcard] area [area]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_eigrp",
+          "message0": "Configure EIGRP AS: %1 Network: %2",
+          "args0": [
+            {"type": "field_number", "name": "AS_NUMBER", "value": 100},
+            {"type": "field_input", "name": "NETWORK", "text": "192.168.1.0"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 160,
+          "tooltip": "Configure EIGRP routing protocol.\n\nCommands:\nrouter eigrp [as-number]\nnetwork [network]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_bgp",
+          "message0": "Configure BGP AS: %1 Neighbor: %2 Remote AS: %3",
+          "args0": [
+            {"type": "field_number", "name": "LOCAL_AS", "value": 65000},
+            {"type": "field_input", "name": "NEIGHBOR", "text": "192.168.1.2"},
+            {"type": "field_number", "name": "REMOTE_AS", "value": 65001}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 160,
+          "tooltip": "Configure BGP routing protocol.\n\nCommands:\nrouter bgp [as-number]\nneighbor [ip] remote-as [as-number]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_rip",
+          "message0": "Configure RIP Version: %1 Network: %2",
+          "args0": [
+            {"type": "field_dropdown", "name": "VERSION", "options": [
+              ["1", "1"], ["2", "2"]
+            ]},
+            {"type": "field_input", "name": "NETWORK", "text": "192.168.1.0"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 160,
+          "tooltip": "Configure RIP routing protocol.\n\nCommands:\nrouter rip\nversion [version]\nnetwork [network]",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_ip_route",
+          "message0": "Show IP Route",
+          "previousStatement": null, "nextStatement": null, "colour": 160,
+          "tooltip": "Show IP routing table.\n\nCommand: show ip route",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_ip_protocols",
+          "message0": "Show IP Protocols",
+          "previousStatement": null, "nextStatement": null, "colour": 160,
+          "tooltip": "Show active IP routing protocols.\n\nCommand: show ip protocols",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_ip_ospf_neighbor",
+          "message0": "Show IP OSPF Neighbor",
+          "previousStatement": null, "nextStatement": null, "colour": 160,
+          "tooltip": "Show OSPF neighbor information.\n\nCommand: show ip ospf neighbor",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_ip_bgp_summary",
+          "message0": "Show IP BGP Summary",
+          "previousStatement": null, "nextStatement": null, "colour": 160,
+          "tooltip": "Show BGP summary information.\n\nCommand: show ip bgp summary",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_ip_eigrp_neighbors",
+          "message0": "Show IP EIGRP Neighbors",
+          "previousStatement": null, "nextStatement": null, "colour": 160,
+          "tooltip": "Show EIGRP neighbor information.\n\nCommand: show ip eigrp neighbors",
+          "helpUrl": ""
+        },
+
+        // Security
+        {
+          "type": "configure_access_list",
+          "message0": "Configure ACL %1 Type: %2 Action: %3 Protocol: %4 Source: %5 Destination: %6",
+          "args0": [
+            {"type": "field_number", "name": "NUMBER", "value": 100},
+            {"type": "field_dropdown", "name": "TYPE", "options": [
+              ["Standard", "standard"], ["Extended", "extended"]
+            ]},
+            {"type": "field_dropdown", "name": "ACTION", "options": [
+              ["Permit", "permit"], ["Deny", "deny"]
+            ]},
+            {"type": "field_dropdown", "name": "PROTOCOL", "options": [
+              ["IP", "ip"], ["TCP", "tcp"], ["UDP", "udp"], ["ICMP", "icmp"]
+            ]},
+            {"type": "field_input", "name": "SOURCE", "text": "any"},
+            {"type": "field_input", "name": "DESTINATION", "text": "any"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 230,
+          "tooltip": "Configure access control list.\n\nCommand: access-list [number] [action] [protocol] [source] [destination]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_nat",
+          "message0": "Configure NAT %1 Inside: %2 Outside: %3 Pool: %4",
+          "args0": [
+            {"type": "field_dropdown", "name": "TYPE", "options": [
+              ["Static", "static"], ["Dynamic", "dynamic"], ["PAT", "pat"]
+            ]},
+            {"type": "field_input", "name": "INSIDE", "text": "GigabitEthernet0/1"},
+            {"type": "field_input", "name": "OUTSIDE", "text": "GigabitEthernet0/2"},
+            {"type": "field_input", "name": "POOL", "text": "192.168.1.100 192.168.1.200"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 230,
+          "tooltip": "Configure Network Address Translation.\n\nCommands:\ninterface [inside]\nip nat inside\ninterface [outside]\nip nat outside\nip nat inside source [static|dynamic|pat]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_ssh",
+          "message0": "Configure SSH %1 Domain: %2 Key: %3 Timeout: %4",
+          "args0": [
+            {"type": "field_dropdown", "name": "VERSION", "options": [
+              ["1", "1"], ["2", "2"]
+            ]},
+            {"type": "field_input", "name": "DOMAIN", "text": "example.com"},
+            {"type": "field_number", "name": "KEY", "value": 1024},
+            {"type": "field_number", "name": "TIMEOUT", "value": 60}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 230,
+          "tooltip": "Configure SSH server.\n\nCommands:\nip domain-name [name]\ncrypto key generate rsa modulus [size]\nip ssh version [version]\nip ssh time-out [seconds]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_telnet",
+          "message0": "Configure Telnet Password: %1",
+          "args0": [
+            {"type": "field_input", "name": "PASSWORD", "text": "cisco"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 230,
+          "tooltip": "Configure telnet access.\n\nCommands:\nline vty 0 4\npassword [password]\nlogin\ntransport input telnet",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_aaa",
+          "message0": "Configure AAA %1 Server: %2 Key: %3",
+          "args0": [
+            {"type": "field_dropdown", "name": "TYPE", "options": [
+              ["Authentication", "auth"], ["Authorization", "authz"], ["Accounting", "acct"]
+            ]},
+            {"type": "field_input", "name": "SERVER", "text": "192.168.1.100"},
+            {"type": "field_input", "name": "KEY", "text": "cisco123"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 230,
+          "tooltip": "Configure AAA (Authentication, Authorization, Accounting).\n\nCommands:\naaa new-model\naaa authentication|authorization|accounting [settings]\nradius-server host [ip] key [key]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_port_security",
+          "message0": "Configure Port Security %1 Max MACs: %2 Violation: %3",
+          "args0": [
+            {"type": "field_input", "name": "INTERFACE", "text": "GigabitEthernet0/1"},
+            {"type": "field_number", "name": "MAX", "value": 1},
+            {"type": "field_dropdown", "name": "VIOLATION", "options": [
+              ["Shutdown", "shutdown"], ["Restrict", "restrict"], ["Protect", "protect"]
+            ]}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 230,
+          "tooltip": "Configure port security on interface.\n\nCommands:\ninterface [name]\nswitchport port-security\nswitchport port-security maximum [number]\nswitchport port-security violation [action]",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_access_lists",
+          "message0": "Show Access Lists %1",
+          "args0": [
+            {"type": "field_input", "name": "NUMBER", "text": ""}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 230,
+          "tooltip": "Show configured access lists.\n\nCommand: show access-list [number]",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_ssh_sessions",
+          "message0": "Show SSH Sessions",
+          "previousStatement": null, "nextStatement": null, "colour": 230,
+          "tooltip": "Show active SSH sessions.\n\nCommand: show ssh",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_telnet_sessions",
+          "message0": "Show Telnet Sessions",
+          "previousStatement": null, "nextStatement": null, "colour": 230,
+          "tooltip": "Show active telnet sessions.\n\nCommand: show users",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_port_security",
+          "message0": "Show Port Security %1",
+          "args0": [
+            {"type": "field_input", "name": "INTERFACE", "text": ""}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 230,
+          "tooltip": "Show port security configuration.\n\nCommand: show port-security interface [name]",
+          "helpUrl": ""
+        },
+
+        // Switching
+        {
+          "type": "configure_vtp",
+          "message0": "Configure VTP Domain: %1 Mode: %2 Password: %3",
+          "args0": [
+            {"type": "field_input", "name": "DOMAIN", "text": "example"},
+            {"type": "field_dropdown", "name": "MODE", "options": [
+              ["Server", "server"], ["Client", "client"], ["Transparent", "transparent"]
+            ]},
+            {"type": "field_input", "name": "PASSWORD", "text": "cisco"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 130,
+          "tooltip": "Configure VLAN Trunking Protocol.\n\nCommands:\nvtp domain [name]\nvtp mode [mode]\nvtp password [password]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_stp",
+          "message0": "Configure STP Mode: %1 Priority: %2",
+          "args0": [
+            {"type": "field_dropdown", "name": "MODE", "options": [
+              ["PVST", "pvst"], ["Rapid PVST", "rapid-pvst"], ["MST", "mst"]
+            ]},
+            {"type": "field_number", "name": "PRIORITY", "value": 32768}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 130,
+          "tooltip": "Configure Spanning Tree Protocol.\n\nCommands:\nspanning-tree mode [mode]\nspanning-tree vlan [number] priority [value]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_etherchannel",
+          "message0": "Configure EtherChannel %1 Mode: %2",
+          "args0": [
+            {"type": "field_number", "name": "CHANNEL", "value": 1},
+            {"type": "field_dropdown", "name": "MODE", "options": [
+              ["Active", "active"], ["Passive", "passive"], ["Auto", "auto"], ["Desirable", "desirable"], ["On", "on"]
+            ]}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 130,
+          "tooltip": "Configure EtherChannel settings.\n\nCommands:\ninterface port-channel [number]\nchannel-protocol [lacp|pagp]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_vlan_access",
+          "message0": "Configure VLAN Access %1 VLAN: %2",
+          "args0": [
+            {"type": "field_input", "name": "INTERFACE", "text": "GigabitEthernet0/1"},
+            {"type": "field_number", "name": "VLAN", "value": 10}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 130,
+          "tooltip": "Configure interface as access port.\n\nCommands:\ninterface [name]\nswitchport mode access\nswitchport access vlan [number]",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_vlan_trunk",
+          "message0": "Configure VLAN Trunk %1 Native VLAN: %2 Allowed VLANs: %3",
+          "args0": [
+            {"type": "field_input", "name": "INTERFACE", "text": "GigabitEthernet0/1"},
+            {"type": "field_number", "name": "NATIVE", "value": 1},
+            {"type": "field_input", "name": "ALLOWED", "text": "all"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 130,
+          "tooltip": "Configure interface as trunk port.\n\nCommands:\ninterface [name]\nswitchport trunk encapsulation dot1q\nswitchport mode trunk\nswitchport trunk native vlan [number]\nswitchport trunk allowed vlan [list]",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_mac_address_table",
+          "message0": "Show MAC Address Table %1",
+          "args0": [
+            {"type": "field_input", "name": "VLAN", "text": ""}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 130,
+          "tooltip": "Show MAC address table.\n\nCommand: show mac address-table [vlan]",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_arp_table",
+          "message0": "Show ARP Table",
+          "previousStatement": null, "nextStatement": null, "colour": 130,
+          "tooltip": "Show ARP table.\n\nCommand: show arp",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_vtp_status",
+          "message0": "Show VTP Status",
+          "previousStatement": null, "nextStatement": null, "colour": 130,
+          "tooltip": "Show VTP status information.\n\nCommand: show vtp status",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_etherchannel_summary",
+          "message0": "Show EtherChannel Summary",
+          "previousStatement": null, "nextStatement": null, "colour": 130,
+          "tooltip": "Show EtherChannel summary.\n\nCommand: show etherchannel summary",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_cdp_neighbors",
+          "message0": "Show CDP Neighbors %1",
+          "args0": [
+            {"type": "field_input", "name": "DETAIL", "text": ""}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 130,
+          "tooltip": "Show CDP neighbor information.\n\nCommand: show cdp neighbors [detail]",
+          "helpUrl": ""
+        },
+
+        // Troubleshooting
+        {
+          "type": "ping_test",
+          "message0": "Ping Test %1 Count: %2 Size: %3",
+          "args0": [
+            {"type": "field_input", "name": "DESTINATION", "text": "192.168.1.1"},
+            {"type": "field_number", "name": "COUNT", "value": 5},
+            {"type": "field_number", "name": "SIZE", "value": 100}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 90,
+          "tooltip": "Test connectivity with ping.\n\nCommand: ping [destination] repeat [count] size [size]",
+          "helpUrl": ""
+        },
+        {
+          "type": "traceroute_test",
+          "message0": "Traceroute Test %1",
+          "args0": [
+            {"type": "field_input", "name": "DESTINATION", "text": "192.168.1.1"}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 90,
+          "tooltip": "Trace route to destination.\n\nCommand: traceroute [destination]",
+          "helpUrl": ""
+        },
+        {
+          "type": "debug_commands",
+          "message0": "Debug %1",
+          "args0": [
+            {"type": "field_dropdown", "name": "TYPE", "options": [
+              ["IP", "ip"], ["OSPF", "ospf"], ["EIGRP", "eigrp"], ["BGP", "bgp"], ["STP", "stp"]
+            ]}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 90,
+          "tooltip": "Enable debugging for specific protocol.\n\nCommand: debug [protocol]",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_logs",
+          "message0": "Show Logs %1",
+          "args0": [
+            {"type": "field_input", "name": "FILTER", "text": ""}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 90,
+          "tooltip": "Show system logs.\n\nCommand: show logging [filter]",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_processes",
+          "message0": "Show Processes %1",
+          "args0": [
+            {"type": "field_dropdown", "name": "TYPE", "options": [
+              ["CPU", "cpu"], ["Memory", "memory"], ["All", "all"]
+            ]}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 90,
+          "tooltip": "Show system processes.\n\nCommand: show processes [type]",
+          "helpUrl": ""
+        },
+        {
+          "type": "show_tech_support",
+          "message0": "Show Tech Support",
+          "previousStatement": null, "nextStatement": null, "colour": 90,
+          "tooltip": "Show technical support information.\n\nCommand: show tech-support",
+          "helpUrl": ""
+        },
+        {
+          "type": "clear_counters",
+          "message0": "Clear Counters %1",
+          "args0": [
+            {"type": "field_input", "name": "INTERFACE", "text": ""}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 90,
+          "tooltip": "Clear interface counters.\n\nCommand: clear counters [interface]",
+          "helpUrl": ""
+        },
+        {
+          "type": "clear_arp_cache",
+          "message0": "Clear ARP Cache",
+          "previousStatement": null, "nextStatement": null, "colour": 90,
+          "tooltip": "Clear ARP cache.\n\nCommand: clear arp-cache",
+          "helpUrl": ""
+        },
+        {
+          "type": "test_connectivity",
+          "message0": "Test Connectivity %1 Port: %2",
+          "args0": [
+            {"type": "field_input", "name": "DESTINATION", "text": "192.168.1.1"},
+            {"type": "field_number", "name": "PORT", "value": 80}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 90,
+          "tooltip": "Test TCP connectivity to specific port.\n\nCommand: telnet [destination] [port]",
+          "helpUrl": ""
+        },
+        {
+          "type": "capture_packets",
+          "message0": "Capture Packets %1 Count: %2 Filter: %3",
+          "args0": [
+            {"type": "field_input", "name": "INTERFACE", "text": "GigabitEthernet0/1"},
+            {"type": "field_number", "name": "COUNT", "value": 100},
+            {"type": "field_input", "name": "FILTER", "text": ""}
+          ],
+          "previousStatement": null, "nextStatement": null, "colour": 90,
+          "tooltip": "Capture packets on interface.\n\nCommands:\nmonitor capture buffer [name] buffer-size [size]\nmonitor capture point start [name] [interface] both\nshow monitor capture buffer [name] [filter]",
+          "helpUrl": ""
+        }
+      ]);
+
+      // Setup event listeners
+      document.getElementById('zoom-in').addEventListener('click', function() {
+        workspace.zoomCenter(1.2);
+      });
+
+      document.getElementById('zoom-out').addEventListener('click', function() {
+        workspace.zoomCenter(0.8);
+      });
+
+      // Pre-load example block for first lab
+      const exampleBlock = `
+        <xml xmlns="https://developers.google.com/blockly/xml">
+          <block type="set_hostname" x="50" y="50">
+            <field name="HOSTNAME">Router1</field>
+          </block>
+        </xml>
+      `;
+      Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(exampleBlock), workspace);
+    });
+
+    // Lab switching function
+    function switchLab(labId) {
+      // Update current lab
+      currentLab = labId;
+      
+      // Update lab title
+      const labTitles = {
+        'lab1': 'Lab 1: Basic Device Configuration',
+        'lab2': 'Lab 2: Routing Configuration',
+        'lab3': 'Lab 3: Security Configuration',
+        'lab4': 'Lab 4: Switching Configuration'
+      };
+      document.querySelector('.lab-title').textContent = labTitles[labId];
+      
+      // Update tab buttons
+      document.querySelectorAll('.lab-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Show/hide instructions
+      document.querySelectorAll('.lab-instructions').forEach(instructions => {
+        instructions.style.display = 'none';
+      });
+      document.getElementById(labId + '-instructions').style.display = 'block';
+      
+      // Clear feedback when switching labs
+      document.getElementById('feedback').innerHTML = '';
+      document.getElementById('feedback').className = '';
+      
+      // Reset progress
+      updateProgress(0, 4);
+    }
+
+    // Progress checking
+    function checkProgress() {
+      const blocks = workspace.getAllBlocks();
+      const feedback = document.getElementById('feedback');
+      
+      let tasks = {};
+      
+      // Define tasks for each lab
+      if (currentLab === 'lab1') {
+        tasks = {
+          task1: blocks.some(b => b.type === "set_hostname" && 
+                 b.getFieldValue('HOSTNAME') === 'Router1'),
+          task2: blocks.some(b => b.type === "set_banner" && 
+                 b.getFieldValue('MESSAGE') === 'Unauthorized Access Prohibited' &&
+                 b.getFieldValue('TYPE') === 'motd'),
+          task3: blocks.some(b => b.type === "configure_interface" && 
+                 b.getFieldValue('INTERFACE') === 'GigabitEthernet0/1' &&
+                 b.getFieldValue('IP') === '192.168.1.1' &&
+                 b.getFieldValue('MASK') === '255.255.255.0' &&
+                 b.getFieldValue('STATE') === 'up'),
+          task4: blocks.some(b => b.type === "save_config")
+        };
+      } else if (currentLab === 'lab2') {
+        tasks = {
+          task1: blocks.some(b => b.type === "configure_static_route" && 
+                 b.getFieldValue('NETWORK') === '10.0.0.0' && 
+                 b.getFieldValue('MASK') === '255.0.0.0' &&
+                 b.getFieldValue('NEXTHOP') === '192.168.1.254'),
+          task2: blocks.some(b => b.type === "configure_ospf" && 
+                 b.getFieldValue('PROCESS_ID') === '1' && 
+                 b.getFieldValue('NETWORK') === '192.168.1.0' &&
+                 b.getFieldValue('AREA') === '0'),
+          task3: blocks.some(b => b.type === "configure_eigrp" && 
+                 b.getFieldValue('AS_NUMBER') === '100' && 
+                 b.getFieldValue('NETWORK') === '192.168.1.0'),
+          task4: blocks.some(b => b.type === "show_ip_route")
+        };
+      } else if (currentLab === 'lab3') {
+        tasks = {
+          task1: blocks.some(b => b.type === "configure_ssh" && 
+                 b.getFieldValue('VERSION') === '2' && 
+                 b.getFieldValue('DOMAIN') === 'example.com'),
+          task2: blocks.some(b => b.type === "configure_access_list" && 
+                 b.getFieldValue('NUMBER') === '100' && 
+                 b.getFieldValue('TYPE') === 'extended' &&
+                 b.getFieldValue('ACTION') === 'permit' &&
+                 b.getFieldValue('PROTOCOL') === 'tcp' &&
+                 b.getFieldValue('SOURCE') === 'any' &&
+                 b.getFieldValue('DESTINATION') === 'any'),
+          task3: blocks.some(b => b.type === "configure_port_security" && 
+                 b.getFieldValue('INTERFACE') === 'GigabitEthernet0/1' && 
+                 b.getFieldValue('MAX') === '1'),
+          task4: blocks.some(b => b.type === "configure_aaa" && 
+                 b.getFieldValue('SERVER') === '192.168.1.100')
+        };
+      } else if (currentLab === 'lab4') {
+        tasks = {
+          task1: blocks.some(b => b.type === "configure_vlan" && 
+                 b.getFieldValue('VLAN') === '10' && 
+                 b.getFieldValue('NAME') === 'Management'),
+          task2: blocks.some(b => b.type === "configure_vlan_access" && 
+                 b.getFieldValue('INTERFACE') === 'GigabitEthernet0/2' && 
+                 b.getFieldValue('VLAN') === '10'),
+          task3: blocks.some(b => b.type === "configure_vlan_trunk" && 
+                 b.getFieldValue('INTERFACE') === 'GigabitEthernet0/3' && 
+                 b.getFieldValue('NATIVE') === '1'),
+          task4: blocks.some(b => b.type === "show_vlan_brief")
+        };
+      }
+      
+      // Update UI
+      Object.keys(tasks).forEach(taskId => {
+        document.getElementById(currentLab + '-' + taskId).classList.toggle('completed', tasks[taskId]);
+      });
+      
+      // Update progress
+      const completed = Object.values(tasks).filter(Boolean).length;
+      updateProgress(completed, 4);
+      
+      // Show feedback
+      if (completed === 4) {
+        feedback.innerHTML = '<div style="color:green;">✅ All tasks completed! Ready to generate your configuration.</div>';
+        feedback.className = 'feedback-success';
+      } else if (completed > 0) {
+        feedback.innerHTML = `<div style="color:#d35400;">⏳ Progress: ${completed}/4 tasks done</div>`;
+        feedback.className = 'feedback-warning';
+      } else {
+        feedback.innerHTML = '<div>Start building your configuration by dragging blocks from the toolbox on the left.</div>';
+        feedback.className = '';
+      }
+    }
+
+    // Update progress bar
+    function updateProgress(completed, total) {
+      const percentage = (completed / total) * 100;
+      document.querySelector('.progress-fill').style.width = `${percentage}%`;
+      document.getElementById('progress-text').textContent = `${completed}/${total}`;
+    }
+
+    // Generate Cisco IOS configuration
+    function generateCiscoCode() {
+      const blocks = workspace.getTopBlocks(true);
+      let code = "";
+      
+      // Add header
+      code += `! Generated by BlockShell Cisco Tool\n`;
+      code += `! Lab: ${document.querySelector('.lab-title').textContent}\n`;
+      code += `! Date: ${new Date().toISOString()}\n`;
+      code += `\n`;
+      
+      // Start with configuration mode
+      code += "enable\n";
+      code += "configure terminal\n\n";
+      
+      // Generate code from blocks
+      for (const block of blocks) {
+        code += generateBlockCodeRecursive(block);
+      }
+      
+      // End with saving configuration
+      code += "\nend\n";
+      code += "write memory\n";
+      code += "exit\n";
+      
+      return code.trim();
+    }
+
+    function generateBlockCodeRecursive(block) {
+      if (!block) return "";
+      let code = "";
+
+      switch (block.type) {
+        // Device Basics
+        case "enable_privileged_mode":
+          code += `! Enable privileged mode\n`;
+          code += `enable secret ${block.getFieldValue('PASSWORD')}\n`;
+          break;
+        case "configure_terminal":
+          code += `! Enter configuration mode\n`;
+          code += `configure terminal\n`;
+          break;
+        case "set_hostname":
+          code += `! Set hostname\n`;
+          code += `hostname ${block.getFieldValue('HOSTNAME')}\n`;
+          break;
+        case "set_banner":
+          code += `! Set ${block.getFieldValue('TYPE')} banner\n`;
+          code += `banner ${block.getFieldValue('TYPE')} ^\n`;
+          code += `${block.getFieldValue('MESSAGE')}\n`;
+          code += `^\n`;
+          break;
+        case "save_config":
+          code += `! Save configuration\n`;
+          code += `write memory\n`;
+          break;
+        case "reload_device":
+          if (block.getFieldValue('CONFIRM') === 'TRUE') {
+            code += `! Reload device\n`;
+            code += `reload\n`;
+          }
+          break;
+        case "show_version":
+          code += `! Show version\n`;
+          code += `show version\n`;
+          break;
+        case "show_running_config":
+          code += `! Show running configuration\n`;
+          code += `show running-config\n`;
+          break;
+        case "show_startup_config":
+          code += `! Show startup configuration\n`;
+          code += `show startup-config\n`;
+          break;
+        case "show_clock":
+          code += `! Show clock\n`;
+          code += `show clock\n`;
+          break;
+
+        // Interface Configuration
+        case "configure_interface":
+          code += `! Configure interface ${block.getFieldValue('INTERFACE')}\n`;
+          code += `interface ${block.getFieldValue('INTERFACE')}\n`;
+          code += ` ip address ${block.getFieldValue('IP')} ${block.getFieldValue('MASK')}\n`;
+          if (block.getFieldValue('STATE') === 'up') {
+            code += ` no shutdown\n`;
+          } else {
+            code += ` shutdown\n`;
+          }
+          code += `exit\n`;
+          break;
+        case "configure_vlan":
+          code += `! Configure VLAN ${block.getFieldValue('VLAN')}\n`;
+          code += `vlan ${block.getFieldValue('VLAN')}\n`;
+          code += ` name ${block.getFieldValue('NAME')}\n`;
+          code += `exit\n`;
+          if (block.getFieldValue('IP') && block.getFieldValue('MASK')) {
+            code += `interface vlan ${block.getFieldValue('VLAN')}\n`;
+            code += ` ip address ${block.getFieldValue('IP')} ${block.getFieldValue('MASK')}\n`;
+            code += ` no shutdown\n`;
+            code += `exit\n`;
+          }
+          break;
+        case "configure_port_channel":
+          code += `! Configure port-channel ${block.getFieldValue('CHANNEL')}\n`;
+          code += `interface port-channel ${block.getFieldValue('CHANNEL')}\n`;
+          code += `exit\n`;
+          const interfaces = block.getFieldValue('INTERFACES').split(',');
+          for (const intf of interfaces) {
+            code += `interface ${intf.trim()}\n`;
+            code += ` channel-group ${block.getFieldValue('CHANNEL')} mode ${block.getFieldValue('PROTOCOL')}\n`;
+            code += `exit\n`;
+          }
+          break;
+        case "configure_subinterface":
+          code += `! Configure subinterface ${block.getFieldValue('INTERFACE')}.${block.getFieldValue('SUBNUM')}\n`;
+          code += `interface ${block.getFieldValue('INTERFACE')}.${block.getFieldValue('SUBNUM')}\n`;
+          code += ` encapsulation dot1Q ${block.getFieldValue('VLAN')}\n`;
+          code += ` ip address ${block.getFieldValue('IP')} ${block.getFieldValue('MASK')}\n`;
+          code += ` no shutdown\n`;
+          code += `exit\n`;
+          break;
+        case "configure_loopback":
+          code += `! Configure loopback ${block.getFieldValue('NUMBER')}\n`;
+          code += `interface loopback ${block.getFieldValue('NUMBER')}\n`;
+          code += ` ip address ${block.getFieldValue('IP')} ${block.getFieldValue('MASK')}\n`;
+          code += ` no shutdown\n`;
+          code += `exit\n`;
+          break;
+        case "show_interfaces":
+          code += `! Show interface ${block.getFieldValue('INTERFACE') || 'all'} details\n`;
+          code += `show interfaces ${block.getFieldValue('INTERFACE') || ''}\n`;
+          break;
+        case "show_ip_interface_brief":
+          code += `! Show IP interface brief\n`;
+          code += `show ip interface brief\n`;
+          break;
+        case "show_interface_status":
+          code += `! Show interface status\n`;
+          code += `show interface status\n`;
+          break;
+        case "show_vlan_brief":
+          code += `! Show VLAN brief\n`;
+          code += `show vlan brief\n`;
+          break;
+        case "show_spanning_tree":
+          code += `! Show spanning tree\n`;
+          code += `show spanning-tree ${block.getFieldValue('VLAN') ? 'vlan ' + block.getFieldValue('VLAN') : ''}\n`;
+          break;
+
+        // IP Routing
+        case "configure_static_route":
+          code += `! Configure static route\n`;
+          code += `ip route ${block.getFieldValue('NETWORK')} ${block.getFieldValue('MASK')} ${block.getFieldValue('NEXTHOP')}\n`;
+          break;
+        case "configure_ospf":
+          code += `! Configure OSPF\n`;
+          code += `router ospf ${block.getFieldValue('PROCESS_ID')}\n`;
+          code += ` network ${block.getFieldValue('NETWORK')} 0.0.0.255 area ${block.getFieldValue('AREA')}\n`;
+          code += `exit\n`;
+          break;
+        case "configure_eigrp":
+          code += `! Configure EIGRP\n`;
+          code += `router eigrp ${block.getFieldValue('AS_NUMBER')}\n`;
+          code += ` network ${block.getFieldValue('NETWORK')}\n`;
+          code += `exit\n`;
+          break;
+        case "configure_bgp":
+          code += `! Configure BGP\n`;
+          code += `router bgp ${block.getFieldValue('LOCAL_AS')}\n`;
+          code += ` neighbor ${block.getFieldValue('NEIGHBOR')} remote-as ${block.getFieldValue('REMOTE_AS')}\n`;
+          code += `exit\n`;
+          break;
+        case "configure_rip":
+          code += `! Configure RIP\n`;
+          code += `router rip\n`;
+          code += ` version ${block.getFieldValue('VERSION')}\n`;
+          code += ` network ${block.getFieldValue('NETWORK')}\n`;
+          code += `exit\n`;
+          break;
+        case "show_ip_route":
+          code += `! Show IP route\n`;
+          code += `show ip route\n`;
+          break;
+        case "show_ip_protocols":
+          code += `! Show IP protocols\n`;
+          code += `show ip protocols\n`;
+          break;
+        case "show_ip_ospf_neighbor":
+          code += `! Show OSPF neighbors\n`;
+          code += `show ip ospf neighbor\n`;
+          break;
+        case "show_ip_bgp_summary":
+          code += `! Show BGP summary\n`;
+          code += `show ip bgp summary\n`;
+          break;
+        case "show_ip_eigrp_neighbors":
+          code += `! Show EIGRP neighbors\n`;
+          code += `show ip eigrp neighbors\n`;
+          break;
+
+        // Security
+        case "configure_access_list":
+          code += `! Configure ${block.getFieldValue('TYPE')} access-list ${block.getFieldValue('NUMBER')}\n`;
+          if (block.getFieldValue('TYPE') === 'standard') {
+            code += `access-list ${block.getFieldValue('NUMBER')} ${block.getFieldValue('ACTION')} ${block.getFieldValue('SOURCE')}\n`;
+          } else {
+            code += `access-list ${block.getFieldValue('NUMBER')} ${block.getFieldValue('ACTION')} ${block.getFieldValue('PROTOCOL')} ${block.getFieldValue('SOURCE')} ${block.getFieldValue('DESTINATION')}\n`;
+          }
+          break;
+        case "configure_nat":
+          code += `! Configure NAT\n`;
+          code += `interface ${block.getFieldValue('INSIDE')}\n`;
+          code += ` ip nat inside\n`;
+          code += `exit\n`;
+          code += `interface ${block.getFieldValue('OUTSIDE')}\n`;
+          code += ` ip nat outside\n`;
+          code += `exit\n`;
+          if (block.getFieldValue('TYPE') === 'static') {
+            code += `ip nat inside source static ${block.getFieldValue('POOL')}\n`;
+          } else if (block.getFieldValue('TYPE') === 'dynamic') {
+            code += `ip nat pool NAT_POOL ${block.getFieldValue('POOL')} netmask 255.255.255.0\n`;
+            code += `ip nat inside source list NAT_ACL pool NAT_POOL\n`;
+          } else { // PAT
+            code += `ip nat inside source list NAT_ACL interface ${block.getFieldValue('OUTSIDE')} overload\n`;
+          }
+          break;
+        case "configure_ssh":
+          code += `! Configure SSH\n`;
+          code += `ip domain-name ${block.getFieldValue('DOMAIN')}\n`;
+          code += `crypto key generate rsa general-keys modulus ${block.getFieldValue('KEY')}\n`;
+          code += `ip ssh version ${block.getFieldValue('VERSION')}\n`;
+          code += `ip ssh time-out ${block.getFieldValue('TIMEOUT')}\n`;
+          code += `line vty 0 4\n`;
+          code += ` transport input ssh\n`;
+          code += `exit\n`;
+          break;
+        case "configure_telnet":
+          code += `! Configure telnet\n`;
+          code += `line vty 0 4\n`;
+          code += ` password ${block.getFieldValue('PASSWORD')}\n`;
+          code += ` login\n`;
+          code += ` transport input telnet\n`;
+          code += `exit\n`;
+          break;
+        case "configure_aaa":
+          code += `! Configure AAA ${block.getFieldValue('TYPE')}\n`;
+          code += `aaa new-model\n`;
+          if (block.getFieldValue('TYPE') === 'auth') {
+            code += `aaa authentication login default group radius local\n`;
+          } else if (block.getFieldValue('TYPE') === 'authz') {
+            code += `aaa authorization exec default group radius local\n`;
+          } else { // accounting
+            code += `aaa accounting exec default start-stop group radius\n`;
+          }
+          code += `radius-server host ${block.getFieldValue('SERVER')} key ${block.getFieldValue('KEY')}\n`;
+          break;
+        case "configure_port_security":
+          code += `! Configure port security\n`;
+          code += `interface ${block.getFieldValue('INTERFACE')}\n`;
+          code += ` switchport port-security\n`;
+          code += ` switchport port-security maximum ${block.getFieldValue('MAX')}\n`;
+          code += ` switchport port-security violation ${block.getFieldValue('VIOLATION')}\n`;
+          code += `exit\n`;
+          break;
+        case "show_access_lists":
+          code += `! Show access lists\n`;
+          code += `show access-list ${block.getFieldValue('NUMBER') || ''}\n`;
+          break;
+        case "show_ssh_sessions":
+          code += `! Show SSH sessions\n`;
+          code += `show ssh\n`;
+          break;
+        case "show_telnet_sessions":
+          code += `! Show telnet sessions\n`;
+          code += `show users\n`;
+          break;
+        case "show_port_security":
+          code += `! Show port security\n`;
+          code += `show port-security interface ${block.getFieldValue('INTERFACE') || ''}\n`;
+          break;
+
+        // Switching
+        case "configure_vtp":
+          code += `! Configure VTP\n`;
+          code += `vtp domain ${block.getFieldValue('DOMAIN')}\n`;
+          code += `vtp mode ${block.getFieldValue('MODE')}\n`;
+          code += `vtp password ${block.getFieldValue('PASSWORD')}\n`;
+          break;
+        case "configure_stp":
+          code += `! Configure STP\n`;
+          code += `spanning-tree mode ${block.getFieldValue('MODE')}\n`;
+          code += `spanning-tree vlan 1 priority ${block.getFieldValue('PRIORITY')}\n`;
+          break;
+        case "configure_etherchannel":
+          code += `! Configure EtherChannel\n`;
+          code += `interface port-channel ${block.getFieldValue('CHANNEL')}\n`;
+          code += ` channel-protocol ${block.getFieldValue('MODE') === 'lacp' ? 'lacp' : 'pagp'}\n`;
+          code += `exit\n`;
+          break;
+        case "configure_vlan_access":
+          code += `! Configure VLAN access port\n`;
+          code += `interface ${block.getFieldValue('INTERFACE')}\n`;
+          code += ` switchport mode access\n`;
+          code += ` switchport access vlan ${block.getFieldValue('VLAN')}\n`;
+          code += `exit\n`;
+          break;
+        case "configure_vlan_trunk":
+          code += `! Configure VLAN trunk port\n`;
+          code += `interface ${block.getFieldValue('INTERFACE')}\n`;
+          code += ` switchport trunk encapsulation dot1q\n`;
+          code += ` switchport mode trunk\n`;
+          code += ` switchport trunk native vlan ${block.getFieldValue('NATIVE')}\n`;
+          code += ` switchport trunk allowed vlan ${block.getFieldValue('ALLOWED')}\n`;
+          code += `exit\n`;
+          break;
+        case "show_mac_address_table":
+          code += `! Show MAC address table\n`;
+          code += `show mac address-table ${block.getFieldValue('VLAN') ? 'vlan ' + block.getFieldValue('VLAN') : ''}\n`;
+          break;
+        case "show_arp_table":
+          code += `! Show ARP table\n`;
+          code += `show arp\n`;
+          break;
+        case "show_vtp_status":
+          code += `! Show VTP status\n`;
+          code += `show vtp status\n`;
+          break;
+        case "show_etherchannel_summary":
+          code += `! Show EtherChannel summary\n`;
+          code += `show etherchannel summary\n`;
+          break;
+        case "show_cdp_neighbors":
+          code += `! Show CDP neighbors\n`;
+          code += `show cdp neighbors ${block.getFieldValue('DETAIL') ? 'detail' : ''}\n`;
+          break;
+
+        // Troubleshooting
+        case "ping_test":
+          code += `! Ping test\n`;
+          code += `ping ${block.getFieldValue('DESTINATION')} repeat ${block.getFieldValue('COUNT')} size ${block.getFieldValue('SIZE')}\n`;
+          break;
+        case "traceroute_test":
+          code += `! Traceroute test\n`;
+          code += `traceroute ${block.getFieldValue('DESTINATION')}\n`;
+          break;
+        case "debug_commands":
+          code += `! Debug ${block.getFieldValue('TYPE')}\n`;
+          code += `debug ${block.getFieldValue('TYPE')}\n`;
+          break;
+        case "show_logs":
+          code += `! Show logs\n`;
+          code += `show logging ${block.getFieldValue('FILTER') || ''}\n`;
+          break;
+        case "show_processes":
+          code += `! Show processes\n`;
+          if (block.getFieldValue('TYPE') === 'cpu') {
+            code += `show processes cpu\n`;
+          } else if (block.getFieldValue('TYPE') === 'memory') {
+            code += `show processes memory\n`;
+          } else {
+            code += `show processes\n`;
+          }
+          break;
+        case "show_tech_support":
+          code += `! Show tech support\n`;
+          code += `show tech-support\n`;
+          break;
+        case "clear_counters":
+          code += `! Clear counters\n`;
+          code += `clear counters ${block.getFieldValue('INTERFACE') || ''}\n`;
+          break;
+        case "clear_arp_cache":
+          code += `! Clear ARP cache\n`;
+          code += `clear arp-cache\n`;
+          break;
+        case "test_connectivity":
+          code += `! Test connectivity\n`;
+          code += `telnet ${block.getFieldValue('DESTINATION')} ${block.getFieldValue('PORT')}\n`;
+          break;
+        case "capture_packets":
+          code += `! Capture packets\n`;
+          code += `monitor capture buffer CAPTURE buffer-size ${block.getFieldValue('COUNT')}\n`;
+          code += `monitor capture point start CAPTURE ${block.getFieldValue('INTERFACE')} both\n`;
+          code += `monitor capture point stop CAPTURE\n`;
+          code += `show monitor capture buffer CAPTURE ${block.getFieldValue('FILTER') || ''}\n`;
+          break;
+      }
+
+      const nextBlock = block.getNextBlock();
+      if (nextBlock) {
+        code += generateBlockCodeRecursive(nextBlock);
+      }
+      return code;
+    }
+
+    function createModal(title) {
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      
+      const content = document.createElement('div');
+      content.className = 'modal-content';
+      
+      const header = document.createElement('div');
+      header.className = 'modal-header';
+      
+      const titleElement = document.createElement('h3');
+      titleElement.className = 'modal-title';
+      titleElement.textContent = title;
+      
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'close-btn';
+      closeBtn.innerHTML = '&times;';
+      closeBtn.onclick = function() {
+        document.body.removeChild(modal);
+      };
+      
+      header.appendChild(titleElement);
+      header.appendChild(closeBtn);
+      content.appendChild(header);
+      modal.appendChild(content);
+      
+      return modal;
+    }
+
+    window.simulate = function simulate() {
+      const code = generateCiscoCode();
+      if (!code || code.trim() === "! Generated by BlockShell Cisco Tool\n! Lab: Lab 1: Basic Device Configuration\n! Date:\nenable\nconfigure terminal\n\n\nend\nwrite memory\nexit") {
+        showNotification("No configuration to show. Please add some blocks first.");
+        return;
+      }
+      
+      const modal = createModal('Generated Cisco IOS Configuration');
+      
+      const codeBlock = document.createElement('div');
+      codeBlock.className = 'code-block';
+      const pre = document.createElement('pre');
+      pre.textContent = code;
+      hljs.highlightElement(pre);
+      codeBlock.appendChild(pre);
+      
+      const copyBtn = document.createElement('button');
+      copyBtn.textContent = 'Copy to Clipboard';
+      copyBtn.style.marginTop = '15px';
+      copyBtn.onclick = function() {
+        navigator.clipboard.writeText(code).then(() => {
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyBtn.textContent = 'Copy to Clipboard';
+          }, 2000);
+        });
+      };
+      
+      modal.querySelector('.modal-content').appendChild(codeBlock);
+      modal.querySelector('.modal-content').appendChild(copyBtn);
+      
+      document.body.appendChild(modal);
+    };
+
+    window.download = function download() {
+      const code = generateCiscoCode();
+      if (!code || code.trim() === "! Generated by BlockShell Cisco Tool\n! Lab: Lab 1: Basic Device Configuration\n! Date:\nenable\nconfigure terminal\n\n\nend\nwrite memory\nexit") {
+        showNotification("Nothing to download. Please add some blocks first.");
+        return;
+      }
+      
+      const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'cisco_config.txt';
+      link.click();
+      
+      showNotification("Configuration downloaded successfully!");
+    };
+    
+    window.clearWorkspace = function() {
+      if (confirm('Are you sure you want to clear the workspace? All blocks will be deleted.')) {
+        workspace.clear();
+        showNotification('Workspace cleared');
+        checkProgress(); // Reset progress
+      }
+    };
+    
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.className = 'notification';
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      // Animate in
+      setTimeout(() => {
+        notification.style.opacity = '1';
+      }, 10);
+      
+      // Animate out after 3 seconds
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 500);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

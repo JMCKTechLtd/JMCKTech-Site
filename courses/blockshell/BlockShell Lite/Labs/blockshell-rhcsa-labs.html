@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockShell-RH: Red Hat Linux Labs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <style>
+    :root {
+      --primary-color: #CC0000;
+      --secondary-color: #107c10;
+      --accent-color: #8661c5;
+      --danger-color: #d13438;
+      --warning-color: #ffb900;
+      --text-color: #2c3e50;
+      --light-bg: #f8f9fa;
+      --border-color: #eaecef;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(to bottom, var(--light-bg), #eef1f5);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-color);
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    header {
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      text-align: center;
+      border-bottom: 1px solid rgba(204, 0, 0, 0.1);
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+      border-radius: 2px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-top: 8px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    #lab-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #lab-header {
+      background: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .lab-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .lab-progress {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-bar {
+      width: 200px;
+      height: 8px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: var(--primary-color);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    #lab-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #instructions-panel {
+      width: 300px;
+      background: white;
+      padding: 20px;
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.03);
+    }
+
+    #blockly-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #blockly-toolbar {
+      padding: 10px 20px;
+      display: flex;
+      gap: 10px;
+      background-color: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    #blocklyDiv {
+      height: calc(100% - 60px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: #990000;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(204, 0, 0, 0.3);
+    }
+
+    button.secondary {
+      background-color: var(--secondary-color);
+    }
+
+    button.secondary:hover {
+      background-color: #0a6b0a;
+    }
+
+    button.danger {
+      background-color: var(--danger-color);
+    }
+
+    button.danger:hover {
+      background-color: #b32d30;
+    }
+
+    button.warning {
+      background-color: var(--warning-color);
+      color: #333;
+    }
+
+    button.warning:hover {
+      background-color: #e6a200;
+    }
+
+    .lab-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .lab-tab {
+      padding: 8px 16px;
+      background: #f1f5f9;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .lab-tab.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .task {
+      background: #f1f5f9;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border-left: 3px solid var(--primary-color);
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .task.completed {
+      background: #e6f7e6;
+      border-left-color: var(--secondary-color);
+    }
+
+    .task h4 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .task p {
+      margin: 0;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .task-icon {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: white;
+      font-size: 12px;
+    }
+
+    .task.completed .task-icon {
+      background: var(--secondary-color);
+    }
+
+    #feedback {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      background: #f8f9fa;
+      border: 1px solid var(--border-color);
+    }
+
+    .feedback-success {
+      background: #e6f7e6;
+      border-color: var(--secondary-color);
+      color: #0a6b0a;
+    }
+
+    .feedback-warning {
+      background: #fff8e6;
+      border-color: var(--warning-color);
+      color: #856404;
+    }
+
+    .feedback-error {
+      background: #fdeaea;
+      border-color: var(--danger-color);
+      color: #b32d30;
+    }
+
+    .blocklyToolboxDiv {
+      border-right: 1px solid var(--border-color) !important;
+    }
+
+    .blocklyMainBackground {
+      stroke-width: 0;
+    }
+
+    .blocklyFlyoutBackground {
+      fill: var(--light-bg);
+    }
+
+    .modal {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--text-color);
+      font-size: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .code-block {
+      background-color: var(--light-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 15px;
+      overflow-x: auto;
+      font-family: Consolas, Monaco, "Andale Mono", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      z-index: 1000;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .zoom-btn {
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+
+    .zoom-btn:hover {
+      background-color: var(--light-bg);
+    }
+
+    .zoom-btn:first-child {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Confirmation dialog styles */
+    .confirmation-dialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .confirmation-content {
+      background-color: white;
+      padding: 25px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .confirmation-title {
+      margin: 0 0 15px 0;
+      color: var(--text-color);
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .confirmation-message {
+      margin: 0 0 20px 0;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .confirmation-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .confirmation-buttons button {
+      min-width: 80px;
+    }
+
+    .app-notification {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transition: all 0.3s ease;
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    .app-notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .app-notification.success {
+      background-color: var(--secondary-color);
+    }
+
+    .app-notification.warning {
+      background-color: var(--warning-color);
+      color: #333;
+    }
+
+    .app-notification.error {
+      background-color: var(--danger-color);
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <h1>BlockShell-RH: Red Hat Linux Labs</h1>
+      <div class="subtitle">Visual Bash Script Builder for RHCSA Administration</div>
+    </header>
+
+    <div id="lab-container">
+      <div id="lab-header">
+        <div class="lab-title">Lab 1: User & Group Management</div>
+        <div class="lab-progress">
+          <span>Progress:</span>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+          <span id="progress-text">0/4</span>
+        </div>
+      </div>
+
+      <div id="lab-content">
+        <div id="instructions-panel">
+          <div class="lab-tabs">
+            <div class="lab-tab active" onclick="switchLab('lab1')">Lab 1</div>
+            <div class="lab-tab" onclick="switchLab('lab2')">Lab 2</div>
+            <div class="lab-tab" onclick="switchLab('lab3')">Lab 3</div>
+            <div class="lab-tab" onclick="switchLab('lab4')">Lab 4</div>
+          </div>
+
+          <div id="lab1-instructions" class="lab-instructions">
+            <h3>🔐 User & Group Management</h3>
+            <p>Learn how to create and manage users and groups in Red Hat Linux.</p>
+            
+            <div class="task" id="lab1-task1">
+              <h4><span class="task-icon">1</span> Create a new user</h4>
+              <p>Use the <strong>Add User</strong> block to create a user named <code>devuser</code> with home directory <code>/home/devuser</code> and shell <code>/bin/bash</code>.</p>
+            </div>
+            
+            <div class="task" id="lab1-task2">
+              <h4><span class="task-icon">2</span> Create a group</h4>
+              <p>Create a group named <code>developers</code> with GID <code>2001</code> using the <strong>Add Group</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab1-task3">
+              <h4><span class="task-icon">3</span> Add user to group</h4>
+              <p>Add <code>devuser</code> to the <code>developers</code> group using the <strong>Add User to Group</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab1-task4">
+              <h4><span class="task-icon">4</span> Set password policy</h4>
+              <p>Configure password policy with minimum 7 days, maximum 90 days, and warning 7 days using the <strong>Set Password Policy</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="lab2-instructions" class="lab-instructions" style="display: none;">
+            <h3>💾 Filesystem Management</h3>
+            <p>Learn how to create and manage filesystems in Red Hat Linux.</p>
+            
+            <div class="task" id="lab2-task1">
+              <h4><span class="task-icon">1</span> Create filesystem</h4>
+              <p>Create an <code>ext4</code> filesystem on <code>/dev/sdb1</code> with label <code>DATA</code> using the <strong>Create Filesystem</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab2-task2">
+              <h4><span class="task-icon">2</span> Mount filesystem</h4>
+              <p>Mount <code>/dev/sdb1</code> to <code>/mnt/data</code> with type <code>ext4</code> and make it persistent using the <strong>Mount Filesystem</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab2-task3">
+              <h4><span class="task-icon">3</span> Analyze disk usage</h4>
+              <p>Analyze disk usage for <code>/var</code> with depth <code>2</code> using the <strong>Analyze Disk</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab2-task4">
+              <h4><span class="task-icon">4</span> Create LVM</h4>
+              <p>Create an LVM volume group named <code>vg_data</code> with physical volume <code>/dev/sdc1</code> using the <strong>Create LVM</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="lab3-instructions" class="lab-instructions" style="display: none;">
+            <h3>⚙️ Service Management</h3>
+            <p>Learn how to manage services and processes in Red Hat Linux.</p>
+            
+            <div class="task" id="lab3-task1">
+              <h4><span class="task-icon">1</span> Manage service</h4>
+              <p>Start and enable the <code>httpd</code> service using the <strong>Service Action</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab3-task2">
+              <h4><span class="task-icon">2</span> Create service</h4>
+              <p>Create a custom service named <code>myapp</code> that runs <code>/usr/local/bin/myapp</code> as user <code>appuser</code> using the <strong>Create Service</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab3-task3">
+              <h4><span class="task-icon">3</span> Schedule task</h4>
+              <p>Schedule a daily backup at 2 AM running <code>/usr/local/bin/backup.sh</code> using the <strong>Schedule Task</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab3-task4">
+              <h4><span class="task-icon">4</span> Check resources</h4>
+              <p>Check memory usage using the <strong>Check Resources</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="lab4-instructions" class="lab-instructions" style="display: none;">
+            <h3>🌐 Networking & Security</h3>
+            <p>Learn how to configure networking and security in Red Hat Linux.</p>
+            
+            <div class="task" id="lab4-task1">
+              <h4><span class="task-icon">1</span> Configure network</h4>
+              <p>Configure interface <code>eth0</code> with IP <code>192.168.1.100/24</code> and gateway <code>192.168.1.1</code> using the <strong>Configure Network</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab4-task2">
+              <h4><span class="task-icon">2</span> Firewall rule</h4>
+              <p>Allow HTTP traffic (port 80/tcp) through the firewall using the <strong>Configure Firewall</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab4-task3">
+              <h4><span class="task-icon">3</span> SELinux mode</h4>
+              <p>Set SELinux to <code>enforcing</code> mode using the <strong>Set SELinux Mode</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab4-task4">
+              <h4><span class="task-icon">4</span> SSH configuration</h4>
+              <p>Disable root login via SSH using the <strong>Configure SSHD</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="feedback"></div>
+        </div>
+
+        <div id="blockly-area">
+          <div id="blockly-toolbar">
+            <button onclick="simulate()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 10 4 15 9 20"></polyline>
+                <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+              </svg>
+              Show Script
+            </button>
+            <button class="secondary" onclick="checkProgress()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              Check Progress
+            </button>
+            <button class="danger" onclick="clearWorkspace()" style="margin-left: auto;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Clear Workspace
+            </button>
+          </div>
+          <div id="blocklyDiv"></div>
+          <div class="zoom-controls">
+            <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+            <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <div id="confirmationDialog" class="confirmation-dialog" style="display: none;">
+    <div class="confirmation-content">
+      <h3 class="confirmation-title">Clear Workspace</h3>
+      <p class="confirmation-message">Are you sure you want to clear the workspace? All blocks will be deleted.</p>
+      <div class="confirmation-buttons">
+        <button class="danger" onclick="confirmClearWorkspace()">Clear</button>
+        <button class="secondary" onclick="cancelClearWorkspace()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Notification -->
+  <div id="appNotification" class="app-notification" style="display: none;"></div>
+
+  <xml id="toolbox" style="display:none">
+    <category name="User Management" colour="180">
+      <block type="add_user"></block>
+      <block type="add_group"></block>
+      <block type="add_user_to_group"></block>
+      <block type="set_password_policy"></block>
+      <block type="lock_account"></block>
+    </category>
+    <category name="Filesystems" colour="210">
+      <block type="create_filesystem"></block>
+      <block type="mount_filesystem"></block>
+      <block type="analyze_disk"></block>
+      <block type="create_lvm"></block>
+      <block type="backup_files"></block>
+    </category>
+    <category name="Services" colour="230">
+      <block type="service_action"></block>
+      <block type="create_service"></block>
+      <block type="schedule_task"></block>
+      <block type="check_resources"></block>
+      <block type="kill_process"></block>
+    </category>
+    <category name="Networking" colour="290">
+      <block type="configure_network"></block>
+      <block type="configure_firewall"></block>
+      <block type="set_selinux_mode"></block>
+      <block type="configure_sshd"></block>
+      <block type="test_connectivity"></block>
+    </category>
+  </xml>
+
+  <script>
+    // Declare workspace variable at the top level
+    let workspace;
+    let currentLab = 'lab1';
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize Blockly workspace
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        trashcan: true,
+        grid: {
+          spacing: 25,
+          length: 3,
+          colour: '#e0e0e0',
+          snap: true
+        },
+        zoom: {
+          controls: true,
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2
+        },
+        theme: {
+          'blockStyles': {
+            'colour_blocks': { 'colourPrimary': '#CF63CF', 'colourSecondary': '#C94FC9', 'colourTertiary': '#BD42BD' },
+            'list_blocks': { 'colourPrimary': '#9966FF', 'colourSecondary': '#855CD6', 'colourTertiary': '#774DCB' },
+            'logic_blocks': { 'colourPrimary': '#4C97FF', 'colourSecondary': '#4280D7', 'colourTertiary': '#3373CC' },
+            'loop_blocks': { 'colourPrimary': '#0fBD8C', 'colourSecondary': '#0DA57A', 'colourTertiary': '#0B8E69' },
+            'math_blocks': { 'colourPrimary': '#59C059', 'colourSecondary': '#46B946', 'colourTertiary': '#389438' },
+            'procedure_blocks': { 'colourPrimary': '#FF6680', 'colourSecondary': '#FF4D6A', 'colourTertiary': '#FF3355' },
+            'text_blocks': { 'colourPrimary': '#FFBF00', 'colourSecondary': '#E6AC00', 'colourTertiary': '#CC9900' },
+            'variable_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' },
+            'variable_dynamic_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' }
+          },
+          'componentStyles': {
+            'workspaceBackgroundColour': '#F9FAFB',
+            'toolboxBackgroundColour': '#FFFFFF',
+            'toolboxForegroundColour': '#1E293B',
+            'flyoutBackgroundColour': '#F1F5F9',
+            'flyoutForegroundColour': '#1E293B',
+            'flyoutOpacity': 0.9,
+            'scrollbarColour': '#CCCCCC',
+            'scrollbarOpacity': 0.6
+          }
+        }
+      });
+
+      // Define all blocks
+      Blockly.Blocks['add_user'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Add User")
+              .appendField(new Blockly.FieldTextInput("devuser"), "USERNAME")
+              .appendField("Home:")
+              .appendField(new Blockly.FieldTextInput("/home/devuser"), "HOME")
+              .appendField("Shell:")
+              .appendField(new Blockly.FieldDropdown([["/bin/bash","/bin/bash"], ["/bin/sh","/bin/sh"], ["/sbin/nologin","/sbin/nologin"]]), "SHELL");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Create a new user with specified home directory and shell");
+        }
+      };
+
+      Blockly.Blocks['add_group'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Add Group")
+              .appendField(new Blockly.FieldTextInput("developers"), "GROUP")
+              .appendField("GID:")
+              .appendField(new Blockly.FieldNumber(2001), "GID");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Create a new group with optional GID");
+        }
+      };
+
+      Blockly.Blocks['add_user_to_group'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Add User")
+              .appendField(new Blockly.FieldTextInput("devuser"), "USERNAME")
+              .appendField("to Group")
+              .appendField(new Blockly.FieldTextInput("developers"), "GROUP");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Add user to group");
+        }
+      };
+
+      Blockly.Blocks['set_password_policy'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set Password Policy Min:")
+              .appendField(new Blockly.FieldNumber(7), "MIN")
+              .appendField("Max:")
+              .appendField(new Blockly.FieldNumber(90), "MAX")
+              .appendField("Warn:")
+              .appendField(new Blockly.FieldNumber(7), "WARN");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Configure password aging policy");
+        }
+      };
+
+      Blockly.Blocks['lock_account'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Lock/Unlock Account")
+              .appendField(new Blockly.FieldTextInput("user"), "USERNAME")
+              .appendField("Action:")
+              .appendField(new Blockly.FieldDropdown([["Lock","LOCK"], ["Unlock","UNLOCK"]]), "ACTION");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Lock or unlock a user account");
+        }
+      };
+
+      Blockly.Blocks['create_filesystem'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create Filesystem on")
+              .appendField(new Blockly.FieldTextInput("/dev/sdb1"), "DEVICE")
+              .appendField("Type:")
+              .appendField(new Blockly.FieldDropdown([["ext4","ext4"], ["xfs","xfs"]]), "FSTYPE")
+              .appendField("Label:")
+              .appendField(new Blockly.FieldTextInput("DATA"), "LABEL");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Format a partition with a specific filesystem type");
+        }
+      };
+
+      Blockly.Blocks['mount_filesystem'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Mount")
+              .appendField(new Blockly.FieldTextInput("/dev/sdb1"), "DEVICE")
+              .appendField("To:")
+              .appendField(new Blockly.FieldTextInput("/mnt/data"), "MOUNTPOINT")
+              .appendField("Type:")
+              .appendField(new Blockly.FieldTextInput("ext4"), "FSTYPE")
+              .appendField("Persist:")
+              .appendField(new Blockly.FieldCheckbox("TRUE"), "PERSIST");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Mount a filesystem and optionally add to /etc/fstab");
+        }
+      };
+
+      Blockly.Blocks['analyze_disk'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Analyze Disk Usage Path:")
+              .appendField(new Blockly.FieldTextInput("/var"), "PATH")
+              .appendField("Depth:")
+              .appendField(new Blockly.FieldNumber(2), "DEPTH");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Analyze disk usage with specified depth");
+        }
+      };
+
+      Blockly.Blocks['create_lvm'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create LVM PV:")
+              .appendField(new Blockly.FieldTextInput("/dev/sdc1"), "PV")
+              .appendField("VG:")
+              .appendField(new Blockly.FieldTextInput("vg_data"), "VG");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Create a physical volume and volume group");
+        }
+      };
+
+      Blockly.Blocks['backup_files'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Backup")
+              .appendField(new Blockly.FieldTextInput("/important/data"), "SOURCE")
+              .appendField("To:")
+              .appendField(new Blockly.FieldTextInput("/backup/location"), "DEST")
+              .appendField("Method:")
+              .appendField(new Blockly.FieldDropdown([["rsync","rsync"], ["tar","tar"]]), "METHOD");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Backup files using various methods");
+        }
+      };
+
+      Blockly.Blocks['service_action'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Service")
+              .appendField(new Blockly.FieldTextInput("httpd"), "SERVICE")
+              .appendField("Action:")
+              .appendField(new Blockly.FieldDropdown([["Start","start"], ["Stop","stop"], ["Restart","restart"], ["Enable","enable"], ["Disable","disable"]]), "ACTION");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Manage systemd services");
+        }
+      };
+
+      Blockly.Blocks['create_service'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create Service")
+              .appendField(new Blockly.FieldTextInput("myapp"), "NAME")
+              .appendField("Exec:")
+              .appendField(new Blockly.FieldTextInput("/usr/local/bin/myapp"), "EXEC")
+              .appendField("User:")
+              .appendField(new Blockly.FieldTextInput("appuser"), "USER");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Create a new systemd service unit");
+        }
+      };
+
+      Blockly.Blocks['schedule_task'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Schedule Task")
+              .appendField(new Blockly.FieldTextInput("backup"), "NAME")
+              .appendField("Command:")
+              .appendField(new Blockly.FieldTextInput("/usr/local/bin/backup.sh"), "COMMAND")
+              .appendField("Schedule:")
+              .appendField(new Blockly.FieldTextInput("0 2 * * *"), "SCHEDULE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Schedule a cron job");
+        }
+      };
+
+      Blockly.Blocks['check_resources'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Check Resources Type:")
+              .appendField(new Blockly.FieldDropdown([["CPU","cpu"], ["Memory","memory"], ["Disk","disk"]]), "TYPE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Check system resource usage");
+        }
+      };
+
+      Blockly.Blocks['kill_process'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Kill Process")
+              .appendField(new Blockly.FieldTextInput("1234"), "PID")
+              .appendField("Signal:")
+              .appendField(new Blockly.FieldDropdown([["TERM (15)","15"], ["KILL (9)","9"]]), "SIGNAL");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Send signal to a process");
+        }
+      };
+
+      Blockly.Blocks['configure_network'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Configure Interface")
+              .appendField(new Blockly.FieldTextInput("eth0"), "IFACE")
+              .appendField("IP:")
+              .appendField(new Blockly.FieldTextInput("192.168.1.100"), "IP")
+              .appendField("Prefix:")
+              .appendField(new Blockly.FieldNumber(24), "PREFIX")
+              .appendField("Gateway:")
+              .appendField(new Blockly.FieldTextInput("192.168.1.1"), "GATEWAY");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Configure a network interface using nmcli");
+        }
+      };
+
+      Blockly.Blocks['configure_firewall'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Firewall Action:")
+              .appendField(new Blockly.FieldDropdown([["Add","add"], ["Remove","remove"]]), "ACTION")
+              .appendField("Port:")
+              .appendField(new Blockly.FieldTextInput("80"), "PORT")
+              .appendField("Protocol:")
+              .appendField(new Blockly.FieldDropdown([["tcp","tcp"], ["udp","udp"]]), "PROTO");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Manage firewall rules with firewall-cmd");
+        }
+      };
+
+      Blockly.Blocks['set_selinux_mode'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set SELinux Mode:")
+              .appendField(new Blockly.FieldDropdown([["enforcing","enforcing"], ["permissive","permissive"]]), "MODE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Change the SELinux runtime mode");
+        }
+      };
+
+      Blockly.Blocks['configure_sshd'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Configure SSHD")
+              .appendField(new Blockly.FieldDropdown([["PermitRootLogin","PermitRootLogin"], ["PasswordAuthentication","PasswordAuthentication"]]), "OPTION")
+              .appendField("Value:")
+              .appendField(new Blockly.FieldTextInput("no"), "VALUE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Modify SSHD configuration");
+        }
+      };
+
+      Blockly.Blocks['test_connectivity'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Test Connectivity to")
+              .appendField(new Blockly.FieldTextInput("8.8.8.8"), "TARGET");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Ping a host to test connectivity");
+        }
+      };
+
+      // Setup event listeners
+      document.getElementById('zoom-in').addEventListener('click', function() {
+        workspace.zoomCenter(1.2);
+      });
+
+      document.getElementById('zoom-out').addEventListener('click', function() {
+        workspace.zoomCenter(0.8);
+      });
+
+      // Add example block for first lab
+      const exampleXml = `<xml>
+        <block type="add_user" x="50" y="50">
+          <field name="USERNAME">devuser</field>
+          <field name="HOME">/home/devuser</field>
+          <field name="SHELL">/bin/bash</field>
+        </block>
+      </xml>`;
+      
+      try {
+        const dom = Blockly.Xml.textToDom(exampleXml);
+        Blockly.Xml.domToWorkspace(dom, workspace);
+      } catch (e) {
+        console.log('Error loading example block:', e);
+      }
+    });
+
+    // Lab switching function
+    function switchLab(labId) {
+      // Update current lab
+      currentLab = labId;
+      
+      // Update lab title
+      const labTitles = {
+        'lab1': 'Lab 1: User & Group Management',
+        'lab2': 'Lab 2: Filesystem Management',
+        'lab3': 'Lab 3: Service Management',
+        'lab4': 'Lab 4: Networking & Security'
+      };
+      document.querySelector('.lab-title').textContent = labTitles[labId];
+      
+      // Update tab buttons
+      document.querySelectorAll('.lab-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Show/hide instructions
+      document.querySelectorAll('.lab-instructions').forEach(instructions => {
+        instructions.style.display = 'none';
+      });
+      document.getElementById(labId + '-instructions').style.display = 'block';
+      
+      // Clear feedback when switching labs
+      document.getElementById('feedback').innerHTML = '';
+      document.getElementById('feedback').className = '';
+      
+      // Reset progress
+      updateProgress(0, 4);
+    }
+
+    // Progress checking
+    function checkProgress() {
+      const blocks = workspace.getAllBlocks();
+      const feedback = document.getElementById('feedback');
+      
+      let tasks = {};
+      
+      // Define tasks for each lab
+      if (currentLab === 'lab1') {
+        tasks = {
+          task1: blocks.some(b => b.type === "add_user" && 
+                 b.getFieldValue('USERNAME') === 'devuser' && 
+                 b.getFieldValue('HOME') === '/home/devuser' &&
+                 b.getFieldValue('SHELL') === '/bin/bash'),
+          task2: blocks.some(b => b.type === "add_group" && 
+                 b.getFieldValue('GROUP') === 'developers' && 
+                 b.getFieldValue('GID') === '2001'),
+          task3: blocks.some(b => b.type === "add_user_to_group" && 
+                 b.getFieldValue('USERNAME') === 'devuser' && 
+                 b.getFieldValue('GROUP') === 'developers'),
+          task4: blocks.some(b => b.type === "set_password_policy" && 
+                 b.getFieldValue('MIN') === '7' && 
+                 b.getFieldValue('MAX') === '90' &&
+                 b.getFieldValue('WARN') === '7')
+        };
+      } else if (currentLab === 'lab2') {
+        tasks = {
+          task1: blocks.some(b => b.type === "create_filesystem" && 
+                 b.getFieldValue('DEVICE') === '/dev/sdb1' && 
+                 b.getFieldValue('FSTYPE') === 'ext4' &&
+                 b.getFieldValue('LABEL') === 'DATA'),
+          task2: blocks.some(b => b.type === "mount_filesystem" && 
+                 b.getFieldValue('DEVICE') === '/dev/sdb1' && 
+                 b.getFieldValue('MOUNTPOINT') === '/mnt/data' &&
+                 b.getFieldValue('FSTYPE') === 'ext4' &&
+                 b.getFieldValue('PERSIST') === 'TRUE'),
+          task3: blocks.some(b => b.type === "analyze_disk" && 
+                 b.getFieldValue('PATH') === '/var' && 
+                 b.getFieldValue('DEPTH') === '2'),
+          task4: blocks.some(b => b.type === "create_lvm" && 
+                 b.getFieldValue('PV') === '/dev/sdc1' && 
+                 b.getFieldValue('VG') === 'vg_data')
+        };
+      } else if (currentLab === 'lab3') {
+        tasks = {
+          task1: blocks.some(b => b.type === "service_action" && 
+                 b.getFieldValue('SERVICE') === 'httpd' && 
+                 (b.getFieldValue('ACTION') === 'start' || b.getFieldValue('ACTION') === 'enable')),
+          task2: blocks.some(b => b.type === "create_service" && 
+                 b.getFieldValue('NAME') === 'myapp' && 
+                 b.getFieldValue('EXEC') === '/usr/local/bin/myapp' &&
+                 b.getFieldValue('USER') === 'appuser'),
+          task3: blocks.some(b => b.type === "schedule_task" && 
+                 b.getFieldValue('COMMAND') === '/usr/local/bin/backup.sh' && 
+                 b.getFieldValue('SCHEDULE') === '0 2 * * *'),
+          task4: blocks.some(b => b.type === "check_resources" && 
+                 b.getFieldValue('TYPE') === 'memory')
+        };
+      } else if (currentLab === 'lab4') {
+        tasks = {
+          task1: blocks.some(b => b.type === "configure_network" && 
+                 b.getFieldValue('IFACE') === 'eth0' && 
+                 b.getFieldValue('IP') === '192.168.1.100' &&
+                 b.getFieldValue('PREFIX') === '24' &&
+                 b.getFieldValue('GATEWAY') === '192.168.1.1'),
+          task2: blocks.some(b => b.type === "configure_firewall" && 
+                 b.getFieldValue('PORT') === '80' && 
+                 b.getFieldValue('PROTO') === 'tcp' &&
+                 b.getFieldValue('ACTION') === 'add'),
+          task3: blocks.some(b => b.type === "set_selinux_mode" && 
+                 b.getFieldValue('MODE') === 'enforcing'),
+          task4: blocks.some(b => b.type === "configure_sshd" && 
+                 b.getFieldValue('OPTION') === 'PermitRootLogin' && 
+                 b.getFieldValue('VALUE') === 'no')
+        };
+      }
+      
+      // Update UI
+      Object.keys(tasks).forEach(taskId => {
+        document.getElementById(currentLab + '-' + taskId).classList.toggle('completed', tasks[taskId]);
+      });
+      
+      // Update progress
+      const completed = Object.values(tasks).filter(Boolean).length;
+      updateProgress(completed, 4);
+      
+      // Show feedback
+      if (completed === 4) {
+        feedback.innerHTML = '<div style="color:green;">✅ All tasks completed! Ready to generate your script.</div>';
+        feedback.className = 'feedback-success';
+      } else if (completed > 0) {
+        feedback.innerHTML = `<div style="color:#d35400;">⏳ Progress: ${completed}/4 tasks done</div>`;
+        feedback.className = 'feedback-warning';
+      } else {
+        feedback.innerHTML = '<div>Start building your script by dragging blocks from the toolbox on the left.</div>';
+        feedback.className = '';
+      }
+    }
+
+    // Update progress bar
+    function updateProgress(completed, total) {
+      const percentage = (completed / total) * 100;
+      document.querySelector('.progress-fill').style.width = `${percentage}%`;
+      document.getElementById('progress-text').textContent = `${completed}/${total}`;
+    }
+
+    // Generate Bash code
+    function generateBashCode() {
+      const blocks = workspace.getTopBlocks(true);
+      let code = "";
+      
+      // Add header
+      code += `#!/bin/bash\n\n`;
+      code += `# Generated by BlockShell-RH Tool\n`;
+      code += `# Lab: ${document.querySelector('.lab-title').textContent}\n`;
+      code += `# Date: ${new Date().toISOString()}\n`;
+      code += `set -euo pipefail\n\n`;
+      
+      // Generate code from blocks
+      for (const block of blocks) {
+        code += generateBlockCodeRecursive(block);
+      }
+      
+      return code.trim();
+    }
+
+    function generateBlockCodeRecursive(block) {
+      if (!block) return "";
+      let code = "";
+
+      switch (block.type) {
+        case "add_user":
+          code += `sudo useradd -m -d "${block.getFieldValue('HOME')}" -s "${block.getFieldValue('SHELL')}" "${block.getFieldValue('USERNAME')}"\n`;
+          break;
+        case "add_group":
+          const gidOpt = block.getFieldValue('GID') ? `-g ${block.getFieldValue('GID')}` : "";
+          code += `sudo groupadd ${gidOpt} "${block.getFieldValue('GROUP')}"\n`;
+          break;
+        case "add_user_to_group":
+          code += `sudo usermod -aG "${block.getFieldValue('GROUP')}" "${block.getFieldValue('USERNAME')}"\n`;
+          break;
+        case "set_password_policy":
+          code += `sudo chage -m ${block.getFieldValue('MIN')} -M ${block.getFieldValue('MAX')} -W ${block.getFieldValue('WARN')} "${block.getFieldValue('USERNAME')}"\n`;
+          break;
+        case "lock_account":
+          const lockCmd = block.getFieldValue('ACTION') === 'LOCK' ? "-L" : "-U";
+          code += `sudo passwd ${lockCmd} "${block.getFieldValue('USERNAME')}"\n`;
+          break;
+        case "create_filesystem":
+          code += `sudo mkfs -t ${block.getFieldValue('FSTYPE')} -L "${block.getFieldValue('LABEL')}" "${block.getFieldValue('DEVICE')}"\n`;
+          break;
+        case "mount_filesystem":
+          code += `sudo mkdir -p "${block.getFieldValue('MOUNTPOINT')}"\n`;
+          code += `sudo mount -t ${block.getFieldValue('FSTYPE')} "${block.getFieldValue('DEVICE')}" "${block.getFieldValue('MOUNTPOINT')}"\n`;
+          if (block.getFieldValue('PERSIST') === 'TRUE') {
+            code += `echo "${block.getFieldValue('DEVICE')} ${block.getFieldValue('MOUNTPOINT')} ${block.getFieldValue('FSTYPE')} defaults 0 0" | sudo tee -a /etc/fstab\n`;
+          }
+          break;
+        case "analyze_disk":
+          code += `du -h --max-depth=${block.getFieldValue('DEPTH')} "${block.getFieldValue('PATH')}" | sort -h\n`;
+          break;
+        case "create_lvm":
+          code += `sudo pvcreate "${block.getFieldValue('PV')}"\n`;
+          code += `sudo vgcreate "${block.getFieldValue('VG')}" "${block.getFieldValue('PV')}"\n`;
+          break;
+        case "backup_files":
+          if (block.getFieldValue('METHOD') === 'rsync') {
+            code += `rsync -a "${block.getFieldValue('SOURCE')}" "${block.getFieldValue('DEST')}"\n`;
+          } else {
+            code += `tar -cvzf "${block.getFieldValue('DEST')}/backup-$(date +%F).tar.gz" "${block.getFieldValue('SOURCE')}"\n`;
+          }
+          break;
+        case "service_action":
+          code += `sudo systemctl ${block.getFieldValue('ACTION')} ${block.getFieldValue('SERVICE')}\n`;
+          break;
+        case "create_service":
+          code += `cat <<EOF | sudo tee /etc/systemd/system/${block.getFieldValue('NAME')}.service\n`;
+          code += `[Unit]\nDescription=${block.getFieldValue('NAME')} Service\nAfter=network.target\n\n`;
+          code += `[Service]\nUser=${block.getFieldValue('USER')}\nExecStart=${block.getFieldValue('EXEC')}\nRestart=always\n\n`;
+          code += `[Install]\nWantedBy=multi-user.target\nEOF\n`;
+          code += `sudo systemctl daemon-reload\nsudo systemctl enable ${block.getFieldValue('NAME')}\n`;
+          break;
+        case "schedule_task":
+          code += `(crontab -l 2>/dev/null; echo "${block.getFieldValue('SCHEDULE')} ${block.getFieldValue('COMMAND')}") | crontab -\n`;
+          break;
+        case "check_resources":
+          if (block.getFieldValue('TYPE') === 'cpu') {
+            code += `mpstat 1 1 | awk '/all/ {print "CPU Usage: " 100-$12 "%"}'`;
+          } else if (block.getFieldValue('TYPE') === 'memory') {
+            code += `free -m | awk 'NR==2{printf "Memory Usage: %.2f%%", $3*100/$2 }'`;
+          } else {
+            code += `df -h | awk '$NF=="/"{printf "Disk Usage: %s", $5}'`;
+          }
+          code += '\n';
+          break;
+        case "kill_process":
+          code += `sudo kill -${block.getFieldValue('SIGNAL')} ${block.getFieldValue('PID')}\n`;
+          break;
+        case "configure_network":
+          code += `sudo nmcli connection modify "${block.getFieldValue('IFACE')}" ipv4.addresses ${block.getFieldValue('IP')}/${block.getFieldValue('PREFIX')} ipv4.gateway ${block.getFieldValue('GATEWAY')} ipv4.method manual\n`;
+          code += `sudo nmcli connection up "${block.getFieldValue('IFACE')}"\n`;
+          break;
+        case "configure_firewall":
+          if (block.getFieldValue('ACTION') === 'add') {
+            code += `sudo firewall-cmd --permanent --add-port=${block.getFieldValue('PORT')}/${block.getFieldValue('PROTO')}\n`;
+            code += `sudo firewall-cmd --reload\n`;
+          } else {
+            code += `sudo firewall-cmd --permanent --remove-port=${block.getFieldValue('PORT')}/${block.getFieldValue('PROTO')}\n`;
+            code += `sudo firewall-cmd --reload\n`;
+          }
+          break;
+        case "set_selinux_mode":
+          code += `sudo setenforce ${block.getFieldValue('MODE')}\n`;
+          code += `sudo sed -i 's/^SELINUX=.*/SELINUX=${block.getFieldValue('MODE')}/' /etc/selinux/config\n`;
+          break;
+        case "configure_sshd":
+          code += `sudo sed -i 's/^${block.getFieldValue('OPTION')}.*/${block.getFieldValue('OPTION')} ${block.getFieldValue('VALUE')}/' /etc/ssh/sshd_config\n`;
+          code += `sudo systemctl restart sshd\n`;
+          break;
+        case "test_connectivity":
+          code += `ping -c 4 ${block.getFieldValue('TARGET')}\n`;
+          break;
+      }
+
+      const nextBlock = block.getNextBlock();
+      if (nextBlock) {
+        code += generateBlockCodeRecursive(nextBlock);
+      }
+      return code;
+    }
+
+    function createModal(title) {
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      
+      const content = document.createElement('div');
+      content.className = 'modal-content';
+      
+      const header = document.createElement('div');
+      header.className = 'modal-header';
+      
+      const titleElement = document.createElement('h3');
+      titleElement.className = 'modal-title';
+      titleElement.textContent = title;
+      
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'close-btn';
+      closeBtn.innerHTML = '&times;';
+      closeBtn.onclick = function() {
+        document.body.removeChild(modal);
+      };
+      
+      header.appendChild(titleElement);
+      header.appendChild(closeBtn);
+      content.appendChild(header);
+      modal.appendChild(content);
+      
+      return modal;
+    }
+
+    window.simulate = function simulate() {
+      const code = generateBashCode();
+      if (!code || code.trim() === "#!/bin/bash\n\n# Generated by BlockShell-RH Tool\n# Lab: Lab 1: User & Group Management\n# Date:") {
+        showAppNotification("No script to show. Please add some blocks first.", "warning");
+        return;
+      }
+      
+      const modal = createModal('Generated Bash Script');
+      
+      const codeBlock = document.createElement('div');
+      codeBlock.className = 'code-block';
+      const pre = document.createElement('pre');
+      pre.textContent = code;
+      hljs.highlightElement(pre);
+      codeBlock.appendChild(pre);
+      
+      const copyBtn = document.createElement('button');
+      copyBtn.textContent = 'Copy to Clipboard';
+      copyBtn.style.marginTop = '15px';
+      copyBtn.onclick = function() {
+        navigator.clipboard.writeText(code).then(() => {
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyBtn.textContent = 'Copy to Clipboard';
+          }, 2000);
+        });
+      };
+      
+      modal.querySelector('.modal-content').appendChild(codeBlock);
+      modal.querySelector('.modal-content').appendChild(copyBtn);
+      
+      document.body.appendChild(modal);
+    };
+
+    window.download = function download() {
+      const code = generateBashCode();
+      if (!code || code.trim() === "#!/bin/bash\n\n# Generated by BlockShell-RH Tool\n# Lab: Lab 1: User & Group Management\n# Date:") {
+        showAppNotification("Nothing to download. Please add some blocks first.", "warning");
+        return;
+      }
+      
+      const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'rh-admin-script.sh';
+      link.click();
+      
+      showAppNotification("Script downloaded successfully!", "success");
+    };
+    
+    // Clear workspace functions
+    window.clearWorkspace = function() {
+      document.getElementById('confirmationDialog').style.display = 'flex';
+    };
+    
+    function confirmClearWorkspace() {
+      workspace.clear();
+      document.getElementById('confirmationDialog').style.display = 'none';
+      showAppNotification('Workspace cleared', 'success');
+      checkProgress(); // Reset progress
+    }
+    
+    function cancelClearWorkspace() {
+      document.getElementById('confirmationDialog').style.display = 'none';
+    }
+    
+    // App notification function
+    function showAppNotification(message, type = 'info') {
+      const notification = document.getElementById('appNotification');
+      notification.textContent = message;
+      notification.className = 'app-notification';
+      notification.classList.add(type);
+      notification.style.display = 'block';
+      
+      // Animate in
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 10);
+      
+      // Animate out after 3 seconds
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+          notification.style.display = 'none';
+        }, 300);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

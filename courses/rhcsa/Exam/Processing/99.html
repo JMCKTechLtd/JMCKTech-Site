@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab: File Permissions with ACLs (Question 99)</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab: File Permissions with ACLs (Question 99)</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Configure file permissions with Access Control Lists (ACLs) on /var/tmp/fstab to meet specific user access requirements.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>File Permissions Requirements</h4>
+                <div class="requirement-item" id="req-copy-fstab">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Copy /etc/fstab to /var/tmp/fstab</span>
+                </div>
+                <div class="requirement-item" id="req-owner-group">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set owner to root and group to root</span>
+                </div>
+                <div class="requirement-item" id="req-no-execute">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Remove execute permissions for all users</span>
+                </div>
+                <div class="requirement-item" id="req-natasha-acl">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set ACL: natasha can read and write</span>
+                </div>
+                <div class="requirement-item" id="req-harry-acl">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set ACL: harry cannot read or write</span>
+                </div>
+                <div class="requirement-item" id="req-other-users">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Other users (present and future) can read</span>
+                </div>
+                <div class="requirement-item" id="req-verify-acl">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify ACL configuration using getfacl</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA File Permissions with ACLs Lab. In this lab, you will configure advanced file permissions using Access Control Lists (ACLs).</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Copy fstab File
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's copy the /etc/fstab file to /var/tmp/fstab.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    cp /etc/fstab /var/tmp/
+                </div>
+                
+                <p>This command copies the fstab file to the target location.</p>
+
+                <div class="concept">
+                    <h4>Understanding File Copy</h4>
+                    <ul>
+                        <li><code>cp</code>: Copies files and directories</li>
+                        <li><code>-p</code>: Preserves permissions and timestamps</li>
+                        <li><code>-a</code>: Archive mode (preserves all attributes)</li>
+                        <li>Without options, the copy gets new permissions and timestamps</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Set Owner and Group
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's ensure the file is owned by root user and root group.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    chown root:root /var/tmp/fstab
+                </div>
+                
+                <p>This command sets both the owner and group to root.</p>
+                
+                <div class="concept">
+                    <h4>File Ownership Commands</h4>
+                    <ul>
+                        <li><code>chown user:group file</code>: Changes owner and group</li>
+                        <li><code>chown user file</code>: Changes only owner</li>
+                        <li><code>chgrp group file</code>: Changes only group</li>
+                        <li>Only root can change file ownership</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Remove Execute Permissions
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's remove execute permissions for all users.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    chmod a-x /var/tmp/fstab
+                </div>
+                
+                <p>This command removes execute permissions for user, group, and others.</p>
+                
+                <div class="hint-box">
+                    <strong>Alternative method:</strong> You can also use <code>chmod 664 /var/tmp/fstab</code>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Set Natasha's ACL Permissions
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's set Access Control List permissions for user natasha.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    setfacl -m u:natasha:rw- /var/tmp/fstab
+                </div>
+                
+                <p>This gives natasha read and write permissions via ACL.</p>
+                
+                <div class="concept">
+                    <h4>Understanding setfacl Syntax</h4>
+                    <ul>
+                        <li><code>-m</code>: Modify ACL entries</li>
+                        <li><code>u:natasha:rw-</code>: User natasha gets read+write</li>
+                        <li><code>g:groupname:perms</code>: For group permissions</li>
+                        <li><code>o:perms</code>: For other users</li>
+                        <li><code>m:perms</code>: For mask (maximum effective permissions)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Set Harry's ACL Permissions
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's set Access Control List permissions for user harry.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    setfacl -m u:harry:--- /var/tmp/fstab
+                </div>
+                
+                <p>This explicitly denies harry any access to the file.</p>
+                
+                <div class="concept">
+                    <h4>ACL Permission Denial</h4>
+                    <p>When using ACLs:</p>
+                    <ul>
+                        <li>ACL entries are evaluated in order</li>
+                        <li>Explicit deny takes precedence</li>
+                        <li>If no ACL entry matches, traditional permissions apply</li>
+                        <li>Use <code>---</code> to explicitly deny all permissions</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step6">
+                <h3>
+                    <span class="step-number">6</span>
+                    Verify ACL Configuration
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's verify that our ACL configuration is correct.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ls -l /var/tmp/fstab
+                </div>
+                <p>Should show <code>-rw-rw-r--+</code> indicating ACLs are present</p>
+                
+                <div class="command-hint">
+                    getfacl /var/tmp/fstab
+                </div>
+                <p>Should show detailed ACL entries for natasha and harry</p>
+
+                <div class="concept">
+                    <h4>ACL Verification Commands</h4>
+                    <p>After setting ACLs, always verify with these commands:</p>
+                    <ul>
+                        <li><code>ls -l</code> - The <code>+</code> sign indicates ACLs</li>
+                        <li><code>getfacl file</code> - Shows all ACL entries</li>
+                        <li><code>setfacl -x entry file</code> - Removes specific ACL entry</li>
+                        <li><code>setfacl -b file</code> - Removes all ACL entries</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All file permission and ACL requirements have been met.</p>
+                <p>The file /var/tmp/fstab now has the correct ownership, basic permissions, and ACL entries.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab: File Permissions with ACLs (Question 99)</div>
+                <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Copy fstab File</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>cp /etc/fstab /var/tmp/</code></div>
+                <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@station ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Track ACL configuration state
+    const aclState = {
+        copyFstab: false,
+        ownerGroup: false,
+        noExecute: false,
+        natashaACL: false,
+        harryACL: false,
+        verifyACL: false
+    };
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'cp', 'chown', 'chmod', 'setfacl', 'getfacl', 'ls', 'clear', 'help'
+    ];
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['cp /etc/fstab /var/tmp/'],
+        2: ['chown root:root /var/tmp/fstab'],
+        3: ['chmod a-x /var/tmp/fstab'],
+        4: ['setfacl -m u:natasha:rw- /var/tmp/fstab'],
+        5: ['setfacl -m u:harry:--- /var/tmp/fstab'],
+        6: ['ls -l /var/tmp/fstab', 'getfacl /var/tmp/fstab']
+    };
+    
+    const commands = {
+        'cp': (args) => {
+            if (args[0] === "/etc/fstab" && args[1] === "/var/tmp/") {
+                if (currentStep === 1 || currentStep > 1) {
+                    aclState.copyFstab = true;
+                    updateRequirements();
+                    completeStep(1);
+                    return "";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `cp: missing file operand`;
+        },
+        
+        'chown': (args) => {
+            if (args[0] === "root:root" && args[1] === "/var/tmp/fstab") {
+                if (currentStep === 2 || currentStep > 2) {
+                    aclState.ownerGroup = true;
+                    updateRequirements();
+                    completeStep(2);
+                    return "";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `chown: invalid user: '${args[0]}'`;
+        },
+        
+        'chmod': (args) => {
+            if (args[0] === "a-x" && args[1] === "/var/tmp/fstab") {
+                if (currentStep === 3 || currentStep > 3) {
+                    aclState.noExecute = true;
+                    updateRequirements();
+                    completeStep(3);
+                    return "";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "664" && args[1] === "/var/tmp/fstab") {
+                if (currentStep === 3 || currentStep > 3) {
+                    aclState.noExecute = true;
+                    updateRequirements();
+                    completeStep(3);
+                    return "";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `chmod: invalid mode: '${args[0]}'`;
+        },
+        
+        'setfacl': (args) => {
+            if (args[0] === "-m" && args[1] === "u:natasha:rw-" && args[2] === "/var/tmp/fstab") {
+                if (currentStep === 4 || currentStep > 4) {
+                    aclState.natashaACL = true;
+                    updateRequirements();
+                    completeStep(4);
+                    return "";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "-m" && args[1] === "u:harry:---" && args[2] === "/var/tmp/fstab") {
+                if (currentStep === 5 || currentStep > 5) {
+                    aclState.harryACL = true;
+                    updateRequirements();
+                    completeStep(5);
+                    return "";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `setfacl: invalid option -- '${args[0]}'`;
+        },
+        
+        'getfacl': (args) => {
+            if (args[0] === "/var/tmp/fstab") {
+                if (currentStep === 6 || currentStep > 6) {
+                    aclState.verifyACL = true;
+                    updateRequirements();
+                    completeStep(6);
+                    
+                    return `# file: var/tmp/fstab\n# owner: root\n# group: root\nuser::rw-\nuser:natasha:rw-\nuser:harry:---\ngroup::r--\nmask::rw-\nother::r--`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `getfacl: ${args[0]}: No such file or directory`;
+        },
+        
+        'ls': (args) => {
+            if (args[0] === "-l" && args[1] === "/var/tmp/fstab") {
+                if (currentStep === 6 || currentStep > 6) {
+                    return `-rw-rw-r--+ 1 root root 685 Nov 10 15:29 /var/tmp/fstab`;
+                }
+            }
+            return `ls: cannot access '${args[1]}': No such file or directory`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: cp, chown, chmod, setfacl, getfacl, ls, clear, help";
+        }
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (aclState.copyFstab) {
+            document.getElementById('req-copy-fstab').classList.add('completed');
+            document.getElementById('req-copy-fstab').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (aclState.ownerGroup) {
+            document.getElementById('req-owner-group').classList.add('completed');
+            document.getElementById('req-owner-group').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (aclState.noExecute) {
+            document.getElementById('req-no-execute').classList.add('completed');
+            document.getElementById('req-no-execute').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (aclState.natashaACL) {
+            document.getElementById('req-natasha-acl').classList.add('completed');
+            document.getElementById('req-natasha-acl').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (aclState.harryACL) {
+            document.getElementById('req-harry-acl').classList.add('completed');
+            document.getElementById('req-harry-acl').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (aclState.verifyACL) {
+            document.getElementById('req-verify-acl').classList.add('completed');
+            document.getElementById('req-verify-acl').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(aclState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(aclState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(aclState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[root@station ~]# Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    if (Array.isArray(stepCommands[currentStep])) {
+                        addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep][0]}`);
+                    } else {
+                        addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep]}`);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        hideTabCompletion();
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
+</body>
+</html>

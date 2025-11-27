@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockShell – Active Directory</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <style>
+    :root {
+      --primary-color: #0078d7;
+      --text-color: #2c3e50;
+      --light-bg: #f8f9fa;
+      --border-color: #eaecef;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(to bottom, var(--light-bg), #eef1f5);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-color);
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    header {
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 120, 215, 0.1);
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      color: #0078d7;
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, #0078d7, #00a4ef);
+      border-radius: 2px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-top: 8px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    #blockly-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #blocklyDiv {
+      height: calc(100% - 60px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #buttons {
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      background-color: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .left-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .right-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 120, 215, 0.3);
+    }
+
+    button.danger {
+      background-color: #d13438;
+    }
+
+    button.danger:hover {
+      background-color: #b32d30;
+    }
+
+    .blocklyToolboxDiv {
+      border-right: 1px solid var(--border-color) !important;
+    }
+
+    .blocklyMainBackground {
+      stroke-width: 0;
+    }
+
+    .blocklyFlyoutBackground {
+      fill: var(--light-bg);
+    }
+
+    .modal {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--text-color);
+      font-size: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .code-block {
+      background-color: var(--light-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 15px;
+      overflow-x: auto;
+      font-family: Consolas, Monaco, "Andale Mono", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      z-index: 1000;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .zoom-btn {
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+
+    .zoom-btn:hover {
+      background-color: var(--light-bg);
+    }
+
+    .zoom-btn:first-child {
+      border-bottom: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <h1>BlockShell – Active Directory</h1>
+      <div class="subtitle">Visual PowerShell Script Builder</div>
+    </header>
+
+    <div id="blockly-container">
+      <div id="buttons">
+        <div class="left-buttons">
+          <button onclick="simulate()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 10 4 15 9 20"></polyline>
+              <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+            </svg>
+            Show Script
+          </button>
+        </div>
+        <div class="right-buttons">
+          <button class="danger" onclick="clearWorkspace()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Clear Workspace
+          </button>
+        </div>
+      </div>
+      <div id="blocklyDiv"></div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+        <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+      </div>
+    </div>
+  </div>
+
+  <xml id="toolbox" style="display:none">
+    <category name="User Management" colour="180">
+      <block type="create_ad_user">
+        <tooltip>Creates a new Active Directory user account. PowerShell: New-ADUser</tooltip>
+      </block>
+      <block type="get_ad_user">
+        <tooltip>Retrieves information about an AD user. PowerShell: Get-ADUser</tooltip>
+      </block>
+      <block type="remove_ad_user">
+        <tooltip>Deletes an AD user account. PowerShell: Remove-ADUser</tooltip>
+      </block>
+      <block type="set_user_properties">
+        <tooltip>Sets common user properties like email and department. PowerShell: Set-ADUser</tooltip>
+      </block>
+      <block type="move_ad_user">
+        <tooltip>Moves a user to a different Organizational Unit. PowerShell: Move-ADObject</tooltip>
+      </block>
+      <block type="rename_ad_user">
+        <tooltip>Renames an existing user account. PowerShell: Rename-ADObject</tooltip>
+      </block>
+      <block type="create_user_from_template">
+        <tooltip>Creates a new user based on an existing template user. PowerShell: New-ADUser with template properties</tooltip>
+      </block>
+    </category>
+    <category name="Group Management" colour="210">
+      <block type="create_ad_group">
+        <tooltip>Creates a new security or distribution group. PowerShell: New-ADGroup</tooltip>
+      </block>
+      <block type="add_user_to_group">
+        <tooltip>Adds a user to an AD group. PowerShell: Add-ADGroupMember</tooltip>
+      </block>
+      <block type="remove_user_from_group">
+        <tooltip>Removes a user from an AD group. PowerShell: Remove-ADGroupMember</tooltip>
+      </block>
+      <block type="copy_ad_group_members">
+        <tooltip>Copies all members from one group to another. PowerShell: Get-ADGroupMember + Add-ADGroupMember</tooltip>
+      </block>
+      <block type="get_group_members">
+        <tooltip>Lists all members of a group. PowerShell: Get-ADGroupMember</tooltip>
+      </block>
+      <block type="nested_group_membership">
+        <tooltip>Gets nested group memberships. PowerShell: Get-ADGroup with MemberOf property</tooltip>
+      </block>
+    </category>
+    <category name="Organization" colour="160">
+      <block type="create_ou">
+        <tooltip>Creates a new Organizational Unit. PowerShell: New-ADOrganizationalUnit</tooltip>
+      </block>
+      <block type="search_ad_objects">
+        <tooltip>Searches AD for objects matching criteria. PowerShell: Get-ADObject</tooltip>
+      </block>
+      <block type="get_inactive_computers">
+        <tooltip>Finds computer accounts not recently active. PowerShell: Get-ADComputer with LastLogonTimeStamp filter</tooltip>
+      </block>
+    </category>
+    <category name="Security" colour="230">
+      <block type="set_user_password">
+        <tooltip>Sets a user's password. PowerShell: Set-ADAccountPassword</tooltip>
+      </block>
+      <block type="force_password_change">
+        <tooltip>Forces user to change password at next login. PowerShell: Set-ADUser -ChangePasswordAtLogon</tooltip>
+      </block>
+      <block type="unlock_ad_account">
+        <tooltip>Unlocks a locked user account. PowerShell: Unlock-ADAccount</tooltip>
+      </block>
+      <block type="enable_ad_account">
+        <tooltip>Enables a disabled account. PowerShell: Enable-ADAccount</tooltip>
+      </block>
+      <block type="disable_ad_account">
+        <tooltip>Disables a user account. PowerShell: Disable-ADAccount</tooltip>
+      </block>
+      <block type="export_group_membership">
+        <tooltip>Exports a user's group memberships to CSV. PowerShell: Get-ADPrincipalGroupMembership</tooltip>
+      </block>
+      <block type="check_password_expiry">
+        <tooltip>Checks if password will expire soon. PowerShell: Get-ADUser with PasswordLastSet</tooltip>
+      </block>
+      <block type="check_locked_accounts">
+        <tooltip>Finds locked accounts in an OU. PowerShell: Search-ADAccount -LockedOut</tooltip>
+      </block>
+      <block type="reset_account_lockout">
+        <tooltip>Resets bad password count. PowerShell: Set-ADUser -Replace @{badPwdCount=0}</tooltip>
+      </block>
+    </category>
+    <category name="Reports" colour="130">
+      <block type="generate_user_report">
+        <tooltip>Generates user reports in various formats. PowerShell: Get-ADUser with custom formatting</tooltip>
+      </block>
+    </category>
+  </xml>
+
+  <script>
+    // Declare workspace variable at the top level
+    let workspace;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize Blockly workspace
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        trashcan: true,
+        grid: {
+          spacing: 25,
+          length: 3,
+          colour: '#e0e0e0',
+          snap: true
+        },
+        zoom: {
+          controls: true,
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2
+        },
+        theme: {
+          'blockStyles': {
+            'colour_blocks': { 'colourPrimary': '#CF63CF', 'colourSecondary': '#C94FC9', 'colourTertiary': '#BD42BD' },
+            'list_blocks': { 'colourPrimary': '#9966FF', 'colourSecondary': '#855CD6', 'colourTertiary': '#774DCB' },
+            'logic_blocks': { 'colourPrimary': '#4C97FF', 'colourSecondary': '#4280D7', 'colourTertiary': '#3373CC' },
+            'loop_blocks': { 'colourPrimary': '#0fBD8C', 'colourSecondary': '#0DA57A', 'colourTertiary': '#0B8E69' },
+            'math_blocks': { 'colourPrimary': '#59C059', 'colourSecondary': '#46B946', 'colourTertiary': '#389438' },
+            'procedure_blocks': { 'colourPrimary': '#FF6680', 'colourSecondary': '#FF4D6A', 'colourTertiary': '#FF3355' },
+            'text_blocks': { 'colourPrimary': '#FFBF00', 'colourSecondary': '#E6AC00', 'colourTertiary': '#CC9900' },
+            'variable_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' },
+            'variable_dynamic_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' }
+          },
+          'componentStyles': {
+            'workspaceBackgroundColour': '#F9FAFB',
+            'toolboxBackgroundColour': '#FFFFFF',
+            'toolboxForegroundColour': '#1E293B',
+            'flyoutBackgroundColour': '#F1F5F9',
+            'flyoutForegroundColour': '#1E293B',
+            'flyoutOpacity': 0.9,
+            'scrollbarColour': '#CCCCCC',
+            'scrollbarOpacity': 0.6
+          }
+        }
+      });
+
+      // Define all blocks with enhanced tooltips
+      Blockly.defineBlocksWithJsonArray([
+        {
+          "type": "create_ad_user",
+          "message0": "Create AD User (Name: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "jdoe" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Creates a new Active Directory user account.\n\nPowerShell: New-ADUser -Name \"value\" -Enabled $true",
+          "helpUrl": ""
+        },
+        {
+          "type": "remove_ad_user",
+          "message0": "Remove AD User (Name: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "jdoe" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Deletes an Active Directory user account.\n\nPowerShell: Remove-ADUser -Identity \"value\" -Confirm:$false",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_ad_group",
+          "message0": "Create AD Group (Name: %1)",
+          "args0": [{ "type": "field_input", "name": "GROUP", "text": "HRGroup" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Creates a new security or distribution group in Active Directory.\n\nPowerShell: New-ADGroup -Name \"value\" -GroupScope Global -GroupCategory Security",
+          "helpUrl": ""
+        },
+        {
+          "type": "add_user_to_group",
+          "message0": "Add User %1 to Group %2",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "jdoe" },
+            { "type": "field_input", "name": "GROUP", "text": "HRGroup" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Adds a user to an Active Directory group.\n\nPowerShell: Add-ADGroupMember -Identity \"group\" -Members \"user\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "remove_user_from_group",
+          "message0": "Remove User %1 from Group %2",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "jdoe" },
+            { "type": "field_input", "name": "GROUP", "text": "HRGroup" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Removes a user from an Active Directory group.\n\nPowerShell: Remove-ADGroupMember -Identity \"group\" -Members \"user\" -Confirm:$false",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_ou",
+          "message0": "Create OU (Name: %1)",
+          "args0": [{ "type": "field_input", "name": "OU", "text": "StaffOU" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Creates a new Organizational Unit in Active Directory.\n\nPowerShell: New-ADOrganizationalUnit -Name \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "move_ad_user",
+          "message0": "Move AD User %1 to OU %2",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "jdoe" },
+            { "type": "field_input", "name": "OU", "text": "StaffOU" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Moves a user to a different Organizational Unit.\n\nPowerShell: Get-ADUser \"user\" | Move-ADObject -TargetPath \"OU=value,DC=domain,DC=com\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_user_password",
+          "message0": "Set AD User Password (User: %1 Password: %2)",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "jdoe" },
+            { "type": "field_input", "name": "PASSWORD", "text": "P@ssword123" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Sets a user's Active Directory password.\n\nPowerShell: Set-ADAccountPassword -Identity \"user\" -NewPassword (ConvertTo-SecureString \"password\" -AsPlainText -Force)",
+          "helpUrl": ""
+        },
+        {
+          "type": "unlock_ad_account",
+          "message0": "Unlock AD Account (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "jdoe" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Unlocks a locked user account.\n\nPowerShell: Unlock-ADAccount -Identity \"user\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_ad_account",
+          "message0": "Enable AD Account (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "jdoe" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Enables a disabled user account.\n\nPowerShell: Enable-ADAccount -Identity \"user\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_ad_user",
+          "message0": "Get AD User Info (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "jdoe" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Retrieves information about an Active Directory user.\n\nPowerShell: Get-ADUser -Identity \"user\" -Properties * | Format-List",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_user_properties",
+          "message0": "Set User Properties (User: %1 Email: %2 Department: %3)",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "jdoe" },
+            { "type": "field_input", "name": "EMAIL", "text": "jdoe@example.com" },
+            { "type": "field_input", "name": "DEPARTMENT", "text": "IT" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Sets common properties for an Active Directory user.\n\nPowerShell: Set-ADUser -Identity \"user\" -EmailAddress \"email\" -Department \"dept\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "disable_ad_account",
+          "message0": "Disable AD Account (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "jdoe" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Disables a user account in Active Directory.\n\nPowerShell: Disable-ADAccount -Identity \"user\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "copy_ad_group_members",
+          "message0": "Copy Members from Group %1 to Group %2",
+          "args0": [
+            { "type": "field_input", "name": "SOURCE_GROUP", "text": "SourceGroup" },
+            { "type": "field_input", "name": "TARGET_GROUP", "text": "TargetGroup" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Copies all members from one group to another.\n\nPowerShell: Get-ADGroupMember -Identity \"source\" | ForEach-Object { Add-ADGroupMember -Identity \"target\" -Members $_.distinguishedName }",
+          "helpUrl": ""
+        },
+        {
+          "type": "force_password_change",
+          "message0": "Force Password Change at Next Login (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "jdoe" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Forces user to change password at next login.\n\nPowerShell: Set-ADUser -Identity \"user\" -ChangePasswordAtLogon $true",
+          "helpUrl": ""
+        },
+        {
+          "type": "rename_ad_user",
+          "message0": "Rename AD User %1 to %2",
+          "args0": [
+            { "type": "field_input", "name": "OLDNAME", "text": "jdoe" },
+            { "type": "field_input", "name": "NEWNAME", "text": "johndoe" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Renames an existing Active Directory user account.\n\nPowerShell: Rename-ADObject -Identity (Get-ADUser \"oldname\").DistinguishedName -NewName \"newname\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_group_members",
+          "message0": "Get Members of Group %1 Export to CSV? %2",
+          "args0": [
+            { "type": "field_input", "name": "GROUP", "text": "HRGroup" },
+            { "type": "field_checkbox", "name": "EXPORT", "checked": false }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Lists all members of an Active Directory group with option to export to CSV.\n\nPowerShell: Get-ADGroupMember -Identity \"group\" | Export-Csv (if enabled)",
+          "helpUrl": ""
+        },
+        {
+          "type": "search_ad_objects",
+          "message0": "Search AD for %1 Filter by %2",
+          "args0": [
+            { "type": "field_input", "name": "SEARCHTERM", "text": "*Smith*" },
+            { "type": "field_dropdown", "name": "OBJECTTYPE", "options": [
+              ["All Objects", "All"],
+              ["Users", "User"],
+              ["Groups", "Group"],
+              ["Computers", "Computer"],
+              ["OUs", "OrganizationalUnit"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Searches Active Directory for objects matching a pattern.\n\nPowerShell: Get-ADObject -Filter \"Name -like 'pattern'\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "export_group_membership",
+          "message0": "Export User %1 Group Memberships to CSV",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "jdoe" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Exports all group memberships for a user to CSV file.\n\nPowerShell: Get-ADPrincipalGroupMembership -Identity \"user\" | Export-Csv",
+          "helpUrl": ""
+        },
+        {
+          "type": "check_password_expiry",
+          "message0": "Check Password Expiry for %1 Days Until Expiry: %2",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "jdoe" },
+            { "type": "field_number", "name": "DAYS", "value": 14, "min": 0, "max": 90 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Checks if user password will expire within specified days.\n\nPowerShell: Checks msDS-UserPasswordExpiryTimeComputed attribute",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_user_from_template",
+          "message0": "Create User From Template (New User: %1 Template User: %2)",
+          "args0": [
+            { "type": "field_input", "name": "NEWUSER", "text": "jsmith" },
+            { "type": "field_input", "name": "TEMPLATEUSER", "text": "jdoe" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Creates a new user by copying properties from a template user.\n\nPowerShell: Copies properties and group memberships from template",
+          "helpUrl": ""
+        },
+        {
+          "type": "nested_group_membership",
+          "message0": "Get Nested Group Membership for %1 Include Transitive? %2",
+          "args0": [
+            { "type": "field_input", "name": "GROUP", "text": "ITGroup" },
+            { "type": "field_checkbox", "name": "TRANSITIVE", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Gets all nested groups within a group, including transitive memberships.\n\nPowerShell: Recursively checks MemberOf property",
+          "helpUrl": ""
+        },
+        {
+          "type": "check_locked_accounts",
+          "message0": "Check for Locked Accounts Filter by OU: %1",
+          "args0": [
+            { "type": "field_input", "name": "OU", "text": "Users" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Finds all locked user accounts in a specific OU.\n\nPowerShell: Search-ADAccount -LockedOut -SearchBase \"OU=value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_inactive_computers",
+          "message0": "Find Inactive Computer Accounts Days Inactive: %1",
+          "args0": [
+            { "type": "field_number", "name": "DAYS", "value": 90, "min": 1, "max": 365 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Finds computer accounts that haven't been active for a specified number of days.\n\nPowerShell: Get-ADComputer with LastLogonTimeStamp filter",
+          "helpUrl": ""
+        },
+        {
+          "type": "generate_user_report",
+          "message0": "Generate User Report Type: %1 Output to: %2",
+          "args0": [
+            { "type": "field_dropdown", "name": "REPORTTYPE", "options": [
+              ["Last Logon", "LastLogon"],
+              ["Account Status", "AccountStatus"],
+              ["Password Age", "PasswordAge"],
+              ["Group Memberships", "Groups"]
+            ]},
+            { "type": "field_dropdown", "name": "OUTPUT", "options": [
+              ["CSV", "CSV"],
+              ["Console", "Console"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Generates a comprehensive user report for auditing and compliance.\n\nPowerShell: Custom report based on selected type and output format",
+          "helpUrl": ""
+        },
+        {
+          "type": "reset_account_lockout",
+          "message0": "Reset Account Lockout Counter for %1",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "jdoe" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Resets the bad password attempt counter for a user.\n\nPowerShell: Set-ADUser -Replace @{badPwdCount=0}",
+          "helpUrl": ""
+        }
+      ]);
+
+      // Setup event listeners
+      document.getElementById('zoom-in').addEventListener('click', function() {
+        workspace.zoomCenter(1.2);
+      });
+
+      document.getElementById('zoom-out').addEventListener('click', function() {
+        workspace.zoomCenter(0.8);
+      });
+
+      window.clearWorkspace = function() {
+        workspace.clear();
+        showNotification('Workspace cleared');
+      };
+
+      function generatePowerShellCode() {
+        const blocks = workspace.getTopBlocks(true);
+        let code = "";
+        
+        // Add header
+        code += `# Generated by BlockShell AD Tool\n`;
+        code += `# Date: ${new Date().toISOString()}\n`;
+        code += `\n`;
+        
+        // Generate code from blocks
+        for (const block of blocks) {
+          code += generateBlockCodeRecursive(block);
+        }
+        
+        return code.trim();
+      }
+
+      function generateBlockCodeRecursive(block) {
+        if (!block) return "";
+        let code = "";
+
+        switch (block.type) {
+          case "create_ad_user":
+            code += `New-ADUser -Name "${block.getFieldValue('USER')}" -Enabled $true\n`;
+            break;
+          case "remove_ad_user":
+            code += `Remove-ADUser -Identity "${block.getFieldValue('USER')}" -Confirm:$false\n`;
+            break;
+          case "create_ad_group":
+            code += `New-ADGroup -Name "${block.getFieldValue('GROUP')}" -GroupScope Global -GroupCategory Security\n`;
+            break;
+          case "add_user_to_group":
+            code += `Add-ADGroupMember -Identity "${block.getFieldValue('GROUP')}" -Members "${block.getFieldValue('USER')}"\n`;
+            break;
+          case "remove_user_from_group":
+            code += `Remove-ADGroupMember -Identity "${block.getFieldValue('GROUP')}" -Members "${block.getFieldValue('USER')}" -Confirm:$false\n`;
+            break;
+          case "create_ou":
+            code += `New-ADOrganizationalUnit -Name "${block.getFieldValue('OU')}"\n`;
+            break;
+          case "move_ad_user":
+            code += `Get-ADUser "${block.getFieldValue('USER')}" | Move-ADObject -TargetPath "OU=${block.getFieldValue('OU')},DC=example,DC=com"\n`;
+            break;
+          case "set_user_password":
+            code += `Set-ADAccountPassword -Identity "${block.getFieldValue('USER')}" -NewPassword (ConvertTo-SecureString "${block.getFieldValue('PASSWORD')}" -AsPlainText -Force)\n`;
+            break;
+          case "unlock_ad_account":
+            code += `Unlock-ADAccount -Identity "${block.getFieldValue('USER')}"\n`;
+            break;
+          case "enable_ad_account":
+            code += `Enable-ADAccount -Identity "${block.getFieldValue('USER')}"\n`;
+            break;
+          case "get_ad_user":
+            code += `Get-ADUser -Identity "${block.getFieldValue('USER')}" -Properties * | Format-List\n`;
+            break;
+          case "set_user_properties":
+            code += `Set-ADUser -Identity "${block.getFieldValue('USER')}" -EmailAddress "${block.getFieldValue('EMAIL')}" -Department "${block.getFieldValue('DEPARTMENT')}"\n`;
+            break;
+          case "disable_ad_account":
+            code += `Disable-ADAccount -Identity "${block.getFieldValue('USER')}"\n`;
+            break;
+          case "copy_ad_group_members":
+            code += `Get-ADGroupMember -Identity "${block.getFieldValue('SOURCE_GROUP')}" | ForEach-Object { Add-ADGroupMember -Identity "${block.getFieldValue('TARGET_GROUP')}" -Members $_.distinguishedName }\n`;
+            break;
+          case "force_password_change":
+            code += `Set-ADUser -Identity "${block.getFieldValue('USER')}" -ChangePasswordAtLogon $true\n`;
+            break;
+          case "rename_ad_user":
+            code += `Rename-ADObject -Identity (Get-ADUser "${block.getFieldValue('OLDNAME')}").DistinguishedName -NewName "${block.getFieldValue('NEWNAME')}"\n`;
+            break;
+          case "get_group_members":
+            if (block.getFieldValue('EXPORT') === 'TRUE') {
+              code += `Get-ADGroupMember -Identity "${block.getFieldValue('GROUP')}" | Get-ADUser -Properties Name,SamAccountName,EmailAddress,Department | Select-Object Name,SamAccountName,EmailAddress,Department | Export-Csv -Path "./${block.getFieldValue('GROUP')}_members.csv" -NoTypeInformation\n`;
+            } else {
+              code += `Get-ADGroupMember -Identity "${block.getFieldValue('GROUP')}" | Get-ADUser -Properties Name,SamAccountName,EmailAddress | Format-Table Name,SamAccountName,EmailAddress\n`;
+            }
+            break;
+          case "search_ad_objects":
+            const objectType = block.getFieldValue('OBJECTTYPE');
+            if (objectType === 'All') {
+              code += `Get-ADObject -Filter "Name -like '${block.getFieldValue('SEARCHTERM')}'" -Properties * | Format-Table Name,ObjectClass,DistinguishedName\n`;
+            } else {
+              code += `Get-ADObject -Filter "Name -like '${block.getFieldValue('SEARCHTERM')}'" -Properties * | Where-Object { $_.ObjectClass -eq '${objectType}' } | Format-Table Name,DistinguishedName\n`;
+            }
+            break;
+          case "export_group_membership":
+            code += `Get-ADPrincipalGroupMembership -Identity "${block.getFieldValue('USER')}" | Select-Object Name,GroupCategory,GroupScope | Export-Csv -Path "./${block.getFieldValue('USER')}_groups.csv" -NoTypeInformation\n`;
+            break;
+          case "check_password_expiry":
+            code += `$user = Get-ADUser -Identity "${block.getFieldValue('USER')}" -Properties "PasswordLastSet","PasswordNeverExpires","msDS-UserPasswordExpiryTimeComputed"
+$expireDate = [datetime]::FromFileTime($user."msDS-UserPasswordExpiryTimeComputed")
+$today = Get-Date
+$daysUntilExpiry = ($expireDate - $today).Days
+
+if ($user.PasswordNeverExpires) {
+    Write-Host "Password for ${block.getFieldValue('USER')} never expires."
+} elseif ($daysUntilExpiry -le ${block.getFieldValue('DAYS')}) {
+    Write-Host "WARNING: Password for ${block.getFieldValue('USER')} will expire in $daysUntilExpiry days on $expireDate"
+} else {
+    Write-Host "Password for ${block.getFieldValue('USER')} will expire in $daysUntilExpiry days on $expireDate"
+}\n`;
+            break;
+          case "create_user_from_template":
+            code += `# Get template user properties
+$templateUser = Get-ADUser -Identity "${block.getFieldValue('TEMPLATEUSER')}" -Properties *
+$newUserParams = @{
+    Name = "${block.getFieldValue('NEWUSER')}"
+    SamAccountName = "${block.getFieldValue('NEWUSER')}"
+    Path = $templateUser.DistinguishedName.Substring($templateUser.DistinguishedName.IndexOf(',') + 1)
+    Department = $templateUser.Department
+    Company = $templateUser.Company
+    Title = $templateUser.Title
+    Manager = $templateUser.Manager
+    Office = $templateUser.Office
+    Enabled = $true
+}
+# Create the new user
+New-ADUser @newUserParams
+
+# Copy group memberships
+Get-ADPrincipalGroupMembership -Identity "${block.getFieldValue('TEMPLATEUSER')}" | 
+    Where-Object { $_.Name -ne "Domain Users" } | 
+    ForEach-Object { Add-ADGroupMember -Identity $_ -Members "${block.getFieldValue('NEWUSER')}" }\n`;
+            break;
+          case "nested_group_membership":
+            if (block.getFieldValue('TRANSITIVE') === 'TRUE') {
+              code += `# Get all groups that this group is a member of (transitive)
+Get-ADGroup -Identity "${block.getFieldValue('GROUP')}" -Properties MemberOf | 
+    Select-Object -ExpandProperty MemberOf | 
+    Get-ADObject -Properties * | 
+    ForEach-Object { 
+        $groupDN = $_
+        # Recursively get parent groups
+        function Get-ParentGroups {
+            param($DN)
+            Get-ADObject -Identity $DN -Properties MemberOf | 
+                Select-Object -ExpandProperty MemberOf | 
+                ForEach-Object {
+                    Get-ADObject -Identity $_ -Properties Name,ObjectClass | 
+                        Select-Object Name,ObjectClass,DistinguishedName
+                    Get-ParentGroups -DN $_
+                }
+        }
+        Get-ADObject -Identity $groupDN -Properties Name,ObjectClass | 
+            Select-Object Name,ObjectClass,DistinguishedName
+        Get-ParentGroups -DN $groupDN
+    } | Sort-Object Name -Unique | Format-Table Name,ObjectClass\n`;
+            } else {
+              code += `# Get direct group memberships only
+Get-ADGroup -Identity "${block.getFieldValue('GROUP')}" -Properties MemberOf | 
+    Select-Object -ExpandProperty MemberOf | 
+    Get-ADObject -Properties Name,ObjectClass | 
+    Select-Object Name,ObjectClass,DistinguishedName | 
+    Format-Table Name,ObjectClass\n`;
+            }
+            break;
+          case "check_locked_accounts":
+            code += `# Find locked accounts in specified OU
+$searchBase = "OU=${block.getFieldValue('OU')},DC=example,DC=com"
+$lockedAccounts = Search-ADAccount -LockedOut -SearchBase $searchBase
+if ($lockedAccounts) {
+    Write-Host "Found $(($lockedAccounts | Measure-Object).Count) locked accounts:"
+    $lockedAccounts | Select-Object Name,SamAccountName,LockedOut,LastLogonDate | Format-Table
+    
+    # Export to CSV for reporting
+    $date = Get-Date -Format "yyyy-MM-dd-HHmm"
+    $lockedAccounts | Select-Object Name,SamAccountName,LockedOut,LastLogonDate | 
+        Export-Csv -Path "./Locked_Accounts_$date.csv" -NoTypeInformation
+    Write-Host "Exported results to ./Locked_Accounts_$date.csv"
+} else {
+    Write-Host "No locked accounts found in OU: ${block.getFieldValue('OU')}"
+}\n`;
+            break;
+          case "get_inactive_computers":
+            code += `# Find inactive computer accounts
+$cutoffDate = (Get-Date).AddDays(-${block.getFieldValue('DAYS')})
+$inactiveComputers = Get-ADComputer -Filter {LastLogonTimeStamp -lt $cutoffDate -and Enabled -eq $true} -Properties Name,LastLogonTimeStamp,OperatingSystem,Description,Location
+
+if ($inactiveComputers) {
+    Write-Host "Found $(($inactiveComputers | Measure-Object).Count) inactive computer accounts (not logged in for ${block.getFieldValue('DAYS')}+ days):"
+    $inactiveComputers | ForEach-Object {
+        # Convert LastLogonTimestamp to readable date
+        $_ | Add-Member -MemberType NoteProperty -Name "LastLogon" -Value ([datetime]::FromFileTime($_.lastLogonTimestamp))
+        $_
+    } | Select-Object Name,LastLogon,OperatingSystem,Description | Format-Table
+    
+    # Export to CSV for reporting
+    $date = Get-Date -Format "yyyy-MM-dd"
+    $inactiveComputers | Select-Object Name,DistinguishedName,Enabled,LastLogon,OperatingSystem,Description |
+        Export-Csv -Path "./InactiveComputers_${block.getFieldValue('DAYS')}days_$date.csv" -NoTypeInformation
+    Write-Host "Exported results to ./InactiveComputers_${block.getFieldValue('DAYS')}days_$date.csv"
+} else {
+    Write-Host "No inactive computer accounts found."
+}\n`;
+            break;
+          case "generate_user_report":
+            const reportType = block.getFieldValue('REPORTTYPE');
+            const outputFormat = block.getFieldValue('OUTPUT');
+            
+            code += `# Generate comprehensive user report
+$reportDate = Get-Date -Format "yyyy-MM-dd"
+$reportName = "${reportType}_Report_$reportDate"
+$users = Get-ADUser -Filter * -Properties Name,SamAccountName,Enabled,PasswordLastSet,LastLogonDate,PasswordNeverExpires,LockedOut,EmailAddress,Department,Title,Manager,MemberOf
+
+Write-Host "Generating ${reportType} report for all users..."
+
+`;
+
+            if (reportType === 'LastLogon') {
+              code += `$processedUsers = $users | Select-Object Name,SamAccountName,Enabled,LastLogonDate,@{
+    Name = "DaysSinceLogon"
+    Expression = { if ($_.LastLogonDate) { 
+        [math]::Round((New-TimeSpan -Start $_.LastLogonDate -End (Get-Date)).TotalDays) 
+    } else { "Never" } }
+} | Sort-Object DaysSinceLogon -Descending
+`;
+            } else if (reportType === 'AccountStatus') {
+              code += `$processedUsers = $users | Select-Object Name,SamAccountName,Enabled,LockedOut,@{
+    Name = "AccountStatus"
+    Expression = { 
+        if (-not $_.Enabled) { "Disabled" }
+        elseif ($_.LockedOut) { "Locked" }
+        else { "Active" }
+    }
+},EmailAddress,Department,Title
+`;
+            } else if (reportType === 'PasswordAge') {
+              code += `$processedUsers = $users | Select-Object Name,SamAccountName,PasswordLastSet,PasswordNeverExpires,@{
+    Name = "PasswordAge"
+    Expression = { if ($_.PasswordLastSet) { 
+        [math]::Round((New-TimeSpan -Start $_.PasswordLastSet -End (Get-Date)).TotalDays) 
+    } else { "Never" } }
+},@{
+    Name = "Status"
+    Expression = { 
+        if ($_.PasswordNeverExpires) { "Never Expires" }
+        elseif (-not $_.PasswordLastSet) { "Password Not Set" }
+        elseif ([math]::Round((New-TimeSpan -Start $_.PasswordLastSet -End (Get-Date)).TotalDays) -gt 90) { "Expired" }
+        else { "Valid" }
+    }
+} | Sort-Object PasswordAge -Descending
+`;
+            } else if (reportType === 'Groups') {
+              code += `$processedUsers = @()
+foreach ($user in $users) {
+    $groups = Get-ADPrincipalGroupMembership -Identity $user.SamAccountName | Select-Object -ExpandProperty Name
+    $groupsString = $groups -join "; "
+    
+    $processedUsers += [PSCustomObject]@{
+        Name = $user.Name
+        SamAccountName = $user.SamAccountName
+        Department = $user.Department
+        Title = $user.Title
+        GroupCount = $groups.Count
+        Groups = $groupsString
+    }
+}
+$processedUsers = $processedUsers | Sort-Object GroupCount -Descending
+`;
+            }
+
+            if (outputFormat === 'CSV') {
+              code += `$processedUsers | Export-Csv -Path "./$reportName.csv" -NoTypeInformation
+Write-Host "Report exported to ./$reportName.csv"
+`;
+            } else {
+              code += `$processedUsers | Format-Table
+Write-Host "Report generated and displayed in console"
+`;
+            }
+            
+            break;
+          case "reset_account_lockout":
+            code += `# Reset the account lockout counter for a user
+$PDC = (Get-ADDomain).PDCEmulator
+$user = Get-ADUser "${block.getFieldValue('USER')}"
+Set-ADUser -Identity $user.DistinguishedName -Replace @{badPwdCount=0} -Server $PDC
+Write-Host "Reset bad password count for ${block.getFieldValue('USER')}"
+
+$userAfter = Get-ADUser "${block.getFieldValue('USER')}" -Properties LockedOut
+if ($userAfter.LockedOut) {
+    Unlock-ADAccount -Identity $user.DistinguishedName
+    Write-Host "Unlocked account for ${block.getFieldValue('USER')}"
+} else {
+    Write-Host "Account was not locked."
+}
+
+Write-Host "Account lockout counter has been reset for ${block.getFieldValue('USER')}"
+\n`;
+            break;
+        }
+
+        const nextBlock = block.getNextBlock();
+        if (nextBlock) {
+          code += generateBlockCodeRecursive(nextBlock);
+        }
+        return code;
+      }
+
+      function createModal(title) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        
+        const content = document.createElement('div');
+        content.className = 'modal-content';
+        
+        const header = document.createElement('div');
+        header.className = 'modal-header';
+        
+        const titleElement = document.createElement('h3');
+        titleElement.className = 'modal-title';
+        titleElement.textContent = title;
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'close-btn';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = function() {
+          document.body.removeChild(modal);
+        };
+        
+        header.appendChild(titleElement);
+        header.appendChild(closeBtn);
+        content.appendChild(header);
+        modal.appendChild(content);
+        
+        return modal;
+      }
+
+      window.simulate = function simulate() {
+        const code = generatePowerShellCode();
+        if (!code) {
+          showNotification("No script to show. Please add some blocks first.");
+          return;
+        }
+        
+        const modal = createModal('Generated PowerShell Script');
+        
+        const codeBlock = document.createElement('div');
+        codeBlock.className = 'code-block';
+        const pre = document.createElement('pre');
+        pre.textContent = code;
+        hljs.highlightElement(pre);
+        codeBlock.appendChild(pre);
+        
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = 'Copy to Clipboard';
+        copyBtn.style.marginTop = '15px';
+        copyBtn.onclick = function() {
+          navigator.clipboard.writeText(code).then(() => {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy to Clipboard';
+            }, 2000);
+          });
+        };
+        
+        modal.querySelector('.modal-content').appendChild(codeBlock);
+        modal.querySelector('.modal-content').appendChild(copyBtn);
+        
+        document.body.appendChild(modal);
+      };
+      
+      function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+          notification.style.opacity = '1';
+        }, 10);
+        
+        // Animate out after 3 seconds
+        setTimeout(() => {
+          notification.style.opacity = '0';
+          setTimeout(() => {
+            document.body.removeChild(notification);
+          }, 500);
+        }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>

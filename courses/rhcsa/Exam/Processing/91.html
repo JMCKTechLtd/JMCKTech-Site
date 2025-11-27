@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab: FTP Server Configuration</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .vim-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .vim-container {
+            display: flex;
+            width: 90%;
+            height: 80%;
+            gap: 20px;
+        }
+        
+        .vim-instructions {
+            width: 30%;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+        
+        .vim-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .vim-editor {
+            width: 70%;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .vim-header {
+            background: #333;
+            padding: 5px 10px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .vim-content {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+            white-space: pre;
+            color: #ccc;
+            position: relative;
+        }
+        
+        .vim-command-line {
+            display: flex;
+            background: #333;
+            padding: 5px;
+            border-top: 1px solid #444;
+        }
+        
+        .vim-prompt {
+            color: #4CAF50;
+            padding: 0 5px;
+        }
+        
+        .vim-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+        }
+        
+        .vim-status {
+            background: #333;
+            padding: 3px 10px;
+            color: #ccc;
+            font-size: 0.9em;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .vim-mode-indicator {
+            color: #FFD700;
+        }
+        
+        .vim-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #ccc;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        
+        .vim-esc-button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .vim-esc-button:hover {
+            background: #666;
+        }
+        
+        .vim-command-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .vim-command-button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .vim-command-button:hover {
+            background: #555;
+        }
+        
+        .vim-mode-indicator.command-mode {
+            color: #FFD700;
+        }
+        
+        .vim-mode-indicator.insert-mode {
+            color: #4CAF50;
+        }
+        
+        .vim-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+            
+            .vim-container {
+                width: 95%;
+                height: 90%;
+                flex-direction: column;
+            }
+            
+            .vim-instructions, .vim-editor {
+                width: 100%;
+            }
+            
+            .vim-instructions {
+                height: 30%;
+            }
+            
+            .vim-editor {
+                height: 70%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab: FTP Server Configuration</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Configure the FTP service in your system, allow remote access to anonymous login and download the program by this service. Service should still be running after system rebooting.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>FTP Server Requirements</h4>
+                <div class="requirement-item" id="req-install">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Install vsftpd package</span>
+                </div>
+                <div class="requirement-item" id="req-start">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Start FTP service</span>
+                </div>
+                <div class="requirement-item" id="req-enable">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Enable FTP service to start at boot</span>
+                </div>
+                <div class="requirement-item" id="req-anonymous">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Configure anonymous access</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA FTP Server Configuration Lab. In this lab, you will install and configure an FTP server with anonymous access.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Install vsftpd Package
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's install the vsftpd (Very Secure FTP Daemon) package.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    yum install -y vsftpd
+                </div>
+                
+                <p>This will download and install the vsftpd package along with any dependencies.</p>
+
+                <div class="concept">
+                    <h4>Understanding FTP Server</h4>
+                    <p>vsftpd is a secure, fast FTP server for UNIX-like systems. It's designed with security in mind and is the default FTP server in many Linux distributions.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Start FTP Service
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's start the FTP service.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    systemctl start vsftpd
+                </div>
+                
+                <p>This will start the vsftpd service immediately.</p>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Enable FTP Service at Boot
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's enable the FTP service to start automatically at system boot.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    systemctl enable vsftpd
+                </div>
+                
+                <p>This will create the necessary symlinks to start vsftpd automatically when the system boots.</p>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Configure Anonymous Access
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's configure the FTP server to allow anonymous access.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    vim /etc/vsftpd/vsftpd.conf
+                </div>
+                
+                <p>Find the line that says <code>anonymous_enable=NO</code> and change it to:</p>
+                
+                <div class="file-content">anonymous_enable=YES</div>
+                
+                <p>To save and exit vim:</p>
+                <ol>
+                    <li>Press <code>ESC</code> to ensure you're in command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to write and quit</li>
+                </ol>
+
+                <div class="concept">
+                    <h4>Understanding FTP Configuration</h4>
+                    <p>The main configuration file for vsftpd is <code>/etc/vsftpd/vsftpd.conf</code>. Key parameters:</p>
+                    <ul>
+                        <li><code>anonymous_enable</code>: Controls anonymous FTP access</li>
+                        <li><code>local_enable</code>: Controls whether local users can log in</li>
+                        <li><code>write_enable</code>: Controls FTP commands that can change the filesystem</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Restart FTP Service
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's restart the FTP service to apply the configuration changes.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    systemctl restart vsftpd
+                </div>
+            </div>
+
+            <div class="guide-step" id="step6">
+                <h3>
+                    <span class="step-number">6</span>
+                    Verify Configuration
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's verify that our FTP server is running and configured correctly.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    systemctl status vsftpd
+                </div>
+                <p>Should show: <code>active (running)</code></p>
+                
+                <div class="command-hint">
+                    systemctl is-enabled vsftpd
+                </div>
+                <p>Should show: <code>enabled</code></p>
+                
+                <div class="command-hint">
+                    grep anonymous_enable /etc/vsftpd/vsftpd.conf
+                </div>
+                <p>Should show: <code>anonymous_enable=YES</code></p>
+
+                <div class="concept">
+                    <h4>Verification Commands</h4>
+                    <p>After configuring services, always verify with these commands:</p>
+                    <ul>
+                        <li><code>systemctl status</code> - Shows service status</li>
+                        <li><code>systemctl is-enabled</code> - Checks if service starts at boot</li>
+                        <li><code>grep</code> - Verifies configuration settings</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All FTP server configuration requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab: FTP Server Configuration</div>
+                <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Install vsftpd Package</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>yum install -y vsftpd</code></div>
+                <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@station ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vim Editor Overlay -->
+<div id="vim-overlay" class="vim-overlay" style="display: none;">
+    <div class="vim-container">
+        <div class="vim-instructions" id="vim-instructions">
+            <h3>Vim Editor Instructions</h3>
+            <div id="vim-instructions-content"></div>
+        </div>
+        
+        <div class="vim-editor">
+            <div class="vim-header">
+                <span id="vim-filename">filename</span>
+                <div class="vim-command-buttons">
+                    <button class="vim-command-button" id="vim-insert-button">i (Insert)</button>
+                    <button class="vim-esc-button" id="vim-esc-button">ESC</button>
+                    <span id="vim-close-btn" style="cursor: pointer; margin-left: 10px;">×</span>
+                </div>
+            </div>
+            <div class="vim-content" id="vim-content">
+                <textarea id="vim-textarea" class="vim-textarea" spellcheck="false"></textarea>
+            </div>
+            <div class="vim-command-line">
+                <input type="text" class="vim-input" id="vim-input" placeholder="Type :wq to save and exit"/>
+            </div>
+            <div class="vim-status">
+                <span class="vim-mode-indicator command-mode" id="vim-mode-indicator">COMMAND MODE</span>
+                <span id="vim-cursor-position">1,1</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    // Vim editor elements
+    const vimOverlay = document.getElementById('vim-overlay');
+    const vimInstructions = document.getElementById('vim-instructions');
+    const vimInstructionsContent = document.getElementById('vim-instructions-content');
+    const vimFilename = document.getElementById('vim-filename');
+    const vimContent = document.getElementById('vim-content');
+    const vimTextarea = document.getElementById('vim-textarea');
+    const vimInput = document.getElementById('vim-input');
+    const vimModeIndicator = document.getElementById('vim-mode-indicator');
+    const vimCursorPosition = document.getElementById('vim-cursor-position');
+    const vimCloseBtn = document.getElementById('vim-close-btn');
+    const vimEscButton = document.getElementById('vim-esc-button');
+    const vimInsertButton = document.getElementById('vim-insert-button');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'yum', 'systemctl', 'vim', 'grep', 'cat', 'cd', 'ls', 'clear', 'help'
+    ];
+    
+    // Available file paths for tab completion
+    const filePaths = {
+        '/etc/': ['vsftpd/', 'sysconfig/'],
+        '/etc/vsftpd/': ['vsftpd.conf']
+    };
+    
+    // Track configuration state
+    const configState = {
+        install: false,
+        start: false,
+        enable: false,
+        anonymous: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['yum install -y vsftpd'],
+        2: ['systemctl start vsftpd'],
+        3: ['systemctl enable vsftpd'],
+        4: ['vim /etc/vsftpd/vsftpd.conf'],
+        5: ['systemctl restart vsftpd'],
+        6: ['systemctl status vsftpd', 'systemctl is-enabled vsftpd', 'grep anonymous_enable /etc/vsftpd/vsftpd.conf']
+    };
+    
+    // Simulated file contents
+    let vsftpdConfContent = `# Example config file /etc/vsftpd/vsftpd.conf
+#
+# The default compiled in settings are fairly paranoid. This sample file
+# loosens things up a bit, to make the ftp daemon more usable.
+#
+# Allow anonymous FTP? (Beware - allowed by default if you comment this out).
+anonymous_enable=NO
+#
+# Uncomment this to allow local users to log in.
+#local_enable=YES
+#
+# Uncomment this to enable any form of FTP write command.
+#write_enable=YES
+#
+# Default umask for local users is 077. You may wish to change this to 022,
+# if your users expect that (022 is used by most other ftpd's)
+#local_umask=022
+#
+# Uncomment this to allow the anonymous FTP user to upload files. This only
+# has an effect if the above global write enable is activated. Also, you will
+# obviously need to create a directory writable by the FTP user.
+#anon_upload_enable=YES
+#
+# Uncomment this if you want the anonymous FTP user to be able to create
+# new directories.
+#anon_mkdir_write_enable=YES
+#
+# Activate directory messages - messages given to remote users when they
+# go into a certain directory.
+dirmessage_enable=YES
+#
+# Activate logging of uploads/downloads.
+xferlog_enable=YES
+#
+# Make sure PORT transfer connections originate from port 20 (ftp-data).
+connect_from_port_20=YES
+#
+# If you want, you can arrange for uploaded anonymous files to be owned by
+# a different user. Note! Using "root" for uploaded files is not
+# recommended!
+#chown_uploads=YES
+#chown_username=whoever
+#
+# You may override where the log file goes if you like. The default is shown
+# below.
+#xferlog_file=/var/log/xferlog
+#
+# If you want, you can have your log file in standard ftpd xferlog format.
+# Note that the default log file location is /var/log/xferlog in this case.
+xferlog_std_format=YES
+#
+# You may change the default value for timing out an idle session.
+#idle_session_timeout=600
+#
+# You may change the default value for timing out a data connection.
+#data_connection_timeout=120
+#
+# It is recommended that you define on your system a unique user which the
+# ftp server can use as a totally isolated and unprivileged user.
+#nopriv_user=ftpsecure
+#
+# Enable this and the server will recognise asynchronous ABOR requests. Not
+# recommended for security (the code is non-trivial). Not enabling it,
+# however, may confuse older FTP clients.
+#async_abor_enable=YES
+#
+# By default the server will pretend to allow ASCII mode but in fact ignore
+# the request. Turn on the below options to have the server actually do ASCII
+# mangling on files when in ASCII mode.
+# Beware that on some FTP servers, ASCII support allows a denial of service
+# attack (DoS) via the command "SIZE /big/file" in ASCII mode. vsftpd
+# predicted this attack and has always been safe, reporting the size of the
+# raw file.
+# ASCII mangling is a horrible feature of the protocol.
+#ascii_upload_enable=YES
+#ascii_download_enable=YES
+#
+# You may fully customise the login banner string:
+#ftpd_banner=Welcome to blah FTP service.
+#
+# You may specify a file of disallowed anonymous e-mail addresses. Apparently
+# useful for combatting certain DoS attacks.
+#deny_email_enable=YES
+# (default follows)
+#banned_email_file=/etc/vsftpd/banned_emails
+#
+# You may restrict local users to their home directories.  See the FAQ for
+# the possible risks in this before using chroot_local_user or
+# chroot_list_enable below.
+#chroot_local_user=YES
+#
+# You may specify an explicit list of local users to chroot() to their home
+# directory. If chroot_local_user is YES, then this list becomes a list of
+# users to NOT chroot().
+# (Warning! chroot'ing can be very dangerous. If using chroot, make sure that
+# the user does not have write access to the top level directory within the
+# chroot)
+#chroot_list_enable=YES
+# (default follows)
+#chroot_list_file=/etc/vsftpd/chroot_list
+#
+# You may activate the "-R" option to the builtin ls. This is disabled by
+# default to avoid remote users being able to cause excessive I/O on large
+# sites. However, some broken FTP clients such as "ncftp" and "mirror" assume
+# the presence of the "-R" option, so there is a strong case for enabling it.
+#ls_recurse_enable=YES
+#
+# When "listen" directive is enabled, vsftpd runs in standalone mode and
+# listens on IPv4 sockets. This directive cannot be used in conjunction
+# with the listen_ipv6 directive.
+listen=YES
+#
+# This directive enables listening on IPv6 sockets. By default, listening
+# on the IPv6 "any" address (::) will accept connections from both IPv6
+# and IPv4 clients. It is not necessary to listen on *both* IPv4 and IPv6
+# sockets. If you want that (perhaps because you want to listen on specific
+# addresses) then you must run two copies of vsftpd with two configuration
+# files.
+#listen_ipv6=YES
+
+pam_service_name=vsftpd
+userlist_enable=YES
+tcp_wrappers=YES`;
+    
+    // Vim editor state
+    let vimState = {
+        file: '',
+        content: '',
+        cursorPos: 0,
+        mode: 'command', // 'command' or 'insert'
+        isEditing: false,
+        fileType: ''
+    };
+    
+    const commands = {
+        'yum': (args) => {
+            if (args[0] === "install" && args[1] === "-y" && args[2] === "vsftpd") {
+                if (currentStep === 1 || currentStep > 1) {
+                    configState.install = true;
+                    updateRequirements();
+                    completeStep(1);
+                    return "Loaded plugins: fastestmirror, langpacks\nLoading mirror speeds from cached hostfile\nResolving Dependencies\n--> Running transaction check\n---> Package vsftpd.x86_64 0:3.0.2-25.el7 will be installed\n--> Finished Dependency Resolution\n\nInstalling:\n vsftpd x86_64 3.0.2-25.el7 1.2 M\n\nTransaction Summary\nInstall 1 Package\n\nTotal download size: 1.2 M\nInstalled size: 1.6 M\nDownloading packages:\nRunning transaction check\nRunning transaction test\nTransaction test succeeded\nRunning transaction\n  Installing : vsftpd-3.0.2-25.el7.x86_64 1/1 \n  Verifying  : vsftpd-3.0.2-25.el7.x86_64 1/1 \n\nInstalled:\n  vsftpd.x86_64 0:3.0.2-25.el7 \n\nComplete!";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `yum: invalid command '${args.join(' ')}'`;
+        },
+        
+        'systemctl': (args) => {
+            if (args[0] === "start" && args[1] === "vsftpd") {
+                if (currentStep === 2 || currentStep > 2) {
+                    configState.start = true;
+                    updateRequirements();
+                    completeStep(2);
+                    return "";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "enable" && args[1] === "vsftpd") {
+                if (currentStep === 3 || currentStep > 3) {
+                    configState.enable = true;
+                    updateRequirements();
+                    completeStep(3);
+                    return "Created symlink from /etc/systemd/system/multi-user.target.wants/vsftpd.service to /usr/lib/systemd/system/vsftpd.service.";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "restart" && args[1] === "vsftpd") {
+                if (currentStep === 5 || currentStep > 5) {
+                    completeStep(5);
+                    return "";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "status" && args[1] === "vsftpd") {
+                if (configState.start) {
+                    return `● vsftpd.service - Vsftpd ftp daemon
+   Loaded: loaded (/usr/lib/systemd/system/vsftpd.service; enabled; vendor preset: disabled)
+   Active: active (running) since Tue 2023-11-14 10:23:45 EST; 5min ago
+  Process: 1234 ExecStart=/usr/sbin/vsftpd /etc/vsftpd/vsftpd.conf (code=exited, status=0/SUCCESS)
+ Main PID: 1235 (vsftpd)
+   CGroup: /system.slice/vsftpd.service
+           └─1235 /usr/sbin/vsftpd /etc/vsftpd/vsftpd.conf
+
+Nov 14 10:23:45 station systemd[1]: Starting Vsftpd ftp daemon...
+Nov 14 10:23:45 station systemd[1]: Started Vsftpd ftp daemon.`;
+                } else {
+                    return `● vsftpd.service - Vsftpd ftp daemon
+   Loaded: loaded (/usr/lib/systemd/system/vsftpd.service; disabled; vendor preset: disabled)
+   Active: inactive (dead)`;
+                }
+            } else if (args[0] === "is-enabled" && args[1] === "vsftpd") {
+                if (configState.enable) {
+                    return "enabled";
+                } else {
+                    return "disabled";
+                }
+            }
+            return `Unknown operation '${args[0]}'.`;
+        },
+        
+        'vim': (args) => {
+            if (args.length === 0) {
+                return "vim: Please specify a file to edit";
+            }
+            
+            const file = args[0];
+            let content = '';
+            
+            if (file === "/etc/vsftpd/vsftpd.conf") {
+                content = vsftpdConfContent;
+                if (currentStep === 4 || currentStep > 4) {
+                    const result = openVimEditor(file, content, 'vsftpd');
+                    return result;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            
+            return `vim: cannot open ${file} for writing: No such file or directory`;
+        },
+        
+        'grep': (args) => {
+            if (args[0] === "anonymous_enable" && args[1] === "/etc/vsftpd/vsftpd.conf") {
+                if (configState.anonymous) {
+                    return "anonymous_enable=YES";
+                } else {
+                    return "anonymous_enable=NO";
+                }
+            }
+            return `grep: ${args[0]}: No such file or directory`;
+        },
+        
+        'cat': (args) => {
+            if (args[0] === "/etc/vsftpd/vsftpd.conf") {
+                return vsftpdConfContent;
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        
+        'ls': (args) => {
+            if (args.length === 0 || args[0] === "/etc/vsftpd") {
+                return "vsftpd.conf";
+            }
+            return `ls: cannot access '${args[0]}': No such file or directory`;
+        },
+        
+        'cd': (args) => {
+            if (args.length === 0 || args[0] === "~") {
+                return ""; // Stay in home directory
+            } else if (args[0] === "/etc/vsftpd") {
+                return ""; // Successfully changed directory
+            }
+            return `bash: cd: ${args[0]}: No such file or directory`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: yum, systemctl, vim, grep, cat, cd, ls, clear, help";
+        }
+    };
+    
+    // Function to open the Vim editor
+    function openVimEditor(filename, content, fileType) {
+        vimState.file = filename;
+        vimState.content = content;
+        vimState.fileType = fileType;
+        vimState.mode = 'command';
+        vimState.isEditing = true;
+        
+        // Set the filename in the editor
+        vimFilename.textContent = filename;
+        
+        // Set the content in the textarea
+        vimTextarea.value = content;
+        
+        // Set up instructions based on file type
+        if (fileType === 'vsftpd') {
+            vimInstructionsContent.innerHTML = `
+                <p>Edit the vsftpd configuration file to enable anonymous access.</p>
+                <p>Find the line that says:</p>
+                <div class="file-content">anonymous_enable=NO</div>
+                <p>And change it to:</p>
+                <div class="file-content">anonymous_enable=YES</div>
+                <p><strong>Vim Commands:</strong></p>
+                <ul>
+                    <li>Press <code>i</code> to enter Insert mode</li>
+                    <li>Navigate to the line and make the change</li>
+                    <li>Press <code>ESC</code> to return to Command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
+                </ul>
+                <p><strong>Search tip:</strong> In command mode, type <code>/anonymous_enable</code> and press Enter to find the line quickly.</p>
+            `;
+        }
+        
+        // Show the Vim overlay
+        vimOverlay.style.display = 'flex';
+        
+        // Start in command mode
+        vimState.mode = 'command';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        
+        // Focus the vim input (command line)
+        setTimeout(() => {
+            vimInput.focus();
+            updateVimCursorPosition();
+        }, 100);
+        
+        return `Opening ${filename} in Vim editor...`;
+    }
+    
+    // Function to handle Vim commands
+    function handleVimCommand(command) {
+        if (command === 'w' || command === 'write') {
+            // Save the file
+            if (vimState.file === "/etc/vsftpd/vsftpd.conf") {
+                vsftpdConfContent = vimTextarea.value;
+                if (vsftpdConfContent.includes("anonymous_enable=YES")) {
+                    configState.anonymous = true;
+                    updateRequirements();
+                }
+                completeStep(4);
+            }
+            return "File saved";
+        } else if (command === 'q' || command === 'quit') {
+            // Close the editor
+            closeVimEditor();
+            return "";
+        } else if (command === 'wq') {
+            // Save and quit
+            const saveMsg = handleVimCommand('w');
+            closeVimEditor();
+            return saveMsg + " and exiting";
+        } else if (command === 'q!') {
+            // Quit without saving
+            closeVimEditor();
+            return "Exiting without saving";
+        }
+        return `Not an editor command: ${command}`;
+    }
+    
+    // Function to close the Vim editor
+    function closeVimEditor() {
+        vimOverlay.style.display = 'none';
+        vimState.isEditing = false;
+        commandInput.focus();
+    }
+    
+    // Function to update Vim cursor position display
+    function updateVimCursorPosition() {
+        const text = vimTextarea.value;
+        const cursorPos = vimTextarea.selectionStart;
+        const lines = text.substring(0, cursorPos).split('\n');
+        const line = lines.length;
+        const column = lines[lines.length - 1].length + 1;
+        vimCursorPosition.textContent = `${line},${column}`;
+    }
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        if (configState.install) {
+            document.getElementById('req-install').classList.add('completed');
+            document.getElementById('req-install').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.start) {
+            document.getElementById('req-start').classList.add('completed');
+            document.getElementById('req-start').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.enable) {
+            document.getElementById('req-enable').classList.add('completed');
+            document.getElementById('req-enable').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.anonymous) {
+            document.getElementById('req-anonymous').classList.add('completed');
+            document.getElementById('req-anonymous').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[root@station ~]# Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep][0]}`);
+                }
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Vim editor event listeners
+    vimCloseBtn.addEventListener('click', () => {
+        closeVimEditor();
+    });
+    
+    vimEscButton.addEventListener('click', () => {
+        vimState.mode = 'command';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        vimTextarea.blur();
+        vimInput.focus();
+        updateVimCursorPosition();
+    });
+    
+    vimInsertButton.addEventListener('click', () => {
+        vimState.mode = 'insert';
+        vimModeIndicator.textContent = 'INSERT MODE';
+        vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+        vimInput.blur();
+        vimTextarea.focus();
+        updateVimCursorPosition();
+    });
+    
+    // Handle vim mode switching with keyboard
+    vimTextarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            vimState.mode = 'command';
+            vimModeIndicator.textContent = 'COMMAND MODE';
+            vimModeIndicator.className = 'vim-mode-indicator command-mode';
+            vimTextarea.blur();
+            vimInput.focus();
+        }
+        updateVimCursorPosition();
+    });
+    
+    // Handle vim command input
+    vimInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const command = vimInput.value.trim();
+            if (command === 'i') {
+                // Switch to insert mode
+                vimState.mode = 'insert';
+                vimModeIndicator.textContent = 'INSERT MODE';
+                vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+                vimInput.blur();
+                vimTextarea.focus();
+                vimInput.value = '';
+            } else if (command.startsWith(':')) {
+                // Handle colon commands
+                const actualCommand = command.substring(1);
+                const result = handleVimCommand(actualCommand);
+                if (result) {
+                    addTerminalOutput(result);
+                }
+                vimInput.value = '';
+            } else if (command) {
+                // Other vim commands
+                vimInput.value = '';
+            }
+        } else if (e.key === 'i' && vimInput.value === '' && vimState.mode === 'command') {
+            // Quick insert mode switch
+            e.preventDefault();
+            vimState.mode = 'insert';
+            vimModeIndicator.textContent = 'INSERT MODE';
+            vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+            vimInput.blur();
+            vimTextarea.focus();
+        }
+    });
+    
+    vimTextarea.addEventListener('click', () => {
+        if (vimState.mode === 'command') {
+            // In command mode, clicking textarea should focus command input instead
+            vimInput.focus();
+        } else {
+            updateVimCursorPosition();
+        }
+    });
+    
+    vimTextarea.addEventListener('keyup', () => {
+        if (vimState.mode === 'insert') {
+            updateVimCursorPosition();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
+</body>
+</html>

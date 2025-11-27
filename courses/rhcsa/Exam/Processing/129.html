@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 129: Reset Root Password with rd.break</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step-bg: #3a3a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--redhat-dark);
+        }
+
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: normal;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--redhat-accent);
+            transition: width 0.3s ease;
+        }
+
+        #progress-text {
+            font-size: 0.9em;
+            margin-top: 5px;
+            color: #ccc;
+        }
+
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .requirement-checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            border: 1px solid #666;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 0.8em;
+        }
+
+        .requirement-item.completed {
+            color: var(--redhat-accent);
+        }
+
+        .requirement-item.completed .requirement-checkbox {
+            background: var(--redhat-accent);
+            border-color: var(--redhat-accent);
+            color: #fff;
+        }
+
+        .requirement-label {
+            flex: 1;
+        }
+
+        .guide-step {
+            background: #2c2c2c;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #555;
+        }
+
+        .guide-step.current {
+            background: var(--current-step-bg);
+            border-left-color: var(--redhat-blue);
+        }
+
+        .guide-step.completed {
+            border-left-color: var(--redhat-accent);
+            opacity: 0.9;
+        }
+
+        .guide-step h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            background: #444;
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+
+        .hint-box {
+            background: rgba(0, 122, 204, 0.1);
+            padding: 8px 10px;
+            border-radius: 3px;
+            border-left: 3px solid var(--redhat-blue);
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+
+        .file-content {
+            background: #1f1f1f;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .completion-message {
+            background: rgba(76, 175, 80, 0.15);
+            border-left: 4px solid var(--redhat-accent);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .completion-message h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .warning {
+            color: #ffcc00;
+            font-size: 0.9em;
+        }
+
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+        }
+
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+        }
+
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+
+        .success {
+            color: var(--redhat-accent);
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .guide-panel,
+            .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 129: Reset Root Password with rd.break</h1>
+    </div>
+
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>
+                    On <strong>node2.domain15.example.com</strong> (Part 2 – Task 1
+                    <em>[Controlling the Boot Process]</em>), interrupt the boot process
+                    and reset the <code>root</code> password to
+                    <code>kexdrams</code> using the <code>rd.break</code> method.
+                </p>
+                <p>
+                    In the real exam you will:
+                </p>
+                <ul>
+                    <li>Interrupt GRUB, edit the kernel line, and append <code>rd.break</code>.</li>
+                    <li>Boot into the emergency shell at <code>switch_root:/#</code>.</li>
+                    <li>Remount <code>/sysroot</code> as read-write and chroot into it.</li>
+                    <li>Set the <code>root</code> password to <code>kexdrams</code>.</li>
+                    <li>Create <code>/.autorelabel</code> so SELinux relabels on next boot.</li>
+                    <li>Exit twice to continue boot and then log in as <code>root</code>.</li>
+                </ul>
+                <p><strong>Time Estimate:</strong> 10–15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Configuration Requirements</h4>
+                <div class="requirement-item" id="req-sysroot-rw">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>/sysroot</code> remounted read-write
+                        (<code>mount -o remount,rw /sysroot</code>)
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-chroot">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        Chrooted into <code>/sysroot</code>
+                        (<code>chroot /sysroot</code>)
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-password">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        Root password changed to <code>kexdrams</code>
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-autorelabel">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        <code>/.autorelabel</code> created to trigger SELinux relabel
+                    </span>
+                </div>
+                <div class="requirement-item" id="req-rebooted">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">
+                        System rebooted and root login with password <code>kexdrams</code> verified
+                    </span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction & GRUB Edit (Conceptual)
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>
+                    In the real environment, you would first:
+                </p>
+                <ol>
+                    <li>Reboot the server (for example with <code>Ctrl+Alt+Del</code>).</li>
+                    <li>At the GRUB menu, highlight the default boot entry and press <kbd>e</kbd>.</li>
+                    <li>Move to the line starting with <code>linux</code>, press <kbd>End</kbd> and append <code>rd.break</code>.</li>
+                    <li>Press <kbd>Ctrl+x</kbd> to boot with the modified parameters.</li>
+                </ol>
+                <p>
+                    After this, you land at the emergency prompt:
+                </p>
+                <div class="file-content">
+switch_root:/#
+                </div>
+                <p>
+                    This simulation starts from that point onward and focuses on
+                    the commands you must run to successfully reset the root
+                    password on <strong>node2</strong>.
+                </p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Remount /sysroot as read-write
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>
+                    At the <code>switch_root:/#</code> prompt, remount
+                    <code>/sysroot</code> with read-write permissions so you can
+                    modify the real root filesystem.
+                </p>
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    mount -o remount,rw /sysroot
+                </div>
+                <div class="concept">
+                    <h4>Why remount /sysroot?</h4>
+                    <p>
+                        The real root filesystem is mounted read-only by default
+                        in this rescue environment. You must remount it
+                        read-write before changing passwords or creating files.
+                    </p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Chroot into /sysroot
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Change your root directory to <code>/sysroot</code> so that
+                    password changes apply to the real system:
+                </p>
+                <div class="command-hint">
+                    chroot /sysroot
+                </div>
+                <p>
+                    Your prompt will typically change to something like:
+                </p>
+                <div class="file-content">
+sh-4.4#
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Set root password to kexdrams
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Now reset the <code>root</code> password to
+                    <code>kexdrams</code> using the non-interactive
+                    <code>passwd --stdin</code> method:
+                </p>
+                <div class="hint-box">
+                    <strong>Type this piped command exactly:</strong>
+                </div>
+                <div class="command-hint">
+                    echo kexdrams | passwd --stdin root
+                </div>
+                <div class="concept">
+                    <h4>Non-interactive password reset</h4>
+                    <p>
+                        Using <code>echo ... | passwd --stdin</code> lets you
+                        script or quickly set a password without being prompted
+                        twice for it.
+                    </p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Create /.autorelabel for SELinux
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    To ensure SELinux contexts are correct for the new password
+                    files, create <code>/.autorelabel</code>. On the next boot,
+                    SELinux will relabel the filesystem:
+                </p>
+                <div class="command-hint">
+                    touch /.autorelabel
+                </div>
+                <p class="warning">
+                    Skipping this on a system with SELinux enabled can cause
+                    login issues after changing the root password in rescue
+                    mode.
+                </p>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Exit the chroot shell
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Leave the chrooted environment and return to the
+                    <code>switch_root:/#</code> prompt:
+                </p>
+                <div class="command-hint">
+                    exit
+                </div>
+            </div>
+
+            <div class="guide-step" id="step6">
+                <h3>
+                    <span class="step-number">6</span>
+                    Exit again to continue boot & verify login
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>
+                    Exit once more to continue the normal boot process. After
+                    the system comes up, log in as <code>root</code> using the
+                    new password <code>kexdrams</code>.
+                </p>
+                <div class="command-hint">
+                    exit
+                </div>
+                <p>
+                    This simulation will show a successful login banner when
+                    you complete this step.
+                </p>
+            </div>
+
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>
+                    You have:
+                </p>
+                <ul>
+                    <li>Used <code>rd.break</code> (conceptually) to interrupt boot into an emergency shell.</li>
+                    <li>Remounted <code>/sysroot</code> read-write and chrooted into it.</li>
+                    <li>Reset the <code>root</code> password to <code>kexdrams</code>.</li>
+                    <li>Created <code>/.autorelabel</code> to ensure SELinux relabels on next boot.</li>
+                    <li>Exited twice to continue boot and verified root login using the new password.</li>
+                </ul>
+                <p>
+                    This completes RHCSA-style
+                    <strong>Question 129 – Task 1 [Controlling the Boot Process]</strong>.
+                </p>
+                <p>You can now move on to the next lab.</p>
+            </div>
+        </div>
+
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">switch_root:/#</span> Welcome to RHCSA Lab 129: Reset Root Password with rd.break</div>
+                <div><span class="prompt">switch_root:/#</span> Assume you have already edited the GRUB kernel line and booted with <code>rd.break</code>.</div>
+                <div><span class="prompt">switch_root:/#</span> Current step: remount /sysroot read-write</div>
+                <div><span class="prompt">switch_root:/#</span> Type: <code>mount -o remount,rw /sysroot</code></div>
+            </div>
+            <div class="command-line">
+                <span class="prompt" id="terminal-prompt">switch_root:/#</span>
+                <input id="command-input" type="text" placeholder="Type the command shown in the current step." autofocus/>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const terminalPrompt = document.getElementById('terminal-prompt');
+
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+
+    // Lab state
+    const configState = {
+        sysrootRW: false,
+        chrooted: false,
+        passwordChanged: false,
+        autorelabelSet: false,
+        rebooted: false
+    };
+
+    let sysrootRW = false;
+    let chrooted = false;
+    let passwordChanged = false;
+    let autorelabelSet = false;
+    let rebooted = false;
+
+    const stepCommands = {
+        1: ['mount -o remount,rw /sysroot'],
+        2: ['chroot /sysroot'],
+        3: ['echo kexdrams | passwd --stdin root'],
+        4: ['touch /.autorelabel'],
+        5: ['exit'],
+        6: ['exit']
+    };
+
+    function addTerminalOutput(text) {
+        const line = document.createElement('div');
+        line.innerHTML = text;
+        terminalOutput.appendChild(line);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    function updateRequirements() {
+        if (configState.sysrootRW) {
+            const item = document.getElementById('req-sysroot-rw');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.chrooted) {
+            const item = document.getElementById('req-chroot');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.passwordChanged) {
+            const item = document.getElementById('req-password');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.autorelabelSet) {
+            const item = document.getElementById('req-autorelabel');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (configState.rebooted) {
+            const item = document.getElementById('req-rebooted');
+            item.classList.add('completed');
+            item.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        const completedCount = Object.values(configState).filter(Boolean).length;
+        const total = Object.keys(configState).length;
+        const percent = (completedCount / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.textContent = Math.round(percent) + '% Complete';
+
+        if (completedCount === total) {
+            completionMessage.style.display = 'block';
+        }
+    }
+
+    function completeStep(step) {
+        if (step !== currentStep) return;
+
+        const stepElement = document.getElementById('step' + step);
+        if (!stepElement) return;
+
+        stepElement.classList.remove('current');
+        stepElement.classList.add('completed');
+        const statusSpan = stepElement.querySelector('.step-status');
+        statusSpan.textContent = 'Completed';
+        statusSpan.className = 'step-status status-completed';
+
+        currentStep++;
+        const nextStep = document.getElementById('step' + currentStep);
+        if (nextStep) {
+            nextStep.classList.add('current');
+            const nextStatus = nextStep.querySelector('.step-status');
+            nextStatus.textContent = 'Current Step';
+            nextStatus.className = 'step-status status-current';
+            const promptText = chrooted ? 'sh-4.4#' : 'switch_root:/#';
+            addTerminalOutput(
+                `<span class="prompt">${promptText}</span> Step ${step} completed. Moving to step ${currentStep}.`
+            );
+            const hint = stepCommands[currentStep] && stepCommands[currentStep][0];
+            if (hint) {
+                addTerminalOutput(
+                    `<span class="prompt">${promptText}</span> Next: <code>${hint}</code>`
+                );
+            }
+        } else {
+            const promptText = chrooted ? 'sh-4.4#' : 'switch_root:/#';
+            addTerminalOutput(
+                `<span class="prompt">${promptText}</span> All steps completed. Review the summary on the left.`
+            );
+        }
+    }
+
+    const commands = {
+        mount: (args) => {
+            const full = ['mount'].concat(args).join(' ');
+            if (full === stepCommands[1][0]) {
+                if (currentStep !== 1) {
+                    return '<span class="error">This command belongs to Step 1. Please follow the steps in order.</span>';
+                }
+                sysrootRW = true;
+                configState.sysrootRW = true;
+                updateRequirements();
+                completeStep(1);
+                return `mount: /sysroot remounted as read-write (simulated)`;
+            }
+            return 'For this lab, use:<br><code>mount -o remount,rw /sysroot</code>';
+        },
+
+        chroot: (args) => {
+            const full = ['chroot'].concat(args).join(' ');
+            if (full === stepCommands[2][0]) {
+                if (currentStep < 2) {
+                    return '<span class="error">Remount /sysroot as read-write before chrooting.</span>';
+                }
+                if (!sysrootRW) {
+                    return '<span class="error">/sysroot is still read-only. Run <code>mount -o remount,rw /sysroot</code> first.</span>';
+                }
+                chrooted = true;
+                configState.chrooted = true;
+                updateRequirements();
+                completeStep(2);
+                terminalPrompt.textContent = 'sh-4.4#';
+                return '';
+            }
+            return 'For this lab, use:<br><code>chroot /sysroot</code>';
+        },
+
+        // We handle the echo | passwd pipeline as a special combined command
+        passwdPipeline: () => {
+            if (currentStep < 3) {
+                return '<span class="error">You must be inside the chroot before changing the root password.</span>';
+            }
+            if (!chrooted) {
+                return '<span class="error">Run <code>chroot /sysroot</code> first so the password change applies to the real system.</span>';
+            }
+            passwordChanged = true;
+            configState.passwordChanged = true;
+            updateRequirements();
+            completeStep(3);
+            return `Changing password for user root.
+passwd: all authentication tokens updated successfully.`;
+        },
+
+        touch: (args) => {
+            const full = ['touch'].concat(args).join(' ');
+            if (full === stepCommands[4][0]) {
+                if (currentStep < 4) {
+                    return '<span class="error">Change the root password before creating /.autorelabel.</span>';
+                }
+                if (!passwordChanged) {
+                    return '<span class="error">You have not changed the root password yet. Complete that step first.</span>';
+                }
+                autorelabelSet = true;
+                configState.autorelabelSet = true;
+                updateRequirements();
+                completeStep(4);
+                return '';
+            }
+            return 'For this lab, use:<br><code>touch /.autorelabel</code>';
+        },
+
+        exit: () => {
+            if (currentStep === 5) {
+                if (!chrooted) {
+                    return '<span class="error">You are not in the chroot environment. Use <code>chroot /sysroot</code> first.</span>';
+                }
+                chrooted = false;
+                completeStep(5);
+                terminalPrompt.textContent = 'switch_root:/#';
+                return '';
+            } else if (currentStep === 6) {
+                if (chrooted) {
+                    return '<span class="error">Exit the chroot shell first, then exit again to continue boot.</span>';
+                }
+                rebooted = true;
+                configState.rebooted = true;
+                updateRequirements();
+                completeStep(6);
+                terminalPrompt.textContent = '[root@node2 ~]#';
+                return `[  OK  ] Rebooting system (simulated)...
+
+Red Hat Enterprise Linux (simulated)
+node2 login: root
+Password: 
+Last login: Fri Mar 24 10:25:01 from console
+
+[root@node2 ~]# <!-- Logged in with password 'kexdrams' (simulated) -->`;
+            } else {
+                return '<span class="error">Use <code>exit</code> only when leaving the chroot (Step 5) or continuing boot (Step 6).</span>';
+            }
+        },
+
+        clear: () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+
+        help: () => {
+            return `Available commands in this lab:
+- mount -o remount,rw /sysroot
+- chroot /sysroot
+- echo kexdrams | passwd --stdin root
+- touch /.autorelabel
+- exit
+- clear
+- help`;
+        }
+    };
+
+    function executeCommand(input) {
+        const trimmed = input.trim();
+        if (!trimmed) return;
+
+        const currentPromptText = terminalPrompt.textContent || 'switch_root:/#';
+        addTerminalOutput(`<span class="prompt">${currentPromptText}</span> ${trimmed}`);
+
+        commandHistory.push(trimmed);
+        historyIndex = commandHistory.length;
+
+        // Handle the piped passwd command as a special case
+        if (trimmed === stepCommands[3][0]) {
+            const result = commands.passwdPipeline();
+            if (result) addTerminalOutput(result);
+            return;
+        }
+
+        const parts = trimmed.split(/\s+/);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+
+        if (commands[cmd]) {
+            const result = commands[cmd](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`bash: ${cmd}: command not found`);
+            addTerminalOutput('Type "help" to see the simulated commands available in this lab.');
+        }
+    }
+
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) historyIndex--;
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex] || '';
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+        }
+    });
+
+    // Init progress UI
+    updateRequirements();
+</script>
+</body>
+</html>

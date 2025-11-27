@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PowerShell – Exchange Server</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <style>
+    :root {
+      --primary-color: #0078d7;
+      --text-color: #2c3e50;
+      --light-bg: #f8f9fa;
+      --border-color: #eaecef;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(to bottom, var(--light-bg), #eef1f5);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-color);
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    header {
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 120, 215, 0.1);
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      color: #0078d7;
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, #0078d7, #00a4ef);
+      border-radius: 2px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-top: 8px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    #blockly-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #blocklyDiv {
+      height: calc(100% - 60px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #buttons {
+      padding: 10px 20px;
+      display: flex;
+      gap: 10px;
+      background-color: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 120, 215, 0.3);
+    }
+
+    button.danger {
+      background-color: #d13438;
+    }
+
+    button.danger:hover {
+      background-color: #b32d30;
+    }
+
+    .blocklyToolboxDiv {
+      border-right: 1px solid var(--border-color) !important;
+    }
+
+    .blocklyMainBackground {
+      stroke-width: 0;
+    }
+
+    .blocklyFlyoutBackground {
+      fill: var(--light-bg);
+    }
+
+    .modal {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--text-color);
+      font-size: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .code-block {
+      background-color: var(--light-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 15px;
+      overflow-x: auto;
+      font-family: Consolas, Monaco, "Andale Mono", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      z-index: 1000;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .zoom-btn {
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+
+    .zoom-btn:hover {
+      background-color: var(--light-bg);
+    }
+
+    .zoom-btn:first-child {
+      border-bottom: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <h1>PowerShell – Exchange Server</h1>
+      <div class="subtitle">BlockShell - The Visual Script Builder</div>
+    </header>
+
+    <div id="blockly-container">
+      <div id="buttons">
+        <button onclick="simulate()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 10 4 15 9 20"></polyline>
+            <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+          </svg>
+          Show Script
+        </button>
+        <button onclick="download()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Script
+        </button>
+        <button class="danger" onclick="clearWorkspace()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Clear Workspace
+        </button>
+      </div>
+      <div id="blocklyDiv"></div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+        <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+      </div>
+    </div>
+  </div>
+
+  <xml id="toolbox" style="display:none">
+    <category name="Installation" colour="120">
+      <block type="install_exchange_prerequisites">
+        <tooltip>Install Windows features needed for Exchange Server. PowerShell: Install-WindowsFeature</tooltip>
+      </block>
+      <block type="install_exchange_server">
+        <tooltip>Install Microsoft Exchange Server. PowerShell: Setup.exe with parameters</tooltip>
+      </block>
+      <block type="install_exchange_cumulative_update">
+        <tooltip>Install Exchange Cumulative Update. PowerShell: Setup.exe with upgrade parameters</tooltip>
+      </block>
+      <block type="verify_exchange_health">
+        <tooltip>Run health checks on Exchange Server. PowerShell: Test-ServiceHealth, Test-SystemHealth</tooltip>
+      </block>
+    </category>
+    
+    <category name="Mailbox Management" colour="180">
+      <block type="create_user_mailbox">
+        <tooltip>Create a new user mailbox. PowerShell: New-Mailbox</tooltip>
+      </block>
+      <block type="create_shared_mailbox">
+        <tooltip>Create a shared mailbox. PowerShell: New-Mailbox -Shared</tooltip>
+      </block>
+      <block type="create_room_mailbox">
+        <tooltip>Create a room mailbox for resource scheduling. PowerShell: New-Mailbox -Room</tooltip>
+      </block>
+      <block type="create_mailbox_database">
+        <tooltip>Create new mailbox database. PowerShell: New-MailboxDatabase</tooltip>
+      </block>
+      <block type="move_mailbox_to_database">
+        <tooltip>Move a mailbox to a different database. PowerShell: New-MoveRequest</tooltip>
+      </block>
+      <block type="set_mailbox_quota">
+        <tooltip>Set mailbox size quotas. PowerShell: Set-Mailbox</tooltip>
+      </block>
+      <block type="enable_mailbox_archive">
+        <tooltip>Enable archive mailbox with specified quota. PowerShell: Enable-Mailbox -Archive</tooltip>
+      </block>
+      <block type="set_mailbox_delegation">
+        <tooltip>Set mailbox delegation permissions. PowerShell: Add-MailboxPermission</tooltip>
+      </block>
+      <block type="get_mailbox_statistics">
+        <tooltip>Get statistics for a mailbox. PowerShell: Get-MailboxStatistics</tooltip>
+      </block>
+      <block type="search_mailbox_content">
+        <tooltip>Search content within a mailbox. PowerShell: Search-Mailbox</tooltip>
+      </block>
+      <block type="export_mailbox_to_pst">
+        <tooltip>Export mailbox content to PST file. PowerShell: New-MailboxExportRequest</tooltip>
+      </block>
+      <block type="import_pst_to_mailbox">
+        <tooltip>Import PST file content to a mailbox. PowerShell: New-MailboxImportRequest</tooltip>
+      </block>
+    </category>
+    
+    <category name="Recipient Management" colour="210">
+      <block type="create_distribution_group">
+        <tooltip>Create a distribution group. PowerShell: New-DistributionGroup</tooltip>
+      </block>
+      <block type="create_dynamic_distribution_group">
+        <tooltip>Create a dynamic distribution group. PowerShell: New-DynamicDistributionGroup</tooltip>
+      </block>
+      <block type="add_user_to_distribution_group">
+        <tooltip>Add user to a distribution group. PowerShell: Add-DistributionGroupMember</tooltip>
+      </block>
+      <block type="remove_user_from_distribution_group">
+        <tooltip>Remove user from a distribution group. PowerShell: Remove-DistributionGroupMember</tooltip>
+      </block>
+      <block type="create_contact">
+        <tooltip>Create a mail contact for external recipients. PowerShell: New-MailContact</tooltip>
+      </block>
+      <block type="create_mail_user">
+        <tooltip>Create a mail user with external email address. PowerShell: New-MailUser</tooltip>
+      </block>
+      <block type="set_recipient_properties">
+        <tooltip>Set properties for a recipient. PowerShell: Set-Recipient</tooltip>
+      </block>
+      <block type="get_recipient_permissions">
+        <tooltip>Get permissions assigned to a recipient. PowerShell: Get-RecipientPermission</tooltip>
+      </block>
+      <block type="set_recipient_permissions">
+        <tooltip>Set permissions for a recipient. PowerShell: Add-MailboxPermission</tooltip>
+      </block>
+    </category>
+    
+    <category name="Transport & Connectors" colour="160">
+      <block type="configure_accepted_domain">
+        <tooltip>Add accepted domain to Exchange. PowerShell: New-AcceptedDomain</tooltip>
+      </block>
+      <block type="configure_receive_connector">
+        <tooltip>Create or modify a receive connector. PowerShell: New-ReceiveConnector</tooltip>
+      </block>
+      <block type="configure_send_connector">
+        <tooltip>Create or modify a send connector. PowerShell: New-SendConnector</tooltip>
+      </block>
+      <block type="create_transport_rule">
+        <tooltip>Create a new transport rule. PowerShell: New-TransportRule</tooltip>
+      </block>
+      <block type="set_default_email_address_policy">
+        <tooltip>Set the default email address policy. PowerShell: Set-EmailAddressPolicy</tooltip>
+      </block>
+      <block type="configure_remote_domain">
+        <tooltip>Configure settings for a remote domain. PowerShell: Set-RemoteDomain</tooltip>
+      </block>
+      <block type="enable_outlook_anywhere">
+        <tooltip>Enable Outlook Anywhere access. PowerShell: Enable-OutlookAnywhere</tooltip>
+      </block>
+      <block type="configure_external_access">
+        <tooltip>Configure external access settings. PowerShell: Set-OutlookAnywhere</tooltip>
+      </block>
+      <block type="test_mail_flow">
+        <tooltip>Test mail flow between addresses. PowerShell: Test-Mailflow</tooltip>
+      </block>
+    </category>
+    
+    <category name="Client Access" colour="230">
+      <block type="configure_owa_virtual_directory">
+        <tooltip>Configure OWA virtual directory settings. PowerShell: Set-OwaVirtualDirectory</tooltip>
+      </block>
+      <block type="configure_ecp_virtual_directory">
+        <tooltip>Configure ECP virtual directory settings. PowerShell: Set-ECPVirtualDirectory</tooltip>
+      </block>
+      <block type="configure_autodiscover">
+        <tooltip>Configure Autodiscover settings. PowerShell: Set-ClientAccessService</tooltip>
+      </block>
+      <block type="configure_active_sync">
+        <tooltip>Configure ActiveSync settings. PowerShell: Set-ActiveSyncVirtualDirectory</tooltip>
+      </block>
+      <block type="set_owa_mailbox_policy">
+        <tooltip>Set OWA mailbox policy for a user. PowerShell: Set-CASMailbox</tooltip>
+      </block>
+      <block type="configure_mapi_over_http">
+        <tooltip>Enable or disable MAPI over HTTP. PowerShell: Set-OrganizationConfig</tooltip>
+      </block>
+      <block type="test_outlook_connectivity">
+        <tooltip>Test Outlook connectivity for a mailbox. PowerShell: Test-OutlookConnectivity</tooltip>
+      </block>
+    </category>
+    
+    <category name="Security & Compliance" colour="130">
+      <block type="enable_antispam_protection">
+        <tooltip>Enable Exchange anti-spam protection. PowerShell: Install-AntiSpamAgents.ps1</tooltip>
+      </block>
+      <block type="configure_malware_filter">
+        <tooltip>Configure malware filter settings. PowerShell: Set-MalwareFilterPolicy</tooltip>
+      </block>
+      <block type="create_retention_policy">
+        <tooltip>Create a new retention policy. PowerShell: New-RetentionPolicy</tooltip>
+      </block>
+      <block type="create_hold_policy">
+        <tooltip>Create a new hold policy. PowerShell: New-RetentionPolicy</tooltip>
+      </block>
+      <block type="enable_audit_logging">
+        <tooltip>Enable mailbox audit logging. PowerShell: Set-AdminAuditLogConfig</tooltip>
+      </block>
+      <block type="search_unified_audit_log">
+        <tooltip>Search the unified audit log. PowerShell: Search-UnifiedAuditLog</tooltip>
+      </block>
+      <block type="configure_message_tracing">
+        <tooltip>Configure message tracing settings. PowerShell: Set-TransportConfig</tooltip>
+      </block>
+      <block type="enable_mailbox_auditing">
+        <tooltip>Enable auditing for a mailbox. PowerShell: Set-Mailbox</tooltip>
+      </block>
+    </category>
+    
+    <category name="Reports & Monitoring" colour="60">
+      <block type="generate_mailbox_report">
+        <tooltip>Generate a mailbox report. PowerShell: Get-Mailbox with formatting</tooltip>
+      </block>
+      <block type="generate_transport_report">
+        <tooltip>Generate a transport report. PowerShell: Get-Queue or Get-MessageTrackingLog</tooltip>
+      </block>
+      <block type="monitor_queue_status">
+        <tooltip>Monitor the status of transport queues. PowerShell: Get-Queue</tooltip>
+      </block>
+      <block type="check_database_status">
+        <tooltip>Check the status of a mailbox database. PowerShell: Get-MailboxDatabase</tooltip>
+      </block>
+      <block type="get_server_health">
+        <tooltip>Get health status of an Exchange server. PowerShell: Get-ServerHealth</tooltip>
+      </block>
+      <block type="check_service_status">
+        <tooltip>Check the status of Exchange services. PowerShell: Get-Service</tooltip>
+      </block>
+    </category>
+  </xml>
+
+  <script>
+    // Declare workspace variable at the top level
+    let workspace;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize Blockly workspace
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        trashcan: true,
+        grid: {
+          spacing: 25,
+          length: 3,
+          colour: '#e0e0e0',
+          snap: true
+        },
+        zoom: {
+          controls: true,
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2
+        },
+        theme: {
+          'blockStyles': {
+            'colour_blocks': { 'colourPrimary': '#CF63CF', 'colourSecondary': '#C94FC9', 'colourTertiary': '#BD42BD' },
+            'list_blocks': { 'colourPrimary': '#9966FF', 'colourSecondary': '#855CD6', 'colourTertiary': '#774DCB' },
+            'logic_blocks': { 'colourPrimary': '#4C97FF', 'colourSecondary': '#4280D7', 'colourTertiary': '#3373CC' },
+            'loop_blocks': { 'colourPrimary': '#0fBD8C', 'colourSecondary': '#0DA57A', 'colourTertiary': '#0B8E69' },
+            'math_blocks': { 'colourPrimary': '#59C059', 'colourSecondary': '#46B946', 'colourTertiary': '#389438' },
+            'procedure_blocks': { 'colourPrimary': '#FF6680', 'colourSecondary': '#FF4D6A', 'colourTertiary': '#FF3355' },
+            'text_blocks': { 'colourPrimary': '#FFBF00', 'colourSecondary': '#E6AC00', 'colourTertiary': '#CC9900' },
+            'variable_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' },
+            'variable_dynamic_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' }
+          },
+          'componentStyles': {
+            'workspaceBackgroundColour': '#F9FAFB',
+            'toolboxBackgroundColour': '#FFFFFF',
+            'toolboxForegroundColour': '#1E293B',
+            'flyoutBackgroundColour': '#F1F5F9',
+            'flyoutForegroundColour': '#1E293B',
+            'flyoutOpacity': 0.9,
+            'scrollbarColour': '#CCCCCC',
+            'scrollbarOpacity': 0.6
+          }
+        }
+      });
+
+      // Define all blocks with enhanced tooltips
+      Blockly.defineBlocksWithJsonArray([
+        {
+          "type": "install_exchange_prerequisites",
+          "message0": "Install Exchange Server Prerequisites",
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Install Windows features needed for Exchange Server.\n\nPowerShell: Install-WindowsFeature RSAT-ADDS, Web-Server, etc.",
+          "helpUrl": ""
+        },
+        {
+          "type": "install_exchange_server",
+          "message0": "Install Exchange Server",
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Install Microsoft Exchange Server with default roles.\n\nPowerShell: Setup.exe /mode:Install /roles:Mailbox,ClientAccess",
+          "helpUrl": ""
+        },
+        {
+          "type": "install_exchange_cumulative_update",
+          "message0": "Install Exchange Cumulative Update %1",
+          "args0": [
+            { "type": "field_input", "name": "CU_VERSION", "text": "CU12" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Install Exchange Server Cumulative Update.\n\nPowerShell: Setup.exe /Mode:Upgrade /Role:Mailbox,ClientAccess",
+          "helpUrl": ""
+        },
+        {
+          "type": "verify_exchange_health",
+          "message0": "Verify Exchange Server Health",
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120,
+          "tooltip": "Run health checks on Exchange Server.\n\nPowerShell: Test-ServiceHealth, Test-SystemHealth",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_user_mailbox",
+          "message0": "Create User Mailbox (User: %1)",
+          "args0": [
+            { "type": "field_input", "name": "USER_NAME", "text": "newuser" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Create a new user mailbox.\n\nPowerShell: New-Mailbox -Name \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_shared_mailbox",
+          "message0": "Create Shared Mailbox (Name: %1)",
+          "args0": [
+            { "type": "field_input", "name": "MAILBOX_NAME", "text": "SharedMailbox" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Create a new shared mailbox.\n\nPowerShell: New-Mailbox -Name \"value\" -Shared",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_room_mailbox",
+          "message0": "Create Room Mailbox (Name: %1)",
+          "args0": [
+            { "type": "field_input", "name": "ROOM_NAME", "text": "ConferenceRoom" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Create a new room mailbox for resource scheduling.\n\nPowerShell: New-Mailbox -Name \"value\" -Room",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_mailbox_database",
+          "message0": "Create Mailbox Database (Name: %1)",
+          "args0": [
+            { "type": "field_input", "name": "DB_NAME", "text": "MailboxDB1" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Create new mailbox database.\n\nPowerShell: New-MailboxDatabase -Name \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "move_mailbox_to_database",
+          "message0": "Move Mailbox %1 to Database %2",
+          "args0": [
+            { "type": "field_input", "name": "MAILBOX", "text": "jdoe" },
+            { "type": "field_input", "name": "DATABASE", "text": "MailboxDB1" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Move a mailbox to a different database.\n\nPowerShell: New-MoveRequest -Identity \"value\" -TargetDatabase \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_mailbox_quota",
+          "message0": "Set Mailbox Quota (User: %1 Size: %2 MB)",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "jdoe" },
+            { "type": "field_number", "name": "SIZE", "value": 2048 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Set mailbox size quotas.\n\nPowerShell: Set-Mailbox -Identity \"value\" -ProhibitSendQuota",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_mailbox_archive",
+          "message0": "Enable Archive for Mailbox %1 Size: %2 GB",
+          "args0": [
+            { "type": "field_input", "name": "MAILBOX", "text": "jdoe" },
+            { "type": "field_number", "name": "SIZE", "value": 50 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Enable archive mailbox with specified quota.\n\nPowerShell: Enable-Mailbox -Identity \"value\" -Archive",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_mailbox_delegation",
+          "message0": "Set Mailbox Delegation (Mailbox: %1 Delegate: %2 Permission: %3)",
+          "args0": [
+            { "type": "field_input", "name": "MAILBOX", "text": "jdoe" },
+            { "type": "field_input", "name": "DELEGATE", "text": "asmith" },
+            { "type": "field_dropdown", "name": "PERMISSION", "options": [
+              ["Full Access", "FullAccess"],
+              ["Send As", "SendAs"],
+              ["Send on Behalf", "SendOnBehalf"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Set mailbox delegation permissions.\n\nPowerShell: Add-MailboxPermission or Set-Mailbox",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_mailbox_statistics",
+          "message0": "Get Mailbox Statistics (Mailbox: %1)",
+          "args0": [
+            { "type": "field_input", "name": "MAILBOX", "text": "jdoe" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Get statistics for a mailbox.\n\nPowerShell: Get-MailboxStatistics -Identity \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "search_mailbox_content",
+          "message0": "Search Mailbox Content (Mailbox: %1 Search Query: %2)",
+          "args0": [
+            { "type": "field_input", "name": "MAILBOX", "text": "jdoe" },
+            { "type": "field_input", "name": "QUERY", "text": "subject:'confidential'" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Search content within a mailbox.\n\nPowerShell: Search-Mailbox -Identity \"value\" -SearchQuery \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "export_mailbox_to_pst",
+          "message0": "Export Mailbox to PST (Mailbox: %1 Path: %2)",
+          "args0": [
+            { "type": "field_input", "name": "MAILBOX", "text": "jdoe" },
+            { "type": "field_input", "name": "PATH", "text": "C:\\Exports\\jdoe.pst" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Export mailbox content to PST file.\n\nPowerShell: New-MailboxExportRequest -Mailbox \"value\" -FilePath \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "import_pst_to_mailbox",
+          "message0": "Import PST to Mailbox (Mailbox: %1 Path: %2)",
+          "args0": [
+            { "type": "field_input", "name": "MAILBOX", "text": "jdoe" },
+            { "type": "field_input", "name": "PATH", "text": "C:\\Imports\\jdoe.pst" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Import PST file content to a mailbox.\n\nPowerShell: New-MailboxImportRequest -Mailbox \"value\" -FilePath \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_distribution_group",
+          "message0": "Create Distribution Group (Name: %1)",
+          "args0": [
+            { "type": "field_input", "name": "DG_NAME", "text": "SalesTeam" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Create a distribution group.\n\nPowerShell: New-DistributionGroup -Name \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_dynamic_distribution_group",
+          "message0": "Create Dynamic Distribution Group (Name: %1 Filter: %2)",
+          "args0": [
+            { "type": "field_input", "name": "GROUP_NAME", "text": "SalesTeam" },
+            { "type": "field_input", "name": "FILTER", "text": "Department -eq 'Sales'" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Create a dynamic distribution group.\n\nPowerShell: New-DynamicDistributionGroup -Name \"value\" -IncludedRecipients",
+          "helpUrl": ""
+        },
+        {
+          "type": "add_user_to_distribution_group",
+          "message0": "Add User %1 to Group %2",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "jdoe" },
+            { "type": "field_input", "name": "GROUP", "text": "SalesTeam" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Add user to a distribution group.\n\nPowerShell: Add-DistributionGroupMember -Identity \"value\" -Member \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "remove_user_from_distribution_group",
+          "message0": "Remove User %1 from Group %2",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "jdoe" },
+            { "type": "field_input", "name": "GROUP", "text": "SalesTeam" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Remove user from a distribution group.\n\nPowerShell: Remove-DistributionGroupMember -Identity \"value\" -Member \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_contact",
+          "message0": "Create Mail Contact (Name: %1 Email: %2)",
+          "args0": [
+            { "type": "field_input", "name": "NAME", "text": "External Contact" },
+            { "type": "field_input", "name": "EMAIL", "text": "contact@external.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Create a mail contact for external recipients.\n\nPowerShell: New-MailContact -Name \"value\" -ExternalEmailAddress \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_mail_user",
+          "message0": "Create Mail User (Name: %1 Email: %2)",
+          "args0": [
+            { "type": "field_input", "name": "NAME", "text": "Mail User" },
+            { "type": "field_input", "name": "EMAIL", "text": "user@external.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Create a mail user with external email address.\n\nPowerShell: New-MailUser -Name \"value\" -ExternalEmailAddress \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_recipient_properties",
+          "message0": "Set Recipient Properties (Recipient: %1 Email: %2 Hidden: %3)",
+          "args0": [
+            { "type": "field_input", "name": "RECIPIENT", "text": "jdoe" },
+            { "type": "field_input", "name": "EMAIL", "text": "jdoe@example.com" },
+            { "type": "field_checkbox", "name": "HIDDEN", "checked": false }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Set properties for a recipient.\n\nPowerShell: Set-Recipient -Identity \"value\" -EmailAddresses",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_recipient_permissions",
+          "message0": "Get Recipient Permissions (Recipient: %1)",
+          "args0": [
+            { "type": "field_input", "name": "RECIPIENT", "text": "jdoe" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Get permissions assigned to a recipient.\n\nPowerShell: Get-RecipientPermission -Identity \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_recipient_permissions",
+          "message0": "Set Recipient Permissions (Recipient: %1 User: %2 Permission: %3)",
+          "args0": [
+            { "type": "field_input", "name": "RECIPIENT", "text": "jdoe" },
+            { "type": "field_input", "name": "USER", "text": "asmith" },
+            { "type": "field_dropdown", "name": "PERMISSION", "options": [
+              ["Full Access", "FullAccess"],
+              ["Send As", "SendAs"],
+              ["Send on Behalf", "SendOnBehalf"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Set permissions for a recipient.\n\nPowerShell: Add-MailboxPermission or Set-Mailbox",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_accepted_domain",
+          "message0": "Configure Accepted Domain (Domain: %1)",
+          "args0": [
+            { "type": "field_input", "name": "ACCEPTED_DOMAIN", "text": "example.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Add accepted domain to Exchange.\n\nPowerShell: New-AcceptedDomain -Name \"value\" -DomainName \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_receive_connector",
+          "message0": "Configure Receive Connector (Name: %1 Port: %2)",
+          "args0": [
+            { "type": "field_input", "name": "RC_NAME", "text": "CustomConnector" },
+            { "type": "field_number", "name": "PORT", "value": 2525 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Create or modify a receive connector.\n\nPowerShell: New-ReceiveConnector -Name \"value\" -Bindings",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_send_connector",
+          "message0": "Configure Send Connector (Name: %1 Smart Host: %2)",
+          "args0": [
+            { "type": "field_input", "name": "SC_NAME", "text": "OutboundConnector" },
+            { "type": "field_input", "name": "SMART_HOST", "text": "mail.example.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Create or modify a send connector.\n\nPowerShell: New-SendConnector -Name \"value\" -SmartHosts \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_transport_rule",
+          "message0": "Create Transport Rule (Name: %1 Condition: %2 Action: %3)",
+          "args0": [
+            { "type": "field_input", "name": "RULE_NAME", "text": "BlockExternal" },
+            { "type": "field_input", "name": "CONDITION", "text": "FromScope -eq 'NotInOrganization'" },
+            { "type": "field_input", "name": "ACTION", "text": "DeleteMessage" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Create a new transport rule.\n\nPowerShell: New-TransportRule -Name \"value\" -Condition \"value\" -Action \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_default_email_address_policy",
+          "message0": "Set Default Email Address Policy (Policy: %1)",
+          "args0": [
+            { "type": "field_input", "name": "POLICY_NAME", "text": "Default Policy" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Set the default email address policy.\n\nPowerShell: Set-EmailAddressPolicy -Identity \"value\" -IsDefault $true",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_remote_domain",
+          "message0": "Configure Remote Domain (Domain: %1)",
+          "args0": [
+            { "type": "field_input", "name": "DOMAIN", "text": "example.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Configure settings for a remote domain.\n\nPowerShell: Set-RemoteDomain -Identity \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_outlook_anywhere",
+          "message0": "Enable Outlook Anywhere (Hostname: %1)",
+          "args0": [
+            { "type": "field_input", "name": "HOST", "text": "mail.example.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Enable Outlook Anywhere access.\n\nPowerShell: Enable-OutlookAnywhere -ExternalHostname \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_external_access",
+          "message0": "Configure External Access (Domain: %1)",
+          "args0": [
+            { "type": "field_input", "name": "DOMAIN", "text": "example.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Configure external access settings.\n\nPowerShell: Set-OutlookAnywhere, Set-ECPVirtualDirectory, Set-OwaVirtualDirectory",
+          "helpUrl": ""
+        },
+        {
+          "type": "test_mail_flow",
+          "message0": "Test Mail Flow (From: %1 To: %2)",
+          "args0": [
+            { "type": "field_input", "name": "FROM", "text": "sender@example.com" },
+            { "type": "field_input", "name": "TO", "text": "recipient@example.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Test mail flow between addresses.\n\nPowerShell: Test-Mailflow -TargetEmailAddress \"value\" -SenderEmailAddress \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_owa_virtual_directory",
+          "message0": "Configure OWA Virtual Directory (URL: %1)",
+          "args0": [
+            { "type": "field_input", "name": "URL", "text": "https://mail.example.com/owa" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Configure OWA virtual directory settings.\n\nPowerShell: Set-OwaVirtualDirectory -Identity \"value\" -ExternalUrl \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_ecp_virtual_directory",
+          "message0": "Configure ECP Virtual Directory (URL: %1)",
+          "args0": [
+            { "type": "field_input", "name": "URL", "text": "https://mail.example.com/ecp" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Configure ECP virtual directory settings.\n\nPowerShell: Set-ECPVirtualDirectory -Identity \"value\" -ExternalUrl \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_autodiscover",
+          "message0": "Configure Autodiscover (Domain: %1)",
+          "args0": [
+            { "type": "field_input", "name": "DOMAIN", "text": "example.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Configure Autodiscover settings.\n\nPowerShell: Set-ClientAccessService -Identity \"value\" -AutodiscoverServiceInternalUri \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_active_sync",
+          "message0": "Configure ActiveSync (Policy: %1)",
+          "args0": [
+            { "type": "field_input", "name": "POLICY", "text": "Default" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Configure ActiveSync settings.\n\nPowerShell: Set-ActiveSyncVirtualDirectory -Identity \"value\" -ExternalUrl \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "set_owa_mailbox_policy",
+          "message0": "Set OWA Mailbox Policy (Mailbox: %1 Policy: %2)",
+          "args0": [
+            { "type": "field_input", "name": "MAILBOX", "text": "jdoe" },
+            { "type": "field_input", "name": "POLICY", "text": "Default" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Set OWA mailbox policy for a user.\n\nPowerShell: Set-CASMailbox -Identity \"value\" -OwaMailboxPolicy \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_mapi_over_http",
+          "message0": "Configure MAPI over HTTP (Enable: %1)",
+          "args0": [
+            { "type": "field_checkbox", "name": "ENABLE", "checked": true }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Enable or disable MAPI over HTTP.\n\nPowerShell: Set-OrganizationConfig -MapiHttpEnabled:$true",
+          "helpUrl": ""
+        },
+        {
+          "type": "test_outlook_connectivity",
+          "message0": "Test Outlook Connectivity (Mailbox: %1)",
+          "args0": [
+            { "type": "field_input", "name": "MAILBOX", "text": "jdoe" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Test Outlook connectivity for a mailbox.\n\nPowerShell: Test-OutlookConnectivity -MailboxId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_antispam_protection",
+          "message0": "Enable Anti-Spam Protection",
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Enable Exchange anti-spam protection.\n\nPowerShell: Install-AntiSpamAgents.ps1 script",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_malware_filter",
+          "message0": "Configure Malware Filter (Action: %1)",
+          "args0": [
+            { "type": "field_dropdown", "name": "ACTION", "options": [
+              ["Delete", "Delete"],
+              ["Quarantine", "Quarantine"],
+              ["Replace", "Replace"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Configure malware filter settings.\n\nPowerShell: Set-MalwareFilterPolicy -Identity \"Default\" -Action \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_retention_policy",
+          "message0": "Create Retention Policy (Name: %1 Days: %2)",
+          "args0": [
+            { "type": "field_input", "name": "NAME", "text": "7YearRetention" },
+            { "type": "field_number", "name": "DAYS", "value": 2555 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Create a new retention policy.\n\nPowerShell: New-RetentionPolicy -Name \"value\" -RetentionPolicyTagLinks",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_hold_policy",
+          "message0": "Create Hold Policy (Name: %1 Query: %2)",
+          "args0": [
+            { "type": "field_input", "name": "NAME", "text": "LegalHold" },
+            { "type": "field_input", "name": "QUERY", "text": "subject:'confidential'" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Create a new hold policy.\n\nPowerShell: New-RetentionPolicy -Name \"value\" -RetentionPolicyTagLinks \"LitigationHold\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_audit_logging",
+          "message0": "Enable Audit Logging",
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Enable mailbox audit logging.\n\nPowerShell: Set-AdminAuditLogConfig -AdminAuditLogEnabled $true",
+          "helpUrl": ""
+        },
+        {
+          "type": "search_unified_audit_log",
+          "message0": "Search Unified Audit Log (Query: %1)",
+          "args0": [
+            { "type": "field_input", "name": "QUERY", "text": "subject:'confidential'" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Search the unified audit log.\n\nPowerShell: Search-UnifiedAuditLog -RecordType ExchangeItem -ObjectIds \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "configure_message_tracing",
+          "message0": "Configure Message Tracing (Days: %1)",
+          "args0": [
+            { "type": "field_number", "name": "DAYS", "value": 30 }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Configure message tracing settings.\n\nPowerShell: Set-TransportConfig -MessageTrackingLogMaxAge \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "enable_mailbox_auditing",
+          "message0": "Enable Mailbox Auditing (Mailbox: %1)",
+          "args0": [
+            { "type": "field_input", "name": "MAILBOX", "text": "jdoe" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Enable auditing for a mailbox.\n\nPowerShell: Set-Mailbox -Identity \"value\" -AuditEnabled $true",
+          "helpUrl": ""
+        },
+        {
+          "type": "generate_mailbox_report",
+          "message0": "Generate Mailbox Report (Type: %1 Output: %2)",
+          "args0": [
+            { "type": "field_dropdown", "name": "TYPE", "options": [
+              ["Size", "Size"],
+              ["Quota", "Quota"],
+              ["Last Logon", "LastLogon"],
+              ["Permissions", "Permissions"]
+            ]},
+            { "type": "field_dropdown", "name": "OUTPUT", "options": [
+              ["CSV", "CSV"],
+              ["HTML", "HTML"],
+              ["Console", "Console"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 60,
+          "tooltip": "Generate a mailbox report.\n\nPowerShell: Get-Mailbox with custom formatting based on type",
+          "helpUrl": ""
+        },
+        {
+          "type": "generate_transport_report",
+          "message0": "Generate Transport Report (Type: %1 Output: %2)",
+          "args0": [
+            { "type": "field_dropdown", "name": "TYPE", "options": [
+              ["Queue", "Queue"],
+              ["Message Tracking", "MessageTracking"],
+              ["Connector", "Connector"]
+            ]},
+            { "type": "field_dropdown", "name": "OUTPUT", "options": [
+              ["CSV", "CSV"],
+              ["HTML", "HTML"],
+              ["Console", "Console"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 60,
+          "tooltip": "Generate a transport report.\n\nPowerShell: Get-Queue or Get-MessageTrackingLog with custom formatting",
+          "helpUrl": ""
+        },
+        {
+          "type": "monitor_queue_status",
+          "message0": "Monitor Queue Status (Server: %1)",
+          "args0": [
+            { "type": "field_input", "name": "SERVER", "text": "EXCH01" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 60,
+          "tooltip": "Monitor the status of transport queues.\n\nPowerShell: Get-Queue -Server \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "check_database_status",
+          "message0": "Check Database Status (Database: %1)",
+          "args0": [
+            { "type": "field_input", "name": "DATABASE", "text": "MailboxDB1" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 60,
+          "tooltip": "Check the status of a mailbox database.\n\nPowerShell: Get-MailboxDatabase -Identity \"value\" -Status",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_server_health",
+          "message0": "Get Server Health (Server: %1)",
+          "args0": [
+            { "type": "field_input", "name": "SERVER", "text": "EXCH01" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 60,
+          "tooltip": "Get health status of an Exchange server.\n\nPowerShell: Get-ServerHealth -Identity \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "check_service_status",
+          "message0": "Check Service Status (Service: %1)",
+          "args0": [
+            { "type": "field_dropdown", "name": "SERVICE", "options": [
+              ["All", "All"],
+              ["Transport", "MSExchangeTransport"],
+              ["Information Store", "MSExchangeIS"],
+              ["Frontend Transport", "MSExchangeFrontEndTransport"],
+              ["Mailbox Replication", "MSExchangeMailboxReplication"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 60,
+          "tooltip": "Check the status of Exchange services.\n\nPowerShell: Get-Service -Name \"value\"",
+          "helpUrl": ""
+        }
+      ]);
+
+      // Setup event listeners
+      document.getElementById('zoom-in').addEventListener('click', function() {
+        workspace.zoomCenter(1.2);
+      });
+
+      document.getElementById('zoom-out').addEventListener('click', function() {
+        workspace.zoomCenter(0.8);
+      });
+
+      window.clearWorkspace = function() {
+        if (confirm('Are you sure you want to clear the workspace? All blocks will be deleted.')) {
+          workspace.clear();
+          showNotification('Workspace cleared');
+        }
+      };
+
+      function generatePowerShellCode() {
+        const blocks = workspace.getTopBlocks(true);
+        let code = "";
+        
+        // Add header
+        code += `# Generated by BlockShell Exchange Tool\n`;
+        code += `# Date: ${new Date().toISOString()}\n`;
+        code += `# Requires Exchange Management Shell\n`;
+        code += `\n`;
+        
+        // Generate code from blocks
+        for (const block of blocks) {
+          code += generateBlockCodeRecursive(block);
+        }
+        
+        return code.trim();
+      }
+
+      function generateBlockCodeRecursive(block) {
+        if (!block) return "";
+        let code = "";
+
+        switch (block.type) {
+          case "install_exchange_prerequisites":
+            code += `# Install Exchange prerequisites\n`;
+            code += `Install-WindowsFeature RSAT-ADDS, Web-Server, Web-Basic-Auth, Web-Windows-Auth, Web-Metabase, Web-Net-Ext45, Web-ASP-Net45, Web-ISAPI-Ext, Web-ISAPI-Filter, Web-Lgcy-Mgmt-Console, WAS-Process-Model, NET-Framework-45-Features, RPC-over-HTTP-proxy, RSAT-Clustering, RSAT-Clustering-CmdInterface, RSAT-Clustering-Mgmt, RSAT-Clustering-PowerShell, WAS-Process-Model, Web-Asp-Net45, Web-Basic-Auth, Web-Client-Auth, Web-Digest-Auth, Web-Dir-Browsing, Web-Dyn-Compression, Web-Http-Errors, Web-Http-Logging, Web-Http-Redirect, Web-Http-Tracing, Web-ISAPI-Ext, Web-ISAPI-Filter, Web-Lgcy-Mgmt-Console, Web-Metabase, Web-Mgmt-Console, Web-Mgmt-Service, Web-Net-Ext45, Web-Request-Monitor, Web-Server, Web-Stat-Compression, Web-Static-Content, Web-Windows-Auth, Web-WMI, Windows-Identity-Foundation\n`;
+            break;
+          case "install_exchange_server":
+            code += `# Install Exchange Server\n`;
+            code += `Setup.exe /mode:Install /roles:Mailbox,ClientAccess /IAcceptExchangeServerLicenseTerms\n`;
+            break;
+          case "install_exchange_cumulative_update":
+            code += `# Install Exchange Cumulative Update\n`;
+            code += `# Download and install ${block.getFieldValue('CU_VERSION')} from Microsoft\n`;
+            code += `Setup.exe /PrepareSchema /IAcceptExchangeServerLicenseTerms\n`;
+            code += `Setup.exe /PrepareAD /IAcceptExchangeServerLicenseTerms\n`;
+            code += `Setup.exe /Mode:Upgrade /Role:Mailbox,ClientAccess /IAcceptExchangeServerLicenseTerms\n`;
+            break;
+          case "verify_exchange_health":
+            code += `# Verify Exchange health\n`;
+            code += `Test-ServiceHealth\n`;
+            code += `Test-SystemHealth\n`;
+            code += `Test-ReplicationHealth\n`;
+            code += `Get-ExchangeServer | Format-Table Name,Edition,AdminDisplayVersion,ServerRole\n`;
+            break;
+          case "create_user_mailbox":
+            code += `# Create user mailbox\n`;
+            code += `New-Mailbox -Name "${block.getFieldValue('USER_NAME')}" -UserPrincipalName "${block.getFieldValue('USER_NAME')}@example.com" -Password (ConvertTo-SecureString "P@ssword123" -AsPlainText -Force) -Alias "${block.getFieldValue('USER_NAME')}"\n`;
+            break;
+          case "create_shared_mailbox":
+            code += `# Create shared mailbox\n`;
+            code += `New-Mailbox -Name "${block.getFieldValue('MAILBOX_NAME')}" -Shared -DisplayName "${block.getFieldValue('MAILBOX_NAME')}"\n`;
+            break;
+          case "create_room_mailbox":
+            code += `# Create room mailbox\n`;
+            code += `New-Mailbox -Name "${block.getFieldValue('ROOM_NAME')}" -Room -DisplayName "${block.getFieldValue('ROOM_NAME')}"\n`;
+            break;
+          case "create_mailbox_database":
+            code += `# Create mailbox database\n`;
+            code += `New-MailboxDatabase -Name "${block.getFieldValue('DB_NAME')}" -EdbFilePath "C:\\Exchange\\${block.getFieldValue('DB_NAME')}\\${block.getFieldValue('DB_NAME')}.edb" -LogFolderPath "C:\\Exchange\\${block.getFieldValue('DB_NAME')}\\Logs"\n`;
+            code += `Mount-Database -Identity "${block.getFieldValue('DB_NAME')}"\n`;
+            break;
+          case "move_mailbox_to_database":
+            code += `# Move mailbox to database\n`;
+            code += `New-MoveRequest -Identity "${block.getFieldValue('MAILBOX')}" -TargetDatabase "${block.getFieldValue('DATABASE')}"\n`;
+            break;
+          case "set_mailbox_quota":
+            code += `# Set mailbox quota\n`;
+            code += `Set-Mailbox -Identity "${block.getFieldValue('USER')}" -ProhibitSendQuota ${block.getFieldValue('SIZE')}MB -ProhibitSendReceiveQuota $(${block.getFieldValue('SIZE')} + 500)MB -IssueWarningQuota $(${block.getFieldValue('SIZE')} - 500)MB\n`;
+            break;
+          case "enable_mailbox_archive":
+            code += `# Enable mailbox archive\n`;
+            code += `Enable-Mailbox -Identity "${block.getFieldValue('MAILBOX')}" -Archive\n`;
+            code += `Set-Mailbox -Identity "${block.getFieldValue('MAILBOX')}" -ArchiveQuota ${block.getFieldValue('SIZE')}GB -ArchiveWarningQuota $(${block.getFieldValue('SIZE')} - 5)GB\n`;
+            break;
+          case "set_mailbox_delegation":
+            const permission = block.getFieldValue('PERMISSION');
+            if (permission === "FullAccess") {
+              code += `# Set mailbox full access permission\n`;
+              code += `Add-MailboxPermission -Identity "${block.getFieldValue('MAILBOX')}" -User "${block.getFieldValue('DELEGATE')}" -AccessRights FullAccess -InheritanceType All\n`;
+            } else if (permission === "SendAs") {
+              code += `# Set send as permission\n`;
+              code += `Add-ADPermission -Identity "${block.getFieldValue('MAILBOX')}" -User "${block.getFieldValue('DELEGATE')}" -ExtendedRights "Send As"\n`;
+            } else if (permission === "SendOnBehalf") {
+              code += `# Set send on behalf permission\n`;
+              code += `Set-Mailbox -Identity "${block.getFieldValue('MAILBOX')}" -GrantSendOnBehalfTo "${block.getFieldValue('DELEGATE')}"\n`;
+            }
+            break;
+          case "get_mailbox_statistics":
+            code += `# Get mailbox statistics\n`;
+            code += `Get-MailboxStatistics -Identity "${block.getFieldValue('MAILBOX')}" | Format-List\n`;
+            break;
+          case "search_mailbox_content":
+            code += `# Search mailbox content\n`;
+            code += `$search = Search-Mailbox -Identity "${block.getFieldValue('MAILBOX')}" -SearchQuery "${block.getFieldValue('QUERY')}" -TargetMailbox "DiscoverySearchMailbox" -TargetFolder "SearchResults" -LogLevel Full\n`;
+            code += `Write-Host "Search completed. Found $($search.ResultItemsCount) items matching the query."\n`;
+            break;
+          case "export_mailbox_to_pst":
+            code += `# Export mailbox to PST\n`;
+            code += `New-MailboxExportRequest -Mailbox "${block.getFieldValue('MAILBOX')}" -FilePath "${block.getFieldValue('PATH')}"\n`;
+            break;
+          case "import_pst_to_mailbox":
+            code += `# Import PST to mailbox\n`;
+            code += `New-MailboxImportRequest -Mailbox "${block.getFieldValue('MAILBOX')}" -FilePath "${block.getFieldValue('PATH')}"\n`;
+            break;
+          case "create_distribution_group":
+            code += `# Create distribution group\n`;
+            code += `New-DistributionGroup -Name "${block.getFieldValue('DG_NAME')}" -Alias "${block.getFieldValue('DG_NAME')}" -Type "Distribution"\n`;
+            break;
+          case "create_dynamic_distribution_group":
+            code += `# Create dynamic distribution group\n`;
+            code += `New-DynamicDistributionGroup -Name "${block.getFieldValue('GROUP_NAME')}" -IncludedRecipients "MailboxUsers" -ConditionalCustomAttribute1 "${block.getFieldValue('FILTER')}"\n`;
+            break;
+          case "add_user_to_distribution_group":
+            code += `# Add user to distribution group\n`;
+            code += `Add-DistributionGroupMember -Identity "${block.getFieldValue('GROUP')}" -Member "${block.getFieldValue('USER')}"\n`;
+            break;
+          case "remove_user_from_distribution_group":
+            code += `# Remove user from distribution group\n`;
+            code += `Remove-DistributionGroupMember -Identity "${block.getFieldValue('GROUP')}" -Member "${block.getFieldValue('USER')}" -Confirm:$false\n`;
+            break;
+          case "create_contact":
+            code += `# Create mail contact\n`;
+            code += `New-MailContact -Name "${block.getFieldValue('NAME')}" -ExternalEmailAddress "${block.getFieldValue('EMAIL')}"\n`;
+            break;
+          case "create_mail_user":
+            code += `# Create mail user\n`;
+            code += `New-MailUser -Name "${block.getFieldValue('NAME')}" -ExternalEmailAddress "${block.getFieldValue('EMAIL')}"\n`;
+            break;
+          case "set_recipient_properties":
+            code += `# Set recipient properties\n`;
+            code += `Set-Recipient -Identity "${block.getFieldValue('RECIPIENT')}" -EmailAddresses @{Add="${block.getFieldValue('EMAIL')}"} -HiddenFromAddressListsEnabled:$${block.getFieldValue('HIDDEN')}\n`;
+            break;
+          case "get_recipient_permissions":
+            code += `# Get recipient permissions\n`;
+            code += `Get-RecipientPermission -Identity "${block.getFieldValue('RECIPIENT')}"\n`;
+            code += `Get-MailboxPermission -Identity "${block.getFieldValue('RECIPIENT')}" | Where-Object { $_.User -notlike "NT AUTHORITY*" }\n`;
+            break;
+          case "set_recipient_permissions":
+            const perm = block.getFieldValue('PERMISSION');
+            if (perm === "FullAccess") {
+              code += `# Set full access permission\n`;
+              code += `Add-MailboxPermission -Identity "${block.getFieldValue('RECIPIENT')}" -User "${block.getFieldValue('USER')}" -AccessRights FullAccess -InheritanceType All\n`;
+            } else if (perm === "SendAs") {
+              code += `# Set send as permission\n`;
+              code += `Add-ADPermission -Identity "${block.getFieldValue('RECIPIENT')}" -User "${block.getFieldValue('USER')}" -ExtendedRights "Send As"\n`;
+            } else if (perm === "SendOnBehalf") {
+              code += `# Set send on behalf permission\n`;
+              code += `Set-Mailbox -Identity "${block.getFieldValue('RECIPIENT')}" -GrantSendOnBehalfTo "${block.getFieldValue('USER')}"\n`;
+            }
+            break;
+          case "configure_accepted_domain":
+            code += `# Configure accepted domain\n`;
+            code += `New-AcceptedDomain -Name "${block.getFieldValue('ACCEPTED_DOMAIN')}" -DomainName "${block.getFieldValue('ACCEPTED_DOMAIN')}" -DomainType Authoritative\n`;
+            break;
+          case "configure_receive_connector":
+            code += `# Configure receive connector\n`;
+            code += `New-ReceiveConnector -Name "${block.getFieldValue('RC_NAME')}" -Bindings 0.0.0.0:${block.getFieldValue('PORT')} -RemoteIPRanges 0.0.0.0-255.255.255.255 -Usage Custom -TransportRole FrontendTransport\n`;
+            break;
+          case "configure_send_connector":
+            code += `# Configure send connector\n`;
+            code += `New-SendConnector -Name "${block.getFieldValue('SC_NAME')}" -AddressSpaces "SMTP:*;1" -DNSRoutingEnabled $false -SmartHosts "${block.getFieldValue('SMART_HOST')}" -SmartHostAuthMechanism None\n`;
+            break;
+          case "create_transport_rule":
+            code += `# Create transport rule\n`;
+            code += `New-TransportRule -Name "${block.getFieldValue('RULE_NAME')}" -Condition "${block.getFieldValue('CONDITION')}" -Action "${block.getFieldValue('ACTION')}"\n`;
+            break;
+          case "set_default_email_address_policy":
+            code += `# Set default email address policy\n`;
+            code += `Set-EmailAddressPolicy -Identity "${block.getFieldValue('POLICY_NAME')}" -Enabled $true -IsDefault $true\n`;
+            break;
+          case "configure_remote_domain":
+            code += `# Configure remote domain\n`;
+            code += `Set-RemoteDomain -Identity "${block.getFieldValue('DOMAIN')}" -AllowedOOFType "External" -AutoForwardEnabled $false -AutoReplyEnabled $true -DeliveryReportEnabled $true -NDREnabled $true -MeetingForwardNotificationEnabled $true\n`;
+            break;
+          case "enable_outlook_anywhere":
+            code += `# Enable Outlook Anywhere\n`;
+            code += `Enable-OutlookAnywhere -Server EXCH01 -ExternalHostname "${block.getFieldValue('HOST')}" -ExternalAuthenticationMethod Basic -SSLOffloading $false\n`;
+            break;
+          case "configure_external_access":
+            code += `# Configure external access\n`;
+            code += `Set-OutlookAnywhere -Identity "EXCH01\\Rpc (Default Web Site)" -ExternalHostname "${block.getFieldValue('DOMAIN')}" -ExternalClientAuthenticationMethod Basic -SSLOffloading $false\n`;
+            code += `Set-ECPVirtualDirectory -Identity "EXCH01\\ecp (Default Web Site)" -ExternalUrl "https://${block.getFieldValue('DOMAIN')}/ecp" -InternalUrl "https://${block.getFieldValue('DOMAIN')}/ecp"\n`;
+            code += `Set-OwaVirtualDirectory -Identity "EXCH01\\owa (Default Web Site)" -ExternalUrl "https://${block.getFieldValue('DOMAIN')}/owa" -InternalUrl "https://${block.getFieldValue('DOMAIN')}/owa"\n`;
+            break;
+          case "test_mail_flow":
+            code += `# Test mail flow\n`;
+            code += `Test-Mailflow -TargetEmailAddress "${block.getFieldValue('TO')}" -SenderEmailAddress "${block.getFieldValue('FROM')}"\n`;
+            break;
+          case "configure_owa_virtual_directory":
+            code += `# Configure OWA virtual directory\n`;
+            code += `Set-OwaVirtualDirectory -Identity "EXCH01\\owa (Default Web Site)" -ExternalUrl "${block.getFieldValue('URL')}" -InternalUrl "${block.getFieldValue('URL')}"\n`;
+            break;
+          case "configure_ecp_virtual_directory":
+            code += `# Configure ECP virtual directory\n`;
+            code += `Set-ECPVirtualDirectory -Identity "EXCH01\\ecp (Default Web Site)" -ExternalUrl "${block.getFieldValue('URL')}" -InternalUrl "${block.getFieldValue('URL')}"\n`;
+            break;
+          case "configure_autodiscover":
+            code += `# Configure Autodiscover\n`;
+            code += `Set-ClientAccessService -Identity EXCH01 -AutodiscoverServiceInternalUri "https://${block.getFieldValue('DOMAIN')}/autodiscover/autodiscover.xml"\n`;
+            break;
+          case "configure_active_sync":
+            code += `# Configure ActiveSync\n`;
+            code += `Set-ActiveSyncVirtualDirectory -Identity "EXCH01\\Microsoft-Server-ActiveSync (Default Web Site)" -ExternalUrl "https://${block.getFieldValue('POLICY')}/Microsoft-Server-ActiveSync" -InternalUrl "https://${block.getFieldValue('POLICY')}/Microsoft-Server-ActiveSync"\n`;
+            break;
+          case "set_owa_mailbox_policy":
+            code += `# Set OWA mailbox policy\n`;
+            code += `Set-CASMailbox -Identity "${block.getFieldValue('MAILBOX')}" -OwaMailboxPolicy "${block.getFieldValue('POLICY')}"\n`;
+            break;
+          case "configure_mapi_over_http":
+            code += `# Configure MAPI over HTTP\n`;
+            code += `Set-OrganizationConfig -MapiHttpEnabled:$${block.getFieldValue('ENABLE')}\n`;
+            break;
+          case "test_outlook_connectivity":
+            code += `# Test Outlook connectivity\n`;
+            code += `Test-OutlookConnectivity -ProbeIdentity "OutlookMapiHttp.Proxy" -MailboxId "${block.getFieldValue('MAILBOX')}"\n`;
+            break;
+          case "enable_antispam_protection":
+            code += `# Enable anti-spam protection\n`;
+            code += `& $env:ExchangeInstallPath\\Scripts\\Install-AntiSpamAgents.ps1\n`;
+            code += `Set-TransportConfig -InternalSMTPServers @{Add="127.0.0.1"}\n`;
+            code += `Restart-Service MSExchangeTransport\n`;
+            break;
+          case "configure_malware_filter":
+            const action = block.getFieldValue('ACTION');
+            let malwareAction = "Delete";
+            if (action === "Quarantine") malwareAction = "Quarantine";
+            else if (action === "Replace") malwareAction = "Replace";
+            
+            code += `# Configure malware filter\n`;
+            code += `Set-MalwareFilterPolicy -Identity "Default" -Action ${malwareAction}\n`;
+            break;
+          case "create_retention_policy":
+            code += `# Create retention policy\n`;
+            code += `New-RetentionPolicy -Name "${block.getFieldValue('NAME')}" -RetentionPolicyTagLinks "Default ${block.getFieldValue('DAYS')} Day Retention"\n`;
+            break;
+          case "create_hold_policy":
+            code += `# Create hold policy\n`;
+            code += `New-RetentionPolicy -Name "${block.getFieldValue('NAME')}" -RetentionPolicyTagLinks "LitigationHold" -Comment "Created for legal hold purposes"\n`;
+            break;
+          case "enable_audit_logging":
+            code += `# Enable audit logging\n`;
+            code += `Set-AdminAuditLogConfig -AdminAuditLogEnabled $true\n`;
+            code += `Set-Mailbox -Identity "DiscoverySearchMailbox" -AuditEnabled $true\n`;
+            break;
+          case "search_unified_audit_log":
+            code += `# Search unified audit log\n`;
+            code += `Search-UnifiedAuditLog -StartDate (Get-Date).AddDays(-7) -EndDate (Get-Date) -RecordType ExchangeItem -ObjectIds "${block.getFieldValue('QUERY')}"\n`;
+            break;
+          case "configure_message_tracing":
+            code += `# Configure message tracing\n`;
+            code += `Set-TransportConfig -MessageTrackingLogEnabled $true -MessageTrackingLogMaxAge ${block.getFieldValue('DAYS')}.00:00:00 -MessageTrackingLogMaxDirectorySize 10GB -MessageTrackingLogMaxFileSize 10MB\n`;
+            break;
+          case "enable_mailbox_auditing":
+            code += `# Enable mailbox auditing\n`;
+            code += `Set-Mailbox -Identity "${block.getFieldValue('MAILBOX')}" -AuditEnabled $true -AuditLogAgeLimit ${block.getFieldValue('DAYS')}\n`;
+            break;
+          case "generate_mailbox_report":
+            const reportType = block.getFieldValue('TYPE');
+            const outputFormat = block.getFieldValue('OUTPUT');
+            
+            code += `# Generate mailbox report\n`;
+            code += `$mailboxes = Get-Mailbox -ResultSize Unlimited | Get-MailboxStatistics\n`;
+            code += `$report = @()\n`;
+            
+            if (reportType === "Size") {
+              code += `$report = $mailboxes | Select-Object DisplayName,ItemCount,TotalItemSize,Database,ServerName | Sort-Object TotalItemSize -Descending\n`;
+            } else if (reportType === "Quota") {
+              code += `$report = $mailboxes | Select-Object DisplayName,@{Name="QuotaStatus";Expression={if ($_.ProhibitSendQuota -ne $null) {"Set"} else {"Not Set"}}},ProhibitSendQuota,IssueWarningQuota,ProhibitSendReceiveQuota | Sort-Object DisplayName\n`;
+            } else if (reportType === "LastLogon") {
+              code += `$report = $mailboxes | Select-Object DisplayName,LastLogonTime,@{Name="DaysSinceLogon";Expression={if ($_.LastLogonTime -ne $null) {[math]::Round((New-TimeSpan -Start $_.LastLogonTime -End (Get-Date)).TotalDays)} else {"Never"}}} | Sort-Object DaysSinceLogon -Descending\n`;
+            } else if (reportType === "Permissions") {
+              code += `$report = @()\n`;
+              code += `$mailboxes | ForEach-Object {\n`;
+              code += `    $perms = Get-MailboxPermission -Identity $_.DisplayName | Where-Object { $_.User -notlike "NT AUTHORITY*" -and $_.User -notlike "S-1-5-21*" }\n`;
+              code += `    if ($perms) {\n`;
+              code += `        $report += [PSCustomObject]@{\n`;
+              code += `            Mailbox = $_.DisplayName\n`;
+              code += `            Permissions = ($perms | Select-Object -ExpandProperty User) -join ", "\n`;
+              code += `        }\n`;
+              code += `    }\n`;
+              code += `}\n`;
+            }
+            
+            if (outputFormat === "CSV") {
+              code += `$report | Export-Csv -Path "MailboxReport_${reportType}_$(Get-Date -Format 'yyyyMMdd').csv" -NoTypeInformation\n`;
+              code += `Write-Host "Report exported to MailboxReport_${reportType}_$(Get-Date -Format 'yyyyMMdd').csv"\n`;
+            } else if (outputFormat === "HTML") {
+              code += `$html = $report | ConvertTo-Html -Property *\n`;
+              code += `$html | Out-File "MailboxReport_${reportType}_$(Get-Date -Format 'yyyyMMdd').html"\n`;
+              code += `Write-Host "Report exported to MailboxReport_${reportType}_$(Get-Date -Format 'yyyyMMdd').html"\n`;
+            } else {
+              code += `$report | Format-Table -AutoSize\n`;
+            }
+            break;
+          case "generate_transport_report":
+            const transportType = block.getFieldValue('TYPE');
+            const transportOutput = block.getFieldValue('OUTPUT');
+            
+            code += `# Generate transport report\n`;
+            code += `$report = @()\n`;
+            
+            if (transportType === "Queue") {
+              code += `$report = Get-Queue | Select-Object Identity,MessageCount,NextHopDomain,Status,LastError | Sort-Object MessageCount -Descending\n`;
+            } else if (transportType === "MessageTracking") {
+              code += `$report = Get-MessageTrackingLog -Start (Get-Date).AddDays(-1) -End (Get-Date) -ResultSize Unlimited | Select-Object Timestamp,ClientIp,EventId,Sender,Recipients,MessageSubject | Sort-Object Timestamp -Descending\n`;
+            } else if (transportType === "Connector") {
+              code += `$report = Get-SendConnector | Select-Object Name,AddressSpaces,Enabled,SmartHosts,MaxMessageSize | Sort-Object Name\n`;
+              code += `$report += Get-ReceiveConnector | Select-Object Name,Bindings,RemoteIPRanges,Enabled,MaxMessageSize | Sort-Object Name\n`;
+            }
+            
+            if (transportOutput === "CSV") {
+              code += `$report | Export-Csv -Path "TransportReport_${transportType}_$(Get-Date -Format 'yyyyMMdd').csv" -NoTypeInformation\n`;
+              code += `Write-Host "Report exported to TransportReport_${transportType}_$(Get-Date -Format 'yyyyMMdd').csv"\n`;
+            } else if (transportOutput === "HTML") {
+              code += `$html = $report | ConvertTo-Html -Property *\n`;
+              code += `$html | Out-File "TransportReport_${transportType}_$(Get-Date -Format 'yyyyMMdd').html"\n`;
+              code += `Write-Host "Report exported to TransportReport_${transportType}_$(Get-Date -Format 'yyyyMMdd').html"\n`;
+            } else {
+              code += `$report | Format-Table -AutoSize\n`;
+            }
+            break;
+          case "monitor_queue_status":
+            code += `# Monitor queue status\n`;
+            code += `Get-Queue -Server "${block.getFieldValue('SERVER')}" | Where-Object { $_.MessageCount -gt 0 } | Format-Table Identity,MessageCount,NextHopDomain,Status,LastError -AutoSize\n`;
+            break;
+          case "check_database_status":
+            code += `# Check database status\n`;
+            code += `Get-MailboxDatabase -Identity "${block.getFieldValue('DATABASE')}" -Status | Format-List Name,Server,Mounted,DatabaseSize,AvailableNewMailboxSpace\n`;
+            code += `Get-MailboxDatabaseCopyStatus -Identity "${block.getFieldValue('DATABASE')}\\" | Format-List Name,Status,CopyQueueLength,ReplayQueueLength,ContentIndexState\n`;
+            break;
+          case "get_server_health":
+            code += `# Get server health\n`;
+            code += `Get-ServerHealth -Identity "${block.getFieldValue('SERVER')}" | Where-Object { $_.AlertValue -ne "Healthy" } | Format-Table Server,HealthSetName,AlertValue -AutoSize\n`;
+            code += `Test-ServiceHealth -Server "${block.getFieldValue('SERVER')}"\n`;
+            code += `Test-ReplicationHealth -Identity "${block.getFieldValue('SERVER')}"\n`;
+            break;
+          case "check_service_status":
+            const service = block.getFieldValue('SERVICE');
+            if (service === "All") {
+              code += `# Check all Exchange services\n`;
+              code += `Get-Service | Where-Object { $_.Name -like "*MSExchange*" } | Format-Table Name,Status,StartType -AutoSize\n`;
+            } else {
+              code += `# Check Exchange service status\n`;
+              code += `Get-Service -Name "${service}" | Format-Table Name,Status,StartType -AutoSize\n`;
+            }
+            break;
+        }
+
+        const nextBlock = block.getNextBlock();
+        if (nextBlock) {
+          code += generateBlockCodeRecursive(nextBlock);
+        }
+        return code;
+      }
+
+      function createModal(title) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        
+        const content = document.createElement('div');
+        content.className = 'modal-content';
+        
+        const header = document.createElement('div');
+        header.className = 'modal-header';
+        
+        const titleElement = document.createElement('h3');
+        titleElement.className = 'modal-title';
+        titleElement.textContent = title;
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'close-btn';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = function() {
+          document.body.removeChild(modal);
+        };
+        
+        header.appendChild(titleElement);
+        header.appendChild(closeBtn);
+        content.appendChild(header);
+        modal.appendChild(content);
+        
+        return modal;
+      }
+
+      window.simulate = function simulate() {
+        const code = generatePowerShellCode();
+        if (!code) {
+          showNotification("No script to show. Please add some blocks first.");
+          return;
+        }
+        
+        const modal = createModal('Generated PowerShell Script');
+        
+        const codeBlock = document.createElement('div');
+        codeBlock.className = 'code-block';
+        const pre = document.createElement('pre');
+        pre.textContent = code;
+        hljs.highlightElement(pre);
+        codeBlock.appendChild(pre);
+        
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = 'Copy to Clipboard';
+        copyBtn.style.marginTop = '15px';
+        copyBtn.onclick = function() {
+          navigator.clipboard.writeText(code).then(() => {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy to Clipboard';
+            }, 2000);
+          });
+        };
+        
+        modal.querySelector('.modal-content').appendChild(codeBlock);
+        modal.querySelector('.modal-content').appendChild(copyBtn);
+        
+        document.body.appendChild(modal);
+      };
+
+      window.download = function download() {
+        const code = generatePowerShellCode();
+        if (!code) {
+          showNotification("Nothing to download. Please add some blocks first.");
+          return;
+        }
+        
+        const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'exchange_script.ps1';
+        link.click();
+        
+        showNotification("Script downloaded successfully!");
+      };
+      
+      function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+          notification.style.opacity = '1';
+        }, 10);
+        
+        // Animate out after 3 seconds
+        setTimeout(() => {
+          notification.style.opacity = '0';
+          setTimeout(() => {
+            document.body.removeChild(notification);
+          }, 500);
+        }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockShell – Okta Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <style>
+    :root {
+      --primary-color: #0078d7;
+      --text-color: #2c3e50;
+      --light-bg: #f8f9fa;
+      --border-color: #eaecef;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(to bottom, var(--light-bg), #eef1f5);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-color);
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    header {
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 120, 215, 0.1);
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      color: #0078d7;
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, #0078d7, #00a4ef);
+      border-radius: 2px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-top: 8px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    #blockly-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #blocklyDiv {
+      height: calc(100% - 60px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #buttons {
+      padding: 10px 20px;
+      display: flex;
+      gap: 10px;
+      background-color: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 120, 215, 0.3);
+    }
+
+    button.danger {
+      background-color: #d13438;
+    }
+
+    button.danger:hover {
+      background-color: #b32d30;
+    }
+
+    .blocklyToolboxDiv {
+      border-right: 1px solid var(--border-color) !important;
+    }
+
+    .blocklyMainBackground {
+      stroke-width: 0;
+    }
+
+    .blocklyFlyoutBackground {
+      fill: var(--light-bg);
+    }
+
+    .modal {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--text-color);
+      font-size: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .code-block {
+      background-color: var(--light-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 15px;
+      overflow-x: auto;
+      font-family: Consolas, Monaco, "Andale Mono", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      z-index: 1000;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .zoom-btn {
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+
+    .zoom-btn:hover {
+      background-color: var(--light-bg);
+    }
+
+    .zoom-btn:first-child {
+      border-bottom: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <h1>BlockShell – Okta Management</h1>
+      <div class="subtitle">Visual PowerShell Script Builder for Okta</div>
+    </header>
+
+    <div id="blockly-container">
+      <div id="buttons">
+        <button onclick="simulate()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 10 4 15 9 20"></polyline>
+            <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+          </svg>
+          Show Script
+        </button>
+        <button onclick="download()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download Script
+        </button>
+        <button class="danger" onclick="clearWorkspace()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Clear Workspace
+        </button>
+      </div>
+      <div id="blocklyDiv"></div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+        <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+      </div>
+    </div>
+  </div>
+
+  <xml id="toolbox" style="display:none">
+    <category name="User Management" colour="180">
+      <block type="get_okta_user">
+        <tooltip>Retrieves information about an Okta user. PowerShell: Get-OktaUser</tooltip>
+      </block>
+      <block type="create_okta_user">
+        <tooltip>Creates a new Okta user account. PowerShell: New-OktaUser</tooltip>
+      </block>
+      <block type="update_okta_user">
+        <tooltip>Updates user properties. PowerShell: Update-OktaUser</tooltip>
+      </block>
+      <block type="suspend_okta_user">
+        <tooltip>Suspends a user account. PowerShell: Suspend-OktaUser</tooltip>
+      </block>
+      <block type="unsuspend_okta_user">
+        <tooltip>Unsuspends a user account. PowerShell: Unsuspend-OktaUser</tooltip>
+      </block>
+      <block type="deactivate_okta_user">
+        <tooltip>Deactivates a user account. PowerShell: Deactivate-OktaUser</tooltip>
+      </block>
+      <block type="delete_okta_user">
+        <tooltip>Deletes a user account. PowerShell: Remove-OktaUser</tooltip>
+      </block>
+      <block type="reset_user_password">
+        <tooltip>Resets a user's password. PowerShell: Set-OktaUserPassword</tooltip>
+      </block>
+      <block type="expire_user_password">
+        <tooltip>Expires a user's password. PowerShell: Expire-OktaUserPassword</tooltip>
+      </block>
+    </category>
+    <category name="Group Management" colour="210">
+      <block type="get_okta_group">
+        <tooltip>Retrieves information about an Okta group. PowerShell: Get-OktaGroup</tooltip>
+      </block>
+      <block type="create_okta_group">
+        <tooltip>Creates a new Okta group. PowerShell: New-OktaGroup</tooltip>
+      </block>
+      <block type="add_user_to_okta_group">
+        <tooltip>Adds a user to an Okta group. PowerShell: Add-OktaUserToGroup</tooltip>
+      </block>
+      <block type="remove_user_from_okta_group">
+        <tooltip>Removes a user from an Okta group. PowerShell: Remove-OktaUserFromGroup</tooltip>
+      </block>
+      <block type="list_group_members">
+        <tooltip>Lists all members of a group. PowerShell: Get-OktaGroupMember</tooltip>
+      </block>
+      <block type="update_okta_group">
+        <tooltip>Updates group properties. PowerShell: Update-OktaGroup</tooltip>
+      </block>
+    </category>
+    <category name="Application Management" colour="160">
+      <block type="get_okta_app">
+        <tooltip>Retrieves information about an Okta application. PowerShell: Get-OktaApplication</tooltip>
+      </block>
+      <block type="assign_user_to_app">
+        <tooltip>Assigns a user to an application. PowerShell: Add-OktaAppUser</tooltip>
+      </block>
+      <block type="remove_user_from_app">
+        <tooltip>Removes a user from an application. PowerShell: Remove-OktaAppUser</tooltip>
+      </block>
+      <block type="list_app_users">
+        <tooltip>Lists users assigned to an application. PowerShell: Get-OktaAppUser</tooltip>
+      </block>
+      <block type="activate_app_user">
+        <tooltip>Activates an application user assignment. PowerShell: Activate-OktaAppUser</tooltip>
+      </block>
+      <block type="deactivate_app_user">
+        <tooltip>Deactivates an application user assignment. PowerShell: Deactivate-OktaAppUser</tooltip>
+      </block>
+    </category>
+    <category name="Authentication & Security" colour="230">
+      <block type="unlock_okta_user">
+        <tooltip>Unlocks a locked user account. PowerShell: Unlock-OktaUser</tooltip>
+      </block>
+      <block type="reset_factors">
+        <tooltip>Resets all MFA factors for a user. PowerShell: Reset-OktaUserFactors</tooltip>
+      </block>
+      <block type="suspend_user_sessions">
+        <tooltip>Suspends all active sessions for a user. PowerShell: Clear-OktaUserSessions</tooltip>
+      </block>
+      <block type="get_user_sessions">
+        <tooltip>Gets active sessions for a user. PowerShell: Get-OktaUserSessions</tooltip>
+      </block>
+      <block type="list_user_factors">
+        <tooltip>Lists MFA factors for a user. PowerShell: Get-OktaUserFactors</tooltip>
+      </block>
+    </category>
+    <category name="Reports & Queries" colour="130">
+      <block type="search_okta_users">
+        <tooltip>Searches for users based on criteria. PowerShell: Find-OktaUser</tooltip>
+      </block>
+      <block type="generate_user_report">
+        <tooltip>Generates user reports in various formats. PowerShell: Export-OktaUserReport</tooltip>
+      </block>
+      <block type="get_system_logs">
+        <tooltip>Retrieves Okta system logs. PowerShell: Get-OktaSystemLog</tooltip>
+      </block>
+      <block type="export_group_membership">
+        <tooltip>Exports group memberships to CSV. PowerShell: Export-OktaGroupMembership</tooltip>
+      </block>
+    </category>
+  </xml>
+
+  <script>
+    // Declare workspace variable at the top level
+    let workspace;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize Blockly workspace
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        trashcan: true,
+        grid: {
+          spacing: 25,
+          length: 3,
+          colour: '#e0e0e0',
+          snap: true
+        },
+        zoom: {
+          controls: true,
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2
+        },
+        theme: {
+          'blockStyles': {
+            'colour_blocks': { 'colourPrimary': '#CF63CF', 'colourSecondary': '#C94FC9', 'colourTertiary': '#BD42BD' },
+            'list_blocks': { 'colourPrimary': '#9966FF', 'colourSecondary': '#855CD6', 'colourTertiary': '#774DCB' },
+            'logic_blocks': { 'colourPrimary': '#4C97FF', 'colourSecondary': '#4280D7', 'colourTertiary': '#3373CC' },
+            'loop_blocks': { 'colourPrimary': '#0fBD8C', 'colourSecondary': '#0DA57A', 'colourTertiary': '#0B8E69' },
+            'math_blocks': { 'colourPrimary': '#59C059', 'colourSecondary': '#46B946', 'colourTertiary': '#389438' },
+            'procedure_blocks': { 'colourPrimary': '#FF6680', 'colourSecondary': '#FF4D6A', 'colourTertiary': '#FF3355' },
+            'text_blocks': { 'colourPrimary': '#FFBF00', 'colourSecondary': '#E6AC00', 'colourTertiary': '#CC9900' },
+            'variable_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' },
+            'variable_dynamic_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' }
+          },
+          'componentStyles': {
+            'workspaceBackgroundColour': '#F9FAFB',
+            'toolboxBackgroundColour': '#FFFFFF',
+            'toolboxForegroundColour': '#1E293B',
+            'flyoutBackgroundColour': '#F1F5F9',
+            'flyoutForegroundColour': '#1E293B',
+            'flyoutOpacity': 0.9,
+            'scrollbarColour': '#CCCCCC',
+            'scrollbarOpacity': 0.6
+          }
+        }
+      });
+
+      // Define all blocks with enhanced tooltips
+      Blockly.defineBlocksWithJsonArray([
+        {
+          "type": "get_okta_user",
+          "message0": "Get Okta User (Login/ID: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Retrieves information about an Okta user.\n\nPowerShell: Get-OktaUser -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_okta_user",
+          "message0": "Create Okta User (First: %1 Last: %2 Email: %3)",
+          "args0": [
+            { "type": "field_input", "name": "FIRSTNAME", "text": "John" },
+            { "type": "field_input", "name": "LASTNAME", "text": "Doe" },
+            { "type": "field_input", "name": "EMAIL", "text": "john.doe@example.com" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Creates a new Okta user account.\n\nPowerShell: New-OktaUser -FirstName \"value\" -LastName \"value\" -Email \"value\" -Login \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "update_okta_user",
+          "message0": "Update Okta User (User: %1 Department: %2 Title: %3)",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "user@example.com" },
+            { "type": "field_input", "name": "DEPARTMENT", "text": "IT" },
+            { "type": "field_input", "name": "TITLE", "text": "Developer" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Updates user properties in Okta.\n\nPowerShell: Update-OktaUser -UserId \"value\" -Department \"value\" -Title \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "suspend_okta_user",
+          "message0": "Suspend Okta User (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Suspends a user account in Okta.\n\nPowerShell: Suspend-OktaUser -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "unsuspend_okta_user",
+          "message0": "Unsuspend Okta User (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Unsuspends a user account in Okta.\n\nPowerShell: Unsuspend-OktaUser -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "deactivate_okta_user",
+          "message0": "Deactivate Okta User (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Deactivates a user account in Okta.\n\nPowerShell: Deactivate-OktaUser -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "delete_okta_user",
+          "message0": "Delete Okta User (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Deletes a user account from Okta.\n\nPowerShell: Remove-OktaUser -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "reset_user_password",
+          "message0": "Reset User Password (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Resets a user's password in Okta.\n\nPowerShell: Set-OktaUserPassword -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "expire_user_password",
+          "message0": "Expire User Password (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 180,
+          "tooltip": "Expires a user's password in Okta.\n\nPowerShell: Expire-OktaUserPassword -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_okta_group",
+          "message0": "Get Okta Group (Name/ID: %1)",
+          "args0": [{ "type": "field_input", "name": "GROUP", "text": "Everyone" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Retrieves information about an Okta group.\n\nPowerShell: Get-OktaGroup -GroupId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "create_okta_group",
+          "message0": "Create Okta Group (Name: %1 Description: %2)",
+          "args0": [
+            { "type": "field_input", "name": "NAME", "text": "New Group" },
+            { "type": "field_input", "name": "DESCRIPTION", "text": "Group description" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Creates a new group in Okta.\n\nPowerShell: New-OktaGroup -Name \"value\" -Description \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "add_user_to_okta_group",
+          "message0": "Add User %1 to Group %2",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "user@example.com" },
+            { "type": "field_input", "name": "GROUP", "text": "Everyone" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Adds a user to an Okta group.\n\nPowerShell: Add-OktaUserToGroup -UserId \"value\" -GroupId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "remove_user_from_okta_group",
+          "message0": "Remove User %1 from Group %2",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "user@example.com" },
+            { "type": "field_input", "name": "GROUP", "text": "Everyone" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Removes a user from an Okta group.\n\nPowerShell: Remove-OktaUserFromGroup -UserId \"value\" -GroupId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "list_group_members",
+          "message0": "List Members of Group %1 Export to CSV? %2",
+          "args0": [
+            { "type": "field_input", "name": "GROUP", "text": "Everyone" },
+            { "type": "field_checkbox", "name": "EXPORT", "checked": false }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Lists all members of an Okta group.\n\nPowerShell: Get-OktaGroupMember -GroupId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "update_okta_group",
+          "message0": "Update Okta Group (Group: %1 Description: %2)",
+          "args0": [
+            { "type": "field_input", "name": "GROUP", "text": "Everyone" },
+            { "type": "field_input", "name": "DESCRIPTION", "text": "Updated description" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 210,
+          "tooltip": "Updates group properties in Okta.\n\nPowerShell: Update-OktaGroup -GroupId \"value\" -Description \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_okta_app",
+          "message0": "Get Okta Application (Name/ID: %1)",
+          "args0": [{ "type": "field_input", "name": "APP", "text": "Salesforce" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Retrieves information about an Okta application.\n\nPowerShell: Get-OktaApplication -AppId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "assign_user_to_app",
+          "message0": "Assign User %1 to Application %2",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "user@example.com" },
+            { "type": "field_input", "name": "APP", "text": "Salesforce" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Assigns a user to an Okta application.\n\nPowerShell: Add-OktaAppUser -UserId \"value\" -AppId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "remove_user_from_app",
+          "message0": "Remove User %1 from Application %2",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "user@example.com" },
+            { "type": "field_input", "name": "APP", "text": "Salesforce" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Removes a user from an Okta application.\n\nPowerShell: Remove-OktaAppUser -UserId \"value\" -AppId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "list_app_users",
+          "message0": "List Users Assigned to Application %1",
+          "args0": [{ "type": "field_input", "name": "APP", "text": "Salesforce" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Lists users assigned to an Okta application.\n\nPowerShell: Get-OktaAppUser -AppId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "activate_app_user",
+          "message0": "Activate Application User (User: %1 App: %2)",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "user@example.com" },
+            { "type": "field_input", "name": "APP", "text": "Salesforce" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Activates an application user assignment.\n\nPowerShell: Activate-OktaAppUser -UserId \"value\" -AppId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "deactivate_app_user",
+          "message0": "Deactivate Application User (User: %1 App: %2)",
+          "args0": [
+            { "type": "field_input", "name": "USER", "text": "user@example.com" },
+            { "type": "field_input", "name": "APP", "text": "Salesforce" }
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160,
+          "tooltip": "Deactivates an application user assignment.\n\nPowerShell: Deactivate-OktaAppUser -UserId \"value\" -AppId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "unlock_okta_user",
+          "message0": "Unlock Okta User (User: %1)",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Unlocks a locked user account in Okta.\n\nPowerShell: Unlock-OktaUser -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "reset_factors",
+          "message0": "Reset MFA Factors for User %1",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Resets all MFA factors for a user.\n\nPowerShell: Reset-OktaUserFactors -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "suspend_user_sessions",
+          "message0": "Suspend All Sessions for User %1",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Suspends all active sessions for a user.\n\nPowerShell: Clear-OktaUserSessions -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_user_sessions",
+          "message0": "Get Active Sessions for User %1",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Gets active sessions for a user.\n\nPowerShell: Get-OktaUserSessions -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "list_user_factors",
+          "message0": "List MFA Factors for User %1",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 230,
+          "tooltip": "Lists MFA factors for a user.\n\nPowerShell: Get-OktaUserFactors -UserId \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "search_okta_users",
+          "message0": "Search Okta Users (Query: %1)",
+          "args0": [{ "type": "field_input", "name": "QUERY", "text": "status eq \"ACTIVE\"" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Searches for users based on criteria.\n\nPowerShell: Find-OktaUser -Query \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "generate_user_report",
+          "message0": "Generate User Report Type: %1 Output to: %2",
+          "args0": [
+            { "type": "field_dropdown", "name": "REPORTTYPE", "options": [
+              ["All Users", "AllUsers"],
+              ["Active Users", "ActiveUsers"],
+              ["Suspended Users", "SuspendedUsers"],
+              ["Deactivated Users", "DeactivatedUsers"]
+            ]},
+            { "type": "field_dropdown", "name": "OUTPUT", "options": [
+              ["CSV", "CSV"],
+              ["HTML", "HTML"],
+              ["Console", "Console"]
+            ]}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Generates a comprehensive user report for auditing and compliance.\n\nPowerShell: Export-OktaUserReport -Type \"value\" -Format \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "get_system_logs",
+          "message0": "Get Okta System Logs (Filter: %1)",
+          "args0": [{ "type": "field_input", "name": "FILTER", "text": "eventType eq \"user.session.start\"" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Retrieves Okta system logs.\n\nPowerShell: Get-OktaSystemLog -Filter \"value\"",
+          "helpUrl": ""
+        },
+        {
+          "type": "export_group_membership",
+          "message0": "Export Group Memberships for User %1",
+          "args0": [{ "type": "field_input", "name": "USER", "text": "user@example.com" }],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 130,
+          "tooltip": "Exports group memberships for a user to CSV.\n\nPowerShell: Export-OktaGroupMembership -UserId \"value\"",
+          "helpUrl": ""
+        }
+      ]);
+
+      // Setup event listeners
+      document.getElementById('zoom-in').addEventListener('click', function() {
+        workspace.zoomCenter(1.2);
+      });
+
+      document.getElementById('zoom-out').addEventListener('click', function() {
+        workspace.zoomCenter(0.8);
+      });
+
+      window.clearWorkspace = function() {
+        if (confirm('Are you sure you want to clear the workspace? All blocks will be deleted.')) {
+          workspace.clear();
+          showNotification('Workspace cleared');
+        }
+      };
+
+      function generatePowerShellCode() {
+        const blocks = workspace.getTopBlocks(true);
+        let code = "";
+        
+        // Add header
+        code += `# Generated by BlockShell Okta Tool\n`;
+        code += `# Date: ${new Date().toISOString()}\n`;
+        code += `# Okta PowerShell Module Required: Okta.Core\n`;
+        code += `\n`;
+        
+        // Add connection setup
+        code += `# Connect to Okta\n`;
+        code += `$OktaOrg = "https://your-domain.okta.com"\n`;
+        code += `$OktaToken = "YOUR_API_TOKEN"\n`;
+        code += `Connect-Okta -OrgUrl $OktaOrg -Token $OktaToken\n\n`;
+        
+        // Generate code from blocks
+        for (const block of blocks) {
+          code += generateBlockCodeRecursive(block);
+        }
+        
+        return code.trim();
+      }
+
+      function generateBlockCodeRecursive(block) {
+        if (!block) return "";
+        let code = "";
+
+        switch (block.type) {
+          case "get_okta_user":
+            code += `# Get Okta User Information\n`;
+            code += `Get-OktaUser -UserId "${block.getFieldValue('USER')}"\n\n`;
+            break;
+          case "create_okta_user":
+            code += `# Create New Okta User\n`;
+            code += `$NewUser = @{\n`;
+            code += `    FirstName = "${block.getFieldValue('FIRSTNAME')}"\n`;
+            code += `    LastName = "${block.getFieldValue('LASTNAME')}"\n`;
+            code += `    Email = "${block.getFieldValue('EMAIL')}"\n`;
+            code += `    Login = "${block.getFieldValue('EMAIL')}"\n`;
+            code += `}\n`;
+            code += `New-OktaUser @NewUser\n\n`;
+            break;
+          case "update_okta_user":
+            code += `# Update Okta User Properties\n`;
+            code += `$UserUpdate = @{\n`;
+            code += `    UserId = "${block.getFieldValue('USER')}"\n`;
+            code += `    Department = "${block.getFieldValue('DEPARTMENT')}"\n`;
+            code += `    Title = "${block.getFieldValue('TITLE')}"\n`;
+            code += `}\n`;
+            code += `Update-OktaUser @UserUpdate\n\n`;
+            break;
+          case "suspend_okta_user":
+            code += `# Suspend Okta User\n`;
+            code += `Suspend-OktaUser -UserId "${block.getFieldValue('USER')}"\n\n`;
+            break;
+          case "unsuspend_okta_user":
+            code += `# Unsuspend Okta User\n`;
+            code += `Unsuspend-OktaUser -UserId "${block.getFieldValue('USER')}"\n\n`;
+            break;
+          case "deactivate_okta_user":
+            code += `# Deactivate Okta User\n`;
+            code += `Deactivate-OktaUser -UserId "${block.getFieldValue('USER')}"\n\n`;
+            break;
+          case "delete_okta_user":
+            code += `# Delete Okta User\n`;
+            code += `Remove-OktaUser -UserId "${block.getFieldValue('USER')}"\n\n`;
+            break;
+          case "reset_user_password":
+            code += `# Reset User Password\n`;
+            code += `Set-OktaUserPassword -UserId "${block.getFieldValue('USER')}"\n\n`;
+            break;
+          case "expire_user_password":
+            code += `# Expire User Password\n`;
+            code += `Expire-OktaUserPassword -UserId "${block.getFieldValue('USER')}"\n\n`;
+            break;
+          case "get_okta_group":
+            code += `# Get Okta Group Information\n`;
+            code += `Get-OktaGroup -GroupId "${block.getFieldValue('GROUP')}"\n\n`;
+            break;
+          case "create_okta_group":
+            code += `# Create New Okta Group\n`;
+            code += `$NewGroup = @{\n`;
+            code += `    Name = "${block.getFieldValue('NAME')}"\n`;
+            code += `    Description = "${block.getFieldValue('DESCRIPTION')}"\n`;
+            code += `}\n`;
+            code += `New-OktaGroup @NewGroup\n\n`;
+            break;
+          case "add_user_to_okta_group":
+            code += `# Add User to Group\n`;
+            code += `Add-OktaUserToGroup -UserId "${block.getFieldValue('USER')}" -GroupId "${block.getFieldValue('GROUP')}"\n\n`;
+            break;
+          case "remove_user_from_okta_group":
+            code += `# Remove User from Group\n`;
+            code += `Remove-OktaUserFromGroup -UserId "${block.getFieldValue('USER')}" -GroupId "${block.getFieldValue('GROUP')}"\n\n`;
+            break;
+          case "list_group_members":
+            if (block.getFieldValue('EXPORT') === 'TRUE') {
+              code += `# Export Group Members to CSV\n`;
+              code += `Get-OktaGroupMember -GroupId "${block.getFieldValue('GROUP')}" | Export-Csv -Path "./${block.getFieldValue('GROUP')}_members.csv" -NoTypeInformation\n\n`;
+            } else {
+              code += `# List Group Members\n`;
+              code += `Get-OktaGroupMember -GroupId "${block.getFieldValue('GROUP')}" | Format-Table Id, Status, Created, LastUpdated\n\n`;
+            }
+            break;
+          case "update_okta_group":
+            code += `# Update Okta Group Properties\n`;
+            code += `$GroupUpdate = @{\n`;
+            code += `    GroupId = "${block.getFieldValue('GROUP')}"\n`;
+            code += `    Description = "${block.getFieldValue('DESCRIPTION')}"\n`;
+            code += `}\n`;
+            code += `Update-OktaGroup @GroupUpdate\n\n`;
+            break;
+          case "get_okta_app":
+            code += `# Get Okta Application Information\n`;
+            code += `Get-OktaApplication -AppId "${block.getFieldValue('APP')}"\n\n`;
+            break;
+          case "assign_user_to_app":
+            code += `# Assign User to Application\n`;
+            code += `Add-OktaAppUser -UserId "${block.getFieldValue('USER')}" -AppId "${block.getFieldValue('APP')}"\n\n`;
+            break;
+          case "remove_user_from_app":
+            code += `# Remove User from Application\n`;
+            code += `Remove-OktaAppUser -UserId "${block.getFieldValue('USER')}" -AppId "${block.getFieldValue('APP')}"\n\n`;
+            break;
+          case "list_app_users":
+            code += `# List Application Users\n`;
+            code += `Get-OktaAppUser -AppId "${block.getFieldValue('APP')}" | Format-Table Id, Scope, Status, Created\n\n`;
+            break;
+          case "activate_app_user":
+            code += `# Activate Application User\n`;
+            code += `Activate-OktaAppUser -UserId "${block.getFieldValue('USER')}" -AppId "${block.getFieldValue('APP')}"\n\n`;
+            break;
+          case "deactivate_app_user":
+            code += `# Deactivate Application User\n`;
+            code += `Deactivate-OktaAppUser -UserId "${block.getFieldValue('USER')}" -AppId "${block.getFieldValue('APP')}"\n\n`;
+            break;
+          case "unlock_okta_user":
+            code += `# Unlock Okta User\n`;
+            code += `Unlock-OktaUser -UserId "${block.getFieldValue('USER')}"\n\n`;
+            break;
+          case "reset_factors":
+            code += `# Reset MFA Factors\n`;
+            code += `Reset-OktaUserFactors -UserId "${block.getFieldValue('USER')}"\n\n`;
+            break;
+          case "suspend_user_sessions":
+            code += `# Suspend User Sessions\n`;
+            code += `Clear-OktaUserSessions -UserId "${block.getFieldValue('USER')}"\n\n`;
+            break;
+          case "get_user_sessions":
+            code += `# Get User Sessions\n`;
+            code += `Get-OktaUserSessions -UserId "${block.getFieldValue('USER')}" | Format-Table Id, Login, Created, Expires, Status\n\n`;
+            break;
+          case "list_user_factors":
+            code += `# List User MFA Factors\n`;
+            code += `Get-OktaUserFactors -UserId "${block.getFieldValue('USER')}" | Format-Table FactorType, Provider, Status, Created\n\n`;
+            break;
+          case "search_okta_users":
+            code += `# Search Okta Users\n`;
+            code += `Find-OktaUser -Query "${block.getFieldValue('QUERY')}" | Format-Table Id, Status, Created, LastLogin\n\n`;
+            break;
+          case "generate_user_report":
+            const reportType = block.getFieldValue('REPORTTYPE');
+            const outputFormat = block.getFieldValue('OUTPUT');
+            
+            code += `# Generate User Report\n`;
+            code += `$ReportDate = Get-Date -Format "yyyy-MM-dd"\n`;
+            code += `$ReportName = "${reportType}_Report_$ReportDate"\n\n`;
+            
+            if (reportType === 'AllUsers') {
+              code += `$Users = Get-OktaUser -All\n`;
+            } else if (reportType === 'ActiveUsers') {
+              code += `$Users = Find-OktaUser -Query 'status eq "ACTIVE"'\n`;
+            } else if (reportType === 'SuspendedUsers') {
+              code += `$Users = Find-OktaUser -Query 'status eq "SUSPENDED"'\n`;
+            } else if (reportType === 'DeactivatedUsers') {
+              code += `$Users = Find-OktaUser -Query 'status eq "DEPROVISIONED"'\n`;
+            }
+            
+            if (outputFormat === 'CSV') {
+              code += `$Users | Select-Object Id, Status, Created, LastLogin, LastUpdated | Export-Csv -Path "./$ReportName.csv" -NoTypeInformation\n`;
+              code += `Write-Host "Report exported to ./$ReportName.csv"\n\n`;
+            } else if (outputFormat === 'HTML') {
+              code += `$HtmlHeader = @"\n`;
+              code += `<!DOCTYPE html>\n`;
+              code += `<html>\n`;
+              code += `<head>\n`;
+              code += `    <title>$ReportName</title>\n`;
+              code += `    <style>\n`;
+              code += `        body { font-family: Arial, sans-serif; margin: 20px; }\n`;
+              code += `        table { border-collapse: collapse; width: 100%; }\n`;
+              code += `        th, td { text-align: left; padding: 8px; border: 1px solid #ddd; }\n`;
+              code += `        th { background-color: #0078d7; color: white; }\n`;
+              code += `        tr:nth-child(even) { background-color: #f2f2f2; }\n`;
+              code += `        h1 { color: #0078d7; }\n`;
+              code += `    </style>\n`;
+              code += `</head>\n`;
+              code += `<body>\n`;
+              code += `    <h1>$ReportName</h1>\n`;
+              code += `    <p>Generated: $(Get-Date)</p>\n`;
+              code += `"@\n\n`;
+              code += `$HtmlFooter = @"\n`;
+              code += `</body>\n`;
+              code += `</html>\n`;
+              code += `"@\n\n`;
+              code += `$HtmlBody = $Users | Select-Object Id, Status, Created, LastLogin, LastUpdated | ConvertTo-Html -Fragment\n`;
+              code += `$HtmlHeader + $HtmlBody + $HtmlFooter | Out-File "./$ReportName.html"\n`;
+              code += `Write-Host "Report exported to ./$ReportName.html"\n\n`;
+            } else {
+              code += `$Users | Select-Object Id, Status, Created, LastLogin, LastUpdated | Format-Table\n`;
+              code += `Write-Host "Report generated and displayed in console"\n\n`;
+            }
+            break;
+          case "get_system_logs":
+            code += `# Get Okta System Logs\n`;
+            code += `Get-OktaSystemLog -Filter "${block.getFieldValue('FILTER')}" | Select-Object Published, EventType, DisplayMessage | Format-Table -AutoSize\n\n`;
+            break;
+          case "export_group_membership":
+            code += `# Export User Group Memberships\n`;
+            code += `$UserGroups = Get-OktaUserGroup -UserId "${block.getFieldValue('USER')}"\n`;
+            code += `$UserGroups | Select-Object Id, Name, Description, Type | Export-Csv -Path "./${block.getFieldValue('USER')}_groups.csv" -NoTypeInformation\n`;
+            code += `Write-Host "Group memberships exported to ./${block.getFieldValue('USER')}_groups.csv"\n\n`;
+            break;
+        }
+
+        const nextBlock = block.getNextBlock();
+        if (nextBlock) {
+          code += generateBlockCodeRecursive(nextBlock);
+        }
+        return code;
+      }
+
+      function createModal(title) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        
+        const content = document.createElement('div');
+        content.className = 'modal-content';
+        
+        const header = document.createElement('div');
+        header.className = 'modal-header';
+        
+        const titleElement = document.createElement('h3');
+        titleElement.className = 'modal-title';
+        titleElement.textContent = title;
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'close-btn';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = function() {
+          document.body.removeChild(modal);
+        };
+        
+        header.appendChild(titleElement);
+        header.appendChild(closeBtn);
+        content.appendChild(header);
+        modal.appendChild(content);
+        
+        return modal;
+      }
+
+      window.simulate = function simulate() {
+        const code = generatePowerShellCode();
+        if (!code) {
+          showNotification("No script to show. Please add some blocks first.");
+          return;
+        }
+        
+        const modal = createModal('Generated Okta PowerShell Script');
+        
+        const codeBlock = document.createElement('div');
+        codeBlock.className = 'code-block';
+        const pre = document.createElement('pre');
+        pre.textContent = code;
+        hljs.highlightElement(pre);
+        codeBlock.appendChild(pre);
+        
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = 'Copy to Clipboard';
+        copyBtn.style.marginTop = '15px';
+        copyBtn.onclick = function() {
+          navigator.clipboard.writeText(code).then(() => {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+              copyBtn.textContent = 'Copy to Clipboard';
+            }, 2000);
+          });
+        };
+        
+        modal.querySelector('.modal-content').appendChild(codeBlock);
+        modal.querySelector('.modal-content').appendChild(copyBtn);
+        
+        document.body.appendChild(modal);
+      };
+
+      window.download = function download() {
+        const code = generatePowerShellCode();
+        if (!code) {
+          showNotification("Nothing to download. Please add some blocks first.");
+          return;
+        }
+        
+        const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'okta_script.ps1';
+        link.click();
+        
+        showNotification("Script downloaded successfully!");
+      };
+      
+      function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+          notification.style.opacity = '1';
+        }, 10);
+        
+        // Animate out after 3 seconds
+        setTimeout(() => {
+          notification.style.opacity = '0';
+          setTimeout(() => {
+            document.body.removeChild(notification);
+          }, 500);
+        }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>
