@@ -1,0 +1,810 @@
+<!-- 4-3-demo.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 4.3 - Automated Demo</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: var(--redhat-red);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+            background: rgba(76, 175, 80, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        .command-display {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            padding: 8px;
+        }
+        
+        .typing-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background: var(--redhat-accent);
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+        
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <div class="header-left">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 4.3: File Attributes (chattr, lsattr)</h1>
+        </div>
+        <div class="demo-badge">🎬 AUTOMATED DEMO</div>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Learn to work with file attributes in Linux using chattr and lsattr commands. You will practice setting immutable and append-only attributes to protect files.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>File Attributes Requirements</h4>
+                <div class="requirement-item" id="req-lsattr">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">View attributes with <code>lsattr</code></span>
+                </div>
+                <div class="requirement-item" id="req-immutable">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set immutable attribute with <code>chattr +i</code></span>
+                </div>
+                <div class="requirement-item" id="req-append">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set append-only with <code>chattr +a</code></span>
+                </div>
+                <div class="requirement-item" id="req-remove">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Remove attributes with <code>chattr -i</code> and <code>chattr -a</code></span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA File Attributes Lab. In this lab, you will learn how to work with special file attributes.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    View File Attributes
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's view the attributes of an existing file.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    lsattr /etc/passwd
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding lsattr</h4>
+                    <p><strong>How it works:</strong> <code>lsattr</code> lists file attributes. Common attributes: i (immutable), a (append-only), A (no atime updates).</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Set Immutable Attribute
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a file and make it immutable.</p>
+                
+                <div class="hint-box">
+                    <strong>Create file:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    touch testfile
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Set immutable:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo chattr +i testfile
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Verify:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    lsattr testfile
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Immutable Attribute</h4>
+                    <p><strong>How it works:</strong> The +i flag makes a file immutable. It cannot be modified, deleted, or renamed, even by root.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Set Append-Only Attribute
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a log file and make it append-only.</p>
+                
+                <div class="hint-box">
+                    <strong>Create file:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    touch audit.log
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Set append-only:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo chattr +a audit.log
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Verify:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    lsattr audit.log
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Append-Only Attribute</h4>
+                    <p><strong>How it works:</strong> The +a flag allows data to be appended but prevents modification or deletion. Perfect for log files.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Remove Attributes
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's remove the attributes.</p>
+                
+                <div class="hint-box">
+                    <strong>Remove immutable:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo chattr -i testfile
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Remove append-only:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo chattr -a audit.log
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Verify:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    lsattr testfile audit.log
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Attribute Removal</h4>
+                    <p><strong>How it works:</strong> Use <code>chattr -i</code> or <code>chattr -a</code> to remove attributes. Only root can remove these attributes.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All file attributes requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@lab ~]#</span> Welcome to RHCSA Lab 4.3: File Attributes</div>
+                <div><span class="prompt">[root@lab ~]#</span> This is an automated demo showing all lab steps</div>
+                <div><span class="prompt">[root@lab ~]#</span> Watch as commands are typed and executed automatically</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt" id="command-prompt">[root@lab ~]#</span>
+                <div class="command-display" id="command-display"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const terminalOutput = document.getElementById('terminal-output');
+    const commandDisplay = document.getElementById('command-display');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    
+    let currentDirectory = '~';
+    let currentStep = 1;
+    
+    const completionState = {
+        lsattr: false,
+        immutable: false,
+        append: false,
+        remove: false
+    };
+    
+    const demoScript = [
+        { delay: 2000, action: 'pause' },
+        { delay: 0, action: 'type', text: 'lsattr /etc/passwd', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'touch testfile', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 1000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo chattr +i testfile', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 1500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'lsattr testfile', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'touch audit.log', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 1000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo chattr +a audit.log', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 1500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'lsattr audit.log', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo chattr -i testfile', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 1000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo chattr -a audit.log', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 1000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'lsattr testfile audit.log', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'showCompletion' }
+    ];
+    
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    function updateRequirements() {
+        if (completionState.lsattr) {
+            document.getElementById('req-lsattr').classList.add('completed');
+            document.getElementById('req-lsattr').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (completionState.immutable) {
+            document.getElementById('req-immutable').classList.add('completed');
+            document.getElementById('req-immutable').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (completionState.append) {
+            document.getElementById('req-append').classList.add('completed');
+            document.getElementById('req-append').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (completionState.remove) {
+            document.getElementById('req-remove').classList.add('completed');
+            document.getElementById('req-remove').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        const completedCount = Object.values(completionState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(completionState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+    }
+    
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+    
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        addTerminalOutput(`<span class="prompt">[root@lab ${currentDirectory}]#</span> ${trimmedInput}`);
+        
+        if (trimmedInput === 'lsattr /etc/passwd') {
+            addTerminalOutput('----------------e----- /etc/passwd');
+            completionState.lsattr = true;
+            updateRequirements();
+            completeStep(1);
+        } else if (trimmedInput === 'touch testfile') {
+            addTerminalOutput('<span class="success">File created</span>');
+        } else if (trimmedInput === 'sudo chattr +i testfile') {
+            addTerminalOutput('<span class="success">Immutable attribute set</span>');
+        } else if (trimmedInput === 'lsattr testfile') {
+            if (!completionState.immutable) {
+                addTerminalOutput('----i-----------e----- testfile');
+                completionState.immutable = true;
+                updateRequirements();
+                completeStep(2);
+            } else {
+                addTerminalOutput('----------------e----- testfile');
+            }
+        } else if (trimmedInput === 'touch audit.log') {
+            addTerminalOutput('<span class="success">File created</span>');
+        } else if (trimmedInput === 'sudo chattr +a audit.log') {
+            addTerminalOutput('<span class="success">Append-only attribute set</span>');
+        } else if (trimmedInput === 'lsattr audit.log') {
+            addTerminalOutput('-----a----------e----- audit.log');
+            completionState.append = true;
+            updateRequirements();
+            completeStep(3);
+        } else if (trimmedInput === 'sudo chattr -i testfile') {
+            addTerminalOutput('<span class="success">Immutable attribute removed</span>');
+        } else if (trimmedInput === 'sudo chattr -a audit.log') {
+            addTerminalOutput('<span class="success">Append-only attribute removed</span>');
+        } else if (trimmedInput === 'lsattr testfile audit.log') {
+            addTerminalOutput('----------------e----- testfile');
+            addTerminalOutput('----------------e----- audit.log');
+            completionState.remove = true;
+            updateRequirements();
+            completeStep(4);
+        }
+    }
+    
+    async function typeText(text, speed) {
+        for (let i = 0; i < text.length; i++) {
+            commandDisplay.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor"></span>';
+            await new Promise(resolve => setTimeout(resolve, speed));
+        }
+        commandDisplay.innerHTML = text + '<span class="typing-cursor"></span>';
+    }
+    
+    function clearInput() {
+        commandDisplay.innerHTML = '<span class="typing-cursor"></span>';
+    }
+    
+    async function runDemoScript() {
+        for (let i = 0; i < demoScript.length; i++) {
+            const step = demoScript[i];
+            
+            if (step.delay > 0) {
+                await new Promise(resolve => setTimeout(resolve, step.delay));
+            }
+            
+            switch (step.action) {
+                case 'pause':
+                    break;
+                case 'type':
+                    await typeText(step.text, step.speed);
+                    break;
+                case 'execute':
+                    const command = commandDisplay.textContent.replace('█', '').trim();
+                    commandDisplay.innerHTML = command;
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    executeCommand(command);
+                    clearInput();
+                    break;
+                case 'showCompletion':
+                    completionMessage.style.display = 'block';
+                    completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    break;
+            }
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        addTerminalOutput('<div class="success">[root@lab ~]# Demo complete! Reloading in 3 seconds...</div>');
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        location.reload();
+    }
+    
+    setTimeout(() => {
+        runDemoScript();
+    }, 1000);
+</script>
+</body>
+</html>

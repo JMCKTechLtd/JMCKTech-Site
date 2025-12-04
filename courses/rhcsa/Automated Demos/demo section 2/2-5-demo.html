@@ -1,0 +1,833 @@
+<!-- 2-5-demo.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 2.5 - Automated Demo</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: var(--redhat-red);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+            background: rgba(76, 175, 80, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        .command-display {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            padding: 8px;
+        }
+        
+        .typing-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background: var(--redhat-accent);
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+        
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <div class="header-left">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 2.5: System Log Files</h1>
+        </div>
+        <div class="demo-badge">🎬 AUTOMATED DEMO</div>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Learn to navigate and analyze system log files using both traditional log files in /var/log and the systemd journal. You will examine different log files, filter log entries, and understand the journalctl command.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Log Analysis Requirements</h4>
+                <div class="requirement-item" id="req-ls-log">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">List log files with <code>ls -l /var/log</code></span>
+                </div>
+                <div class="requirement-item" id="req-tail-messages">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">View messages log with <code>sudo tail -20 /var/log/messages</code></span>
+                </div>
+                <div class="requirement-item" id="req-journalctl">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">View journal with <code>journalctl -n 10</code></span>
+                </div>
+                <div class="requirement-item" id="req-journalctl-since">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Filter logs by time with <code>journalctl --since "1 hour ago"</code></span>
+                </div>
+                <div class="requirement-item" id="req-journalctl-priority">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Filter by priority with <code>journalctl -p err</code></span>
+                </div>
+                <div class="requirement-item" id="req-journalctl-unit">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">View unit logs with <code>journalctl -u sshd</code></span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA System Log Files Lab. In this lab, you will learn how to analyze system logs using both traditional and modern tools.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    List Log Files
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's list the log files in /var/log.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ls -l /var/log
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding /var/log Directory</h4>
+                    <p><strong>How it works:</strong> The /var/log directory contains traditional log files. Common files include messages (general system logs), secure (authentication logs), and boot.log (boot messages).</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    View Messages Log
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's view the last 20 lines of the messages log.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo tail -20 /var/log/messages
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding tail Command</h4>
+                    <p><strong>How it works:</strong> The <code>tail</code> command displays the last lines of a file. The <code>-20</code> flag shows the last 20 lines. This is useful for viewing recent log entries.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    View Journal
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's view the last 10 journal entries.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    journalctl -n 10
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding journalctl</h4>
+                    <p><strong>How it works:</strong> <code>journalctl</code> queries the systemd journal, which stores logs from all system services. The <code>-n</code> flag limits output to the specified number of entries.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Filter by Time
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's filter logs from the last hour.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    journalctl --since "1 hour ago"
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Time Filtering</h4>
+                    <p><strong>How it works:</strong> The <code>--since</code> option filters logs by time. You can use relative time ("1 hour ago") or absolute time ("2024-12-04 10:00:00").</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Filter by Priority
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's view only error messages.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    journalctl -p err
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Priority Levels</h4>
+                    <p><strong>How it works:</strong> The <code>-p</code> option filters by priority. Levels include: emerg, alert, crit, err, warning, notice, info, debug. This helps focus on important messages.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step6">
+                <h3>
+                    <span class="step-number">6</span>
+                    View Unit Logs
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's view logs for the sshd service.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    journalctl -u sshd
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Unit Filtering</h4>
+                    <p><strong>How it works:</strong> The <code>-u</code> option filters logs for a specific systemd unit (service). This is essential for troubleshooting specific services.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All log analysis requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@lab ~]#</span> Welcome to RHCSA Lab 2.5: System Log Files</div>
+                <div><span class="prompt">[root@lab ~]#</span> This is an automated demo showing all lab steps</div>
+                <div><span class="prompt">[root@lab ~]#</span> Watch as commands are typed and executed automatically</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt" id="command-prompt">[root@lab ~]#</span>
+                <div class="command-display" id="command-display"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const terminalOutput = document.getElementById('terminal-output');
+    const commandDisplay = document.getElementById('command-display');
+    const commandPrompt = document.getElementById('command-prompt');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    
+    let currentDirectory = '~';
+    let currentStep = 1;
+    
+    const completionState = {
+        lsLog: false,
+        tailMessages: false,
+        journalctl: false,
+        journalctlSince: false,
+        journalctlPriority: false,
+        journalctlUnit: false
+    };
+    
+    // Demo script - defines all actions to perform
+    const demoScript = [
+        { delay: 2000, action: 'pause' },
+        { delay: 0, action: 'type', text: 'ls -l /var/log', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo tail -20 /var/log/messages', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'journalctl -n 10', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'journalctl --since "1 hour ago"', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'journalctl -p err', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'journalctl -u sshd', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'showCompletion' }
+    ];
+    
+    let scriptIndex = 0;
+    let typingTimeout = null;
+    
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    function updateRequirements() {
+        if (completionState.lsLog) {
+            document.getElementById('req-ls-log').classList.add('completed');
+            document.getElementById('req-ls-log').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.tailMessages) {
+            document.getElementById('req-tail-messages').classList.add('completed');
+            document.getElementById('req-tail-messages').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.journalctl) {
+            document.getElementById('req-journalctl').classList.add('completed');
+            document.getElementById('req-journalctl').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.journalctlSince) {
+            document.getElementById('req-journalctl-since').classList.add('completed');
+            document.getElementById('req-journalctl-since').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.journalctlPriority) {
+            document.getElementById('req-journalctl-priority').classList.add('completed');
+            document.getElementById('req-journalctl-priority').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.journalctlUnit) {
+            document.getElementById('req-journalctl-unit').classList.add('completed');
+            document.getElementById('req-journalctl-unit').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        const completedCount = Object.values(completionState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(completionState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+    }
+    
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Scroll to current step
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+    
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        
+        addTerminalOutput(`<span class="prompt">[root@lab ${currentDirectory}]#</span> ${trimmedInput}`);
+        
+        // Handle different commands
+        if (trimmedInput === 'ls -l /var/log') {
+            addTerminalOutput('-rw-r----- 1 root root 12345 Dec  4 10:00 messages');
+            addTerminalOutput('-rw-r----- 1 root root  5678 Dec  4 10:00 secure');
+            addTerminalOutput('-rw-r--r-- 1 root root  3456 Dec  4 09:50 boot.log');
+            completionState.lsLog = true;
+            updateRequirements();
+            completeStep(1);
+        } else if (trimmedInput === 'sudo tail -20 /var/log/messages') {
+            addTerminalOutput('Dec  4 10:00:01 lab systemd: Started Session 1 of user root.');
+            addTerminalOutput('Dec  4 10:01:15 lab sshd: Server listening on 0.0.0.0 port 22.');
+            addTerminalOutput('Dec  4 10:02:30 lab NetworkManager: device eth0: carrier is ON');
+            completionState.tailMessages = true;
+            updateRequirements();
+            completeStep(2);
+        } else if (trimmedInput === 'journalctl -n 10') {
+            addTerminalOutput('-- Logs begin at Mon 2024-12-02 10:00:00, end at Thu 2024-12-04 10:05:00. --');
+            addTerminalOutput('Dec 04 10:03:45 lab systemd: Starting Network Manager...');
+            addTerminalOutput('Dec 04 10:04:12 lab systemd: Started OpenSSH server daemon.');
+            completionState.journalctl = true;
+            updateRequirements();
+            completeStep(3);
+        } else if (trimmedInput === 'journalctl --since "1 hour ago"') {
+            addTerminalOutput('-- Logs begin at Thu 2024-12-04 09:05:00. --');
+            addTerminalOutput('Dec 04 09:15:23 lab systemd: Started user session.');
+            addTerminalOutput('Dec 04 09:45:11 lab sshd: Accepted publickey for root');
+            completionState.journalctlSince = true;
+            updateRequirements();
+            completeStep(4);
+        } else if (trimmedInput === 'journalctl -p err') {
+            addTerminalOutput('-- Logs begin at Mon 2024-12-02, end at Thu 2024-12-04. --');
+            addTerminalOutput('Dec 03 14:23:11 lab kernel: [UFW BLOCK] IN=eth0 OUT= SRC=10.0.0.50');
+            addTerminalOutput('Dec 04 08:12:45 lab systemd: Failed to start service.');
+            completionState.journalctlPriority = true;
+            updateRequirements();
+            completeStep(5);
+        } else if (trimmedInput === 'journalctl -u sshd') {
+            addTerminalOutput('-- Logs begin at Mon 2024-12-02, end at Thu 2024-12-04. --');
+            addTerminalOutput('Dec 04 10:01:15 lab sshd: Server listening on 0.0.0.0 port 22.');
+            addTerminalOutput('Dec 04 10:15:42 lab sshd: Accepted publickey for root from 192.168.1.100');
+            completionState.journalctlUnit = true;
+            updateRequirements();
+            completeStep(6);
+        }
+    }
+    
+    async function typeText(text, speed) {
+        for (let i = 0; i < text.length; i++) {
+            commandDisplay.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor"></span>';
+            await new Promise(resolve => setTimeout(resolve, speed));
+        }
+        commandDisplay.innerHTML = text + '<span class="typing-cursor"></span>';
+    }
+    
+    function clearInput() {
+        commandDisplay.innerHTML = '<span class="typing-cursor"></span>';
+    }
+    
+    async function runDemoScript() {
+        for (let i = 0; i < demoScript.length; i++) {
+            const step = demoScript[i];
+            
+            if (step.delay > 0) {
+                await new Promise(resolve => setTimeout(resolve, step.delay));
+            }
+            
+            switch (step.action) {
+                case 'pause':
+                    // Just wait
+                    break;
+                    
+                case 'type':
+                    await typeText(step.text, step.speed);
+                    break;
+                    
+                case 'execute':
+                    const command = commandDisplay.textContent.replace('█', '').trim();
+                    commandDisplay.innerHTML = command;
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    executeCommand(command);
+                    clearInput();
+                    break;
+                    
+                case 'showCompletion':
+                    completionMessage.style.display = 'block';
+                    completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    break;
+            }
+        }
+        
+        // Show restart message
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        addTerminalOutput('<div class="success">[root@lab ~]# Demo complete! Reloading in 3 seconds...</div>');
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        location.reload();
+    }
+    
+    // Start the demo
+    setTimeout(() => {
+        runDemoScript();
+    }, 1000);
+</script>
+</body>
+</html>

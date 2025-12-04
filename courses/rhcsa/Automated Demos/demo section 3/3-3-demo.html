@@ -1,0 +1,849 @@
+<!-- 3-3-demo.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 3.3 - Automated Demo</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: var(--redhat-red);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+            background: rgba(76, 175, 80, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        .command-display {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            padding: 8px;
+        }
+        
+        .typing-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background: var(--redhat-accent);
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+        
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <div class="header-left">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 3.3: Create and Configure Filesystems</h1>
+        </div>
+        <div class="demo-badge">🎬 AUTOMATED DEMO</div>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Create and configure three different types of filesystems: ext4, XFS, and vfat on available partitions.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Filesystem Requirements</h4>
+                <div class="requirement-item" id="req-lsblk">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">List block devices with <code>lsblk</code></span>
+                </div>
+                <div class="requirement-item" id="req-mkfs-ext4">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create ext4 filesystem with <code>sudo mkfs.ext4 /dev/sdb1</code></span>
+                </div>
+                <div class="requirement-item" id="req-mkfs-xfs">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create XFS filesystem with <code>sudo mkfs.xfs /dev/sdb2</code></span>
+                </div>
+                <div class="requirement-item" id="req-mkfs-vfat">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create vfat filesystem with <code>sudo mkfs.vfat /dev/sdb3</code></span>
+                </div>
+                <div class="requirement-item" id="req-blkid">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Check filesystems with <code>sudo blkid</code></span>
+                </div>
+                <div class="requirement-item" id="req-lsblk-f">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify with <code>lsblk -f</code></span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Filesystem Creation Lab. In this lab, you will learn how to create different filesystem types.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    List Block Devices
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's list the available block devices and partitions.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    lsblk
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Block Devices</h4>
+                    <p><strong>How it works:</strong> The <code>lsblk</code> command lists all available block devices, showing disks and their partitions in a tree structure.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Create ext4 Filesystem
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create an ext4 filesystem on the first partition.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo mkfs.ext4 /dev/sdb1
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding ext4</h4>
+                    <p><strong>How it works:</strong> ext4 is a mature, reliable filesystem commonly used in Linux. It supports large files and volumes, journaling, and is well-tested.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Create XFS Filesystem
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create an XFS filesystem on the second partition.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo mkfs.xfs /dev/sdb2
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding XFS</h4>
+                    <p><strong>How it works:</strong> XFS is the default filesystem for RHEL. It's a high-performance filesystem designed for scalability and large files.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Create vfat Filesystem
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a vfat filesystem on the third partition.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo mkfs.vfat /dev/sdb3
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding vfat</h4>
+                    <p><strong>How it works:</strong> vfat (FAT32) is useful for compatibility with Windows and other operating systems. It has file size limitations (4GB max).</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Check Filesystem UUIDs
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's check the UUIDs and filesystem types.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo blkid /dev/sdb1 /dev/sdb2 /dev/sdb3
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding blkid</h4>
+                    <p><strong>How it works:</strong> The <code>blkid</code> command displays block device attributes, including UUIDs and filesystem types. UUIDs are unique identifiers.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step6">
+                <h3>
+                    <span class="step-number">6</span>
+                    Verify Filesystems
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's verify all filesystems are properly created.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    lsblk -f
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding lsblk -f</h4>
+                    <p><strong>How it works:</strong> The <code>lsblk -f</code> command lists block devices with filesystem information, including type, label, UUID, and mount point.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All filesystem requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@lab ~]#</span> Welcome to RHCSA Lab 3.3: Create and Configure Filesystems</div>
+                <div><span class="prompt">[root@lab ~]#</span> This is an automated demo showing all lab steps</div>
+                <div><span class="prompt">[root@lab ~]#</span> Watch as commands are typed and executed automatically</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt" id="command-prompt">[root@lab ~]#</span>
+                <div class="command-display" id="command-display"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const terminalOutput = document.getElementById('terminal-output');
+    const commandDisplay = document.getElementById('command-display');
+    const commandPrompt = document.getElementById('command-prompt');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    
+    let currentDirectory = '~';
+    let currentStep = 1;
+    
+    const completionState = {
+        lsblk: false,
+        mkfsExt4: false,
+        mkfsXfs: false,
+        mkfsVfat: false,
+        blkid: false,
+        lsblkF: false
+    };
+    
+    // Demo script - defines all actions to perform
+    const demoScript = [
+        { delay: 2000, action: 'pause' },
+        { delay: 0, action: 'type', text: 'lsblk', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo mkfs.ext4 /dev/sdb1', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo mkfs.xfs /dev/sdb2', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo mkfs.vfat /dev/sdb3', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo blkid /dev/sdb1 /dev/sdb2 /dev/sdb3', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'lsblk -f', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'showCompletion' }
+    ];
+    
+    let scriptIndex = 0;
+    let typingTimeout = null;
+    
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    function updateRequirements() {
+        if (completionState.lsblk) {
+            document.getElementById('req-lsblk').classList.add('completed');
+            document.getElementById('req-lsblk').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.mkfsExt4) {
+            document.getElementById('req-mkfs-ext4').classList.add('completed');
+            document.getElementById('req-mkfs-ext4').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.mkfsXfs) {
+            document.getElementById('req-mkfs-xfs').classList.add('completed');
+            document.getElementById('req-mkfs-xfs').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.mkfsVfat) {
+            document.getElementById('req-mkfs-vfat').classList.add('completed');
+            document.getElementById('req-mkfs-vfat').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.blkid) {
+            document.getElementById('req-blkid').classList.add('completed');
+            document.getElementById('req-blkid').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.lsblkF) {
+            document.getElementById('req-lsblk-f').classList.add('completed');
+            document.getElementById('req-lsblk-f').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        const completedCount = Object.values(completionState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(completionState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+    }
+    
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Scroll to current step
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+    
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        
+        addTerminalOutput(`<span class="prompt">[root@lab ${currentDirectory}]#</span> ${trimmedInput}`);
+        
+        // Handle different commands
+        if (trimmedInput === 'lsblk') {
+            addTerminalOutput('NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT');
+            addTerminalOutput('sda      8:0    0   20G  0 disk');
+            addTerminalOutput('├─sda1   8:1    0    1G  0 part /boot');
+            addTerminalOutput('└─sda2   8:2    0   19G  0 part /');
+            addTerminalOutput('sdb      8:16   0   10G  0 disk');
+            addTerminalOutput('├─sdb1   8:17   0    3G  0 part');
+            addTerminalOutput('├─sdb2   8:18   0    3G  0 part');
+            addTerminalOutput('└─sdb3   8:19   0    3G  0 part');
+            completionState.lsblk = true;
+            updateRequirements();
+            completeStep(1);
+        } else if (trimmedInput === 'sudo mkfs.ext4 /dev/sdb1') {
+            addTerminalOutput('mke2fs 1.45.6 (20-Mar-2020)');
+            addTerminalOutput('Creating filesystem with 786432 4k blocks and 196608 inodes');
+            addTerminalOutput('Filesystem UUID: 12345678-1234-1234-1234-123456789abc');
+            addTerminalOutput('Allocating group tables: done');
+            addTerminalOutput('Writing inode tables: done');
+            addTerminalOutput('Creating journal (16384 blocks): done');
+            addTerminalOutput('<span class="success">Writing superblocks and filesystem accounting information: done</span>');
+            completionState.mkfsExt4 = true;
+            updateRequirements();
+            completeStep(2);
+        } else if (trimmedInput === 'sudo mkfs.xfs /dev/sdb2') {
+            addTerminalOutput('meta-data=/dev/sdb2              isize=512    agcount=4, agsize=196608 blks');
+            addTerminalOutput('         =                       sectsz=512   attr=2, projid32bit=1');
+            addTerminalOutput('data     =                       bsize=4096   blocks=786432, imaxpct=25');
+            addTerminalOutput('naming   =version 2              bsize=4096   ascii-ci=0 ftype=1');
+            addTerminalOutput('log      =internal log           bsize=4096   blocks=2560, version=2');
+            addTerminalOutput('<span class="success">Filesystem created successfully</span>');
+            completionState.mkfsXfs = true;
+            updateRequirements();
+            completeStep(3);
+        } else if (trimmedInput === 'sudo mkfs.vfat /dev/sdb3') {
+            addTerminalOutput('mkfs.fat 4.1 (2017-01-24)');
+            addTerminalOutput('<span class="success">Filesystem created successfully</span>');
+            completionState.mkfsVfat = true;
+            updateRequirements();
+            completeStep(4);
+        } else if (trimmedInput === 'sudo blkid /dev/sdb1 /dev/sdb2 /dev/sdb3') {
+            addTerminalOutput('/dev/sdb1: UUID="12345678-1234-1234-1234-123456789abc" TYPE="ext4" PARTUUID="abcd1234-01"');
+            addTerminalOutput('/dev/sdb2: UUID="87654321-4321-4321-4321-cba987654321" TYPE="xfs" PARTUUID="abcd1234-02"');
+            addTerminalOutput('/dev/sdb3: UUID="1234-5678" TYPE="vfat" PARTUUID="abcd1234-03"');
+            completionState.blkid = true;
+            updateRequirements();
+            completeStep(5);
+        } else if (trimmedInput === 'lsblk -f') {
+            addTerminalOutput('NAME   FSTYPE LABEL UUID                                 MOUNTPOINT');
+            addTerminalOutput('sda');
+            addTerminalOutput('├─sda1 ext4         12ab34cd-56ef-78gh-90ij-123456789012 /boot');
+            addTerminalOutput('└─sda2 xfs          ab12cd34-ef56-gh78-ij90-abcdef123456 /');
+            addTerminalOutput('sdb');
+            addTerminalOutput('├─sdb1 ext4         12345678-1234-1234-1234-123456789abc');
+            addTerminalOutput('├─sdb2 xfs          87654321-4321-4321-4321-cba987654321');
+            addTerminalOutput('└─sdb3 vfat         1234-5678');
+            completionState.lsblkF = true;
+            updateRequirements();
+            completeStep(6);
+        }
+    }
+    
+    async function typeText(text, speed) {
+        for (let i = 0; i < text.length; i++) {
+            commandDisplay.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor"></span>';
+            await new Promise(resolve => setTimeout(resolve, speed));
+        }
+        commandDisplay.innerHTML = text + '<span class="typing-cursor"></span>';
+    }
+    
+    function clearInput() {
+        commandDisplay.innerHTML = '<span class="typing-cursor"></span>';
+    }
+    
+    async function runDemoScript() {
+        for (let i = 0; i < demoScript.length; i++) {
+            const step = demoScript[i];
+            
+            if (step.delay > 0) {
+                await new Promise(resolve => setTimeout(resolve, step.delay));
+            }
+            
+            switch (step.action) {
+                case 'pause':
+                    // Just wait
+                    break;
+                    
+                case 'type':
+                    await typeText(step.text, step.speed);
+                    break;
+                    
+                case 'execute':
+                    const command = commandDisplay.textContent.replace('█', '').trim();
+                    commandDisplay.innerHTML = command;
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    executeCommand(command);
+                    clearInput();
+                    break;
+                    
+                case 'showCompletion':
+                    completionMessage.style.display = 'block';
+                    completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    break;
+            }
+        }
+        
+        // Show restart message
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        addTerminalOutput('<div class="success">[root@lab ~]# Demo complete! Reloading in 3 seconds...</div>');
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        location.reload();
+    }
+    
+    // Start the demo
+    setTimeout(() => {
+        runDemoScript();
+    }, 1000);
+</script>
+</body>
+</html>

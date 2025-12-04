@@ -1,0 +1,821 @@
+<!-- 5-1-demo.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 5.1 - Automated Demo</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: var(--redhat-red);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+            background: rgba(76, 175, 80, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        .command-display {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            padding: 8px;
+        }
+        
+        .typing-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background: var(--redhat-accent);
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+        
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <div class="header-left">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 5.1: Schedule Tasks (cron, at)</h1>
+        </div>
+        <div class="demo-badge">🎬 AUTOMATED DEMO</div>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Learn to schedule tasks using cron and at commands. You will create cron jobs for recurring tasks and use the at command for one-time scheduled tasks.</p>
+                <p><strong>Time Estimate:</strong> 20-25 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Task Scheduling Requirements</h4>
+                <div class="requirement-item" id="req-crontab-list">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">View crontab with <code>crontab -l</code></span>
+                </div>
+                <div class="requirement-item" id="req-crontab-edit">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Edit crontab with <code>crontab -e</code></span>
+                </div>
+                <div class="requirement-item" id="req-verify-cron">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify cron job creation</span>
+                </div>
+                <div class="requirement-item" id="req-at-schedule">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Schedule task with <code>at</code></span>
+                </div>
+                <div class="requirement-item" id="req-at-queue">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">View at queue with <code>atq</code></span>
+                </div>
+                <div class="requirement-item" id="req-at-remove">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Remove at job with <code>atrm</code></span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Task Scheduling Lab. Learn to automate tasks using cron and at.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    View Current Crontab
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's check if there are any existing cron jobs.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    crontab -l
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding crontab</h4>
+                    <p><strong>How it works:</strong> <code>crontab -l</code> lists scheduled cron jobs for the current user. Each job runs at specified intervals.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Create Cron Job
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a cron job that runs every minute.</p>
+                
+                <div class="hint-box">
+                    <strong>Edit crontab:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    crontab -e
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Then verify:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    crontab -l
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Cron Format</h4>
+                    <p><strong>How it works:</strong> Cron format: <code>* * * * * command</code> (minute hour day month weekday). Example: <code>*/5 * * * *</code> runs every 5 minutes.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Verify Cron Job Output
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Check if the cron job created the log file.</p>
+                
+                <div class="hint-box">
+                    <strong>Check log file:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ls ~/cron_test.log
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Cron Output</h4>
+                    <p><strong>How it works:</strong> Cron jobs can redirect output to files. Use <code>>></code> to append or <code>></code> to overwrite.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Schedule Task with at
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's schedule a one-time task using the at command.</p>
+                
+                <div class="hint-box">
+                    <strong>Schedule task:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    echo "echo 'AT test' >> ~/at_test.log" | at now + 1 minute
+                </div>
+                
+                <div class="hint-box">
+                    <strong>View queue:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    atq
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding at Command</h4>
+                    <p><strong>How it works:</strong> <code>at</code> schedules one-time tasks. Use times like: now + 1 hour, 10:00 AM, tomorrow, etc.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Remove Scheduled Task
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's remove the scheduled at job.</p>
+                
+                <div class="hint-box">
+                    <strong>Remove job:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    atrm 1
+                </div>
+                
+                <div class="hint-box">
+                    <strong>Verify removal:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    atq
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Job Management</h4>
+                    <p><strong>How it works:</strong> <code>atrm</code> removes scheduled at jobs by job number. <code>atq</code> shows remaining jobs in the queue.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All task scheduling requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@lab ~]#</span> Welcome to RHCSA Lab 5.1: Schedule Tasks</div>
+                <div><span class="prompt">[root@lab ~]#</span> This is an automated demo showing all lab steps</div>
+                <div><span class="prompt">[root@lab ~]#</span> Watch as commands are typed and executed automatically</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt" id="command-prompt">[root@lab ~]#</span>
+                <div class="command-display" id="command-display"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const terminalOutput = document.getElementById('terminal-output');
+    const commandDisplay = document.getElementById('command-display');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    
+    let currentDirectory = '~';
+    let currentStep = 1;
+    
+    const completionState = {
+        crontabList: false,
+        crontabEdit: false,
+        verifyCron: false,
+        atSchedule: false,
+        atQueue: false,
+        atRemove: false
+    };
+    
+    const demoScript = [
+        { delay: 2000, action: 'pause' },
+        { delay: 0, action: 'type', text: 'crontab -l', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'crontab -e', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'crontab -l', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'ls ~/cron_test.log', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'echo "echo \'AT test\' >> ~/at_test.log" | at now + 1 minute', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 1500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'atq', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'atrm 1', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 1500, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'atq', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'showCompletion' }
+    ];
+    
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    function updateRequirements() {
+        if (completionState.crontabList) {
+            document.getElementById('req-crontab-list').classList.add('completed');
+            document.getElementById('req-crontab-list').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (completionState.crontabEdit) {
+            document.getElementById('req-crontab-edit').classList.add('completed');
+            document.getElementById('req-crontab-edit').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (completionState.verifyCron) {
+            document.getElementById('req-verify-cron').classList.add('completed');
+            document.getElementById('req-verify-cron').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (completionState.atSchedule) {
+            document.getElementById('req-at-schedule').classList.add('completed');
+            document.getElementById('req-at-schedule').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (completionState.atQueue) {
+            document.getElementById('req-at-queue').classList.add('completed');
+            document.getElementById('req-at-queue').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (completionState.atRemove) {
+            document.getElementById('req-at-remove').classList.add('completed');
+            document.getElementById('req-at-remove').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        const completedCount = Object.values(completionState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(completionState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+    }
+    
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+    
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        addTerminalOutput(`<span class="prompt">[root@lab ${currentDirectory}]#</span> ${trimmedInput}`);
+        
+        if (trimmedInput === 'crontab -l') {
+            if (!completionState.crontabList) {
+                addTerminalOutput('no crontab for root');
+                completionState.crontabList = true;
+                updateRequirements();
+                completeStep(1);
+            } else {
+                addTerminalOutput('* * * * * echo "Cron test" >> ~/cron_test.log');
+                completionState.verifyCron = true;
+                updateRequirements();
+                completeStep(2);
+            }
+        } else if (trimmedInput === 'crontab -e') {
+            addTerminalOutput('<span class="success">Opening crontab editor...</span>');
+            addTerminalOutput('Adding: * * * * * echo "Cron test" >> ~/cron_test.log');
+            addTerminalOutput('<span class="success">crontab: installing new crontab</span>');
+            completionState.crontabEdit = true;
+            updateRequirements();
+        } else if (trimmedInput === 'ls ~/cron_test.log') {
+            addTerminalOutput('/root/cron_test.log');
+            completeStep(3);
+        } else if (trimmedInput.includes('at now + 1 minute')) {
+            addTerminalOutput('job 1 at Thu Dec  4 12:01:00 2025');
+            addTerminalOutput('<span class="success">Task scheduled successfully</span>');
+            completionState.atSchedule = true;
+            updateRequirements();
+            completeStep(4);
+        } else if (trimmedInput === 'atq') {
+            if (!completionState.atQueue) {
+                addTerminalOutput('1       Thu Dec  4 12:01:00 2025 a root');
+                completionState.atQueue = true;
+                updateRequirements();
+            } else {
+                addTerminalOutput('<span class="success">Queue is empty</span>');
+                completionState.atRemove = true;
+                updateRequirements();
+                completeStep(5);
+            }
+        } else if (trimmedInput === 'atrm 1') {
+            addTerminalOutput('<span class="success">Job 1 removed from queue</span>');
+        }
+    }
+    
+    async function typeText(text, speed) {
+        for (let i = 0; i < text.length; i++) {
+            commandDisplay.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor"></span>';
+            await new Promise(resolve => setTimeout(resolve, speed));
+        }
+        commandDisplay.innerHTML = text + '<span class="typing-cursor"></span>';
+    }
+    
+    function clearInput() {
+        commandDisplay.innerHTML = '<span class="typing-cursor"></span>';
+    }
+    
+    async function runDemoScript() {
+        for (let i = 0; i < demoScript.length; i++) {
+            const step = demoScript[i];
+            
+            if (step.delay > 0) {
+                await new Promise(resolve => setTimeout(resolve, step.delay));
+            }
+            
+            switch (step.action) {
+                case 'pause':
+                    break;
+                case 'type':
+                    await typeText(step.text, step.speed);
+                    break;
+                case 'execute':
+                    const command = commandDisplay.textContent.replace('█', '').trim();
+                    commandDisplay.innerHTML = command;
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    executeCommand(command);
+                    clearInput();
+                    break;
+                case 'showCompletion':
+                    completionMessage.style.display = 'block';
+                    completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    break;
+            }
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        addTerminalOutput('<div class="success">[root@lab ~]# Demo complete! Reloading in 3 seconds...</div>');
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        location.reload();
+    }
+    
+    setTimeout(() => {
+        runDemoScript();
+    }, 1000);
+</script>
+</body>
+</html>

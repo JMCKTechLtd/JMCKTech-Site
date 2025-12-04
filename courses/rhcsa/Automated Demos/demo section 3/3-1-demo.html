@@ -1,0 +1,807 @@
+<!-- 3-1-demo.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 3.1 - Automated Demo</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: var(--redhat-red);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+            background: rgba(76, 175, 80, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        .command-display {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            padding: 8px;
+        }
+        
+        .typing-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background: var(--redhat-accent);
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+        
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .trophy {
+            display: inline-block;
+            margin-left: 5px;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <div class="header-left">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 3.1: List, Create, and Delete Partitions</h1>
+        </div>
+        <div class="demo-badge">🎬 AUTOMATED DEMO</div>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Learn to list, create, and delete partitions using various Linux tools including fdisk, gdisk, and parted. You will examine existing partitions and practice creating new ones.</p>
+                <p><strong>Time Estimate:</strong> 20-25 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Partition Management Requirements</h4>
+                <div class="requirement-item" id="req-lsblk">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">List block devices with <code>lsblk</code></span>
+                </div>
+                <div class="requirement-item" id="req-fdisk-list">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">List partitions with <code>sudo fdisk -l /dev/sda</code></span>
+                </div>
+                <div class="requirement-item" id="req-fdisk">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use fdisk with <code>sudo fdisk /dev/sdb</code></span>
+                </div>
+                <div class="requirement-item" id="req-gdisk">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use gdisk with <code>sudo gdisk /dev/sdc</code></span>
+                </div>
+                <div class="requirement-item" id="req-parted">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use parted with <code>sudo parted /dev/sdd</code></span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Partition Management Lab. In this lab, you will learn how to work with disk partitions using multiple tools.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    List Block Devices
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's list all block devices on the system.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    lsblk
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding lsblk</h4>
+                    <p><strong>How it works:</strong> The <code>lsblk</code> command lists all block devices in a tree format, showing the relationships between disks, partitions, and mount points.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    List Partitions with fdisk
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's examine the partition table of a specific disk.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo fdisk -l /dev/sda
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding fdisk -l</h4>
+                    <p><strong>How it works:</strong> The <code>fdisk -l</code> command lists the partition table for the specified disk, showing partition types, sizes, and boundaries.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Interactive fdisk
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's use fdisk interactively to manage partitions.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo fdisk /dev/sdb
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding fdisk Interactive Mode</h4>
+                    <p><strong>How it works:</strong> Interactive <code>fdisk</code> provides commands to create, delete, and modify partitions. Common commands: n (new), d (delete), p (print), w (write), q (quit).</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Use gdisk for GPT
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's use gdisk for GPT partition tables.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo gdisk /dev/sdc
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding gdisk</h4>
+                    <p><strong>How it works:</strong> <code>gdisk</code> is used for GPT (GUID Partition Table) disks, which support larger disks and more partitions than MBR. It has similar commands to fdisk.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Use parted
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's use parted, a more modern partitioning tool.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    sudo parted /dev/sdd
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding parted</h4>
+                    <p><strong>How it works:</strong> <code>parted</code> supports both MBR and GPT partition tables and can resize partitions. Use 'print' to view partitions and 'mkpart' to create new ones.</p>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All partition management requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@lab ~]#</span> Welcome to RHCSA Lab 3.1: List, Create, and Delete Partitions</div>
+                <div><span class="prompt">[root@lab ~]#</span> This is an automated demo showing all lab steps</div>
+                <div><span class="prompt">[root@lab ~]#</span> Watch as commands are typed and executed automatically</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt" id="command-prompt">[root@lab ~]#</span>
+                <div class="command-display" id="command-display"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const terminalOutput = document.getElementById('terminal-output');
+    const commandDisplay = document.getElementById('command-display');
+    const commandPrompt = document.getElementById('command-prompt');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    
+    let currentDirectory = '~';
+    let currentStep = 1;
+    
+    const completionState = {
+        lsblk: false,
+        fdiskList: false,
+        fdisk: false,
+        gdisk: false,
+        parted: false
+    };
+    
+    // Demo script - defines all actions to perform
+    const demoScript = [
+        { delay: 2000, action: 'pause' },
+        { delay: 0, action: 'type', text: 'lsblk', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 3000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo fdisk -l /dev/sda', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 3000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo fdisk /dev/sdb', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 3000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo gdisk /dev/sdc', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 3000, action: 'pause' },
+        
+        { delay: 0, action: 'type', text: 'sudo parted /dev/sdd', speed: 100 },
+        { delay: 500, action: 'execute' },
+        { delay: 2000, action: 'showCompletion' }
+    ];
+    
+    let scriptIndex = 0;
+    let typingTimeout = null;
+    
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    function updateRequirements() {
+        if (completionState.lsblk) {
+            document.getElementById('req-lsblk').classList.add('completed');
+            document.getElementById('req-lsblk').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.fdiskList) {
+            document.getElementById('req-fdisk-list').classList.add('completed');
+            document.getElementById('req-fdisk-list').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.fdisk) {
+            document.getElementById('req-fdisk').classList.add('completed');
+            document.getElementById('req-fdisk').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.gdisk) {
+            document.getElementById('req-gdisk').classList.add('completed');
+            document.getElementById('req-gdisk').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (completionState.parted) {
+            document.getElementById('req-parted').classList.add('completed');
+            document.getElementById('req-parted').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        const completedCount = Object.values(completionState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(completionState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+    }
+    
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Scroll to current step
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+    
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        
+        addTerminalOutput(`<span class="prompt">[root@lab ${currentDirectory}]#</span> ${trimmedInput}`);
+        
+        // Handle different commands
+        if (trimmedInput === 'lsblk') {
+            addTerminalOutput('NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT');
+            addTerminalOutput('sda      8:0    0   20G  0 disk');
+            addTerminalOutput('├─sda1   8:1    0    1G  0 part /boot');
+            addTerminalOutput('└─sda2   8:2    0   19G  0 part /');
+            addTerminalOutput('sdb      8:16   0   10G  0 disk');
+            addTerminalOutput('sdc      8:32   0   10G  0 disk');
+            addTerminalOutput('sdd      8:48   0   10G  0 disk');
+            completionState.lsblk = true;
+            updateRequirements();
+            completeStep(1);
+        } else if (trimmedInput === 'sudo fdisk -l /dev/sda') {
+            addTerminalOutput('Disk /dev/sda: 20 GiB, 21474836480 bytes, 41943040 sectors');
+            addTerminalOutput('Units: sectors of 1 * 512 = 512 bytes');
+            addTerminalOutput('Sector size (logical/physical): 512 bytes / 512 bytes');
+            addTerminalOutput('');
+            addTerminalOutput('Device     Boot   Start      End  Sectors Size Id Type');
+            addTerminalOutput('/dev/sda1  *       2048  2099199  2097152   1G 83 Linux');
+            addTerminalOutput('/dev/sda2       2099200 41943039 39843840  19G 8e Linux LVM');
+            completionState.fdiskList = true;
+            updateRequirements();
+            completeStep(2);
+        } else if (trimmedInput === 'sudo fdisk /dev/sdb') {
+            addTerminalOutput('<span class="warning">Welcome to fdisk (util-linux 2.32.1).</span>');
+            addTerminalOutput('Changes will remain in memory only, until you decide to write them.');
+            addTerminalOutput('Be careful before using the write command.');
+            addTerminalOutput('');
+            addTerminalOutput('Command (m for help): [Simulated interactive mode]');
+            completionState.fdisk = true;
+            updateRequirements();
+            completeStep(3);
+        } else if (trimmedInput === 'sudo gdisk /dev/sdc') {
+            addTerminalOutput('<span class="warning">GPT fdisk (gdisk) version 1.0.3</span>');
+            addTerminalOutput('');
+            addTerminalOutput('Partition table scan:');
+            addTerminalOutput('  MBR: not present');
+            addTerminalOutput('  BSD: not present');
+            addTerminalOutput('  APM: not present');
+            addTerminalOutput('  GPT: not present');
+            addTerminalOutput('');
+            addTerminalOutput('Command (? for help): [Simulated interactive mode]');
+            completionState.gdisk = true;
+            updateRequirements();
+            completeStep(4);
+        } else if (trimmedInput === 'sudo parted /dev/sdd') {
+            addTerminalOutput('<span class="success">GNU Parted 3.2</span>');
+            addTerminalOutput('Using /dev/sdd');
+            addTerminalOutput('Welcome to GNU Parted! Type \'help\' to view a list of commands.');
+            addTerminalOutput('(parted) [Simulated interactive mode]');
+            completionState.parted = true;
+            updateRequirements();
+            completeStep(5);
+        }
+    }
+    
+    async function typeText(text, speed) {
+        for (let i = 0; i < text.length; i++) {
+            commandDisplay.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor"></span>';
+            await new Promise(resolve => setTimeout(resolve, speed));
+        }
+        commandDisplay.innerHTML = text + '<span class="typing-cursor"></span>';
+    }
+    
+    function clearInput() {
+        commandDisplay.innerHTML = '<span class="typing-cursor"></span>';
+    }
+    
+    async function runDemoScript() {
+        for (let i = 0; i < demoScript.length; i++) {
+            const step = demoScript[i];
+            
+            if (step.delay > 0) {
+                await new Promise(resolve => setTimeout(resolve, step.delay));
+            }
+            
+            switch (step.action) {
+                case 'pause':
+                    // Just wait
+                    break;
+                    
+                case 'type':
+                    await typeText(step.text, step.speed);
+                    break;
+                    
+                case 'execute':
+                    const command = commandDisplay.textContent.replace('█', '').trim();
+                    commandDisplay.innerHTML = command;
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    executeCommand(command);
+                    clearInput();
+                    break;
+                    
+                case 'showCompletion':
+                    completionMessage.style.display = 'block';
+                    completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    break;
+            }
+        }
+        
+        // Show restart message
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        addTerminalOutput('<div class="success">[root@lab ~]# Demo complete! Reloading in 3 seconds...</div>');
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        location.reload();
+    }
+    
+    // Start the demo
+    setTimeout(() => {
+        runDemoScript();
+    }, 1000);
+</script>
+</body>
+</html>

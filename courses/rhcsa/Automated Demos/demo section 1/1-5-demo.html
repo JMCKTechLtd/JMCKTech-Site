@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 1.5: Create and Edit Text Files – Automated Demo</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Red Hat Text', 'Overpass', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header img {
+            height: 30px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+
+        .demo-badge {
+            background: rgba(204, 0, 0, 0.18);
+            border: 1px solid var(--redhat-red);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.9em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #ffd5d5;
+        }
+
+        .demo-badge::before {
+            content: "●";
+            font-size: 0.7em;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+
+        .requirement-label {
+            flex: 1;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--redhat-blue), var(--redhat-accent));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        #progress-text {
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .guide-step.completed {
+            opacity: 0.8;
+            border-left: 4px solid #666;
+        }
+
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+
+        .hint-box {
+            background: rgba(0, 122, 204, 0.2);
+            border-left: 3px solid var(--redhat-blue);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        .command-hint {
+            background: #2a2a2a;
+            padding: 8px 10px;
+            border-radius: 3px;
+            margin: 6px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 0.9em;
+            display: inline-block;
+        }
+
+        .editor-instructions {
+            background: #262626;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 8px;
+            font-size: 0.9em;
+        }
+
+        .editor-instructions h4 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .warning {
+            background: rgba(204, 0, 0, 0.15);
+            border-left: 3px solid var(--redhat-red);
+            padding: 8px 10px;
+            border-radius: 3px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .concept {
+            background: #2a2a2a;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+            font-size: 0.85em;
+        }
+
+        .concept-item {
+            background: #252525;
+            padding: 6px 8px;
+            border-radius: 3px;
+        }
+
+        .concept-item strong {
+            display: block;
+            color: #eee;
+            margin-bottom: 2px;
+        }
+
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+
+        .command-display {
+            flex: 1;
+            min-height: 1.4em;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            color: var(--redhat-light);
+            white-space: pre;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.1em;
+            background: var(--redhat-accent);
+            margin-left: 2px;
+            animation: blink 1s step-start infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+
+        .completion-message {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid var(--redhat-accent);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .guide-panel,
+            .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <div class="header-left">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 1.5: Create and Edit Text Files</h1>
+        </div>
+        <div class="demo-badge">🎬 AUTOMATED DEMO</div>
+    </div>
+
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>In this lab you will learn how to create and edit text files using both <code>nano</code> and <code>vim</code>. The demo will show how each command should look and what to expect in the terminal.</p>
+                <p><strong>Time Estimate:</strong> 15–20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Text File Requirements</h4>
+                <div class="requirement-item" id="req-nano-create">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create a file with <code>nano my_first_file.txt</code> and add content</span>
+                </div>
+                <div class="requirement-item" id="req-view-list">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">View and list the file with <code>cat</code> and <code>ls -l my_first_file.txt</code></span>
+                </div>
+                <div class="requirement-item" id="req-vim-basic">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create a second file with <code>vim my_second_file.txt</code></span>
+                </div>
+                <div class="requirement-item" id="req-vim-advanced">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Reopen the file in vim to perform basic edits and save</span>
+                </div>
+                <div class="requirement-item" id="req-compare">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Compare files and list all text files with <code>cat</code> and <code>ls -l *.txt</code></span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Text File Creation Lab automated demo. Watch the commands on the right-hand side while following the written steps here. Use this as a reference when you complete the interactive version of the lab.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Creating Files with nano
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, create a file using the <code>nano</code> text editor.</p>
+
+                <div class="hint-box">
+                    <strong>Command to run in the real lab:</strong>
+                </div>
+                <div class="command-hint">nano my_first_file.txt</div>
+
+                <div class="editor-instructions">
+                    <h4>Nano Editor Basics</h4>
+                    <p>After opening nano, follow these steps:</p>
+                    <ol>
+                        <li>Type some text, for example: <code>Hello, this is my first file</code></li>
+                        <li>Press <kbd>Ctrl</kbd>+<kbd>O</kbd> to save (Write Out)</li>
+                        <li>Press <kbd>Enter</kbd> to confirm the filename</li>
+                        <li>Press <kbd>Ctrl</kbd>+<kbd>X</kbd> to exit nano</li>
+                    </ol>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding nano</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Simple terminal-based text editor
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Easy to learn and ideal for quick edits
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Commonly installed on most Linux systems
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When you need quick edits without advanced features
+                        </div>
+                    </div>
+                    <p><strong>Keys to remember:</strong> <code>Ctrl+O</code> to write the file, <code>Ctrl+X</code> to exit.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Viewing and Listing Files
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Next, view the file you created and check its details with <code>cat</code> and <code>ls</code>.</p>
+
+                <div class="hint-box">
+                    <strong>Commands to run:</strong>
+                </div>
+                <div class="command-hint">cat my_first_file.txt</div>
+                <div class="command-hint">ls -l my_first_file.txt</div>
+
+                <div class="concept">
+                    <h4>cat and ls -l</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>cat</strong>
+                            Displays file contents to the terminal
+                        </div>
+                        <div class="concept-item">
+                            <strong>ls -l</strong>
+                            Shows detailed file information (permissions, owner, size, date)
+                        </div>
+                    </div>
+                    <p>Use these commands regularly to confirm that files were created and saved correctly.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Creating a File with vim
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now create a second file using the <code>vim</code> editor.</p>
+
+                <div class="hint-box">
+                    <strong>Command to run:</strong>
+                </div>
+                <div class="command-hint">vim my_second_file.txt</div>
+
+                <div class="editor-instructions">
+                    <h4>Vim Basics (Insert and Save)</h4>
+                    <ol>
+                        <li>Press <kbd>i</kbd> to enter <strong>Insert</strong> mode.</li>
+                        <li>Type some text, for example: <code>This is my second file created with vim</code></li>
+                        <li>Press <kbd>Esc</kbd> to return to Normal mode.</li>
+                        <li>Type <code>:wq</code> and press <kbd>Enter</kbd> to write the file and quit.</li>
+                    </ol>
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding vim</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Powerful modal text editor
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Efficient for advanced text editing
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Installed by default on RHEL/Rocky/AlmaLinux
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When doing system admin or repeated edits
+                        </div>
+                    </div>
+                    <p><strong>Key idea:</strong> vim has modes. Learn <strong>Insert</strong>, <strong>Normal</strong>, and how to save and quit.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Editing the File Again with vim
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Reopen the file in <code>vim</code> and perform a simple edit to simulate advanced operations.</p>
+
+                <div class="hint-box">
+                    <strong>Command to run:</strong>
+                </div>
+                <div class="command-hint">vim my_second_file.txt</div>
+
+                <div class="editor-instructions">
+                    <h4>Example Edit Workflow</h4>
+                    <ol>
+                        <li>Press <kbd>i</kbd> to enter Insert mode and add another line.</li>
+                        <li>Press <kbd>Esc</kbd> to return to Normal mode.</li>
+                        <li>Use the arrow keys to move around the file.</li>
+                        <li>Type <code>:wq</code> to save and quit again.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Comparing Files and Listing Text Files
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, display the contents of both files and list all <code>.txt</code> files in the current directory.</p>
+
+                <div class="hint-box">
+                    <strong>Commands to run:</strong>
+                </div>
+                <div class="command-hint">cat my_first_file.txt</div>
+                <div class="command-hint">cat my_second_file.txt</div>
+                <div class="command-hint">ls -l *.txt</div>
+
+                <div class="concept">
+                    <h4>Verifying Your Work</h4>
+                    <p>Reading files with <code>cat</code> and listing them with <code>ls -l</code> helps you verify that both editors created and saved files as expected.</p>
+                </div>
+            </div>
+
+            <div id="completion-message" class="completion-message">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All text file creation and editing requirements have been demonstrated. Use this demo as a blueprint when you complete the interactive lab.</p>
+            </div>
+        </div>
+
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[user@lab ~]$</span> RHCSA Lab 1.5: Create and Edit Text Files (Automated Demo)</div>
+                <div><span class="prompt">[user@lab ~]$</span> All commands shown on the left will be typed and executed here.</div>
+                <div><span class="prompt">[user@lab ~]$</span> Starting with: creating a file using nano.</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt" id="command-prompt">[user@lab ~]$</span>
+                <div id="command-display" class="command-display">
+                    <span class="typing-cursor"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const terminalOutput = document.getElementById('terminal-output');
+    const commandDisplay = document.getElementById('command-display');
+    const commandPrompt = document.getElementById('command-prompt');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+
+    let currentDirectory = '~';
+    let currentStep = 1;
+
+    const completionState = {
+        nanoCreate: false,
+        viewList: false,
+        vimBasic: false,
+        vimAdvanced: false,
+        compareFiles: false
+    };
+
+    // Simulated file contents
+    let myFirstFileContent = "";
+    let mySecondFileContent = "";
+
+    const demoScript = [
+        // Step 1: nano create
+        { delay: 1200, action: 'message', text: 'Opening nano to create my_first_file.txt…' },
+        { delay: 200, action: 'type', text: 'nano my_first_file.txt', speed: 70 },
+        { delay: 300, action: 'execute' },
+        { delay: 1800, action: 'pause' },
+
+        // Step 2: view + ls
+        { delay: 0, action: 'type', text: 'cat my_first_file.txt', speed: 70 },
+        { delay: 300, action: 'execute' },
+        { delay: 1500, action: 'pause' },
+
+        { delay: 0, action: 'type', text: 'ls -l my_first_file.txt', speed: 70 },
+        { delay: 300, action: 'execute' },
+        { delay: 1800, action: 'pause' },
+
+        // Step 3: vim basic create
+        { delay: 0, action: 'message', text: 'Now creating a second file with vim…' },
+        { delay: 200, action: 'type', text: 'vim my_second_file.txt', speed: 70 },
+        { delay: 300, action: 'execute' },
+        { delay: 1800, action: 'pause' },
+
+        // Step 4: vim advanced edit
+        { delay: 0, action: 'message', text: 'Reopening my_second_file.txt in vim to make a small edit…' },
+        { delay: 200, action: 'type', text: 'vim my_second_file.txt', speed: 70 },
+        { delay: 300, action: 'execute' },
+        { delay: 2000, action: 'pause' },
+
+        // Step 5: compare + list
+        { delay: 0, action: 'message', text: 'Comparing files and listing all .txt files…' },
+        { delay: 200, action: 'type', text: 'cat my_first_file.txt', speed: 70 },
+        { delay: 300, action: 'execute' },
+        { delay: 1400, action: 'pause' },
+
+        { delay: 0, action: 'type', text: 'cat my_second_file.txt', speed: 70 },
+        { delay: 300, action: 'execute' },
+        { delay: 1400, action: 'pause' },
+
+        { delay: 0, action: 'type', text: 'ls -l *.txt', speed: 70 },
+        { delay: 300, action: 'execute' },
+        { delay: 2000, action: 'complete-demo' }
+    ];
+
+    function addTerminalOutput(html) {
+        const line = document.createElement('div');
+        line.innerHTML = html;
+        terminalOutput.appendChild(line);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    function updateRequirements() {
+        if (completionState.nanoCreate) {
+            const el = document.getElementById('req-nano-create');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        if (completionState.viewList) {
+            const el = document.getElementById('req-view-list');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        if (completionState.vimBasic) {
+            const el = document.getElementById('req-vim-basic');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        if (completionState.vimAdvanced) {
+            const el = document.getElementById('req-vim-advanced');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        if (completionState.compareFiles) {
+            const el = document.getElementById('req-compare');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        const completedCount = Object.values(completionState).filter(v => v).length;
+        const total = Object.keys(completionState).length;
+        const percent = (completedCount / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.textContent = Math.round(percent) + '% Complete';
+    }
+
+    function setStepStates(targetStep) {
+        steps.forEach((stepEl, index) => {
+            const statusEl = stepEl.querySelector('.step-status');
+            if (!statusEl) return;
+
+            if (index < targetStep) {
+                stepEl.classList.remove('current');
+                stepEl.classList.add('completed');
+                statusEl.textContent = 'Completed';
+                statusEl.className = 'step-status status-completed';
+            } else if (index === targetStep) {
+                stepEl.classList.add('current');
+                stepEl.classList.remove('completed');
+                statusEl.textContent = 'Current Step';
+                statusEl.className = 'step-status status-current';
+                stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                stepEl.classList.remove('current');
+                stepEl.classList.remove('completed');
+                statusEl.textContent = 'Pending';
+                statusEl.className = 'step-status status-pending';
+            }
+        });
+    }
+
+    function completeStep(stepNumber) {
+        if (stepNumber === currentStep) {
+            currentStep++;
+            setStepStates(currentStep);
+        }
+    }
+
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+
+        addTerminalOutput(`<span class="prompt">[user@lab ${currentDirectory}]$</span> ${trimmedInput}`);
+
+        if (trimmedInput === 'nano my_first_file.txt') {
+            myFirstFileContent = 'Hello, this is my first file\n(entered in nano, then saved with Ctrl+O and exited with Ctrl+X)';
+            addTerminalOutput('Opening nano editor (demo)…');
+            addTerminalOutput('…typing: "Hello, this is my first file"');
+            addTerminalOutput('…saving with Ctrl+O, confirming filename, and exiting with Ctrl+X.');
+            completionState.nanoCreate = true;
+            updateRequirements();
+            completeStep(1);
+        } else if (trimmedInput === 'cat my_first_file.txt') {
+            addTerminalOutput(myFirstFileContent || 'cat: my_first_file.txt: No such file or directory');
+        } else if (trimmedInput === 'ls -l my_first_file.txt') {
+            if (myFirstFileContent) {
+                addTerminalOutput('-rw-r--r-- 1 user user  78 Jan 10 10:00 my_first_file.txt');
+                completionState.viewList = true;
+                updateRequirements();
+                completeStep(2);
+            } else {
+                addTerminalOutput('ls: cannot access \'my_first_file.txt\': No such file or directory');
+            }
+        } else if (trimmedInput === 'vim my_second_file.txt') {
+            if (!completionState.vimBasic) {
+                // First time (basic create)
+                mySecondFileContent = 'This is my second file created with vim\nSaved with :wq';
+                addTerminalOutput('Opening vim (demo)…');
+                addTerminalOutput('…pressing i to enter Insert mode.');
+                addTerminalOutput('…typing: "This is my second file created with vim"');
+                addTerminalOutput('…pressing Esc, then :wq to save and quit.');
+                completionState.vimBasic = true;
+                updateRequirements();
+                completeStep(3);
+            } else {
+                // Second time (advanced/simple edit)
+                mySecondFileContent += '\nAdditional line added during second vim edit.';
+                addTerminalOutput('Re-opening my_second_file.txt in vim (demo)…');
+                addTerminalOutput('…pressing i to insert an additional line, then Esc and :wq again.');
+                completionState.vimAdvanced = true;
+                updateRequirements();
+                completeStep(4);
+            }
+        } else if (trimmedInput === 'cat my_second_file.txt') {
+            addTerminalOutput(mySecondFileContent || 'cat: my_second_file.txt: No such file or directory');
+        } else if (trimmedInput === 'ls -l *.txt') {
+            let lines = [];
+            if (myFirstFileContent) {
+                lines.push('-rw-r--r-- 1 user user  78 Jan 10 10:00 my_first_file.txt');
+            }
+            if (mySecondFileContent) {
+                lines.push('-rw-r--r-- 1 user user 112 Jan 10 10:05 my_second_file.txt');
+            }
+            if (lines.length === 0) {
+                addTerminalOutput('ls: cannot access \'*.txt\': No such file or directory');
+            } else {
+                lines.forEach(l => addTerminalOutput(l));
+                completionState.compareFiles = true;
+                updateRequirements();
+                completeStep(5);
+            }
+        } else {
+            addTerminalOutput(`<span class="warning">[demo] Command not scripted in this animation.</span>`);
+        }
+    }
+
+    async function typeText(text, speed) {
+        for (let i = 0; i < text.length; i++) {
+            commandDisplay.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor"></span>';
+            await new Promise(resolve => setTimeout(resolve, speed));
+        }
+        commandDisplay.innerHTML = text + '<span class="typing-cursor"></span>';
+    }
+
+    function clearInput() {
+        commandDisplay.innerHTML = '<span class="typing-cursor"></span>';
+    }
+
+    async function runDemoScript() {
+        setStepStates(currentStep);
+        updateRequirements();
+
+        for (let i = 0; i < demoScript.length; i++) {
+            const step = demoScript[i];
+
+            if (step.delay && step.delay > 0) {
+                await new Promise(resolve => setTimeout(resolve, step.delay));
+            }
+
+            switch (step.action) {
+                case 'pause':
+                    break;
+
+                case 'message':
+                    addTerminalOutput(`<span class="warning">${step.text}</span>`);
+                    break;
+
+                case 'type':
+                    await typeText(step.text, step.speed || 80);
+                    break;
+
+                case 'execute': {
+                    const command = commandDisplay.textContent.replace('█', '').trim();
+                    commandDisplay.innerHTML = command;
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    executeCommand(command);
+                    clearInput();
+                    break;
+                }
+
+                case 'complete-demo':
+                    completionMessage.style.display = 'block';
+                    completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    addTerminalOutput('<span class="success">[user@lab ~]$ All text file tasks demonstrated successfully.</span>');
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    addTerminalOutput('<span class="success">[user@lab ~]$ Demo complete! Reloading in 3 seconds…</span>');
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    location.reload();
+                    return;
+            }
+        }
+    }
+
+    // Start demo
+    setTimeout(() => {
+        runDemoScript();
+    }, 1000);
+</script>
+</body>
+</html>

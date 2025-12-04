@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 1.4 - Manage Files &amp; Directories</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .lab-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: #111;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 80vh;
+        }
+        
+        .header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .lab-intro {
+            background: #2b2b2b;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2b2b2b;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--redhat-blue);
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            background: #333;
+        }
+        
+        .requirement-item.completed {
+            background: #1f3d27;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--redhat-blue);
+            text-align: center;
+            line-height: 22px;
+            font-size: 0.9em;
+            margin-right: 8px;
+        }
+        
+        .step-status {
+            font-size: 0.8em;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-left: 10px;
+        }
+        
+        .status-current {
+            background: rgba(76, 175, 80, 0.2);
+            color: var(--redhat-accent);
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .status-completed {
+            background: rgba(158, 158, 158, 0.2);
+            color: #ddd;
+            border: 1px solid #999;
+        }
+        
+        .status-pending {
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--redhat-blue);
+            border: 1px solid var(--redhat-blue);
+        }
+        
+        .hint-box {
+            background: #252525;
+            border-left: 3px solid var(--redhat-blue);
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        .command-hint {
+            font-family: 'Red Hat Mono', monospace;
+            background: #222;
+            padding: 6px 8px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            display: inline-block;
+        }
+        
+        .hint-box strong {
+            color: var(--redhat-light);
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            position: relative;
+        }
+        
+        .terminal-output-line {
+            margin-bottom: 4px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--redhat-blue), var(--redhat-accent));
+            transition: width 0.3s ease;
+        }
+        
+        #progress-text {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+        
+        .completion-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #1f3d27;
+            border: 1px solid var(--redhat-accent);
+            color: #c8e6c9;
+        }
+        
+        .warning {
+            background: rgba(204, 0, 0, 0.1);
+            border-left: 3px solid var(--redhat-red);
+            padding: 8px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .concept {
+            background: #252525;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .concept-item {
+            background: #333;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        .concept-item strong {
+            display: block;
+            color: #fff;
+        }
+        
+        .file-structure {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            margin: 10px 0;
+        }
+        
+        .dir {
+            color: #4CAF50;
+        }
+        
+        .file {
+            color: #007ACC;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+        }
+
+        .success {
+            color: #c8e6c9;
+        }
+
+        .demo-badge {
+            background: var(--redhat-red);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-left: auto;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .command-display {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            padding: 8px;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background: var(--redhat-accent);
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat...ght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Lab 1.4: Manage Files &amp; Directories</h1>
+        <div class="demo-badge">🎬 AUTOMATED DEMO</div>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Learn essential file and directory management...ng files, removing files and directories, and finding files.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>File Management Commands to Master</h4>
+                <div class="requirement-item" id="req-ls">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use <code>ls -l</code> and <code>ls -a</code> to list files</span>
+                </div>
+                <div class="requirement-item" id="req-touch-cp">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use <code>touch</code> and <code>cp</code> to create and copy files</span>
+                </div>
+                <div class="requirement-item" id="req-mv">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use <code>mv</code> to move and rename files</span>
+                </div>
+                <div class="requirement-item" id="req-rm">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use <code>rm</code> to remove files and directories</span>
+                </div>
+                <div class="requirement-item" id="req-find">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use <code>find</code> to search for files</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA File Management Lab. In ...n essential file and directory management commands in Linux.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Listing Files with ls
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's explore the contents of your current directory using the <code>ls</code> command.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    ls -l
+                </div>
+                <div class="command-hint">
+                    ls -a
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding ls</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Lists directory contents
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            View files and directories
+                        </div>
+                        <div class="concept-item">
+                            <strong>Common Options</strong>
+                            <code>-l</code> (long format), <code>-a</code> (show hidden)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Output Meaning</strong>
+                            Permissions, owner, size, date
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>ls</code> reads the contents of a directory and prints them. <code>ls -l</code> shows detailed information, while <code>ls -a</code> includes hidden files (starting with .). Combine options like <code>ls -la</code>.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Creating and Copying Files
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's create a new file and make copies using <code>touch</code> and <code>cp</code>.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    touch newfile.txt
+                </div>
+                <div class="command-hint">
+                    cp newfile.txt copied_file.txt
+                </div>
+                <div class="command-hint">
+                    cp -r documents documents_backup
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding touch and cp</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>touch</strong>
+                            Creates empty files or updates timestamps
+                        </div>
+                        <div class="concept-item">
+                            <strong>cp</strong>
+                            Copies files or directories
+                        </div>
+                        <div class="concept-item">
+                            <strong>Options</strong>
+                            <code>-r</code> (recursive copy for directories)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Best Practice</strong>
+                            Use meaningful names; be careful with overwrites
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>touch</code> creates a new empty file if it doesn't exist. <code>cp source destination</code> copies files, and <code>cp -r</code> is required to copy directories and their contents.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Moving and Renaming Files
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Next, let's move files into directories and rename them using <code>mv</code>.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    mv copied_file.txt documents/
+                </div>
+                <div class="command-hint">
+                    mv documents/copied_file.txt documents/renamed_file.txt
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding mv</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Moves or renames files
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            Organize files into directories and rename them
+                        </div>
+                        <div class="concept-item">
+                            <strong>Examples</strong>
+                            <code>mv file.txt dir/</code>, <code>mv old new</code>
+                        </div>
+                        <div class="concept-item">
+                            <strong>Tip</strong>
+                            Use full paths to avoid confusion
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>mv source destination</code> moves a file or directory to a new location or renames it. When the destination is a directory, the source is moved inside. When the destination is a filename, the source is renamed.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Removing Files and Directories
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's learn how to remove files and directories using the <code>rm</code> command.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    rm file1.txt
+                </div>
+                <div class="command-hint">
+                    rm -r documents_backup
+                </div>
+
+                <div class="warning">
+                    <strong>Warning:</strong> <code>rm</code> permanently deletes files. Be careful, especially with <code>rm -r</code> and <code>rm -rf</code>.
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding rm</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Removes files or directories
+                        </div>
+                        <div class="concept-item">
+                            <strong>Options</strong>
+                            <code>-r</code> (recursive), <code>-f</code> (force)
+                        </div>
+                        <div class="concept-item">
+                            <strong>Best Practice</strong>
+                            Double-check paths before running
+                        </div>
+                        <div class="concept-item">
+                            <strong>Tip</strong>
+                            Use <code>ls</code> to verify before deleting
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>rm filename</code> removes a file. <code>rm -r directory</code> removes a directory and its contents recursively. Combine with <code>-f</code> to suppress prompts (dangerous if misused).</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Finding Files
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's learn how to find files using the <code>find</code> command.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    find . -name "*.txt"
+                </div>
+                
+                <div class="command-hint">
+                    find /etc -type f -name "*.conf"
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding find Command</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Searches for files/directories
+                        </div>
+                        <div class="concept-item">
+                            <strong>Power</strong>
+                            Can search by name, type, size, time, etc.
+                        </div>
+                        <div class="concept-item">
+                            <strong>Examples</strong>
+                            <code>find . -name "*.log"</code>, <code>find /var -type d</code>
+                        </div>
+                        <div class="concept-item">
+                            <strong>Tip</strong>
+                            Combine with commands like <code>-exec</code> for powerful operations
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>find path options</code> walks the directory tree starting at <code>path</code> and matches files based on the options you provide. You can search by name, type, permissions, size, and more.</p>
+                </div>
+            </div>
+
+            <div id="completion-message" class="completion-message" style="display:none;">
+                ✅ All file management tasks demonstrated! Review the commands and concepts before attempting the hands-on lab.
+            </div>
+        </div>
+
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[user@lab ~]$</span> RHCSA Lab 1.4 Demo: Manage Files &amp; Directories</div>
+                <div><span class="prompt">[user@lab ~]$</span> Watch the automated demo while following the steps on the left.</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt" id="command-prompt">[user@lab ~]$</span>
+                <div class="command-display" id="command-display"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const terminalOutput = document.getElementById('terminal-output');
+    const commandDisplay = document.getElementById('command-display');
+    const commandPrompt = document.getElementById('command-prompt');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+
+    let currentDirectory = '~';
+
+    const completionState = {
+        ls: false,
+        touchCp: false,
+        mv: false,
+        rm: false,
+        find: false
+    };
+
+    function addTerminalOutput(text) {
+        const line = document.createElement('div');
+        line.innerHTML = text;
+        terminalOutput.appendChild(line);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    function updateRequirements() {
+        if (completionState.ls) {
+            const el = document.getElementById('req-ls');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (completionState.touchCp) {
+            const el = document.getElementById('req-touch-cp');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (completionState.mv) {
+            const el = document.getElementById('req-mv');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (completionState.rm) {
+            const el = document.getElementById('req-rm');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        if (completionState.find) {
+            const el = document.getElementById('req-find');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '✓';
+        }
+
+        const total = Object.keys(completionState).length;
+        const done = Object.values(completionState).filter(Boolean).length;
+        const percent = Math.round((done / total) * 100);
+        progressFill.style.width = percent + '%';
+        progressText.textContent = percent + '% Complete';
+    }
+
+    function setStepStates(currentStep) {
+        steps.forEach((stepEl, index) => {
+            const statusEl = stepEl.querySelector('.step-status');
+            if (!statusEl) return;
+
+            if (index < currentStep) {
+                stepEl.classList.remove('current');
+                stepEl.classList.add('completed');
+                statusEl.textContent = 'Completed';
+                statusEl.className = 'step-status status-completed';
+            } else if (index === currentStep) {
+                stepEl.classList.remove('completed');
+                stepEl.classList.add('current');
+                statusEl.textContent = 'Current Step';
+                statusEl.className = 'step-status status-current';
+                stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                stepEl.classList.remove('completed');
+                stepEl.classList.remove('current');
+                statusEl.textContent = 'Pending';
+                statusEl.className = 'step-status status-pending';
+            }
+        });
+    }
+
+    async function typeText(text, speed) {
+        commandDisplay.innerHTML = '';
+        for (let i = 0; i < text.length; i++) {
+            commandDisplay.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor"></span>';
+            await new Promise(resolve => setTimeout(resolve, speed));
+        }
+        commandDisplay.innerHTML = text;
+    }
+
+    function printCommand(cmd) {
+        addTerminalOutput('<span class="prompt">[user@lab ' + currentDirectory + ']$</span> ' + cmd);
+    }
+
+    async function runDemoScript() {
+        const demoScript = [
+            {
+                step: 1,
+                onComplete: () => { completionState.ls = true; updateRequirements(); },
+                commands: [
+                    { cmd: 'ls -l', output: 'total 3<br/>-rw-r--r-- 1 user user   0 Jan 10 10:00 file1.txt<br/>-rw-r--r-- 1 user user   0 Jan 10 10:00 file2.txt<br/>drwxr-xr-x 2 user user  64 Jan 10 10:00 documents' },
+                    { cmd: 'ls -a', output: '.<br/>..<br/>.hidden_file<br/>file1.txt<br/>file2.txt<br/>documents' }
+                ]
+            },
+            {
+                step: 2,
+                onComplete: () => { completionState.touchCp = true; updateRequirements(); },
+                commands: [
+                    { cmd: 'touch newfile.txt', output: '' },
+                    { cmd: 'cp newfile.txt copied_file.txt', output: '' },
+                    { cmd: 'cp -r documents documents_backup', output: '' }
+                ]
+            },
+            {
+                step: 3,
+                onComplete: () => { completionState.mv = true; updateRequirements(); },
+                commands: [
+                    { cmd: 'mv copied_file.txt documents/', output: '' },
+                    { cmd: 'mv documents/copied_file.txt documents/renamed_file.txt', output: '' }
+                ]
+            },
+            {
+                step: 4,
+                onComplete: () => { completionState.rm = true; updateRequirements(); },
+                commands: [
+                    { cmd: 'rm file1.txt', output: '' },
+                    { cmd: 'rm -r documents_backup', output: '' }
+                ]
+            },
+            {
+                step: 5,
+                onComplete: () => { completionState.find = true; updateRequirements(); },
+                commands: [
+                    { cmd: 'find . -name "*.txt"', output: './file2.txt<br/>./newfile.txt<br/>./copied_file.txt<br/>./documents/doc1.txt<br/>./documents/renamed_file.txt' },
+                    { cmd: 'find /etc -type f -name "*.conf"', output: '/etc/httpd/httpd.conf<br/>/etc/ssh/sshd_config<br/>/etc/resolv.conf' }
+                ]
+            }
+        ];
+
+        // Ensure intro (step 0) shows as completed before starting
+        setStepStates(1);
+        updateRequirements();
+
+        for (const block of demoScript) {
+            setStepStates(block.step);
+            for (const item of block.commands) {
+                await typeText(item.cmd, 40);
+                await new Promise(resolve => setTimeout(resolve, 200));
+                printCommand(item.cmd);
+                if (item.output) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    addTerminalOutput(item.output);
+                }
+                await new Promise(resolve => setTimeout(resolve, 700));
+            }
+            if (block.onComplete) {
+                block.onComplete();
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        completionMessage.style.display = 'block';
+        addTerminalOutput('<div class="success">[user@lab ~]$ Demo complete. Review the steps on the left before moving on.</div>');
+    }
+
+    setTimeout(runDemoScript, 1000);
+</script>
+</body>
+</html>

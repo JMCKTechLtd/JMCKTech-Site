@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Lab 1.3 - Automated Demo</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Red Hat Text', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header img {
+            height: 30px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+
+        .demo-badge {
+            background: var(--redhat-red);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+
+        .guide-panel h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .lab-intro p {
+            margin: 0 0 8px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            height: 8px;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0;
+            background: var(--redhat-accent);
+            transition: width 0.3s ease;
+        }
+
+        #progress-text {
+            font-size: 0.9em;
+            margin-top: 5px;
+            color: #ccc;
+        }
+
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 0.95em;
+        }
+
+        .requirement-checkbox {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            margin-right: 8px;
+            color: var(--redhat-accent);
+        }
+
+        .requirement-item.completed .requirement-label {
+            text-decoration: line-through;
+            color: #aaa;
+        }
+
+        .guide-step {
+            background: #222;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid transparent;
+        }
+
+        .guide-step.current {
+            background: var(--current-step);
+            border-left-color: var(--redhat-blue);
+        }
+
+        .guide-step.completed {
+            border-left-color: var(--redhat-accent);
+            opacity: 0.9;
+        }
+
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+
+        .status-pending {
+            background: #444;
+            color: #eee;
+        }
+
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+
+        .hint-box {
+            background: rgba(0, 122, 204, 0.2);
+            border-left: 3px solid var(--redhat-blue);
+            padding: 8px 10px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .command-hint {
+            background: #111;
+            border-radius: 3px;
+            padding: 6px 10px;
+            font-family: "Red Hat Mono", monospace;
+            font-size: 0.9em;
+            margin: 5px 0 10px 0;
+            border: 1px solid #444;
+        }
+
+        code {
+            font-family: "Red Hat Mono", monospace;
+            background: #111;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .concept {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border: 1px solid #333;
+        }
+
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .concept-item {
+            background: #262626;
+            padding: 6px 8px;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+
+        .concept-item strong {
+            display: block;
+            margin-bottom: 2px;
+            color: #ddd;
+        }
+
+        .regex-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 0.85em;
+        }
+
+        .regex-table th,
+        .regex-table td {
+            border: 1px solid #444;
+            padding: 6px 8px;
+            text-align: left;
+        }
+
+        .regex-table th {
+            background-color: #333;
+            color: var(--redhat-accent);
+        }
+
+        .regex-example {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 0.85em;
+        }
+
+        .terminal {
+            flex: 1;
+            background: var(--terminal-bg);
+            color: #e0e0e0;
+            font-family: "Red Hat Mono", monospace;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            overflow-y: auto;
+            font-size: 0.9em;
+        }
+
+        .command-line {
+            background: #111;
+            padding: 10px 15px;
+            font-family: "Red Hat Mono", monospace;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .prompt {
+            color: #00ff00;
+        }
+
+        .command-display {
+            flex: 1;
+            min-height: 1.2em;
+            white-space: pre;
+            word-break: break-all;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 7px;
+            background: #e0e0e0;
+            margin-left: 2px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .success {
+            color: #9BE567;
+        }
+
+        .warning {
+            color: #FFD700;
+        }
+
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .guide-panel,
+            .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <div class="header-left">
+            <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+            <h1>RHCSA Lab 1.3: grep &amp; Regular Expressions</h1>
+        </div>
+        <div class="demo-badge">🎬 AUTOMATED DEMO</div>
+    </div>
+
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Master the use of <code>grep</code> and regular expressions for text processing in Linux.</p>
+                <p>You will search for patterns, use anchors, character classes, and extended regular expressions.</p>
+                <p><strong>Time Estimate:</strong> 15–20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>grep &amp; Regular Expressions Requirements</h4>
+                <div class="requirement-item" id="req-basic-grep">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use basic grep to search for "error" in sample.log</span>
+                </div>
+                <div class="requirement-item" id="req-case-insensitive">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use case-insensitive grep to search for "warning"</span>
+                </div>
+                <div class="requirement-item" id="req-start-anchor">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use regex anchor ^ to find lines starting with "2023"</span>
+                </div>
+                <div class="requirement-item" id="req-end-anchor">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use regex anchor $ to find lines ending with "failed"</span>
+                </div>
+                <div class="requirement-item" id="req-char-class-digit">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use character class [0-9] to find digits followed by %</span>
+                </div>
+                <div class="requirement-item" id="req-char-class-vowels">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use character class [AEIOU] to find uppercase vowels</span>
+                </div>
+                <div class="requirement-item" id="req-extended-or">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use extended regex with | to find "error" or "warning"</span>
+                </div>
+                <div class="requirement-item" id="req-extended-quantifier">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Use extended regex with {n} to match SSN pattern in data.txt</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA <code>grep</code> &amp; Regular Expressions lab. This automated demo will walk through each required command and show you how the patterns work on sample log data.</p>
+                <p>Watch the commands on the right-hand side and use this as a reference when you do the interactive lab.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Basic grep Usage
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>Start with basic <code>grep</code> usage to search for simple text patterns in a log file.</p>
+
+                <div class="hint-box">
+                    <strong>Type these commands exactly in the lab:</strong>
+                </div>
+
+                <div class="command-hint">
+                    grep "error" sample.log
+                </div>
+
+                <p>Then:</p>
+
+                <div class="command-hint">
+                    grep -i "warning" sample.log
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding grep Basics</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Searches for patterns in text
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            To find specific information in files
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Works on logs or any text file
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            Whenever you need to filter or search text
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>grep</code> scans each line of input for the given pattern. The <code>-i</code> option makes the search case-insensitive.</p>
+
+                    <table class="regex-table">
+                        <tr>
+                            <th>Option</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                        <tr>
+                            <td><code>-i</code></td>
+                            <td>Case-insensitive search</td>
+                            <td><code>grep -i "hello" file.txt</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>-v</code></td>
+                            <td>Invert match (show non-matching lines)</td>
+                            <td><code>grep -v "success" log.txt</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>-n</code></td>
+                            <td>Show line numbers</td>
+                            <td><code>grep -n "error" log.txt</code></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Regular Expression Anchors
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Use anchors to match text at the start or end of a line.</p>
+
+                <div class="hint-box">
+                    <strong>Type these commands in the lab:</strong>
+                </div>
+
+                <div class="command-hint">
+                    grep "^2023" sample.log
+                </div>
+
+                <p>Then:</p>
+
+                <div class="command-hint">
+                    grep "failed$" sample.log
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Anchors</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            <code>^</code> = start of line, <code>$</code> = end of line
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            To find text in a precise position
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Used in most regex engines
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When you only care about beginnings/ends of lines
+                        </div>
+                    </div>
+
+                    <div class="regex-example">
+                        <strong>Sample log file content:</strong><br/>
+                        2023-01-10 10:00:01 System started<br/>
+                        2023-01-10 10:05:23 Warning: disk space low<br/>
+                        2023-01-10 10:10:45 Error: connection failed<br/>
+                        2023-01-10 10:15:12 Operation completed successfully<br/>
+                        2023-01-10 10:20:34 CPU usage at 75%<br/>
+                        2023-01-10 10:25:56 Error: authentication failed<br/>
+                        2023-01-10 10:30:18 WARNING: memory threshold exceeded<br/>
+                        2023-01-10 10:35:40 Backup completed with 90% success<br/>
+                        2023-01-10 10:40:02 Error: disk I/O failed<br/>
+                        2023-01-10 10:45:24 System shutdown
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Character Classes
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Use character classes to match sets of characters.</p>
+
+                <div class="hint-box">
+                    <strong>Type these commands in the lab:</strong>
+                </div>
+
+                <div class="command-hint">
+                    grep "[0-9]%" sample.log
+                </div>
+
+                <p>Then:</p>
+
+                <div class="command-hint">
+                    grep "[AEIOU]" sample.log
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Character Classes</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            Match any character from a set
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            To match variations of a pattern
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            Inside square brackets <code>[ ]</code>
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When you need flexible matching
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>[0-9]</code> matches any digit, <code>[AEIOU]</code> matches any uppercase vowel. Use <code>[^0-9]</code> to match non-digits.</p>
+
+                    <table class="regex-table">
+                        <tr>
+                            <th>Pattern</th>
+                            <th>Matches</th>
+                            <th>Example</th>
+                        </tr>
+                        <tr>
+                            <td><code>[abc]</code></td>
+                            <td>a, b, or c</td>
+                            <td><code>gr[ae]y</code> (gray or grey)</td>
+                        </tr>
+                        <tr>
+                            <td><code>[a-z]</code></td>
+                            <td>Any lowercase letter</td>
+                            <td><code>[a-z]@domain.com</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>[^0-9]</code></td>
+                            <td>Any non-digit</td>
+                            <td><code>[^0-9]%</code></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Extended Regular Expressions
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Use extended regular expressions for more powerful pattern matching.</p>
+
+                <div class="hint-box">
+                    <strong>Type these commands in the lab:</strong>
+                </div>
+
+                <div class="command-hint">
+                    grep -E "error|warning" sample.log
+                </div>
+
+                <p>Then:</p>
+
+                <div class="command-hint">
+                    grep -E "[0-9]{3}-[0-9]{2}-[0-9]{4}" data.txt
+                </div>
+
+                <div class="concept">
+                    <h4>Understanding Extended Regex</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>What</strong>
+                            More powerful pattern matching
+                        </div>
+                        <div class="concept-item">
+                            <strong>Why</strong>
+                            For complex matching requirements
+                        </div>
+                        <div class="concept-item">
+                            <strong>Where</strong>
+                            With <code>grep -E</code> or <code>egrep</code>
+                        </div>
+                        <div class="concept-item">
+                            <strong>When</strong>
+                            When basic patterns are not enough
+                        </div>
+                    </div>
+                    <p><strong>How it works:</strong> <code>|</code> means OR, and <code>{n}</code> means “exactly n occurrences”. The SSN pattern <code>[0-9]{3}-[0-9]{2}-[0-9]{4}</code> matches values like <code>123-45-6789</code>.</p>
+
+                    <table class="regex-table">
+                        <tr>
+                            <th>Pattern</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                        <tr>
+                            <td><code>error|warning</code></td>
+                            <td>error OR warning</td>
+                            <td><code>grep -E "error|warning"</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>[0-9]{3}</code></td>
+                            <td>Exactly three digits</td>
+                            <td><code>[0-9]{3}-[0-9]{2}-[0-9]{4}</code></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div id="completion-message" class="completion-message">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All grep and regular expression requirements have been demonstrated.</p>
+                <p>Use this demo as a reference when completing the interactive lab.</p>
+            </div>
+        </div>
+
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[user@lab ~]$</span> Welcome to RHCSA Lab 1.3: grep &amp; Regular Expressions</div>
+                <div><span class="prompt">[user@lab ~]$</span> This is an automated demo showing all required commands.</div>
+                <div><span class="prompt">[user@lab ~]$</span> Watch the left-hand instructions while the commands run on the right.</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt" id="command-prompt">[user@lab ~]$</span>
+                <div class="command-display" id="command-display">
+                    <span class="typing-cursor"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const terminalOutput = document.getElementById('terminal-output');
+    const commandDisplay = document.getElementById('command-display');
+    const commandPrompt = document.getElementById('command-prompt');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+
+    let currentDirectory = '~';
+    let currentStep = 1;
+
+    const completionState = {
+        basicGrep: false,
+        caseInsensitive: false,
+        startAnchor: false,
+        endAnchor: false,
+        charClassDigit: false,
+        charClassVowels: false,
+        extendedOr: false,
+        extendedQuantifier: false
+    };
+
+    // Demo script – defines all actions to perform in order
+    const demoScript = [
+        { delay: 800, action: 'showMessage', message: 'Starting basic grep usage demo…' },
+
+        { delay: 500, action: 'type', text: 'grep "error" sample.log', speed: 70 },
+        { delay: 400, action: 'execute' },
+        { delay: 2200, action: 'pause' },
+
+        { delay: 0, action: 'type', text: 'grep -i "warning" sample.log', speed: 70 },
+        { delay: 400, action: 'execute' },
+        { delay: 2400, action: 'pause' },
+
+        { delay: 0, action: 'showMessage', message: 'Now demonstrating regex anchors ^ and $…' },
+        { delay: 400, action: 'type', text: 'grep "^2023" sample.log', speed: 70 },
+        { delay: 400, action: 'execute' },
+        { delay: 2200, action: 'pause' },
+
+        { delay: 0, action: 'type', text: 'grep "failed$" sample.log', speed: 70 },
+        { delay: 400, action: 'execute' },
+        { delay: 2400, action: 'pause' },
+
+        { delay: 0, action: 'showMessage', message: 'Next: character classes [0-9] and [AEIOU]…' },
+        { delay: 400, action: 'type', text: 'grep "[0-9]%" sample.log', speed: 70 },
+        { delay: 400, action: 'execute' },
+        { delay: 2200, action: 'pause' },
+
+        { delay: 0, action: 'type', text: 'grep "[AEIOU]" sample.log', speed: 70 },
+        { delay: 400, action: 'execute' },
+        { delay: 2400, action: 'pause' },
+
+        { delay: 0, action: 'showMessage', message: 'Finally: extended regex with | and {n}…' },
+        { delay: 400, action: 'type', text: 'grep -E "error|warning" sample.log', speed: 70 },
+        { delay: 400, action: 'execute' },
+        { delay: 2200, action: 'pause' },
+
+        { delay: 0, action: 'type', text: 'grep -E "[0-9]{3}-[0-9]{2}-[0-9]{4}" data.txt', speed: 70 },
+        { delay: 400, action: 'execute' },
+        { delay: 2600, action: 'showCompletion' }
+    ];
+
+    function addTerminalOutput(html) {
+        const line = document.createElement('div');
+        line.innerHTML = html;
+        terminalOutput.appendChild(line);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    function updateRequirements() {
+        if (completionState.basicGrep) {
+            const el = document.getElementById('req-basic-grep');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '☑';
+        }
+
+        if (completionState.caseInsensitive) {
+            const el = document.getElementById('req-case-insensitive');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '☑';
+        }
+
+        if (completionState.startAnchor) {
+            const el = document.getElementById('req-start-anchor');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '☑';
+        }
+
+        if (completionState.endAnchor) {
+            const el = document.getElementById('req-end-anchor');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '☑';
+        }
+
+        if (completionState.charClassDigit) {
+            const el = document.getElementById('req-char-class-digit');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '☑';
+        }
+
+        if (completionState.charClassVowels) {
+            const el = document.getElementById('req-char-class-vowels');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '☑';
+        }
+
+        if (completionState.extendedOr) {
+            const el = document.getElementById('req-extended-or');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '☑';
+        }
+
+        if (completionState.extendedQuantifier) {
+            const el = document.getElementById('req-extended-quantifier');
+            el.classList.add('completed');
+            el.querySelector('.requirement-checkbox').textContent = '☑';
+        }
+
+        const completedCount = Object.values(completionState).filter(v => v).length;
+        const total = Object.keys(completionState).length;
+        const progressPercent = (completedCount / total) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+    }
+
+    function completeStep(step) {
+        if (step === currentStep && step < steps.length) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            const status = steps[step].querySelector('.step-status');
+            status.textContent = 'Completed';
+            status.className = 'step-status status-completed';
+
+            currentStep++;
+
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                const nextStatus = steps[currentStep].querySelector('.step-status');
+                nextStatus.textContent = 'Current Step';
+                nextStatus.className = 'step-status status-current';
+                steps[currentStep].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+
+        addTerminalOutput(`<span class="prompt">[user@lab ~]$</span> ${trimmedInput}`);
+
+        // Simulated log & data content (matches what you show in the lab)
+        const sampleLogLines = [
+            '2023-01-10 10:00:01 System started',
+            '2023-01-10 10:05:23 Warning: disk space low',
+            '2023-01-10 10:10:45 Error: connection failed',
+            '2023-01-10 10:15:12 Operation completed successfully',
+            '2023-01-10 10:20:34 CPU usage at 75%',
+            '2023-01-10 10:25:56 Error: authentication failed',
+            '2023-01-10 10:30:18 WARNING: memory threshold exceeded',
+            '2023-01-10 10:35:40 Backup completed with 90% success',
+            '2023-01-10 10:40:02 Error: disk I/O failed',
+            '2023-01-10 10:45:24 System shutdown'
+        ];
+
+        const dataLines = [
+            'User: john.doe, SSN: 123-45-6789',
+            'User: jane.smith, SSN: 987-65-4321',
+            'User: bob.johnson, Phone: (555) 123-4567',
+            'User: alice.williams, SSN: 456-78-9012',
+            'User: charlie.brown, Phone: (555) 987-6543'
+        ];
+
+        // Handle demo commands explicitly (strict, no guessing)
+        if (trimmedInput === 'grep "error" sample.log') {
+            sampleLogLines
+                .filter(line => line.toLowerCase().includes('error'))
+                .forEach(line => addTerminalOutput(line));
+            completionState.basicGrep = true;
+            updateRequirements();
+            addTerminalOutput('<span class="success">✅ Basic grep command demonstrated.</span>');
+        } else if (trimmedInput === 'grep -i "warning" sample.log') {
+            sampleLogLines
+                .filter(line => /warning/i.test(line))
+                .forEach(line => addTerminalOutput(line));
+            completionState.caseInsensitive = true;
+            updateRequirements();
+            addTerminalOutput('<span class="success">✅ Case-insensitive grep demonstrated.</span>');
+            completeStep(1);
+        } else if (trimmedInput === 'grep "^2023" sample.log') {
+            sampleLogLines
+                .filter(line => line.startsWith('2023'))
+                .forEach(line => addTerminalOutput(line));
+            completionState.startAnchor = true;
+            updateRequirements();
+            addTerminalOutput('<span class="success">✅ Start anchor (^) demonstrated.</span>');
+        } else if (trimmedInput === 'grep "failed$" sample.log') {
+            sampleLogLines
+                .filter(line => line.endsWith('failed'))
+                .forEach(line => addTerminalOutput(line));
+            completionState.endAnchor = true;
+            updateRequirements();
+            addTerminalOutput('<span class="success">✅ End anchor ($) demonstrated.</span>');
+            completeStep(2);
+        } else if (trimmedInput === 'grep "[0-9]%" sample.log') {
+            sampleLogLines
+                .filter(line => /[0-9]%/.test(line))
+                .forEach(line => addTerminalOutput(line));
+            completionState.charClassDigit = true;
+            updateRequirements();
+            addTerminalOutput('<span class="success">✅ Digit character class [0-9] demonstrated.</span>');
+        } else if (trimmedInput === 'grep "[AEIOU]" sample.log') {
+            sampleLogLines
+                .filter(line => /[AEIOU]/.test(line))
+                .forEach(line => addTerminalOutput(line));
+            completionState.charClassVowels = true;
+            updateRequirements();
+            addTerminalOutput('<span class="success">✅ Vowel character class [AEIOU] demonstrated.</span>');
+            completeStep(3);
+        } else if (trimmedInput === 'grep -E "error|warning" sample.log') {
+            sampleLogLines
+                .filter(line => /error|warning/i.test(line))
+                .forEach(line => addTerminalOutput(line));
+            completionState.extendedOr = true;
+            updateRequirements();
+            addTerminalOutput('<span class="success">✅ Extended regex alternation (error|warning) demonstrated.</span>');
+        } else if (trimmedInput === 'grep -E "[0-9]{3}-[0-9]{2}-[0-9]{4}" data.txt') {
+            dataLines
+                .filter(line => /[0-9]{3}-[0-9]{2}-[0-9]{4}/.test(line))
+                .forEach(line => addTerminalOutput(line));
+            completionState.extendedQuantifier = true;
+            updateRequirements();
+            addTerminalOutput('<span class="success">✅ Quantifiers {n} for SSN pattern demonstrated.</span>');
+            completeStep(4);
+        } else {
+            // Should never fire in the scripted demo – safety only
+            addTerminalOutput('<span class="warning">[Demo] Command not scripted for this animation.</span>');
+        }
+    }
+
+    async function typeText(text, speed) {
+        for (let i = 0; i < text.length; i++) {
+            commandDisplay.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor"></span>';
+            await new Promise(resolve => setTimeout(resolve, speed));
+        }
+        commandDisplay.innerHTML = text + '<span class="typing-cursor"></span>';
+    }
+
+    function clearInput() {
+        commandDisplay.innerHTML = '<span class="typing-cursor"></span>';
+    }
+
+    async function runDemoScript() {
+        for (let i = 0; i < demoScript.length; i++) {
+            const step = demoScript[i];
+
+            if (step.delay && step.delay > 0) {
+                await new Promise(resolve => setTimeout(resolve, step.delay));
+            }
+
+            switch (step.action) {
+                case 'type':
+                    await typeText(step.text, step.speed || 80);
+                    break;
+
+                case 'execute': {
+                    const command = commandDisplay.textContent.replace('█', '').trim();
+                    commandDisplay.innerHTML = command;
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    executeCommand(command);
+                    clearInput();
+                    break;
+                }
+
+                case 'showMessage':
+                    addTerminalOutput(`<span class="warning">${step.message}</span>`);
+                    break;
+
+                case 'pause':
+                    // Just a timed pause – nothing visual needed
+                    break;
+
+                case 'showCompletion':
+                    completionMessage.style.display = 'block';
+                    completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    updateRequirements();
+                    addTerminalOutput('<div class="success">[user@lab ~]$ All demo requirements completed.</div>');
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    addTerminalOutput('<div class="success">[user@lab ~]$ Demo complete! Reloading in 3 seconds…</div>');
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    location.reload();
+                    return;
+            }
+        }
+    }
+
+    // Start the demo
+    setTimeout(() => {
+        runDemoScript();
+    }, 1000);
+</script>
+</body>
+</html>

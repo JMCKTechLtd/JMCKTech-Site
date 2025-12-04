@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockShell RedHat Linux Labs - Automated Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <style>
+    :root {
+      --primary-color: #CC0000;
+      --secondary-color: #107c10;
+      --accent-color: #8661c5;
+      --danger-color: #d13438;
+      --warning-color: #ffb900;
+      --text-color: #2c3e50;
+      --light-bg: #f8f9fa;
+      --border-color: #eaecef;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(to bottom, var(--light-bg), #eef1f5);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-color);
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    header {
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      text-align: center;
+      border-bottom: 1px solid rgba(204, 0, 0, 0.1);
+      position: relative;
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+      border-radius: 2px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-top: 8px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    .demo-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: var(--primary-color);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.05); }
+    }
+
+    #lab-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #lab-header {
+      background: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .lab-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .lab-progress {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-bar {
+      width: 200px;
+      height: 8px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: var(--primary-color);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    #lab-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #instructions-panel {
+      width: 300px;
+      background: white;
+      padding: 20px;
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.03);
+    }
+
+    #blockly-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #blockly-toolbar {
+      padding: 10px 20px;
+      display: flex;
+      gap: 10px;
+      background-color: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    #blocklyDiv {
+      height: calc(100% - 60px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: #990000;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(204, 0, 0, 0.3);
+    }
+
+    button.secondary {
+      background-color: var(--secondary-color);
+    }
+
+    button.secondary:hover {
+      background-color: #0a6b0a;
+    }
+
+    .lab-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .lab-tab {
+      padding: 8px 16px;
+      background: #f1f5f9;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .lab-tab.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .task {
+      background: #f1f5f9;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border-left: 3px solid var(--primary-color);
+      font-size: 14px;
+      transition: all 0.5s;
+    }
+
+    .task.completed {
+      background: #e6f7e6;
+      border-left-color: var(--secondary-color);
+      animation: taskComplete 0.5s ease;
+    }
+
+    @keyframes taskComplete {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    .task h4 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .task p {
+      margin: 0;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .task-icon {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: white;
+      font-size: 12px;
+    }
+
+    .task.completed .task-icon {
+      background: var(--secondary-color);
+    }
+
+    #feedback {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      background: #f8f9fa;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s;
+    }
+
+    .feedback-success {
+      background: #e6f7e6;
+      border-color: var(--secondary-color);
+      color: #0a6b0a;
+    }
+
+    .feedback-warning {
+      background: #fff8e6;
+      border-color: var(--warning-color);
+      color: #856404;
+    }
+
+    .app-notification {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transition: all 0.3s ease;
+      opacity: 0;
+      transform: translateX(-50%) translateY(-20px);
+      font-weight: 500;
+    }
+
+    .app-notification.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .app-notification.success {
+      background-color: var(--secondary-color);
+    }
+
+    .app-notification.warning {
+      background-color: var(--warning-color);
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <div class="demo-badge">🎬 AUTOMATED DEMO</div>
+      <h1>BlockShell RedHat Linux Labs</h1>
+      <div class="subtitle">Visual Bash Script Builder for RHCSA Administration</div>
+    </header>
+
+    <div id="lab-container">
+      <div id="lab-header">
+        <div class="lab-title">Lab 1: User & Group Management</div>
+        <div class="lab-progress">
+          <span>Progress:</span>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+          <span id="progress-text">0/4</span>
+        </div>
+      </div>
+
+      <div id="lab-content">
+        <div id="instructions-panel">
+          <div class="lab-tabs">
+            <div class="lab-tab active">Lab 1</div>
+            <div class="lab-tab">Lab 2</div>
+            <div class="lab-tab">Lab 3</div>
+            <div class="lab-tab">Lab 4</div>
+          </div>
+
+          <div id="lab1-instructions" class="lab-instructions">
+            <h3>🔐 User & Group Management</h3>
+            <p>Learn how to create and manage users and groups in Red Hat Linux.</p>
+            
+            <div class="task" id="lab1-task1">
+              <h4><span class="task-icon">1</span> Create a new user</h4>
+              <p>Use the <strong>Add User</strong> block to create a user named <code>devuser</code> with home directory <code>/home/devuser</code> and shell <code>/bin/bash</code>.</p>
+            </div>
+            
+            <div class="task" id="lab1-task2">
+              <h4><span class="task-icon">2</span> Create a group</h4>
+              <p>Create a group named <code>developers</code> with GID <code>2001</code> using the <strong>Add Group</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab1-task3">
+              <h4><span class="task-icon">3</span> Add user to group</h4>
+              <p>Add <code>devuser</code> to the <code>developers</code> group using the <strong>Add User to Group</strong> block.</p>
+            </div>
+            
+            <div class="task" id="lab1-task4">
+              <h4><span class="task-icon">4</span> Set password policy</h4>
+              <p>Configure password policy with minimum 7 days, maximum 90 days, and warning 7 days using the <strong>Set Password Policy</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="feedback"></div>
+        </div>
+
+        <div id="blockly-area">
+          <div id="blockly-toolbar">
+            <button onclick="simulate()">
+              Show Script
+            </button>
+            <button class="secondary" onclick="checkProgress()">
+              Check Progress
+            </button>
+          </div>
+          <div id="blocklyDiv"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="appNotification" class="app-notification"></div>
+
+  <xml id="toolbox" style="display:none">
+    <category name="User Management" colour="180">
+      <block type="add_user"></block>
+      <block type="add_group"></block>
+      <block type="add_user_to_group"></block>
+      <block type="set_password_policy"></block>
+    </category>
+  </xml>
+
+  <script>
+    let workspace;
+    let demoRunning = false;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        trashcan: true,
+        grid: {
+          spacing: 25,
+          length: 3,
+          colour: '#e0e0e0',
+          snap: true
+        },
+        zoom: {
+          controls: true,
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2
+        },
+        theme: {
+          'componentStyles': {
+            'workspaceBackgroundColour': '#F9FAFB',
+            'toolboxBackgroundColour': '#FFFFFF',
+            'toolboxForegroundColour': '#1E293B',
+            'flyoutBackgroundColour': '#F1F5F9',
+            'flyoutForegroundColour': '#1E293B',
+            'flyoutOpacity': 0.9,
+            'scrollbarColour': '#CCCCCC',
+            'scrollbarOpacity': 0.6
+          }
+        }
+      });
+
+      // Define blocks
+      Blockly.Blocks['add_user'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Add User")
+              .appendField(new Blockly.FieldTextInput("devuser"), "USERNAME")
+              .appendField("Home:")
+              .appendField(new Blockly.FieldTextInput("/home/devuser"), "HOME")
+              .appendField("Shell:")
+              .appendField(new Blockly.FieldDropdown([["/bin/bash","/bin/bash"], ["/bin/sh","/bin/sh"]]), "SHELL");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+        }
+      };
+
+      Blockly.Blocks['add_group'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Add Group")
+              .appendField(new Blockly.FieldTextInput("developers"), "GROUP")
+              .appendField("GID:")
+              .appendField(new Blockly.FieldNumber(2001), "GID");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+        }
+      };
+
+      Blockly.Blocks['add_user_to_group'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Add User")
+              .appendField(new Blockly.FieldTextInput("devuser"), "USERNAME")
+              .appendField("to Group")
+              .appendField(new Blockly.FieldTextInput("developers"), "GROUP");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+        }
+      };
+
+      Blockly.Blocks['set_password_policy'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set Password Policy Min:")
+              .appendField(new Blockly.FieldNumber(7), "MIN")
+              .appendField("Max:")
+              .appendField(new Blockly.FieldNumber(90), "MAX")
+              .appendField("Warn:")
+              .appendField(new Blockly.FieldNumber(7), "WARN");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+        }
+      };
+
+      // Start the demo
+      setTimeout(() => {
+        runDemo();
+      }, 2000);
+    });
+
+    async function runDemo() {
+      if (demoRunning) return;
+      demoRunning = true;
+
+      showAppNotification('Demo starting: Building User Management Script', 'warning');
+      await sleep(2000);
+
+      // Step 1: Add User block
+      showAppNotification('Adding user creation block...', 'warning');
+      await sleep(1000);
+      
+      const block1 = workspace.newBlock('add_user');
+      block1.setFieldValue('devuser', 'USERNAME');
+      block1.setFieldValue('/home/devuser', 'HOME');
+      block1.setFieldValue('/bin/bash', 'SHELL');
+      block1.initSvg();
+      block1.render();
+      block1.moveBy(50, 50);
+      await animateBlockAppearance(block1);
+      await sleep(1500);
+      checkProgress();
+      await sleep(1000);
+
+      // Step 2: Add Group block
+      showAppNotification('Adding group creation block...', 'warning');
+      await sleep(1000);
+      
+      const block2 = workspace.newBlock('add_group');
+      block2.setFieldValue('developers', 'GROUP');
+      block2.setFieldValue('2001', 'GID');
+      block2.initSvg();
+      block2.render();
+      block2.moveBy(50, 130);
+      block1.nextConnection.connect(block2.previousConnection);
+      await animateBlockAppearance(block2);
+      await sleep(1500);
+      checkProgress();
+      await sleep(1000);
+
+      // Step 3: Add User to Group block
+      showAppNotification('Adding user-to-group assignment block...', 'warning');
+      await sleep(1000);
+      
+      const block3 = workspace.newBlock('add_user_to_group');
+      block3.setFieldValue('devuser', 'USERNAME');
+      block3.setFieldValue('developers', 'GROUP');
+      block3.initSvg();
+      block3.render();
+      block3.moveBy(50, 210);
+      block2.nextConnection.connect(block3.previousConnection);
+      await animateBlockAppearance(block3);
+      await sleep(1500);
+      checkProgress();
+      await sleep(1000);
+
+      // Step 4: Set Password Policy block
+      showAppNotification('Adding password policy block...', 'warning');
+      await sleep(1000);
+      
+      const block4 = workspace.newBlock('set_password_policy');
+      block4.setFieldValue('7', 'MIN');
+      block4.setFieldValue('90', 'MAX');
+      block4.setFieldValue('7', 'WARN');
+      block4.initSvg();
+      block4.render();
+      block4.moveBy(50, 290);
+      block3.nextConnection.connect(block4.previousConnection);
+      await animateBlockAppearance(block4);
+      await sleep(1500);
+      checkProgress();
+      await sleep(2000);
+
+      showAppNotification('✅ All tasks completed! Lab finished successfully!', 'success');
+      await sleep(3000);
+
+      showAppNotification('Restarting demo in 3 seconds...', 'warning');
+      await sleep(3000);
+      
+      workspace.clear();
+      demoRunning = false;
+      updateProgress(0, 4);
+      document.getElementById('feedback').innerHTML = '';
+      document.querySelectorAll('.task').forEach(task => task.classList.remove('completed'));
+      
+      runDemo();
+    }
+
+    function animateBlockAppearance(block) {
+      return new Promise(resolve => {
+        const svgGroup = block.getSvgRoot();
+        svgGroup.style.opacity = '0';
+        svgGroup.style.transform = 'scale(0.8)';
+        svgGroup.style.transition = 'all 0.3s ease';
+        
+        setTimeout(() => {
+          svgGroup.style.opacity = '1';
+          svgGroup.style.transform = 'scale(1)';
+          setTimeout(resolve, 300);
+        }, 50);
+      });
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function checkProgress() {
+      const blocks = workspace.getAllBlocks();
+      
+      const tasks = {
+        task1: blocks.some(b => b.type === "add_user" && 
+               b.getFieldValue('USERNAME') === 'devuser' && 
+               b.getFieldValue('HOME') === '/home/devuser' &&
+               b.getFieldValue('SHELL') === '/bin/bash'),
+        task2: blocks.some(b => b.type === "add_group" && 
+               b.getFieldValue('GROUP') === 'developers' && 
+               b.getFieldValue('GID') === '2001'),
+        task3: blocks.some(b => b.type === "add_user_to_group" && 
+               b.getFieldValue('USERNAME') === 'devuser' && 
+               b.getFieldValue('GROUP') === 'developers'),
+        task4: blocks.some(b => b.type === "set_password_policy" && 
+               b.getFieldValue('MIN') === '7' && 
+               b.getFieldValue('MAX') === '90' &&
+               b.getFieldValue('WARN') === '7')
+      };
+      
+      Object.keys(tasks).forEach(taskId => {
+        const taskElement = document.getElementById('lab1-' + taskId);
+        if (tasks[taskId] && !taskElement.classList.contains('completed')) {
+          taskElement.classList.add('completed');
+        }
+      });
+      
+      const completed = Object.values(tasks).filter(Boolean).length;
+      updateProgress(completed, 4);
+      
+      const feedback = document.getElementById('feedback');
+      if (completed === 4) {
+        feedback.innerHTML = '<div style="color:green;">✅ All tasks completed! Ready to generate your script.</div>';
+        feedback.className = 'feedback-success';
+      } else if (completed > 0) {
+        feedback.innerHTML = `<div style="color:#d35400;">⏳ Progress: ${completed}/4 tasks done</div>`;
+        feedback.className = 'feedback-warning';
+      }
+    }
+
+    function updateProgress(completed, total) {
+      const percentage = (completed / total) * 100;
+      document.querySelector('.progress-fill').style.width = `${percentage}%`;
+      document.getElementById('progress-text').textContent = `${completed}/${total}`;
+    }
+
+    function showAppNotification(message, type = 'info') {
+      const notification = document.getElementById('appNotification');
+      notification.textContent = message;
+      notification.className = 'app-notification';
+      if (type) notification.classList.add(type);
+      notification.style.display = 'block';
+      
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 10);
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+          notification.style.display = 'none';
+        }, 300);
+      }, 3000);
+    }
+
+    function simulate() {
+      showAppNotification('Script generation feature - demo only', 'warning');
+    }
+  </script>
+</body>
+</html>
