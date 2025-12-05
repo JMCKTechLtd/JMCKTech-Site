@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>RHCSA Exam Lab 14: LVM Expansion</title>
+    <title>RHCSA Exam Lab 11: LDAP Authentication Configuration</title>
     <style>
         :root {
             --redhat-red: #cc0000;
@@ -393,6 +393,173 @@
             color: white;
         }
         
+        .vim-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .vim-container {
+            display: flex;
+            width: 90%;
+            height: 80%;
+            gap: 20px;
+        }
+        
+        .vim-instructions {
+            width: 30%;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+        
+        .vim-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .vim-editor {
+            width: 70%;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .vim-header {
+            background: #333;
+            padding: 5px 10px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .vim-content {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+            white-space: pre;
+            color: #ccc;
+            position: relative;
+        }
+        
+        .vim-command-line {
+            display: flex;
+            background: #333;
+            padding: 5px;
+            border-top: 1px solid #444;
+        }
+        
+        .vim-prompt {
+            color: #4CAF50;
+            padding: 0 5px;
+        }
+        
+        .vim-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+        }
+        
+        .vim-status {
+            background: #333;
+            padding: 3px 10px;
+            color: #ccc;
+            font-size: 0.9em;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .vim-mode-indicator {
+            color: #FFD700;
+        }
+        
+        .vim-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #ccc;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        
+        .vim-esc-button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .vim-esc-button:hover {
+            background: #666;
+        }
+        
+        .vim-command-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .vim-command-button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .vim-command-button:hover {
+            background: #555;
+        }
+        
+        .vim-mode-indicator.command-mode {
+            color: #FFD700;
+        }
+        
+        .vim-mode-indicator.insert-mode {
+            color: #4CAF50;
+        }
+        
+        .vim-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
         @media (max-width: 992px) {
             .main-content {
                 flex-direction: column;
@@ -402,6 +569,24 @@
                 width: 100%;
                 height: 50%;
             }
+            
+            .vim-container {
+                width: 95%;
+                height: 90%;
+                flex-direction: column;
+            }
+            
+            .vim-instructions, .vim-editor {
+                width: 100%;
+            }
+            
+            .vim-instructions {
+                height: 30%;
+            }
+            
+            .vim-editor {
+                height: 70%;
+            }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
@@ -410,7 +595,7 @@
 <div class="lab-container">
     <div class="header">
         <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-        <h1>RHCSA Exam Lab 14: LVM Expansion</h1>
+        <h1>RHCSA Exam Lab 11: LDAP Authentication Configuration</h1>
     </div>
     
     <div class="main-content">
@@ -419,8 +604,8 @@
             
             <div class="lab-intro">
                 <h3>Lab Objective</h3>
-                <p>Extend logical volume <code>vo</code> from 190M to 300M with size between 280-320M. You will need to check available space, extend the logical volume, resize the filesystem, and verify the changes.</p>
-                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <p>Configure the authentication mode of your host account and password as LDAP. You will need to configure your system to authenticate against an LDAP server and test the configuration.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill"></div>
                 </div>
@@ -428,22 +613,22 @@
             </div>
 
             <div class="requirements-panel">
-                <h4>LVM Expansion Requirements</h4>
-                <div class="requirement-item" id="req-check-vg">
+                <h4>LDAP Configuration Requirements</h4>
+                <div class="requirement-item" id="req-install-packages">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Check available space in volume group with <code>vgdisplay</code></span>
+                    <span class="requirement-label">Install required LDAP client packages</span>
                 </div>
-                <div class="requirement-item" id="req-extend-lv">
+                <div class="requirement-item" id="req-configure-auth">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Extend logical volume <code>vo</code> to 300M using <code>lvextend</code></span>
+                    <span class="requirement-label">Configure LDAP authentication using system-config-authentication</span>
                 </div>
-                <div class="requirement-item" id="req-resize-fs">
+                <div class="requirement-item" id="req-download-cert">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Resize filesystem with <code>resize2fs</code></span>
+                    <span class="requirement-label">Download and configure CA certificate</span>
                 </div>
-                <div class="requirement-item" id="req-verify-size">
+                <div class="requirement-item" id="req-test-login">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Verify new size is between 280M-320M with <code>lvdisplay</code></span>
+                    <span class="requirement-label">Test LDAP login with ldapuser40</span>
                 </div>
             </div>
 
@@ -453,168 +638,173 @@
                     Lab Introduction
                     <span class="step-status status-completed">Completed</span>
                 </h3>
-                <p>Welcome to the RHCSA LVM Expansion Lab. In this lab, you will extend a logical volume and resize its filesystem.</p>
+                <p>Welcome to the RHCSA LDAP Authentication Configuration Lab. In this lab, you will configure your system to authenticate against an LDAP server.</p>
                 <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
             </div>
 
             <div class="guide-step current" id="step1">
                 <h3>
                     <span class="step-number">1</span>
-                    Check Available Space
+                    Install LDAP Client Packages
                     <span class="step-status status-current">Current Step</span>
                 </h3>
-                <p>Before extending the LV, verify you have enough space in the volume group:</p>
+                <p>First, let's install the required packages for LDAP authentication.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
-                <div class="command-hint">
-                    vgdisplay
+                <div class="required-command">
+                    <span class="command-hint">yum groupinstall directory-client</span>
                 </div>
                 
-                <p>Look for "Free PE / Size" to ensure enough space exists.</p>
+                <p>This will install the necessary packages including:</p>
+                <ul>
+                    <li>krb5-workstation</li>
+                    <li>pam-krb5</li>
+                    <li>sssd</li>
+                </ul>
 
                 <div class="concept">
-                    <h4>Understanding vgdisplay Output</h4>
-                    <p>Key fields to check:</p>
-                    <ul>
-                        <li><code>VG Name</code>: Name of your volume group</li>
-                        <li><code>VG Size</code>: Total size of the volume group</li>
-                        <li><code>Free PE / Size</code>: Available space for extension</li>
-                    </ul>
-                    <p>If space is insufficient, you'll need to add physical volumes with <code>pvcreate</code> and extend the VG with <code>vgextend</code>.</p>
+                    <h4>Understanding LDAP Authentication</h4>
+                    <p>LDAP (Lightweight Directory Access Protocol) is a protocol for accessing and maintaining distributed directory information services. In this lab, you'll configure your system to authenticate users against an LDAP server.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step2">
                 <h3>
                     <span class="step-number">2</span>
-                    Extend the Logical Volume
+                    Configure LDAP Authentication
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Increase the size of logical volume <code>vo</code> from 190M to 300M:</p>
+                <p>Now let's configure LDAP authentication using the graphical configuration tool.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
-                <div class="command-hint">
-                    lvextend -L 300M /dev/vg0/vo
+                <div class="required-command">
+                    <span class="command-hint">system-config-authentication</span>
                 </div>
                 
-                <p>Or alternatively: <code>lvextend -L +110M /dev/vg0/vo</code></p>
-
+                <p>Configure the following settings in the authentication tool:</p>
+                <ol>
+                    <li>User Account Database: <code>LDAP</code></li>
+                    <li>LDAP Search Base DN: <code>dc=example,dc=com</code></li>
+                    <li>LDAP Server: <code>ldap://instructor.example.com</code> (use domain form, not IP)</li>
+                    <li>Check "Use TLS to encrypt connections"</li>
+                    <li>Download CA Certificate from: <code>http://ip/dir/ldap.crt</code></li>
+                    <li>Authentication Method: <code>LDAP Password</code></li>
+                    <li>Click "Apply"</li>
+                </ol>
+                
                 <div class="concept">
-                    <h4>LVM Extension Options</h4>
-                    <p>The <code>lvextend</code> command has two syntax options:</p>
-                    <ul>
-                        <li><code>-L 300M</code>: Sets absolute size to 300M</li>
-                        <li><code>-L +110M</code>: Adds 110M to current size</li>
-                    </ul>
-                    <p>The filesystem remains unchanged after LV extension - you must resize it separately.</p>
+                    <h4>LDAP Configuration Parameters</h4>
+                    <p>The LDAP search base DN defines where in the directory tree the server should search for user entries. Using TLS ensures secure communication with the LDAP server.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step3">
                 <h3>
                     <span class="step-number">3</span>
-                    Resize the Filesystem
+                    Verify LDAP Configuration
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>After extending the LV, resize the filesystem to use the new space:</p>
+                <p>Now let's verify that our LDAP configuration is working correctly.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
-                <div class="command-hint">
-                    resize2fs /dev/vg0/vo
+                <div class="required-command">
+                    <span class="command-hint">getent passwd ldapuser40</span>
                 </div>
-
+                
+                <p>This command should display information about the LDAP user <code>ldapuser40</code> if the configuration is correct.</p>
+                
                 <div class="concept">
-                    <h4>Filesystem Resizing Notes</h4>
-                    <p><code>resize2fs</code> automatically detects the new LV size and expands to fill it.</p>
-                    <p>For unmounted filesystems, use <code>resize2fs -f</code> to force the operation.</p>
-                    <p>Always verify with <code>df -h</code> after resizing.</p>
+                    <h4>Understanding getent Command</h4>
+                    <p>The <code>getent</code> command displays entries from databases supported by the Name Service Switch libraries, which includes LDAP when properly configured.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step4">
                 <h3>
                     <span class="step-number">4</span>
-                    Verify the Changes
+                    Test LDAP Login
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Confirm the LV is now between 280M-320M and mounted correctly:</p>
+                <p>Finally, let's test the LDAP login functionality.</p>
                 
                 <div class="hint-box">
-                    <strong>Type these commands one by one:</strong>
+                    <strong>Type this command exactly:</strong>
                 </div>
                 
-                <div class="command-hint">
-                    lvdisplay /dev/vg0/vo
+                <div class="required-command">
+                    <span class="command-hint">su - ldapuser40</span>
                 </div>
-                <p>Look for "LV Size" in the output.</p>
                 
-                <div class="command-hint">
-                    df -h /mnt/vo
-                </div>
-                <p>Verify the filesystem shows the new size.</p>
+                <p>When prompted for a password, use: <code>password</code></p>
+                
+                <p class="warning">Note: The user will not have a home directory unless you configure autofs in the following questions. This is expected behavior at this stage.</p>
 
                 <div class="concept">
-                    <h4>Verification Commands</h4>
-                    <p>Essential verification commands:</p>
-                    <ul>
-                        <li><code>lvdisplay</code> - Shows LV details including size</li>
-                        <li><code>df -h</code> - Shows mounted filesystem sizes</li>
-                        <li><code>mount</code> - Verifies filesystem is mounted</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="concept">
-                <h4>LVM Expansion Concepts</h4>
-                <div class="concept-grid">
-                    <div class="concept-item">
-                        <strong>Volume Groups (VG)</strong>
-                        Storage pool created from physical volumes (PVs). Check free space with <code>vgdisplay</code>.
-                    </div>
-                    <div class="concept-item">
-                        <strong>Logical Volumes (LV)</strong>
-                        Can be resized dynamically. Use <code>lvextend</code> to grow and <code>lvreduce</code> to shrink.
-                    </div>
-                    <div class="concept-item">
-                        <strong>Filesystem Resizing</strong>
-                        After LV resize, filesystem must be adjusted with <code>resize2fs</code> for ext4.
-                    </div>
-                    <div class="concept-item">
-                        <strong>Verification</strong>
-                        Always verify changes with <code>lvdisplay</code> and <code>df -h</code>.
-                    </div>
+                    <h4>LDAP User Authentication</h4>
+                    <p>After successful authentication, LDAP users can log into the system. However, without a properly configured home directory (via autofs or other means), they may not have a complete user environment.</p>
                 </div>
             </div>
             
             <div id="completion-message" class="completion-message" style="display: none;">
                 <h3>🎉 Lab Completed Successfully!</h3>
-                <p>All LVM expansion requirements have been met.</p>
+                <p>All LDAP authentication configuration requirements have been met.</p>
                 <p>You can now proceed to the next lab.</p>
             </div>
         </div>
         
         <div class="terminal-panel">
             <div class="terminal" id="terminal-output">
-                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 14: LVM Expansion</div>
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 11: LDAP Authentication Configuration</div>
                 <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
                 <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
-                <div><span class="prompt">[root@station ~]#</span> Current step: Check Available Space</div>
-                <div><span class="prompt">[root@station ~]#</span> Type: <code>vgdisplay</code></div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Install LDAP Client Packages</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>yum groupinstall directory-client</code></div>
                 <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
             </div>
             <div class="command-line">
                 <span class="prompt">[root@station ~]#</span>
                 <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
                 <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vim Editor Overlay -->
+<div id="vim-overlay" class="vim-overlay" style="display: none;">
+    <div class="vim-container">
+        <div class="vim-instructions" id="vim-instructions">
+            <h3>Vim Editor Instructions</h3>
+            <div id="vim-instructions-content"></div>
+        </div>
+        
+        <div class="vim-editor">
+            <div class="vim-header">
+                <span id="vim-filename">filename</span>
+                <div class="vim-command-buttons">
+                    <button class="vim-command-button" id="vim-insert-button">i (Insert)</button>
+                    <button class="vim-esc-button" id="vim-esc-button">ESC</button>
+                    <span id="vim-close-btn" style="cursor: pointer; margin-left: 10px;">×</span>
+                </div>
+            </div>
+            <div class="vim-content" id="vim-content">
+                <textarea id="vim-textarea" class="vim-textarea" spellcheck="false"></textarea>
+            </div>
+            <div class="vim-command-line">
+                <input type="text" class="vim-input" id="vim-input" placeholder="Type :wq to save and exit"/>
+            </div>
+            <div class="vim-status">
+                <span class="vim-mode-indicator command-mode" id="vim-mode-indicator">COMMAND MODE</span>
+                <span id="vim-cursor-position">1,1</span>
             </div>
         </div>
     </div>
@@ -630,6 +820,20 @@
     const steps = document.querySelectorAll('.guide-step');
     const tabCompletion = document.getElementById('tab-completion');
     
+    // Vim editor elements
+    const vimOverlay = document.getElementById('vim-overlay');
+    const vimInstructions = document.getElementById('vim-instructions');
+    const vimInstructionsContent = document.getElementById('vim-instructions-content');
+    const vimFilename = document.getElementById('vim-filename');
+    const vimContent = document.getElementById('vim-content');
+    const vimTextarea = document.getElementById('vim-textarea');
+    const vimInput = document.getElementById('vim-input');
+    const vimModeIndicator = document.getElementById('vim-mode-indicator');
+    const vimCursorPosition = document.getElementById('vim-cursor-position');
+    const vimCloseBtn = document.getElementById('vim-close-btn');
+    const vimEscButton = document.getElementById('vim-esc-button');
+    const vimInsertButton = document.getElementById('vim-insert-button');
+    
     let commandHistory = [];
     let historyIndex = -1;
     let currentStep = 1;
@@ -639,132 +843,115 @@
     
     // Available commands for tab completion
     const availableCommands = [
-        'vgdisplay', 'lvdisplay', 'lvextend', 'resize2fs', 'df', 'clear', 'help'
+        'yum', 'system-config-authentication', 'getent', 'su', 'wget', 'clear', 'help'
     ];
     
     // Available file paths for tab completion
     const filePaths = {
-        '/dev/': ['vg0/'],
-        '/dev/vg0/': ['vo'],
-        '/mnt/': ['vo']
+        '/etc/': ['yum.repos.d/', 'passwd'],
+        '/etc/yum.repos.d/': ['local.repo']
     };
     
     // Track configuration state
     const configState = {
-        checkedVG: false,
-        extendedLV: false,
-        resizedFS: false,
-        verifiedSize: false
+        installPackages: false,
+        configureAuth: false,
+        downloadCert: false,
+        testLogin: false
     };
     
     // Expected commands for each step
     const stepCommands = {
-        1: ['vgdisplay'],
-        2: ['lvextend -L 300M /dev/vg0/vo', 'lvextend -L +110M /dev/vg0/vo'],
-        3: ['resize2fs /dev/vg0/vo'],
-        4: ['lvdisplay /dev/vg0/vo', 'df -h /mnt/vo']
+        1: ['yum groupinstall directory-client'],
+        2: ['system-config-authentication'],
+        3: ['getent passwd ldapuser40'],
+        4: ['su - ldapuser40']
     };
     
-    // Simulated initial LV state
-    let lvSize = "190.00 MiB";
-    
     const commands = {
-        'vgdisplay': () => {
-            if (currentStep === 1 || currentStep > 1) {
-                configState.checkedVG = true;
+        'yum': (args) => {
+            if (args[0] === "groupinstall" && args[1] === "directory-client") {
+                if (currentStep === 1) {
+                    configState.installPackages = true;
+                    updateRequirements();
+                    completeStep(1);
+                    return "Installing directory-client package group...\n" +
+                           "Resolving dependencies...\n" +
+                           "Installing: krb5-workstation, pam-krb5, sssd\n" +
+                           "Complete! LDAP client packages installed successfully.";
+                } else {
+                    return "Please complete the current step first or ensure you're on the right step.";
+                }
+            }
+            return "Usage: yum groupinstall directory-client";
+        },
+        
+        'system-config-authentication': () => {
+            if (currentStep === 2) {
+                configState.configureAuth = true;
+                configState.downloadCert = true;
                 updateRequirements();
-                completeStep(1);
-                return `  --- Volume group ---
-  VG Name               vg0
-  System ID             
-  Format                lvm2
-  Metadata Areas        1
-  Metadata Sequence No  2
-  VG Access             read/write
-  VG Status             resizable
-  MAX LV                0
-  Cur LV                1
-  Open LV               1
-  Max PV                0
-  Cur PV                1
-  Act PV                1
-  VG Size               500.00 MiB
-  PE Size               4.00 MiB
-  Total PE              125
-  Alloc PE / Size       48 / 192.00 MiB
-  Free  PE / Size       77 / 308.00 MiB
-  VG UUID               abc123-xyz456`;
+                completeStep(2);
+                return "Opening Authentication Configuration tool...\n" +
+                       "Configuration applied successfully.\n" +
+                       "LDAP authentication has been configured with:\n" +
+                       "- User Account Database: LDAP\n" +
+                       "- LDAP Search Base DN: dc=example,dc=com\n" +
+                       "- LDAP Server: ldap://instructor.example.com\n" +
+                       "- TLS encryption enabled\n" +
+                       "- CA certificate downloaded and configured\n" +
+                       "- Authentication Method: LDAP Password";
             } else {
-                return "Please complete the previous steps first.";
+                return "Please complete the current step first or ensure you're on the right step.";
             }
         },
         
-        'lvdisplay': (args) => {
-            if (args[0] === "/dev/vg0/vo") {
-                if (configState.extendedLV) {
-                    lvSize = "300.00 MiB";
-                    configState.verifiedSize = true;
-                    updateRequirements();
-                }
-                return `  --- Logical volume ---
-  LV Path                /dev/vg0/vo
-  LV Name                vo
-  VG Name                vg0
-  LV UUID                def456-uvw789
-  LV Write Access        read/write
-  LV Creation host, time station, 2023-01-01 12:00:00 +0000
-  LV Status              available
-  # open                 1
-  LV Size                ${lvSize}
-  Current LE             48
-  Segments               1
-  Allocation             inherit
-  Read ahead sectors     auto
-  - currently set to     256
-  Block device           253:0`;
-            }
-            return "Please specify a logical volume path";
-        },
-        
-        'lvextend': (args) => {
-            if ((args[0] === "-L" && args[1] === "300M" && args[2] === "/dev/vg0/vo") || 
-                (args[0] === "-L" && args[1] === "+110M" && args[2] === "/dev/vg0/vo")) {
-                if (currentStep === 2 || currentStep > 2) {
-                    configState.extendedLV = true;
-                    updateRequirements();
-                    completeStep(2);
-                    return "Size of logical volume vg0/vo changed from 190.00 MiB (48 extents) to 300.00 MiB (75 extents).\nLogical volume vg0/vo successfully resized.";
-                } else {
-                    return "Please complete the previous steps first.";
-                }
-            }
-            return "Invalid lvextend command. Usage: lvextend -L [+]SIZE[mMgGtT] LV";
-        },
-        
-        'resize2fs': (args) => {
-            if (args[0] === "/dev/vg0/vo") {
-                if (currentStep === 3 || currentStep > 3) {
-                    if (!configState.extendedLV) {
-                        return "resize2fs: The filesystem is already 199680 (1k) blocks long. Nothing to do!";
+        'getent': (args) => {
+            if (args[0] === "passwd" && args[1] === "ldapuser40") {
+                if (currentStep === 3) {
+                    if (configState.configureAuth) {
+                        completeStep(3);
+                        return "ldapuser40:x:1001:1001:LDAP User 40:/home/ldapuser40:/bin/bash";
+                    } else {
+                        return "getent: ldapuser40: no such user\n" +
+                               "LDAP authentication is not properly configured.";
                     }
-                    configState.resizedFS = true;
-                    updateRequirements();
-                    completeStep(3);
-                    return "resize2fs 1.45.6 (20-Mar-2020)\nFilesystem at /dev/vg0/vo is mounted on /mnt/vo; on-line resizing required\nold_desc_blocks = 1, new_desc_blocks = 1\nThe filesystem on /dev/vg0/vo is now 307200 (1k) blocks long.";
                 } else {
-                    return "Please complete the previous steps first.";
+                    return "Please complete the current step first or ensure you're on the right step.";
                 }
             }
-            return "Please specify a device";
+            return "Usage: getent passwd ldapuser40";
         },
         
-        'df': (args) => {
-            if (args[0] === "-h" && args[1] === "/mnt/vo") {
-                const size = configState.resizedFS ? "300M" : "190M";
-                return `Filesystem            Size  Used Avail Use% Mounted on
-/dev/mapper/vg0-vo    ${size}  120M  180M  40% /mnt/vo`;
+        'su': (args) => {
+            if (args[0] === "-" && args[1] === "ldapuser40") {
+                if (currentStep === 4) {
+                    if (configState.configureAuth) {
+                        configState.testLogin = true;
+                        updateRequirements();
+                        completeStep(4);
+                        return "Password: password\n" +
+                               "Could not chdir to home directory /home/ldapuser40: No such file or directory\n" +
+                               "-bash-4.2$ \n" +
+                               "LDAP login successful! User authenticated via LDAP.\n" +
+                               "Note: Home directory is not available until autofs is configured.";
+                    } else {
+                        return "Password: password\n" +
+                               "su: Authentication failure";
+                    }
+                } else {
+                    return "Please complete the current step first or ensure you're on the right step.";
+                }
             }
-            return "Please specify a mount point";
+            return "Usage: su - ldapuser40";
+        },
+        
+        'wget': (args) => {
+            if (args[0] === "http://ip/dir/ldap.crt") {
+                return "Downloading CA certificate...\n" +
+                       "Certificate downloaded successfully.";
+            }
+            return `wget: unable to resolve host address for '${args[0]}'`;
         },
         
         'clear': () => {
@@ -773,30 +960,51 @@
         },
         
         'help': () => {
-            return "Available commands: vgdisplay, lvdisplay, lvextend, resize2fs, df, clear, help";
+            return "Available commands: yum, system-config-authentication, getent, su, wget, clear, help";
         }
     };
     
+    // Function to open the Vim editor (not used in this lab but kept for consistency)
+    function openVimEditor(filename, content, fileType) {
+        return "Vim editor not required for this lab.";
+    }
+    
+    // Function to handle Vim commands (not used in this lab but kept for consistency)
+    function handleVimCommand(command) {
+        return "";
+    }
+    
+    // Function to close the Vim editor (not used in this lab but kept for consistency)
+    function closeVimEditor() {
+        vimOverlay.style.display = 'none';
+        commandInput.focus();
+    }
+    
+    // Function to update Vim cursor position display (not used in this lab but kept for consistency)
+    function updateVimCursorPosition() {
+        // Not implemented for this lab
+    }
+    
     // Function to update requirements display
     function updateRequirements() {
-        if (configState.checkedVG) {
-            document.getElementById('req-check-vg').classList.add('completed');
-            document.getElementById('req-check-vg').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.installPackages) {
+            document.getElementById('req-install-packages').classList.add('completed');
+            document.getElementById('req-install-packages').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.extendedLV) {
-            document.getElementById('req-extend-lv').classList.add('completed');
-            document.getElementById('req-extend-lv').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.configureAuth) {
+            document.getElementById('req-configure-auth').classList.add('completed');
+            document.getElementById('req-configure-auth').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.resizedFS) {
-            document.getElementById('req-resize-fs').classList.add('completed');
-            document.getElementById('req-resize-fs').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.downloadCert) {
+            document.getElementById('req-download-cert').classList.add('completed');
+            document.getElementById('req-download-cert').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.verifiedSize) {
-            document.getElementById('req-verify-size').classList.add('completed');
-            document.getElementById('req-verify-size').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.testLogin) {
+            document.getElementById('req-test-login').classList.add('completed');
+            document.getElementById('req-test-login').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
         // Update progress
@@ -1053,9 +1261,21 @@
         }
     });
     
+    // Vim editor event listeners (kept for consistency but not functional in this lab)
+    vimCloseBtn.addEventListener('click', () => {
+        closeVimEditor();
+    });
+    
+    vimEscButton.addEventListener('click', () => {
+        // Not functional in this lab
+    });
+    
+    vimInsertButton.addEventListener('click', () => {
+        // Not functional in this lab
+    });
+    
     // Initialize the lab
     updateRequirements();
 </script>
 </body>
 </html>
-

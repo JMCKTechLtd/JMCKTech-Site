@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>RHCSA Exam Lab 8: User Management</title>
+    <title>RHCSA Exam Lab 9: FTP Server Configuration</title>
     <style>
         :root {
             --redhat-red: #cc0000;
@@ -595,7 +595,7 @@
 <div class="lab-container">
     <div class="header">
         <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-        <h1>RHCSA Exam Lab 8: User Management</h1>
+        <h1>RHCSA Exam Lab 9: FTP Server Configuration</h1>
     </div>
     
     <div class="main-content">
@@ -604,8 +604,8 @@
             
             <div class="lab-intro">
                 <h3>Lab Objective</h3>
-                <p>Create and manage user accounts on your system. You will need to create a user with a specific UID, set a password, and verify the user configuration.</p>
-                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <p>Configure a local YUM repository, install the vsftpd FTP server package, and configure it to allow anonymous access.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill"></div>
                 </div>
@@ -613,18 +613,26 @@
             </div>
 
             <div class="requirements-panel">
-                <h4>User Management Requirements</h4>
-                <div class="requirement-item" id="req-user-created">
+                <h4>FTP Server Requirements</h4>
+                <div class="requirement-item" id="req-yum-repo">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Create user <code>alex</code> with UID <code>1234</code></span>
+                    <span class="requirement-label">Configure local YUM repository in <code>/etc/yum.repos.d/local.repo</code></span>
                 </div>
-                <div class="requirement-item" id="req-password-set">
+                <div class="requirement-item" id="req-yum-cache">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Set password for <code>alex</code> to <code>alex111</code></span>
+                    <span class="requirement-label">Create YUM cache with <code>yum makecache</code></span>
                 </div>
-                <div class="requirement-item" id="req-user-verify">
+                <div class="requirement-item" id="req-ftp-install">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Verify user creation and password</span>
+                    <span class="requirement-label">Install vsftpd package</span>
+                </div>
+                <div class="requirement-item" id="req-ftp-config">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Configure anonymous access in <code>/etc/vsftpd/vsftpd.conf</code></span>
+                </div>
+                <div class="requirement-item" id="req-ftp-service">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Start vsftpd service and enable at boot</span>
                 </div>
             </div>
 
@@ -634,122 +642,209 @@
                     Lab Introduction
                     <span class="step-status status-completed">Completed</span>
                 </h3>
-                <p>Welcome to the RHCSA User Management Lab. In this lab, you will create and manage user accounts on a Red Hat Enterprise Linux system.</p>
+                <p>Welcome to the RHCSA FTP Server Configuration Lab. In this lab, you will configure a local YUM repository, install the vsftpd FTP server, and configure it for anonymous access.</p>
                 <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
             </div>
 
             <div class="guide-step current" id="step1">
                 <h3>
                     <span class="step-number">1</span>
-                    Create the User
+                    Configure Local YUM Repository
                     <span class="step-status status-current">Current Step</span>
                 </h3>
-                <p>Create a new user named <code>alex</code> with UID <code>1234</code>:</p>
+                <p>First, let's create a local repository file to install packages from the existing file server.</p>
                 
                 <div class="hint-box">
-                    <strong>Type this command exactly:</strong>
+                    <strong>Navigate to YUM repositories directory:</strong>
                 </div>
                 
-                <div class="command-hint">
-                    useradd -u 1234 alex
+                <div class="required-command">
+                    <strong>Required command:</strong><br>
+                    <code>cd /etc/yum.repos.d/</code>
                 </div>
+                
+                <div class="hint-box">
+                    <strong>Create or edit local repository file:</strong>
+                </div>
+                
+                <div class="required-command">
+                    <strong>Required command:</strong><br>
+                    <code>vim local.repo</code>
+                </div>
+                
+                <p>Ensure the file contains these settings:</p>
+                
+                <div class="file-content">[local]
+name=local.repo
+baseurl=file:///mnt
+enabled=1
+gpgcheck=0</div>
+                
+                <p>To save and exit vim:</p>
+                <ol>
+                    <li>Press <code>ESC</code> to ensure you're in command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to write and quit</li>
+                </ol>
 
                 <div class="concept">
-                    <h4>Understanding User Creation</h4>
-                    <p>The <code>useradd</code> command creates new user accounts. The <code>-u</code> option specifies the user ID (UID), which must be a unique number. UIDs below 1000 are typically reserved for system accounts.</p>
+                    <h4>Understanding YUM Repositories</h4>
+                    <p>YUM repositories provide a way to install and manage packages. Key parameters:</p>
+                    <ul>
+                        <li><code>baseurl</code>: Location of the repository packages</li>
+                        <li><code>enabled</code>: Whether the repository is active</li>
+                        <li><code>gpgcheck</code>: Whether to verify package signatures</li>
+                    </ul>
                 </div>
             </div>
 
             <div class="guide-step" id="step2">
                 <h3>
                     <span class="step-number">2</span>
-                    Set the Password
+                    Create YUM Cache
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Set the password for user <code>alex</code> to <code>alex111</code>:</p>
+                <p>After configuring the repository, update the package cache.</p>
                 
-                <div class="hint-box">
-                    <strong>Method 1: Interactive password setting</strong>
-                </div>
-                
-                <div class="command-hint">
-                    passwd alex
-                </div>
-                
-                <p>Then enter <code>alex111</code> twice when prompted</p>
-                
-                <div class="hint-box">
-                    <strong>Method 2: Non-interactive password setting</strong>
-                </div>
-                
-                <div class="command-hint">
-                    echo "alex111" | passwd --stdin alex
+                <div class="required-command">
+                    <strong>Required command:</strong><br>
+                    <code>yum makecache</code>
                 </div>
 
                 <div class="concept">
-                    <h4>Understanding Password Management</h4>
-                    <p>The <code>passwd</code> command changes user passwords. The <code>--stdin</code> option allows setting the password non-interactively, which is useful for scripts. Note that this method may show the password in process listings temporarily.</p>
+                    <h4>About YUM Cache</h4>
+                    <p>The YUM cache stores repository metadata to speed up package operations. Creating the cache after repository changes ensures YUM has current package information.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step3">
                 <h3>
                     <span class="step-number">3</span>
-                    Verify the User
+                    Install vsftpd Package
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Verify that the user was created correctly and the password works:</p>
+                <p>Now let's install the FTP server package using YUM.</p>
                 
-                <div class="hint-box">
-                    <strong>Check user information:</strong>
+                <div class="required-command">
+                    <strong>Required command:</strong><br>
+                    <code>yum install -y vsftpd</code>
                 </div>
-                
-                <div class="command-hint">
-                    id alex
-                </div>
-                <p>Should show: <code>uid=1234(alex)</code></p>
-                
-                <div class="command-hint">
-                    getent passwd alex
-                </div>
-                <p>Should show user details</p>
-                
-                <div class="hint-box">
-                    <strong>Test the password:</strong>
-                </div>
-                
-                <div class="command-hint">
-                    su - alex
-                </div>
-                <p>Enter password <code>alex111</code> when prompted</p>
-                <p>Type <code>exit</code> to return to root</p>
 
                 <div class="concept">
-                    <h4>Verification Commands</h4>
-                    <p>After creating a user, always verify with these commands:</p>
+                    <h4>About vsftpd</h4>
+                    <p>vsftpd (Very Secure FTP Daemon) is the default FTP server on RHEL. It's known for its security features and performance. After installation, it needs to be configured and started.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Configure FTP Server
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's edit the vsftpd configuration file to enable anonymous access.</p>
+                
+                <div class="required-command">
+                    <strong>Required command:</strong><br>
+                    <code>vim /etc/vsftpd/vsftpd.conf</code>
+                </div>
+                
+                <p>Ensure the file contains this setting:</p>
+                
+                <div class="file-content">anonymous_enable=YES</div>
+                
+                <p>To save and exit vim:</p>
+                <ol>
+                    <li>Press <code>ESC</code> to ensure you're in command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to write and quit</li>
+                </ol>
+
+                <div class="concept">
+                    <h4>FTP Server Configuration</h4>
+                    <p>The main configuration file for vsftpd controls server behavior. Key settings include:</p>
                     <ul>
-                        <li><code>id username</code> - Shows UID, GID, and groups</li>
-                        <li><code>getent passwd username</code> - Checks user database entry</li>
-                        <li><code>su - username</code> - Tests password authentication</li>
-                        <li><code>cat /etc/passwd | grep username</code> - Alternative check</li>
+                        <li><code>anonymous_enable</code>: Allows anonymous logins</li>
+                        <li><code>local_enable</code>: Permits local users to log in</li>
+                        <li><code>write_enable</code>: Allows file uploads</li>
+                        <li><code>anon_root</code>: Sets the root directory for anonymous users</li>
                     </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Start and Enable FTP Service
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's start the FTP service and configure it to start at boot.</p>
+                
+                <div class="required-command">
+                    <strong>Required command:</strong><br>
+                    <code>systemctl start vsftpd</code>
+                </div>
+                
+                <div class="required-command">
+                    <strong>Required command:</strong><br>
+                    <code>systemctl enable vsftpd</code>
+                </div>
+                
+                <div class="command-hint">
+                    <strong>Optional verification:</strong><br>
+                    <code>systemctl status vsftpd</code>
+                </div>
+
+                <div class="concept">
+                    <h4>Service Management</h4>
+                    <p>System services are managed with systemctl. Key commands:</p>
+                    <ul>
+                        <li><code>systemctl start</code>: Starts a service</li>
+                        <li><code>systemctl stop</code>: Stops a service</li>
+                        <li><code>systemctl restart</code>: Restarts a service</li>
+                        <li><code>systemctl enable</code>: Enables at boot</li>
+                        <li><code>systemctl disable</code>: Disables at boot</li>
+                        <li><code>systemctl status</code>: Shows service status</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="concept">
+                <h4>FTP Server Concepts</h4>
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <strong>vsftpd</strong>
+                        Very Secure FTP Daemon is the default FTP server on RHEL, known for its security and performance.
+                    </div>
+                    <div class="concept-item">
+                        <strong>YUM Repositories</strong>
+                        Local repositories can be used when internet access is unavailable or for faster package installation.
+                    </div>
+                    <div class="concept-item">
+                        <strong>Anonymous FTP</strong>
+                        Allows users to download files without authentication. Typically uses <code>/var/ftp/pub</code> directory.
+                    </div>
+                    <div class="concept-item">
+                        <strong>Service Management</strong>
+                        <code>systemctl start</code> to start a service<br>
+                        <code>systemctl enable</code> to enable at boot<br>
+                        <code>systemctl status</code> to check status
+                    </div>
                 </div>
             </div>
             
             <div id="completion-message" class="completion-message" style="display: none;">
                 <h3>🎉 Lab Completed Successfully!</h3>
-                <p>All user management requirements have been met.</p>
-                <p>You can now proceed to the next lab.</p>
+                <p>All FTP server configuration requirements have been met.</p>
+                <p>Anonymous users can now download files from /var/ftp/pub</p>
             </div>
         </div>
         
         <div class="terminal-panel">
             <div class="terminal" id="terminal-output">
-                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 8: User Management</div>
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 9: FTP Server Configuration</div>
                 <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
                 <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
-                <div><span class="prompt">[root@station ~]#</span> Current step: Create the User</div>
-                <div><span class="prompt">[root@station ~]#</span> Type: <code>useradd -u 1234 alex</code></div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Configure Local YUM Repository</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>cd /etc/yum.repos.d/</code></div>
                 <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
             </div>
             <div class="command-line">
@@ -825,32 +920,40 @@
     
     // Available commands for tab completion
     const availableCommands = [
-        'useradd', 'passwd', 'id', 'getent', 'su', 'echo', 'cat', 'grep', 'exit', 'clear', 'help'
+        'vim', 'cat', 'cd', 'ls', 'yum', 'systemctl', 'clear', 'help'
     ];
     
     // Available file paths for tab completion
     const filePaths = {
-        '/etc/': ['passwd', 'shadow', 'group'],
+        '/etc/': ['yum.repos.d/', 'vsftpd/'],
+        '/etc/yum.repos.d/': ['local.repo', 'redhat.repo'],
+        '/etc/vsftpd/': ['vsftpd.conf', 'ftpusers']
     };
     
     // Track configuration state
     const configState = {
-        userCreated: false,
-        passwordSet: false,
-        userVerified: false
+        yumRepo: false,
+        yumCache: false,
+        ftpInstall: false,
+        ftpConfig: false,
+        ftpService: false
     };
     
     // Expected commands for each step
     const stepCommands = {
-        1: ['useradd -u 1234 alex'],
-        2: ['passwd alex', 'echo "alex111" | passwd --stdin alex'],
-        3: ['id alex', 'getent passwd alex', 'su - alex']
+        1: ['cd /etc/yum.repos.d/', 'cd /etc/yum.repos.d'],
+        2: ['vim /etc/yum.repos.d/local.repo'],
+        3: ['yum makecache'],
+        4: ['yum install -y vsftpd'],
+        5: ['vim /etc/vsftpd/vsftpd.conf'],
+        6: ['systemctl start vsftpd', 'systemctl enable vsftpd']
     };
     
-    // Simulated system state
-    let users = {
-        root: { uid: 0, password: '' },
-    };
+    // Simulated file contents
+    let localRepoContent = "# No local repository configured";
+    let vsftpdConfContent = `anonymous_enable=NO
+local_enable=YES
+write_enable=NO`;
     
     // Vim editor state
     let vimState = {
@@ -863,116 +966,115 @@
     };
     
     const commands = {
-        'useradd': (args) => {
-            if (args.length === 2 && args[0] === '-u' && args[1] === '1234 alex') {
-                users.alex = { uid: 1234, password: '' };
-                configState.userCreated = true;
-                updateRequirements();
-                completeStep(1);
-                return "User 'alex' created successfully with UID 1234";
-            } else if (args.length === 1 && args[0] === 'alex') {
-                // Without UID specification
-                users.alex = { uid: 1000, password: '' };
-                terminalOutput.innerHTML += `<div class="warning">User created but without specified UID 1234</div>`;
-                return "User 'alex' created successfully";
-            }
-            return "Usage: useradd [-u UID] username";
-        },
-        
-        'passwd': (args) => {
-            if (args.length === 1 && args[0] === 'alex') {
-                // Simulate interactive password change
-                if (configState.userCreated) {
-                    users.alex.password = 'alex111';
-                    configState.passwordSet = true;
-                    updateRequirements();
-                    completeStep(2);
-                    return "Changing password for user alex.\nNew password: \nRetype new password: \npasswd: all authentication tokens updated successfully.";
+        'cd': (args) => {
+            if (args.length === 0 || args[0] === "~") {
+                return ""; // Stay in home directory
+            } else if (args[0] === "/etc/yum.repos.d" || 
+                       args[0] === "/etc/yum.repos.d/") {
+                if (currentStep === 1 || currentStep > 1) {
+                    completeStep(1);
+                    return ""; // Successfully changed directory
                 } else {
-                    return "passwd: user 'alex' does not exist";
-                }
-            } else if (args.length === 2 && args[0] === '--stdin' && args[1] === 'alex') {
-                // Non-interactive password change
-                if (configState.userCreated) {
-                    users.alex.password = 'alex111';
-                    configState.passwordSet = true;
-                    updateRequirements();
-                    completeStep(2);
-                    return "Changing password for user alex.\npasswd: all authentication tokens updated successfully.";
-                } else {
-                    return "passwd: user 'alex' does not exist";
+                    return "Please complete the previous steps first.";
                 }
             }
-            return "Usage: passwd [--stdin] username";
+            return `bash: cd: ${args[0]}: No such file or directory`;
         },
         
-        'id': (args) => {
-            if (args.length === 1 && args[0] === 'alex') {
-                if (users.alex) {
-                    return `uid=1234(alex) gid=1234(alex) groups=1234(alex)`;
-                } else {
-                    return `id: 'alex': no such user`;
-                }
+        'ls': (args) => {
+            if (args.length === 0 || args[0] === "/etc/yum.repos.d") {
+                return "local.repo\nredhat.repo";
+            } else if (args[0] === "/etc/vsftpd") {
+                return "vsftpd.conf\nftpusers";
             }
-            return "Usage: id username";
-        },
-        
-        'getent': (args) => {
-            if (args.length === 2 && args[0] === 'passwd' && args[1] === 'alex') {
-                if (users.alex) {
-                    return `alex:x:1234:1234::/home/alex:/bin/bash`;
-                } else {
-                    return "";
-                }
-            }
-            return "Usage: getent passwd username";
-        },
-        
-        'su': (args) => {
-            if (args.length === 2 && args[0] === '-' && args[1] === 'alex') {
-                if (!users.alex) {
-                    return "su: user alex does not exist";
-                } else if (users.alex.password !== 'alex111') {
-                    return "su: Authentication failure";
-                } else {
-                    configState.userVerified = true;
-                    updateRequirements();
-                    completeStep(3);
-                    return `[alex@station ~]$ `;
-                }
-            }
-            return "Usage: su - username";
-        },
-        
-        'exit': () => {
-            return "[root@station ~]# ";
-        },
-        
-        'echo': (args) => {
-            // This is handled in the pipe command processing
-            return args.join(' ');
+            return `ls: cannot access '${args[0]}': No such file or directory`;
         },
         
         'cat': (args) => {
-            if (args[0] === "/etc/passwd") {
-                let content = "root:x:0:0:root:/root:/bin/bash\n";
-                if (users.alex) {
-                    content += "alex:x:1234:1234::/home/alex:/bin/bash\n";
-                }
-                return content;
+            if (args[0] === "/etc/yum.repos.d/local.repo") {
+                return localRepoContent;
+            } else if (args[0] === "/etc/vsftpd/vsftpd.conf") {
+                return vsftpdConfContent;
             }
             return `cat: ${args[0]}: No such file or directory`;
         },
         
-        'grep': (args) => {
-            if (args[0] === "alex" && args[1] === "/etc/passwd") {
-                if (users.alex) {
-                    return "alex:x:1234:1234::/home/alex:/bin/bash";
+        'vim': (args) => {
+            if (args.length === 0) {
+                return "vim: Please specify a file to edit";
+            }
+            
+            const file = args[0];
+            let content = '';
+            
+            if (file === "/etc/yum.repos.d/local.repo") {
+                content = localRepoContent;
+                if (currentStep === 2 || currentStep > 2) {
+                    const result = openVimEditor(file, content, 'localrepo');
+                    return result;
                 } else {
-                    return "";
+                    return "Please complete the previous steps first.";
+                }
+            } else if (file === "/etc/vsftpd/vsftpd.conf") {
+                content = vsftpdConfContent;
+                if (currentStep === 5 || currentStep > 5) {
+                    const result = openVimEditor(file, content, 'vsftpd');
+                    return result;
+                } else {
+                    return "Please complete the previous steps first.";
                 }
             }
-            return "Usage: grep pattern file";
+            
+            return `vim: cannot open ${file} for writing: No such file or directory`;
+        },
+        
+        'yum': (args) => {
+            if (args[0] === "makecache") {
+                if (currentStep === 3 || currentStep > 3) {
+                    configState.yumCache = true;
+                    updateRequirements();
+                    completeStep(3);
+                    return "Metadata Cache Created";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "install" && args.includes("vsftpd")) {
+                if (currentStep === 4 || currentStep > 4) {
+                    configState.ftpInstall = true;
+                    updateRequirements();
+                    completeStep(4);
+                    return "Complete!\nInstalled:\n  vsftpd.x86_64 0:3.0.2-28.el7";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `Unknown yum command '${args.join(' ')}'`;
+        },
+        
+        'systemctl': (args) => {
+            if (args[0] === "start" && args[1] === "vsftpd") {
+                if (currentStep === 6 || currentStep > 6) {
+                    configState.ftpService = true;
+                    updateRequirements();
+                    return "";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "enable" && args[1] === "vsftpd") {
+                if (currentStep === 6 || currentStep > 6) {
+                    configState.ftpService = true;
+                    updateRequirements();
+                    completeStep(6);
+                    return "Created symlink from /etc/systemd/system/multi-user.target.wants/vsftpd.service to /usr/lib/systemd/system/vsftpd.service.";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "status" && args[1] === "vsftpd") {
+                return configState.ftpService ? 
+                    "● vsftpd.service - Vsftpd ftp daemon\n   Loaded: loaded (/usr/lib/systemd/system/vsftpd.service; enabled; vendor preset: disabled)\n   Active: active (running) since Wed 2023-05-10 14:32:45 EDT; 5s ago" :
+                    "● vsftpd.service - Vsftpd ftp daemon\n   Loaded: loaded (/usr/lib/systemd/system/vsftpd.service; disabled; vendor preset: disabled)\n   Active: inactive (dead)";
+            }
+            return `Unknown systemctl command '${args.join(' ')}'`;
         },
         
         'clear': () => {
@@ -981,56 +1083,156 @@
         },
         
         'help': () => {
-            return "Available commands: useradd, passwd, id, getent, su, echo, cat, grep, exit, clear, help";
+            return "Available commands: vim, cat, cd, ls, yum, systemctl, clear, help";
         }
     };
     
-    // Function to handle pipe commands
-    function handlePipeCommand(commandText) {
-        const parts = commandText.split('|').map(part => part.trim());
+    // Function to open the Vim editor
+    function openVimEditor(filename, content, fileType) {
+        vimState.file = filename;
+        vimState.content = content;
+        vimState.fileType = fileType;
+        vimState.mode = 'command';
+        vimState.isEditing = true;
         
-        if (parts.length === 2 && parts[0].startsWith('echo') && parts[1].startsWith('passwd')) {
-            const echoParts = parts[0].split(' ');
-            const passwdParts = parts[1].split(' ');
-            
-            if (echoParts.length >= 2 && passwdParts[0] === 'passwd' && 
-                passwdParts[1] === '--stdin' && passwdParts[2] === 'alex') {
-                
-                const password = echoParts[1].replace(/"/g, '');
-                if (password === 'alex111') {
-                    if (configState.userCreated) {
-                        users.alex.password = 'alex111';
-                        configState.passwordSet = true;
-                        updateRequirements();
-                        completeStep(2);
-                        return "Changing password for user alex.\npasswd: all authentication tokens updated successfully.";
-                    } else {
-                        return "passwd: user 'alex' does not exist";
-                    }
-                } else {
-                    return "passwd: Authentication token manipulation error";
-                }
-            }
+        // Set the filename in the editor
+        vimFilename.textContent = filename;
+        
+        // Set the content in the textarea
+        vimTextarea.value = content;
+        
+        // Set up instructions based on file type
+        if (fileType === 'localrepo') {
+            vimInstructionsContent.innerHTML = `
+                <p>Edit the local repository configuration file.</p>
+                <p>Add these settings to the file:</p>
+                <div class="file-content">[local]
+name=local.repo
+baseurl=file:///mnt
+enabled=1
+gpgcheck=0</div>
+                <p><strong>Vim Commands:</strong></p>
+                <ul>
+                    <li>Press <code>i</code> to enter Insert mode</li>
+                    <li>Type the required configuration</li>
+                    <li>Press <code>ESC</code> to return to Command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
+                </ul>
+            `;
+        } else if (fileType === 'vsftpd') {
+            vimInstructionsContent.innerHTML = `
+                <p>Edit the vsftpd configuration file.</p>
+                <p>Ensure the file contains this setting:</p>
+                <div class="file-content">anonymous_enable=YES</div>
+                <p><strong>Vim Commands:</strong></p>
+                <ul>
+                    <li>Press <code>i</code> to enter Insert mode</li>
+                    <li>Type the required configuration</li>
+                    <li>Press <code>ESC</code> to return to Command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
+                </ul>
+            `;
         }
         
-        return `Command not supported: ${commandText}`;
+        // Show the Vim overlay
+        vimOverlay.style.display = 'flex';
+        
+        // Start in command mode
+        vimState.mode = 'command';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        
+        // Focus the vim input (command line)
+        setTimeout(() => {
+            vimInput.focus();
+            updateVimCursorPosition();
+        }, 100);
+        
+        return `Opening ${filename} in Vim editor...`;
+    }
+    
+    // Function to handle Vim commands
+    function handleVimCommand(command) {
+        if (command === 'w' || command === 'write') {
+            // Save the file
+            if (vimState.file === "/etc/yum.repos.d/local.repo") {
+                localRepoContent = vimTextarea.value;
+                if (localRepoContent.includes("[local]") && 
+                    localRepoContent.includes("baseurl=file:///mnt") &&
+                    localRepoContent.includes("enabled=1") &&
+                    localRepoContent.includes("gpgcheck=0")) {
+                    configState.yumRepo = true;
+                    updateRequirements();
+                    completeStep(2);
+                }
+            } else if (vimState.file === "/etc/vsftpd/vsftpd.conf") {
+                vsftpdConfContent = vimTextarea.value;
+                if (vsftpdConfContent.includes("anonymous_enable=YES")) {
+                    configState.ftpConfig = true;
+                    updateRequirements();
+                }
+                completeStep(5);
+            }
+            return "File saved";
+        } else if (command === 'q' || command === 'quit') {
+            // Close the editor
+            closeVimEditor();
+            return "";
+        } else if (command === 'wq') {
+            // Save and quit
+            const saveMsg = handleVimCommand('w');
+            closeVimEditor();
+            return saveMsg + " and exiting";
+        } else if (command === 'q!') {
+            // Quit without saving
+            closeVimEditor();
+            return "Exiting without saving";
+        }
+        return `Not an editor command: ${command}`;
+    }
+    
+    // Function to close the Vim editor
+    function closeVimEditor() {
+        vimOverlay.style.display = 'none';
+        vimState.isEditing = false;
+        commandInput.focus();
+    }
+    
+    // Function to update Vim cursor position display
+    function updateVimCursorPosition() {
+        const text = vimTextarea.value;
+        const cursorPos = vimTextarea.selectionStart;
+        const lines = text.substring(0, cursorPos).split('\n');
+        const line = lines.length;
+        const column = lines[lines.length - 1].length + 1;
+        vimCursorPosition.textContent = `${line},${column}`;
     }
     
     // Function to update requirements display
     function updateRequirements() {
-        if (configState.userCreated) {
-            document.getElementById('req-user-created').classList.add('completed');
-            document.getElementById('req-user-created').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.yumRepo) {
+            document.getElementById('req-yum-repo').classList.add('completed');
+            document.getElementById('req-yum-repo').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.passwordSet) {
-            document.getElementById('req-password-set').classList.add('completed');
-            document.getElementById('req-password-set').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.yumCache) {
+            document.getElementById('req-yum-cache').classList.add('completed');
+            document.getElementById('req-yum-cache').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.userVerified) {
-            document.getElementById('req-user-verify').classList.add('completed');
-            document.getElementById('req-user-verify').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.ftpInstall) {
+            document.getElementById('req-ftp-install').classList.add('completed');
+            document.getElementById('req-ftp-install').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.ftpConfig) {
+            document.getElementById('req-ftp-config').classList.add('completed');
+            document.getElementById('req-ftp-config').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.ftpService) {
+            document.getElementById('req-ftp-service').classList.add('completed');
+            document.getElementById('req-ftp-service').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
         // Update progress
@@ -1042,6 +1244,8 @@
         // Show completion message if all requirements are met
         if (completedCount === Object.keys(configState).length) {
             completionMessage.style.display = 'block';
+            addTerminalOutput(`<div class="success">🎉 All FTP server configuration requirements completed successfully!</div>`);
+            addTerminalOutput(`<div class="success">Anonymous users can now download files from /var/ftp/pub</div>`);
         }
     }
     
@@ -1090,15 +1294,6 @@
         
         // Display the command in terminal
         addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
-        
-        // Check if it's a pipe command
-        if (trimmedInput.includes('|')) {
-            const result = handlePipeCommand(trimmedInput);
-            if (result) {
-                addTerminalOutput(result);
-            }
-            return;
-        }
         
         // Parse command and arguments
         const parts = trimmedInput.split(' ');
@@ -1296,9 +1491,94 @@
         }
     });
     
+    // Vim editor event listeners
+    vimCloseBtn.addEventListener('click', () => {
+        closeVimEditor();
+    });
+    
+    vimEscButton.addEventListener('click', () => {
+        vimState.mode = 'command';
+        vimModeIndicator.textContent = 'COMMAND MODE';
+        vimModeIndicator.className = 'vim-mode-indicator command-mode';
+        vimTextarea.blur();
+        vimInput.focus();
+        updateVimCursorPosition();
+    });
+    
+    vimInsertButton.addEventListener('click', () => {
+        vimState.mode = 'insert';
+        vimModeIndicator.textContent = 'INSERT MODE';
+        vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+        vimInput.blur();
+        vimTextarea.focus();
+        updateVimCursorPosition();
+    });
+    
+    // Handle vim mode switching with keyboard
+    vimTextarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            vimState.mode = 'command';
+            vimModeIndicator.textContent = 'COMMAND MODE';
+            vimModeIndicator.className = 'vim-mode-indicator command-mode';
+            vimTextarea.blur();
+            vimInput.focus();
+        }
+        updateVimCursorPosition();
+    });
+    
+    // Handle vim command input
+    vimInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const command = vimInput.value.trim();
+            if (command === 'i') {
+                // Switch to insert mode
+                vimState.mode = 'insert';
+                vimModeIndicator.textContent = 'INSERT MODE';
+                vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+                vimInput.blur();
+                vimTextarea.focus();
+                vimInput.value = '';
+            } else if (command.startsWith(':')) {
+                // Handle colon commands
+                const actualCommand = command.substring(1);
+                const result = handleVimCommand(actualCommand);
+                if (result) {
+                    addTerminalOutput(result);
+                }
+                vimInput.value = '';
+            } else if (command) {
+                // Other vim commands
+                vimInput.value = '';
+            }
+        } else if (e.key === 'i' && vimInput.value === '' && vimState.mode === 'command') {
+            // Quick insert mode switch
+            e.preventDefault();
+            vimState.mode = 'insert';
+            vimModeIndicator.textContent = 'INSERT MODE';
+            vimModeIndicator.className = 'vim-mode-indicator insert-mode';
+            vimInput.blur();
+            vimTextarea.focus();
+        }
+    });
+    
+    vimTextarea.addEventListener('click', () => {
+        if (vimState.mode === 'command') {
+            // In command mode, clicking textarea should focus command input instead
+            vimInput.focus();
+        } else {
+            updateVimCursorPosition();
+        }
+    });
+    
+    vimTextarea.addEventListener('keyup', () => {
+        if (vimState.mode === 'insert') {
+            updateVimCursorPosition();
+        }
+    });
+    
     // Initialize the lab
     updateRequirements();
 </script>
 </body>
 </html>
-

@@ -653,13 +653,13 @@
             <div class="guide-step current" id="step1">
                 <h3>
                     <span class="step-number">1</span>
-                    Install HTTP Server
+                    Install and Enable HTTP Server
                     <span class="step-status status-current">Current Step</span>
                 </h3>
-                <p>First, let's install the Apache HTTP server package.</p>
+                <p>First, install the Apache HTTP server package and enable it to start at boot.</p>
                 
-                <div class="hint-box">
-                    <strong>Type this command exactly:</strong>
+                <div class="required-command">
+                    <strong>Required Command:</strong>
                 </div>
                 
                 <div class="command-hint">
@@ -667,6 +667,10 @@
                 </div>
                 
                 <p>Once the installation is complete, enable the service to start at boot:</p>
+                
+                <div class="required-command">
+                    <strong>Required Command:</strong>
+                </div>
                 
                 <div class="command-hint">
                     systemctl enable httpd
@@ -690,6 +694,10 @@
                     <strong>Navigate to the web root directory:</strong>
                 </div>
                 
+                <div class="required-command">
+                    <strong>Required Command:</strong>
+                </div>
+                
                 <div class="command-hint">
                     cd /var/www/html
                 </div>
@@ -698,12 +706,20 @@
                     <strong>Download the example page:</strong>
                 </div>
                 
+                <div class="required-command">
+                    <strong>Required Command:</strong>
+                </div>
+                
                 <div class="command-hint">
-                    wget http://ip/dir/example.html
+                    wget http://172.24.40.1/dir/example.html
                 </div>
                 
                 <div class="hint-box">
                     <strong>Create index.html from the example:</strong>
+                </div>
+                
+                <div class="required-command">
+                    <strong>Required Command:</strong>
                 </div>
                 
                 <div class="command-hint">
@@ -726,6 +742,10 @@
                 
                 <div class="hint-box">
                     <strong>Edit the Apache configuration file:</strong>
+                </div>
+                
+                <div class="required-command">
+                    <strong>Required Command:</strong>
                 </div>
                 
                 <div class="command-hint">
@@ -770,6 +790,10 @@
                     <strong>Start the HTTP service:</strong>
                 </div>
                 
+                <div class="required-command">
+                    <strong>Required Command:</strong>
+                </div>
+                
                 <div class="command-hint">
                     systemctl start httpd
                 </div>
@@ -778,12 +802,20 @@
                     <strong>Restart the HTTP service (after configuration changes):</strong>
                 </div>
                 
+                <div class="required-command">
+                    <strong>Required Command:</strong>
+                </div>
+                
                 <div class="command-hint">
                     systemctl restart httpd
                 </div>
                 
                 <div class="hint-box">
                     <strong>Verify the service is running:</strong>
+                </div>
+                
+                <div class="required-command">
+                    <strong>Required Command:</strong>
                 </div>
                 
                 <div class="command-hint">
@@ -809,7 +841,7 @@
                 <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 10: HTTP Server Configuration</div>
                 <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
                 <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
-                <div><span class="prompt">[root@station ~]#</span> Current step: Install HTTP Server</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Install and Enable HTTP Server</div>
                 <div><span class="prompt">[root@station ~]#</span> Type: <code>yum install -y httpd</code></div>
                 <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
             </div>
@@ -892,10 +924,10 @@
     // Available file paths for tab completion
     const filePaths = {
         '/etc/': ['httpd/', 'resolv.conf'],
-        '/etc/httpd/': ['conf/'],
+        '/etc/httpd/': ['conf/', 'conf.d/'],
         '/etc/httpd/conf/': ['httpd.conf'],
         '/var/': ['www/'],
-        '/var/www/': ['html/'],
+        '/var/www/': ['html/', 'cgi-bin/'],
         '/var/www/html/': ['example.html', 'index.html']
     };
     
@@ -909,24 +941,163 @@
         restart: false
     };
     
-    // Expected commands for each step
-    const stepCommands = {
-        1: ['yum install -y httpd', 'systemctl enable httpd'],
-        2: ['cd /var/www/html', 'wget http://ip/dir/example.html', 'cp example.html index.html'],
-        3: ['vim /etc/httpd/conf/httpd.conf'],
-        4: ['systemctl start httpd', 'systemctl restart httpd', 'systemctl status httpd']
+    // Track which commands have been executed for current step
+    const stepCommandTracker = {
+        1: { 'yum install -y httpd': false, 'systemctl enable httpd': false },
+        2: { 'cd /var/www/html': false, 'wget http://172.24.40.1/dir/example.html': false, 'cp example.html index.html': false },
+        3: { 'vim /etc/httpd/conf/httpd.conf': false },
+        4: { 'systemctl start httpd': false, 'systemctl restart httpd': false, 'systemctl status httpd': false }
     };
     
     // Simulated file contents
-    let httpdConfContent = "# Default Apache configuration";
-    let webContent = "";
+    let httpdConfContent = `#
+# This is the main Apache HTTP server configuration file.  It contains the
+# configuration directives that give the server its instructions.
+# See <URL:http://httpd.apache.org/docs/2.4/> for detailed information.
+# In particular, see 
+# <URL:http://httpd.apache.org/docs/2.4/mod/directives.html>
+# for a discussion of each configuration directive.
+#
+# See the httpd.conf(5) man page for more information.
+#
+
+#
+# Listen: Allows you to bind Apache to specific IP addresses and/or
+# ports, instead of the default. See also the <VirtualHost>
+# directive.
+#
+# Change this to Listen on specific IP addresses as shown below to 
+# prevent Apache from glomming onto all bound IP addresses.
+#
+#Listen 12.34.56.78:80
+Listen 80
+
+#
+# Dynamic Shared Object (DSO) Support
+#
+# To be able to use the functionality of a module which was built as a DSO you
+# have to place corresponding \`LoadModule' lines at this location so the
+# directives contained in it are actually available _before_ they are used.
+# Statically compiled modules (those listed by \`httpd -l') do not need
+# to be loaded here.
+#
+# Example:
+# LoadModule foo_module modules/mod_foo.so
+#
+Include conf.modules.d/*.conf
+
+#
+# If you wish httpd to run as a different user or group, you must run
+# httpd as root initially and it will switch.  
+#
+# User/Group: The name (or #number) of the user/group to run httpd as.
+# It is usually good practice to create a dedicated user and group for
+# running httpd, as with most system services.
+#
+User apache
+Group apache
+
+# 'Main' server configuration
+#
+# The directives in this section set up the values used by the 'main'
+# server, which responds to any requests that aren't handled by a
+# <VirtualHost> definition.  These values also provide defaults for
+# any <VirtualHost> containers you may define later in the file.
+#
+# All of these directives may appear inside <VirtualHost> containers,
+# in which case these default settings will be overridden for the
+# virtual host being defined.
+#
+
+#
+# ServerAdmin: Your address, where problems with the server should be
+# e-mailed.  This address appears on some server-generated pages, such
+# as error documents.  e.g. admin@your-domain.com
+#
+ServerAdmin root@localhost
+
+#
+# ServerName gives the name and port that the server uses to identify itself.
+# This can often be determined automatically, but we recommend you specify
+# it explicitly to prevent problems during startup.
+#
+# If your host doesn't have a registered DNS name, enter its IP address here.
+#
+#ServerName www.example.com:80
+
+#
+# Deny access to the entirety of your server's filesystem. You must
+# explicitly permit access to web content directories in other 
+# <Directory> blocks below.
+#
+<Directory />
+    AllowOverride none
+    Require all denied
+</Directory>
+
+#
+# Note that from this point forward you must specifically allow
+# particular features to be enabled - so if something's not working as
+# you might expect, make sure that you have specifically enabled it
+# below.
+#
+
+#
+# DocumentRoot: The directory out of which you will serve your
+# documents. By default, all requests are taken from this directory, but
+# symbolic links and aliases may be used to point to other locations.
+#
+DocumentRoot "/var/www/html"
+
+#
+# Relax access to content within /var/www.
+#
+<Directory "/var/www">
+    AllowOverride None
+    # Allow open access:
+    Require all granted
+</Directory>
+
+# Further relax access to the default document root:
+<Directory "/var/www/html">
+    #
+    # Possible values for the Options directive are "None", "All",
+    # or any combination of:
+    #   Indexes Includes FollowSymLinks SymLinksifOwnerMatch ExecCGI MultiViews
+    #
+    # Note that "MultiViews" must be named *explicitly* --- "Options All"
+    # doesn't give it to you.
+    #
+    # The Options directive is both complicated and important.  Please see
+    # http://httpd.apache.org/docs/2.4/mod/core.html#options
+    # for more information.
+    #
+    Options Indexes FollowSymLinks
+
+    #
+    # AllowOverride controls what directives may be placed in .htaccess files.
+    # It can be "All", "None", or any combination of the keywords:
+    #   Options FileInfo AuthConfig Limit
+    #
+    AllowOverride None
+
+    #
+    # Controls who can get stuff from this server.
+    #
+    Require all granted
+</Directory>
+
+# Additional configuration files
+IncludeOptional conf.d/*.conf`;
+    
+    let webContent = "<!DOCTYPE html>\n<html>\n<head>\n    <title>Example Page</title>\n</head>\n<body>\n    <h1>Welcome to RHCSA Lab 10</h1>\n    <p>This is the example page for HTTP server configuration.</p>\n</body>\n</html>";
     
     // Vim editor state
     let vimState = {
         file: '',
         content: '',
         cursorPos: 0,
-        mode: 'command', // 'command' or 'insert'
+        mode: 'command',
         isEditing: false,
         fileType: ''
     };
@@ -934,10 +1105,16 @@
     const commands = {
         'yum': (args) => {
             if (args[0] === "install" && args[1] === "-y" && args[2] === "httpd") {
-                if (currentStep === 1 || currentStep > 1) {
+                if (currentStep === 1) {
+                    stepCommandTracker[1]['yum install -y httpd'] = true;
                     configState.install = true;
                     updateRequirements();
+                    if (allStepCommandsDone(1)) completeStep(1);
                     return "Installing httpd...\nComplete!";
+                } else if (currentStep > 1) {
+                    configState.install = true;
+                    updateRequirements();
+                    return "httpd is already installed.";
                 } else {
                     return "Please complete the previous steps first.";
                 }
@@ -948,40 +1125,49 @@
         'systemctl': (args) => {
             if (args[0] === "enable" && args[1] === "httpd") {
                 if (currentStep === 1 || currentStep > 1) {
+                    stepCommandTracker[1]['systemctl enable httpd'] = true;
                     configState.enable = true;
                     updateRequirements();
-                    completeStep(1);
-                    return "Created symlink...";
+                    if (currentStep === 1 && allStepCommandsDone(1)) completeStep(1);
+                    return "Created symlink /etc/systemd/system/multi-user.target.wants/httpd.service → /usr/lib/systemd/system/httpd.service.";
                 } else {
                     return "Please complete the previous steps first.";
                 }
             } else if (args[0] === "start" && args[1] === "httpd") {
                 if (currentStep === 4 || currentStep > 4) {
-                    return "Starting httpd...";
+                    stepCommandTracker[4]['systemctl start httpd'] = true;
+                    return "Starting httpd (via systemctl): httpd.service.";
                 } else {
                     return "Please complete the previous steps first.";
                 }
             } else if (args[0] === "restart" && args[1] === "httpd") {
                 if (currentStep === 4 || currentStep > 4) {
+                    stepCommandTracker[4]['systemctl restart httpd'] = true;
                     configState.restart = true;
                     updateRequirements();
-                    completeStep(4);
-                    return "Restarting httpd...";
+                    if (allStepCommandsDone(4)) completeStep(4);
+                    return "Restarting httpd (via systemctl): httpd.service.";
                 } else {
                     return "Please complete the previous steps first.";
                 }
             } else if (args[0] === "status" && args[1] === "httpd") {
-                return "● httpd.service - The Apache HTTP Server\n   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)\n   Active: active (running)";
+                if (currentStep === 4 || currentStep > 4) {
+                    stepCommandTracker[4]['systemctl status httpd'] = true;
+                    if (currentStep === 4 && allStepCommandsDone(4)) completeStep(4);
+                }
+                return "● httpd.service - The Apache HTTP Server\n   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)\n   Active: active (running) since Tue 2023-10-10 14:30:00 UTC; 1min ago\n     Docs: man:httpd(8)\n           man:apachectl(8)\n Main PID: 1234 (httpd)\n   Status: \"Total requests: 0; Current requests/sec: 0; Current traffic:   0 B/sec\"\n    Tasks: 213 (limit: 4915)\n   Memory: 25.3M\n   CGroup: /system.slice/httpd.service\n           ├─1234 /usr/sbin/httpd -DFOREGROUND\n           ├─1235 /usr/sbin/httpd -DFOREGROUND\n           ├─1236 /usr/sbin/httpd -DFOREGROUND\n           ├─1237 /usr/sbin/httpd -DFOREGROUND\n           └─1238 /usr/sbin/httpd -DFOREGROUND";
             }
             return `Unknown operation '${args.join(' ')}'`;
         },
         
         'cd': (args) => {
             if (args.length === 0 || args[0] === "~") {
-                return ""; // Stay in home directory
+                return "";
             } else if (args[0] === "/var/www/html") {
                 if (currentStep === 2 || currentStep > 2) {
-                    return ""; // Successfully changed directory
+                    stepCommandTracker[2]['cd /var/www/html'] = true;
+                    if (currentStep === 2 && allStepCommandsDone(2)) completeStep(2);
+                    return "";
                 } else {
                     return "Please complete the previous steps first.";
                 }
@@ -990,32 +1176,46 @@
         },
         
         'ls': (args) => {
-            if (args.length === 0 || args[0] === "/var/www/html") {
-                return "example.html\nindex.html";
+            if (args.length === 0) {
+                return "Desktop  Documents  Downloads  Music  Pictures  Public  Templates  Videos";
+            } else if (args[0] === "/var/www/html") {
+                if (configState.download) {
+                    return "example.html  index.html";
+                } else {
+                    return "example.html";
+                }
+            } else if (args[0] === "-l") {
+                if (configState.download) {
+                    return "-rw-r--r--. 1 root root  234 Oct 10 14:30 example.html\n-rw-r--r--. 1 root root  234 Oct 10 14:30 index.html";
+                } else if (configState.index) {
+                    return "-rw-r--r--. 1 root root  234 Oct 10 14:30 index.html";
+                }
             }
             return `ls: cannot access '${args[0]}': No such file or directory`;
         },
         
         'wget': (args) => {
-            if (args[0] === "http://ip/dir/example.html") {
+            if (args[0] === "http://172.24.40.1/dir/example.html" || args[0] === "http://ip/dir/example.html") {
                 if (currentStep === 2 || currentStep > 2) {
-                    webContent = "<html><body><h1>Example Page</h1></body></html>";
+                    stepCommandTracker[2]['wget http://172.24.40.1/dir/example.html'] = true;
                     configState.download = true;
                     updateRequirements();
-                    return "Saving to: 'example.html'";
+                    if (currentStep === 2 && allStepCommandsDone(2)) completeStep(2);
+                    return "2023-10-10 14:30:00 (1.23 MB/s) - 'example.html' saved [234/234]";
                 } else {
                     return "Please complete the previous steps first.";
                 }
             }
-            return `wget: unable to resolve host address '${args[0]}'`;
+            return `wget: unable to resolve host address`;
         },
         
         'cp': (args) => {
             if (args[0] === "example.html" && args[1] === "index.html") {
                 if (currentStep === 2 || currentStep > 2) {
+                    stepCommandTracker[2]['cp example.html index.html'] = true;
                     configState.index = true;
                     updateRequirements();
-                    completeStep(2);
+                    if (currentStep === 2 && allStepCommandsDone(2)) completeStep(2);
                     return "";
                 } else {
                     return "Please complete the previous steps first.";
@@ -1027,6 +1227,8 @@
         'cat': (args) => {
             if (args[0] === "/var/www/html/index.html" || args[0] === "/var/www/html/example.html") {
                 return webContent;
+            } else if (args[0] === "/etc/httpd/conf/httpd.conf") {
+                return httpdConfContent;
             }
             return `cat: ${args[0]}: No such file or directory`;
         },
@@ -1042,11 +1244,15 @@
             if (file === "/etc/httpd/conf/httpd.conf") {
                 content = httpdConfContent;
                 if (currentStep === 3 || currentStep > 3) {
+                    stepCommandTracker[3]['vim /etc/httpd/conf/httpd.conf'] = true;
+                    if (currentStep === 3) completeStep(3);
                     const result = openVimEditor(file, content, 'httpd');
                     return result;
                 } else {
                     return "Please complete the previous steps first.";
                 }
+            } else if (file === "local.repo") {
+                return "vim: cannot open local.repo for writing: No such file or directory";
             }
             
             return `vim: cannot open ${file} for writing: No such file or directory`;
@@ -1054,6 +1260,7 @@
         
         'clear': () => {
             terminalOutput.innerHTML = '';
+            addTerminalOutput('<span class="prompt">[root@station ~]#</span> Terminal cleared');
             return '';
         },
         
@@ -1061,6 +1268,15 @@
             return "Available commands: yum, systemctl, cd, ls, wget, cp, vim, cat, clear, help";
         }
     };
+    
+    // Helper function to check if all commands for a step are done
+    function allStepCommandsDone(step) {
+        const tracker = stepCommandTracker[step];
+        for (const cmd in tracker) {
+            if (!tracker[cmd]) return false;
+        }
+        return true;
+    }
     
     // Function to open the Vim editor
     function openVimEditor(filename, content, fileType) {
@@ -1070,13 +1286,9 @@
         vimState.mode = 'command';
         vimState.isEditing = true;
         
-        // Set the filename in the editor
         vimFilename.textContent = filename;
-        
-        // Set the content in the textarea
         vimTextarea.value = content;
         
-        // Set up instructions based on file type
         if (fileType === 'httpd') {
             vimInstructionsContent.innerHTML = `
                 <p>Edit the Apache configuration file to set up a virtual host.</p>
@@ -1093,18 +1305,22 @@
                     <li>Press <code>ESC</code> to return to Command mode</li>
                     <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
                 </ul>
+                <p><strong>Steps:</strong></p>
+                <ol>
+                    <li>Press <code>G</code> to go to the end of the file</li>
+                    <li>Press <code>i</code> to enter Insert mode</li>
+                    <li>Type the virtual host configuration</li>
+                    <li>Press <code>ESC</code> to return to Command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code></li>
+                </ol>
             `;
         }
         
-        // Show the Vim overlay
         vimOverlay.style.display = 'flex';
-        
-        // Start in command mode
         vimState.mode = 'command';
         vimModeIndicator.textContent = 'COMMAND MODE';
         vimModeIndicator.className = 'vim-mode-indicator command-mode';
         
-        // Focus the vim input (command line)
         setTimeout(() => {
             vimInput.focus();
             updateVimCursorPosition();
@@ -1116,7 +1332,6 @@
     // Function to handle Vim commands
     function handleVimCommand(command) {
         if (command === 'w' || command === 'write') {
-            // Save the file
             if (vimState.file === "/etc/httpd/conf/httpd.conf") {
                 httpdConfContent = vimTextarea.value;
                 if (httpdConfContent.includes("NameVirtualHost 172.24.40.40:80") && 
@@ -1125,25 +1340,21 @@
                     httpdConfContent.includes("ServerName station.domain40.example.com")) {
                     configState.vhost = true;
                     updateRequirements();
-                    completeStep(3);
                 }
                 return "File saved";
-            } else if (command === 'q' || command === 'quit') {
-                // Close the editor
-                closeVimEditor();
-                return "";
-            } else if (command === 'wq') {
-                // Save and quit
-                const saveMsg = handleVimCommand('w');
-                closeVimEditor();
-                return saveMsg + " and exiting";
-            } else if (command === 'q!') {
-                // Quit without saving
-                closeVimEditor();
-                return "Exiting without saving";
             }
-            return `Not an editor command: ${command}`;
+        } else if (command === 'q' || command === 'quit') {
+            closeVimEditor();
+            return "";
+        } else if (command === 'wq') {
+            const saveMsg = handleVimCommand('w');
+            closeVimEditor();
+            return saveMsg + " and exiting";
+        } else if (command === 'q!') {
+            closeVimEditor();
+            return "Exiting without saving";
         }
+        return `Not an editor command: ${command}`;
     }
     
     // Function to close the Vim editor
@@ -1195,13 +1406,11 @@
             document.getElementById('req-restart').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        // Update progress
         const completedCount = Object.values(configState).filter(v => v).length;
         const progressPercent = (completedCount / Object.keys(configState).length) * 100;
         progressFill.style.width = `${progressPercent}%`;
         progressText.textContent = `${Math.round(progressPercent)}% Complete`;
         
-        // Show completion message if all requirements are met
         if (completedCount === Object.keys(configState).length) {
             completionMessage.style.display = 'block';
         }
@@ -1222,12 +1431,15 @@
                 steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
                 steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
                 
-                // Update terminal with next step info
                 addTerminalOutput(`[root@station ~]# Step ${step} completed. Moving to step ${currentStep}.`);
                 
-                // Show the command for the next step if available
-                if (stepCommands[currentStep]) {
-                    addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep][0]}`);
+                // Show the first command for the next step
+                if (currentStep === 2) {
+                    addTerminalOutput(`[root@station ~]# Next: cd /var/www/html`);
+                } else if (currentStep === 3) {
+                    addTerminalOutput(`[root@station ~]# Next: vim /etc/httpd/conf/httpd.conf`);
+                } else if (currentStep === 4) {
+                    addTerminalOutput(`[root@station ~]# Next: systemctl start httpd`);
                 }
             }
         }
@@ -1246,19 +1458,15 @@
         const trimmedInput = input.trim();
         if (!trimmedInput) return;
         
-        // Add to command history
         commandHistory.push(trimmedInput);
         historyIndex = commandHistory.length;
         
-        // Display the command in terminal
         addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
         
-        // Parse command and arguments
         const parts = trimmedInput.split(' ');
         const command = parts[0];
         const args = parts.slice(1);
         
-        // Execute command if it exists
         if (commands.hasOwnProperty(command)) {
             const result = commands[command](args);
             if (result) {
@@ -1274,7 +1482,6 @@
     function handleTabCompletion() {
         const input = commandInput.value;
         
-        // If this is a consecutive tab press with no change in input, cycle through options
         if (input === lastTabInput && tabCompletionItems.length > 1) {
             tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
             showTabCompletion(tabCompletionItems, tabCompletionIndex);
@@ -1285,17 +1492,14 @@
         const parts = input.split(' ');
         const lastPart = parts[parts.length - 1];
         
-        // Reset tab completion state for new input
         tabCompletionIndex = 0;
         
-        // If no input, show all available commands
         if (parts.length === 1 && lastPart === '') {
             tabCompletionItems = availableCommands;
             showTabCompletion(tabCompletionItems, 0);
             return;
         }
         
-        // If it's a command completion
         if (parts.length === 1) {
             tabCompletionItems = availableCommands.filter(cmd => 
                 cmd.startsWith(lastPart)
@@ -1309,17 +1513,14 @@
             return;
         }
         
-        // If it's a path completion
         const pathParts = lastPart.split('/');
         let basePath = pathParts.slice(0, -1).join('/') || '/';
         const partialName = pathParts[pathParts.length - 1];
         
-        // Normalize base path
         if (!basePath.endsWith('/') && basePath !== '/') {
             basePath += '/';
         }
         
-        // Get available completions for this path
         const availablePaths = filePaths[basePath] || [];
         tabCompletionItems = availablePaths.filter(path => 
             path.startsWith(partialName)
@@ -1339,14 +1540,12 @@
             return;
         }
         
-        // If only one item, auto-complete
         if (items.length === 1) {
             completeWithSuggestion(items[0]);
             hideTabCompletion();
             return;
         }
         
-        // Create completion items
         tabCompletion.innerHTML = '';
         items.forEach((item, index) => {
             const div = document.createElement('div');
@@ -1359,7 +1558,6 @@
             tabCompletion.appendChild(div);
         });
         
-        // Show the completion box
         tabCompletion.style.display = 'block';
         
         tabCompletionIndex = selectedIndex;
@@ -1380,10 +1578,8 @@
         const lastPart = parts[parts.length - 1];
         
         if (parts.length === 1) {
-            // Command completion
             commandInput.value = suggestion + ' ';
         } else {
-            // Path completion
             const pathParts = lastPart.split('/');
             const basePath = pathParts.slice(0, -1).join('/');
             
@@ -1396,7 +1592,6 @@
             commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
         }
         
-        // Move cursor to end
         commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
         lastTabInput = commandInput.value;
     }
@@ -1433,7 +1628,6 @@
         } else if (e.key === 'Escape') {
             hideTabCompletion();
         } else {
-            // Hide tab completion on other key presses if input changes
             setTimeout(() => {
                 if (commandInput.value !== lastTabInput) {
                     hideTabCompletion();
@@ -1490,7 +1684,6 @@
         if (e.key === 'Enter') {
             const command = vimInput.value.trim();
             if (command === 'i') {
-                // Switch to insert mode
                 vimState.mode = 'insert';
                 vimModeIndicator.textContent = 'INSERT MODE';
                 vimModeIndicator.className = 'vim-mode-indicator insert-mode';
@@ -1498,19 +1691,22 @@
                 vimTextarea.focus();
                 vimInput.value = '';
             } else if (command.startsWith(':')) {
-                // Handle colon commands
                 const actualCommand = command.substring(1);
                 const result = handleVimCommand(actualCommand);
                 if (result) {
                     addTerminalOutput(result);
                 }
                 vimInput.value = '';
+            } else if (command === 'G') {
+                // Go to end of file
+                vimTextarea.selectionStart = vimTextarea.value.length;
+                vimTextarea.selectionEnd = vimTextarea.value.length;
+                vimInput.value = '';
+                updateVimCursorPosition();
             } else if (command) {
-                // Other vim commands
                 vimInput.value = '';
             }
         } else if (e.key === 'i' && vimInput.value === '' && vimState.mode === 'command') {
-            // Quick insert mode switch
             e.preventDefault();
             vimState.mode = 'insert';
             vimModeIndicator.textContent = 'INSERT MODE';
@@ -1522,7 +1718,6 @@
     
     vimTextarea.addEventListener('click', () => {
         if (vimState.mode === 'command') {
-            // In command mode, clicking textarea should focus command input instead
             vimInput.focus();
         } else {
             updateVimCursorPosition();

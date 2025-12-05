@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>RHCSA Exam Lab 7: Swap Partition Configuration</title>
+    <title>RHCSA Exam Lab 15: LVM Creation</title>
     <style>
         :root {
             --redhat-red: #cc0000;
@@ -319,14 +319,6 @@
             font-family: 'Red Hat Mono', monospace;
         }
         
-        kbd {
-            background: #444;
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: white;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        
         .success {
             color: var(--redhat-accent);
             font-weight: bold;
@@ -563,97 +555,6 @@
             overflow: auto;
         }
         
-        .partition-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
-        }
-        
-        .partition-table th, .partition-table td {
-            border: 1px solid #444;
-            padding: 8px;
-            text-align: left;
-        }
-        
-        .partition-table th {
-            background-color: #333;
-        }
-        
-        .fdisk-prompt {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        
-        .fdisk-simulator {
-            background: #000;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 15px 0;
-            font-family: 'Red Hat Mono', monospace;
-            color: #ccc;
-            min-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .fdisk-commands {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin: 15px 0;
-        }
-        
-        .fdisk-command {
-            background: #333;
-            border: 1px solid #555;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            border-radius: 3px;
-            cursor: pointer;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        
-        .fdisk-command:hover {
-            background: #444;
-        }
-        
-        .fdisk-command:active {
-            background: #555;
-        }
-        
-        .fdisk-command.disabled {
-            background: #222;
-            color: #666;
-            cursor: not-allowed;
-        }
-        
-        .fdisk-input-area {
-            display: flex;
-            margin: 10px 0;
-        }
-        
-        .fdisk-input {
-            flex: 1;
-            background: #222;
-            border: 1px solid #444;
-            color: white;
-            padding: 8px;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        
-        .fdisk-submit {
-            background: #4CAF50;
-            border: none;
-            color: white;
-            padding: 8px 15px;
-            cursor: pointer;
-            font-family: 'Red Hat Mono', monospace;
-        }
-        
-        .fdisk-submit:hover {
-            background: #45a049;
-        }
-        
         @keyframes blink {
             0%, 50% { opacity: 1; }
             51%, 100% { opacity: 0; }
@@ -686,10 +587,6 @@
             .vim-editor {
                 height: 70%;
             }
-            
-            .fdisk-commands {
-                grid-template-columns: repeat(2, 1fr);
-            }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
@@ -698,7 +595,7 @@
 <div class="lab-container">
     <div class="header">
         <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-        <h1>RHCSA Exam Lab 7: Swap Partition Configuration</h1>
+        <h1>RHCSA Exam Lab 15: LVM Creation</h1>
     </div>
     
     <div class="main-content">
@@ -707,7 +604,7 @@
             
             <div class="lab-intro">
                 <h3>Lab Objective</h3>
-                <p>Create and configure a 2G swap partition on your system. You will need to create the partition, set its type, format it as swap, activate it, and configure it to mount automatically at boot.</p>
+                <p>Create and configure LVM (Logical Volume Manager) components including physical volumes, volume groups, and logical volumes. You will also format the logical volume and configure it for automatic mounting.</p>
                 <p><strong>Time Estimate:</strong> 15-20 minutes</p>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill"></div>
@@ -716,26 +613,26 @@
             </div>
 
             <div class="requirements-panel">
-                <h4>Swap Partition Requirements</h4>
-                <div class="requirement-item" id="req-partition-created">
+                <h4>LVM Creation Requirements</h4>
+                <div class="requirement-item" id="req-pvcreate">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Create a 2G swap partition on <code>/dev/sda</code></span>
+                    <span class="requirement-label">Create physical volumes on <code>/dev/sda7</code> and <code>/dev/sda8</code></span>
                 </div>
-                <div class="requirement-item" id="req-partition-type">
+                <div class="requirement-item" id="req-vgcreate">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Set partition type to Linux swap (82)</span>
+                    <span class="requirement-label">Create volume group <code>vg1</code> with 16M extends</span>
                 </div>
-                <div class="requirement-item" id="req-mkswap">
+                <div class="requirement-item" id="req-lvcreate">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Format partition as swap with <code>mkswap</code></span>
+                    <span class="requirement-label">Create logical volume with 50 extends named <code>lvm02</code></span>
                 </div>
-                <div class="requirement-item" id="req-swapon">
+                <div class="requirement-item" id="req-mkfs">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Activate swap with <code>swapon</code></span>
+                    <span class="requirement-label">Format as ext4 filesystem</span>
                 </div>
                 <div class="requirement-item" id="req-fstab">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Add entry to <code>/etc/fstab</code> for automatic mounting</span>
+                    <span class="requirement-label">Configure automatic mounting at <code>/mnt/data</code></span>
                 </div>
             </div>
 
@@ -745,253 +642,202 @@
                     Lab Introduction
                     <span class="step-status status-completed">Completed</span>
                 </h3>
-                <p>Welcome to the RHCSA Swap Partition Configuration Lab. In this lab, you will create and configure a swap partition on a Red Hat Enterprise Linux system.</p>
+                <p>Welcome to the RHCSA LVM Creation Lab. In this lab, you will create and configure LVM components including physical volumes, volume groups, and logical volumes.</p>
                 <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
             </div>
 
             <div class="guide-step current" id="step1">
                 <h3>
                     <span class="step-number">1</span>
-                    Create a New Partition
+                    Create Physical Volumes
                     <span class="step-status status-current">Current Step</span>
                 </h3>
-                <p>Use <code>fdisk</code> to create a new 2G partition on <code>/dev/sda</code>:</p>
+                <p>Initialize disk partitions as physical volumes for LVM:</p>
                 
-                <div class="hint-box">
-                    <strong>Click the command below to start fdisk:</strong>
+                <div class="required-command">
+                    <strong>Required Command:</strong>
+                    <div class="command-hint">pvcreate /dev/sda7 /dev/sda8</div>
                 </div>
                 
-                <div class="command-hint" id="start-fdisk" style="cursor: pointer; background: #333;">
-                    fdisk /dev/sda
-                </div>
-                
-                <div id="fdisk-simulator" style="display: none;">
-                    <div class="fdisk-simulator" id="fdisk-output">
-                        <div>Welcome to fdisk (util-linux 2.32.1).</div>
-                        <div>Changes will remain in memory only until you decide to write them.</div>
-                        <div>Be careful before using the write command.</div>
-                        <div>&nbsp;</div>
-                        <div>Command (m for help): <span class="fdisk-prompt">_</span></div>
-                    </div>
-                    
-                    <div class="fdisk-commands">
-                        <div class="fdisk-command" data-command="p">p - Print partition table</div>
-                        <div class="fdisk-command" data-command="n">n - Add new partition</div>
-                        <div class="fdisk-command" data-command="t">t - Change partition type</div>
-                        <div class="fdisk-command" data-command="w">w - Write table to disk</div>
-                        <div class="fdisk-command" data-command="q">q - Quit without saving</div>
-                        <div class="fdisk-command" data-command="d">d - Delete partition</div>
-                        <div class="fdisk-command" data-command="l">l - List known types</div>
-                        <div class="fdisk-command" data-command="m">m - Print help menu</div>
-                    </div>
-                    
-                    <div class="fdisk-input-area" id="fdisk-input-area" style="display: none;">
-                        <input type="text" class="fdisk-input" id="fdisk-input" placeholder="Enter value...">
-                        <button class="fdisk-submit" id="fdisk-submit">Submit</button>
-                    </div>
-                </div>
-
                 <div class="concept">
-                    <h4>Current Partition Table (Example)</h4>
-                    <table class="partition-table">
-                        <tr>
-                            <th>Device</th>
-                            <th>Size</th>
-                            <th>Type</th>
-                            <th>Mount Point</th>
-                        </tr>
-                        <tr>
-                            <td>/dev/sda1</td>
-                            <td>1G</td>
-                            <td>Linux</td>
-                            <td>/boot</td>
-                        </tr>
-                        <tr>
-                            <td>/dev/sda2</td>
-                            <td>20G</td>
-                            <td>LVM</td>
-                            <td>(LVM PV)</td>
-                        </tr>
-                        <tr>
-                            <td>/dev/sda3</td>
-                            <td>2G</td>
-                            <td>Linux swap</td>
-                            <td>[SWAP]</td>
-                        </tr>
-                        <tr>
-                            <td>/dev/sda4</td>
-                            <td>10G</td>
-                            <td>Extended</td>
-                            <td>-</td>
-                        </tr>
-                        <tr>
-                            <td>/dev/sda5</td>
-                            <td>5G</td>
-                            <td>Linux</td>
-                            <td>/home</td>
-                        </tr>
-                    </table>
-                    <p>Note: Your system may have different partitions. The key is to create a new 2G partition without affecting existing ones.</p>
+                    <h4>About Physical Volumes</h4>
+                    <p>Physical volumes are the building blocks of LVM. They can be:</p>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>Whole disks</strong>
+                            <code>/dev/sdb</code>
+                        </div>
+                        <div class="concept-item">
+                            <strong>Disk partitions</strong>
+                            <code>/dev/sda7</code>
+                        </div>
+                        <div class="concept-item">
+                            <strong>RAID devices</strong>
+                            RAID arrays
+                        </div>
+                    </div>
+                    <p>Verify with <code>pvdisplay</code> or <code>pvs</code>.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step2">
                 <h3>
                     <span class="step-number">2</span>
-                    Format as Swap Space
+                    Create Volume Group
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>After creating the partition, format it as swap space:</p>
+                <p>Create a volume group with 16M extends:</p>
                 
-                <div class="hint-box">
-                    <strong>Update kernel partition table:</strong>
+                <div class="required-command">
+                    <strong>Required Command:</strong>
+                    <div class="command-hint">vgcreate -s 16M vg1 /dev/sda7 /dev/sda8</div>
                 </div>
                 
-                <div class="command-hint">
-                    partprobe /dev/sda
-                </div>
-                
-                <div class="hint-box">
-                    <strong>Format as swap:</strong>
-                </div>
-                
-                <div class="command-hint">
-                    mkswap /dev/sdaX
-                </div>
-                <p class="warning">Replace X with your actual partition number</p>
-
                 <div class="concept">
-                    <h4>Understanding mkswap</h4>
-                    <p>The <code>mkswap</code> command formats a partition as swap space. It creates a swap signature and prepares the partition for use as virtual memory.</p>
-                    <p>After running <code>mkswap</code>, you'll see output showing the UUID of the new swap space. This UUID can be used in <code>/etc/fstab</code> for persistent mounting.</p>
+                    <h4>Volume Group Extends</h4>
+                    <p>Extends are the smallest allocatable units in a VG. Key points:</p>
+                    <ul>
+                        <li>Default size is 4MB (can be 1K-16G)</li>
+                        <li>Larger extends reduce management overhead</li>
+                        <li>All LVs in a VG share the same extend size</li>
+                    </ul>
+                    <p>Verify with <code>vgdisplay vg1</code>.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step3">
                 <h3>
                     <span class="step-number">3</span>
-                    Activate the Swap Space
+                    Create Logical Volume
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Enable the new swap partition without affecting existing swap:</p>
+                <p>Create a logical volume with 50 extends (800M total):</p>
                 
-                <div class="hint-box">
-                    <strong>Activate swap:</strong>
+                <div class="required-command">
+                    <strong>Required Command:</strong>
+                    <div class="command-hint">lvcreate -l 50 -n lvm02 vg1</div>
                 </div>
                 
-                <div class="command-hint">
-                    swapon /dev/sdaX
-                </div>
-                <p class="warning">Replace X with your actual partition number</p>
-                
-                <div class="hint-box">
-                    <strong>Verify activation:</strong>
-                </div>
-                
-                <div class="command-hint">
-                    swapon -s
-                </div>
-                <p>You should see both the original swap and your new 2G swap listed.</p>
-
                 <div class="concept">
-                    <h4>Temporary vs Persistent Activation</h4>
-                    <p>The <code>swapon</code> command only activates swap temporarily. To make it persistent across reboots, you must add an entry to <code>/etc/fstab</code>.</p>
-                    <p>Using UUIDs in <code>/etc/fstab</code> is recommended as partition numbers may change if disks are reordered.</p>
+                    <h4>Logical Volume Creation</h4>
+                    <p>Key options for <code>lvcreate</code>:</p>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>-l</strong>
+                            Size in extends (50 extends × 16M = 800M)
+                        </div>
+                        <div class="concept-item">
+                            <strong>-L</strong>
+                            Absolute size (e.g., <code>-L 800M</code>)
+                        </div>
+                        <div class="concept-item">
+                            <strong>-n</strong>
+                            Name for the LV
+                        </div>
+                    </div>
+                    <p>Verify with <code>lvdisplay /dev/vg1/lvm02</code>.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step4">
                 <h3>
                     <span class="step-number">4</span>
-                    Configure Persistent Mounting
+                    Create Filesystem
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Edit <code>/etc/fstab</code> to enable automatic swap activation at boot:</p>
+                <p>Format the logical volume as ext4:</p>
                 
-                <div class="hint-box">
-                    <strong>Get the UUID of your swap partition:</strong>
+                <div class="required-command">
+                    <strong>Required Command:</strong>
+                    <div class="command-hint">mkfs.ext4 /dev/vg1/lvm02</div>
                 </div>
                 
-                <div class="command-hint">
-                    blkid /dev/sdaX
+                <div class="concept">
+                    <h4>Filesystem Creation</h4>
+                    <p>The <code>mkfs</code> command creates a filesystem:</p>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>mkfs.ext4</strong>
+                            For ext4 filesystem
+                        </div>
+                        <div class="concept-item">
+                            <strong>-L option</strong>
+                            Add filesystem label
+                        </div>
+                        <div class="concept-item">
+                            <strong>blkid</strong>
+                            Verify with <code>blkid /dev/vg1/lvm02</code>
+                        </div>
+                    </div>
                 </div>
-                <p class="warning">Replace X with your actual partition number</p>
-                <p>Look for the UUID in the output (or use the UUID from mkswap output).</p>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Configure Mounting
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Set up automatic mounting at <code>/mnt/data</code>:</p>
                 
-                <div class="hint-box">
-                    <strong>Edit /etc/fstab:</strong>
+                <div class="required-command">
+                    <strong>Required Commands:</strong>
+                    <div class="command-hint">mkdir -p /mnt/data</div>
                 </div>
                 
-                <div class="command-hint" id="start-vim" style="cursor: pointer; background: #333;">
-                    vim /etc/fstab
+                <p>Get the UUID of the filesystem:</p>
+                <div class="command-hint">blkid /dev/vg1/lvm02</div>
+                
+                <p>Copy the UUID for use in fstab.</p>
+                
+                <div class="required-command">
+                    <strong>Edit fstab file:</strong>
+                    <div class="command-hint">vim /etc/fstab</div>
                 </div>
                 
-                <p>Add a line like this (using your actual UUID):</p>
+                <p>Add this line (replace UUID with actual value):</p>
                 
-                <div class="file-content">UUID=xxxx-xxxx-xxxx-xxxx none swap sw 0 0</div>
+                <div class="file-content">UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx /mnt/data ext4 defaults 0 0</div>
                 
                 <p>To save and exit vim:</p>
                 <ol>
                     <li>Press <code>ESC</code> to ensure you're in command mode</li>
                     <li>Type <code>:wq</code> and press <code>Enter</code> to write and quit</li>
                 </ol>
+                
+                <p>Finally, mount the filesystem:</p>
+                <div class="command-hint">mount -a</div>
 
                 <div class="concept">
-                    <h4>Understanding /etc/fstab</h4>
-                    <p>The <code>/etc/fstab</code> file controls what filesystems are mounted at boot. Each line has six fields:</p>
-                    <ol>
-                        <li><strong>Device:</strong> Can be device path (/dev/sdaX) or UUID (recommended)</li>
-                        <li><strong>Mount point:</strong> <code>none</code> for swap</li>
-                        <li><strong>Filesystem type:</strong> <code>swap</code></li>
-                        <li><strong>Options:</strong> <code>sw</code> for swap</li>
-                        <li><strong>Dump:</strong> <code>0</code> (not used for swap)</li>
-                        <li><strong>Fsck order:</strong> <code>0</code> (no filesystem check for swap)</li>
-                    </ol>
-                </div>
-            </div>
-            
-            <div class="concept">
-                <h4>Understanding Swap Space</h4>
-                <div class="concept-grid">
-                    <div class="concept-item">
-                        <strong>What is Swap?</strong>
-                        Swap space is used when the system's physical RAM is full. It acts as an overflow area, moving less-used memory pages to disk.
-                    </div>
-                    <div class="concept-item">
-                        <strong>Swap Partition vs Swap File</strong>
-                        Swap partitions are dedicated disk partitions for swap, while swap files are regular files configured as swap space.
-                    </div>
-                    <div class="concept-item">
-                        <strong>Swap Management</strong>
-                        <code>swapon</code> - Activates swap space<br>
-                        <code>swapoff</code> - Deactivates swap space<br>
-                        <code>swapon -s</code> - Shows current swap usage
-                    </div>
-                    <div class="concept-item">
-                        <strong>Persistence</strong>
-                        To make swap persistent across reboots, entries must be added to <code>/etc/fstab</code> using either device path or UUID.
-                    </div>
+                    <h4>Persistent Mounting</h4>
+                    <p>Key points about <code>/etc/fstab</code>:</p>
+                    <ul>
+                        <li>UUID is preferred over device names (more reliable)</li>
+                        <li>Test with <code>mount -a</code> before rebooting</li>
+                        <li>Verify with <code>mount | grep /mnt/data</code></li>
+                    </ul>
                 </div>
             </div>
             
             <div id="completion-message" class="completion-message" style="display: none;">
                 <h3>🎉 Lab Completed Successfully!</h3>
-                <p>All swap partition requirements have been met.</p>
+                <p>All LVM creation requirements have been met.</p>
                 <p>You can now proceed to the next lab.</p>
             </div>
         </div>
         
         <div class="terminal-panel">
             <div class="terminal" id="terminal-output">
-                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 7: Swap Partition Configuration</div>
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 15: LVM Creation</div>
                 <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
                 <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
-                <div><span class="prompt">[root@station ~]#</span> Current step: Create a New Partition</div>
-                <div><span class="prompt">[root@station ~]#</span> Click "fdisk /dev/sda" in the guide panel to start</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Create Physical Volumes</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>pvcreate /dev/sda7 /dev/sda8</code></div>
+                <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
             </div>
             <div class="command-line">
                 <span class="prompt">[root@station ~]#</span>
-                <input autofocus id="command-input" placeholder="Type commands here or use the interactive tools in the guide..." type="text"/>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
                 <div id="tab-completion" class="tab-completion" style="display: none;"></div>
             </div>
         </div>
@@ -1039,15 +885,6 @@
     const steps = document.querySelectorAll('.guide-step');
     const tabCompletion = document.getElementById('tab-completion');
     
-    // Fdisk simulator elements
-    const startFdisk = document.getElementById('start-fdisk');
-    const fdiskSimulator = document.getElementById('fdisk-simulator');
-    const fdiskOutput = document.getElementById('fdisk-output');
-    const fdiskCommands = document.querySelectorAll('.fdisk-command');
-    const fdiskInputArea = document.getElementById('fdisk-input-area');
-    const fdiskInput = document.getElementById('fdisk-input');
-    const fdiskSubmit = document.getElementById('fdisk-submit');
-    
     // Vim editor elements
     const vimOverlay = document.getElementById('vim-overlay');
     const vimInstructions = document.getElementById('vim-instructions');
@@ -1061,7 +898,6 @@
     const vimCloseBtn = document.getElementById('vim-close-btn');
     const vimEscButton = document.getElementById('vim-esc-button');
     const vimInsertButton = document.getElementById('vim-insert-button');
-    const startVim = document.getElementById('start-vim');
     
     let commandHistory = [];
     let historyIndex = -1;
@@ -1072,50 +908,51 @@
     
     // Available commands for tab completion
     const availableCommands = [
-        'fdisk', 'partprobe', 'partx', 'mkswap', 'swapon', 'blkid', 'vim', 'cat', 'free', 'clear', 'help'
+        'pvcreate', 'vgcreate', 'lvcreate', 'mkfs.ext4', 'blkid', 'mkdir', 'vim', 'mount', 'mount -a',
+        'pvs', 'vgs', 'lvs', 'pvdisplay', 'vgdisplay', 'lvdisplay', 'clear', 'help'
     ];
     
     // Available file paths for tab completion
     const filePaths = {
-        '/dev/': ['sda', 'sdb', 'sdc'],
+        '/dev/': ['sda7', 'sda8', 'vg1/', 'vg1/lvm02'],
+        '/dev/vg1/': ['lvm02'],
+        '/mnt/': ['data'],
         '/etc/': ['fstab']
     };
     
     // Track configuration state
     const configState = {
-        partitionCreated: false,
-        partitionType: false,
-        mkswap: false,
-        swapon: false,
-        fstab: false
+        pvCreated: false,
+        vgCreated: false,
+        lvCreated: false,
+        fsCreated: false,
+        fstabConfigured: false
+    };
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['pvcreate /dev/sda7 /dev/sda8'],
+        2: ['vgcreate -s 16M vg1 /dev/sda7 /dev/sda8'],
+        3: ['lvcreate -l 50 -n lvm02 vg1'],
+        4: ['mkfs.ext4 /dev/vg1/lvm02'],
+        5: ['mkdir -p /mnt/data', 'blkid /dev/vg1/lvm02', 'vim /etc/fstab', 'mount -a']
     };
     
     // Simulated file contents
-    let fstabContent = `# /etc/fstab
-UUID=1234-5678 / ext4 defaults 1 1
-UUID=abcd-efgh /boot ext4 defaults 1 2
-UUID=ijkl-mnop swap swap defaults 0 0
+    let fstabContent = `#
+# /etc/fstab
+# Created by anaconda on Fri Oct 15 12:33:45 2021
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/rhel-root   /                       xfs     defaults        0 0
+UUID=abcd-efgh          /boot                   ext4    defaults        1 2
+/dev/mapper/rhel-swap   swap                    swap    defaults        0 0
 `;
     
-    // Simulated partition table
-    const initialPartitions = [
-        { device: '/dev/sda1', size: '1G', type: '83', mount: '/boot' },
-        { device: '/dev/sda2', size: '20G', type: '8e', mount: '(LVM PV)' },
-        { device: '/dev/sda3', size: '2G', type: '82', mount: '[SWAP]' },
-        { device: '/dev/sda4', size: '10G', type: '05', mount: '-' },
-        { device: '/dev/sda5', size: '5G', type: '83', mount: '/home' }
-    ];
-    let partitions = JSON.parse(JSON.stringify(initialPartitions));
-    let newSwapPartition = null;
-    
-    // Fdisk simulation state
-    let fdiskState = {
-        active: false,
-        currentCommand: null,
-        newPartitionNumber: 6,
-        waitingForInput: false,
-        inputPrompt: ''
-    };
+    // Simulated UUID - FIXED: This is the actual UUID that will be used
+    const simulatedUUID = "123e4567-e89b-12d3-a456-426614174000";
     
     // Vim editor state
     let vimState = {
@@ -1128,88 +965,92 @@ UUID=ijkl-mnop swap swap defaults 0 0
     };
     
     const commands = {
-        'fdisk': (args) => {
-            if (args[0] === "/dev/sda") {
-                startFdiskSimulation();
-                return "";
-            }
-            return `fdisk: cannot open ${args[0]}: No such file or directory`;
-        },
-        
-        'partprobe': (args) => {
-            if (args[0] === "/dev/sda" && newSwapPartition) {
-                if (currentStep === 2 || currentStep > 2) {
-                    return "";
+        'pvcreate': (args) => {
+            if (args.includes("/dev/sda7") && args.includes("/dev/sda8")) {
+                if (currentStep === 1 || currentStep > 1) {
+                    configState.pvCreated = true;
+                    updateRequirements();
+                    completeStep(1);
+                    return "Physical volume \"/dev/sda7\" successfully created.\nPhysical volume \"/dev/sda8\" successfully created.";
                 } else {
                     return "Please complete the previous steps first.";
                 }
             }
-            return `Error: Partition(s) on ${args[0]} in use - no changes made`;
+            return "Please specify devices to initialize as physical volumes";
         },
         
-        'partx': (args) => {
-            if (args[0] === "-a" && args[1] === "/dev/sda" && newSwapPartition) {
+        'vgcreate': (args) => {
+            if (args[0] === "-s" && args[1] === "16M" && args[2] === "vg1" && 
+                args.includes("/dev/sda7") && args.includes("/dev/sda8")) {
                 if (currentStep === 2 || currentStep > 2) {
-                    return "";
-                } else {
-                    return "Please complete the previous steps first.";
-                }
-            }
-            return `partx: /dev/sda: failed to add partitions`;
-        },
-        
-        'mkswap': (args) => {
-            if (args[0] && args[0].startsWith("/dev/sda") && newSwapPartition && args[0] === newSwapPartition.device) {
-                if (currentStep === 2 || currentStep > 2) {
-                    configState.mkswap = true;
+                    configState.vgCreated = true;
                     updateRequirements();
                     completeStep(2);
-                    return `Setting up swapspace version 1, size = 2 GiB (2147479552 bytes)
-UUID=8d1567e8-3c1a-4a3d-9c2b-1f3d4e5f6a7d`;
+                    return "Volume group \"vg1\" successfully created";
                 } else {
                     return "Please complete the previous steps first.";
                 }
             }
-            return `mkswap: ${args[0]}: invalid swap partition`;
+            return "Invalid vgcreate command. Usage: vgcreate [-s SIZE] VG_NAME PV...";
         },
         
-        'swapon': (args) => {
-            if (args[0] === "-a") {
-                if (configState.fstab) {
-                    configState.swapon = true;
-                    updateRequirements();
-                    return "";
-                }
-                return `swapon: /etc/fstab: parse error at line 4 -- ignored`;
-            } else if (args[0] && args[0].startsWith("/dev/sda") && newSwapPartition && args[0] === newSwapPartition.device) {
+        'lvcreate': (args) => {
+            if (args[0] === "-l" && args[1] === "50" && args[2] === "-n" && 
+                args[3] === "lvm02" && args[4] === "vg1") {
                 if (currentStep === 3 || currentStep > 3) {
-                    configState.swapon = true;
+                    configState.lvCreated = true;
                     updateRequirements();
                     completeStep(3);
-                    return "";
+                    return "Logical volume \"lvm02\" created.";
                 } else {
                     return "Please complete the previous steps first.";
                 }
-            } else if (args[0] === "-s") {
-                let output = "Filename\t\t\tType\t\tSize\tUsed\tPriority\n";
-                output += "/dev/sda3\t\t\tpartition\t2097148\t0\t-2\n";
-                if (configState.swapon && newSwapPartition) {
-                    output += `${newSwapPartition.device}\t\t\tpartition\t2097148\t0\t-3\n`;
-                }
-                return output;
             }
-            return `swapon: ${args[0]}: invalid argument`;
+            return "Invalid lvcreate command. Usage: lvcreate [-L SIZE|-l EXTENTS] [-n NAME] VG";
+        },
+        
+        'mkfs.ext4': (args) => {
+            if (args[0] === "/dev/vg1/lvm02") {
+                if (currentStep === 4 || currentStep > 4) {
+                    configState.fsCreated = true;
+                    updateRequirements();
+                    completeStep(4);
+                    return `mke2fs 1.45.6 (20-Mar-2020)
+Creating filesystem with 204800 4k blocks and 51200 inodes
+Filesystem UUID: ${simulatedUUID}
+Superblock backups stored on blocks: 
+        32768, 98304, 163840
+
+Allocating group tables: done                            
+Writing inode tables: done                            
+Creating journal (4096 blocks): done
+Writing superblocks and filesystem accounting information: done`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return "Please specify a device to format";
         },
         
         'blkid': (args) => {
-            if (args[0] && args[0].startsWith("/dev/sda") && newSwapPartition && args[0] === newSwapPartition.device) {
-                if (currentStep === 4 || currentStep > 4) {
-                    return `/dev/sda6: UUID="8d1567e8-3c1a-4a3d-9c2b-1f3d4e5f6a7d" TYPE="swap"`;
+            if (args[0] === "/dev/vg1/lvm02") {
+                if (!configState.fsCreated) {
+                    return "";
+                }
+                return `/dev/vg1/lvm02: UUID="${simulatedUUID}" TYPE="ext4"`;
+            }
+            return "Please specify a device";
+        },
+        
+        'mkdir': (args) => {
+            if (args[0] === "-p" && args[1] === "/mnt/data") {
+                if (currentStep === 5 || currentStep > 5) {
+                    return ""; // Successfully created directory
                 } else {
                     return "Please complete the previous steps first.";
                 }
             }
-            return `blkid: ${args[0]}: No such file or directory`;
+            return "Please specify directory to create";
         },
         
         'vim': (args) => {
@@ -1222,7 +1063,7 @@ UUID=8d1567e8-3c1a-4a3d-9c2b-1f3d4e5f6a7d`;
             
             if (file === "/etc/fstab") {
                 content = fstabContent;
-                if (currentStep === 4 || currentStep > 4) {
+                if (currentStep === 5 || currentStep > 5) {
                     const result = openVimEditor(file, content, 'fstab');
                     return result;
                 } else {
@@ -1233,24 +1074,71 @@ UUID=8d1567e8-3c1a-4a3d-9c2b-1f3d4e5f6a7d`;
             return `vim: cannot open ${file} for writing: No such file or directory`;
         },
         
-        'cat': (args) => {
-            if (args[0] === "/etc/fstab") {
-                return fstabContent;
+        'mount': (args) => {
+            if (args[0] === "-a") {
+                if (currentStep === 5 || currentStep > 5) {
+                    // Check if fstab was configured correctly
+                    if (configState.fstabConfigured) {
+                        // All requirements are now complete
+                        updateRequirements();
+                        
+                        // Check if all requirements are met
+                        const allComplete = Object.values(configState).every(v => v);
+                        if (allComplete) {
+                            completionMessage.style.display = 'block';
+                        }
+                        
+                        return "";
+                    } else {
+                        return "mount: /mnt/data: can't find UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
+                    }
+                } else {
+                    return "Please complete the previous steps first.";
+                }
             }
-            return `cat: ${args[0]}: No such file or directory`;
+            return "Usage: mount [-a] [-t type] [-o options] device dir";
         },
         
-        'free': (args) => {
-            if (args[0] === "-h") {
-                let output = "              total        used        free      shared  buff/cache   available\n";
-                output += "Mem:           1.9G        1.1G        120M         15M        780M        680M\n";
-                output += "Swap:          2.0G          0B        2.0G\n";
-                if (configState.swapon && newSwapPartition) {
-                    output += "Swap:          4.0G          0B        4.0G\n";
-                }
-                return output;
+        'pvs': () => {
+            if (configState.pvCreated) {
+                return "PV         VG   Fmt  Attr PSize   PFree\n/dev/sda7  vg1  lvm2 a--  1024.00m 1024.00m\n/dev/sda8  vg1  lvm2 a--  1024.00m 1024.00m";
             }
-            return `free: invalid option -- '${args[0]}'`;
+            return "";
+        },
+        
+        'vgs': () => {
+            if (configState.vgCreated) {
+                return "VG   #PV #LV #SN Attr   VSize   VFree\nvg1    2   0   0 wz--n- 2048.00m 2048.00m";
+            }
+            return "";
+        },
+        
+        'lvs': () => {
+            if (configState.lvCreated) {
+                return "LV    VG   Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert\nlvm02 vg1  -wi-a----- 800.00m";
+            }
+            return "";
+        },
+        
+        'pvdisplay': () => {
+            if (configState.pvCreated) {
+                return "--- Physical volume ---\nPV Name               /dev/sda7\nVG Name               vg1\nPV Size               1.00 GiB\nAllocatable           yes\n\n--- Physical volume ---\nPV Name               /dev/sda8\nVG Name               vg1\nPV Size               1.00 GiB\nAllocatable           yes";
+            }
+            return "";
+        },
+        
+        'vgdisplay': (args) => {
+            if (args[0] === "vg1" && configState.vgCreated) {
+                return "--- Volume group ---\nVG Name               vg1\nSystem ID             \nFormat                lvm2\nVG Size               2.00 GiB\nPE Size               16.00 MiB\nTotal PE              128\nAlloc PE / Size       0 / 0\nFree  PE / Size       128 / 2.00 GiB";
+            }
+            return "Please specify volume group name";
+        },
+        
+        'lvdisplay': (args) => {
+            if (args[0] === "/dev/vg1/lvm02" && configState.lvCreated) {
+                return "--- Logical volume ---\nLV Path                /dev/vg1/lvm02\nLV Name                lvm02\nVG Name                vg1\nLV UUID                abcdefg-hijk-lmno-pqrs-tuvwxyz123456\nLV Write Access        read/write\nLV Creation host, time station, 2023-10-15 12:00:00 -0400\nLV Status              available\n# open                 0\nLV Size                800.00 MiB\nCurrent LE             50\nSegments               1\nAllocation             inherit\nRead ahead sectors     auto\n- currently set to     256\nBlock device           253:0";
+            }
+            return "Please specify logical volume path";
         },
         
         'clear': () => {
@@ -1259,306 +1147,9 @@ UUID=8d1567e8-3c1a-4a3d-9c2b-1f3d4e5f6a7d`;
         },
         
         'help': () => {
-            return "Available commands: fdisk, partprobe, partx, mkswap, swapon, blkid, vim, cat, free, clear, help";
+            return "Available commands: pvcreate, vgcreate, lvcreate, mkfs.ext4, blkid, mkdir, vim, mount, pvs, vgs, lvs, pvdisplay, vgdisplay, lvdisplay, clear, help";
         }
     };
-    
-    // Function to start fdisk simulation
-    function startFdiskSimulation() {
-        fdiskSimulator.style.display = 'block';
-        fdiskState.active = true;
-        fdiskState.waitingForInput = false;
-        
-        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> fdisk /dev/sda`);
-        addTerminalOutput(`Starting fdisk simulation...`);
-        
-        // Clear any previous output and show initial state
-        fdiskOutput.innerHTML = `
-            <div>Welcome to fdisk (util-linux 2.32.1).</div>
-            <div>Changes will remain in memory only until you decide to write them.</div>
-            <div>Be careful before using the write command.</div>
-            <div>&nbsp;</div>
-            <div>Command (m for help): <span class="fdisk-prompt">_</span></div>
-        `;
-    }
-    
-    // Function to handle fdisk commands
-    function handleFdiskCommand(command) {
-        if (!fdiskState.active) return;
-        
-        let output = '';
-        
-        switch(command) {
-            case 'p':
-                output = printPartitionTable();
-                break;
-            case 'n':
-                output = createNewPartition();
-                break;
-            case 't':
-                if (newSwapPartition) {
-                    output = `Partition number (1-${partitions.length + 1}, default ${fdiskState.newPartitionNumber}): `;
-                    fdiskState.waitingForInput = true;
-                    fdiskState.inputPrompt = 'partition';
-                    fdiskInput.placeholder = "Enter partition number...";
-                    fdiskInputArea.style.display = 'flex';
-                } else {
-                    output = "Please create a partition first with 'n'";
-                }
-                break;
-            case 'w':
-                output = writeChanges();
-                break;
-            case 'q':
-                output = quitWithoutSaving();
-                break;
-            case 'd':
-                output = "Partition number (1-6, default 6): ";
-                fdiskState.waitingForInput = true;
-                fdiskState.inputPrompt = 'delete';
-                fdiskInput.placeholder = "Enter partition number to delete...";
-                fdiskInputArea.style.display = 'flex';
-                break;
-            case 'l':
-                output = `0  Empty           24  NEC DOS         81  Minix / old Lin bf  Solaris        
-1  FAT12           27  Hidden NTFS Win 82  Linux swap / So c1  DRDOS/sec (FAT-
-2  XENIX root      39  Plan 9          83  Linux           c4  DRDOS/sec (FAT-
-3  XENIX usr       3c  PartitionMagic  84  OS/2 hidden C:  c6  DRDOS/sec (FAT-
-4  FAT16 <32M      40  Venix 80286     85  Linux extended  c7  Syrinx         
-5  Extended        41  PPC PReP Boot   86  NTFS volume set da  Non-FS data    
-6  FAT16           42  SFS             87  NTFS volume set db  CP/M / CTOS / .
-7  HPFS/NTFS/exFAT 4d  QNX4.x          88  Linux plaintext de  Dell Utility   
-8  AIX             4e  QNX4.x 2nd part 8e  Linux LVM       df  BootIt         
-9  AIX bootable    4f  QNX4.x 3rd part 93  Amoeba          e1  DOS access     
-a  OS/2 Boot Manag 50  OnTrack DM      94  Amoeba BBT      e3  DOS R/O        
-b  W95 FAT32       51  OnTrack DM6 Aux 9f  BSD/OS          e4  SpeedStor      
-c  W95 FAT32 (LBA) 52  CP/M            a0  IBM Thinkpad hi ea  Rufus alignment
-e  W95 FAT16 (LBA) 53  OnTrack DM6 Aux a5  FreeBSD         eb  BeOS fs        
-f  W95 Ext'd (LBA) 54  OnTrackDM6      a6  OpenBSD         ee  GPT            
-10 OPUS            55  EZ-Drive        a7  NeXTSTEP        ef  EFI (FAT-12/16/
-11 Hidden FAT12    56  Golden Bow      a8  Darwin UFS      f0  Linux/PA-RISC b
-12 Compaq diagnost 5c  Priam Edisk     a9  NetBSD          f1  SpeedStor      
-14 Hidden FAT16 <3 61  SpeedStor       ab  Darwin boot     f4  SpeedStor      
-16 Hidden FAT16    63  GNU HURD or Sys af  HFS / HFS+      f2  DOS secondary  
-17 Hidden HPFS/NTF 64  Novell Netware  b7  BSDI fs         fb  VMware VMFS    
-18 AST SmartSleep  65  Novell Netware  b8  BSDI swap       fc  VMware VMKCORE 
-1b Hidden W95 FAT3 70  DiskSecure Mult bb  Boot Wizard hid fd  Linux raid auto
-1c Hidden W95 FAT3 75  PC/IX           bc  Acronis FAT32 L fe  LANstep        
-1e Hidden W95 FAT1 80  Old Minix       be  Solaris boot    ff  BBT            
-`;
-                break;
-            case 'm':
-                output = `Help menu:
-  a   toggle a bootable flag
-  b   edit nested BSD disklabel
-  c   toggle the dos compatibility flag
-  d   delete a partition
-  g   create a new empty GPT partition table
-  G   create an IRIX (SGI) partition table
-  l   list known partition types
-  m   print this menu
-  n   add a new partition
-  o   create a new empty DOS partition table
-  p   print the partition table
-  q   quit without saving changes
-  s   create a new empty Sun disklabel
-  t   change a partition type
-  v   verify the partition table
-  w   write table to disk and exit
-  x   extra functionality (experts only)`;
-                break;
-            default:
-                output = `Unknown command: ${command}`;
-        }
-        
-        if (output) {
-            appendFdiskOutput(output);
-        }
-    }
-    
-    // Function to handle fdisk input
-    function handleFdiskInput(input) {
-        if (!fdiskState.active || !fdiskState.waitingForInput) return;
-        
-        let output = '';
-        
-        if (fdiskState.inputPrompt === 'partition') {
-            // Handle partition number input for 't' command
-            const partNum = parseInt(input);
-            if (partNum >= 1 && partNum <= partitions.length + 1) {
-                if (partNum === fdiskState.newPartitionNumber) {
-                    output = `Hex code (type L to list codes): `;
-                    fdiskState.waitingForInput = true;
-                    fdiskState.inputPrompt = 'hexcode';
-                    fdiskInput.placeholder = "Enter hex code (82 for Linux swap)...";
-                } else {
-                    output = `Invalid partition number: ${input}`;
-                    fdiskState.waitingForInput = false;
-                    fdiskInputArea.style.display = 'none';
-                }
-            } else {
-                output = `Invalid partition number: ${input}`;
-                fdiskState.waitingForInput = false;
-                fdiskInputArea.style.display = 'none';
-            }
-        } else if (fdiskState.inputPrompt === 'hexcode') {
-            // Handle hex code input for partition type
-            if (input === '82') {
-                if (newSwapPartition) {
-                    newSwapPartition.type = '82';
-                    configState.partitionType = true;
-                    updateRequirements();
-                    output = `Changed type of partition '${fdiskState.newPartitionNumber}' to 'Linux swap / Solaris'`;
-                }
-            } else {
-                output = `Invalid hex code: ${input}`;
-            }
-            fdiskState.waitingForInput = false;
-            fdiskInputArea.style.display = 'none';
-        } else if (fdiskState.inputPrompt === 'delete') {
-            // Handle partition deletion
-            const partNum = parseInt(input);
-            if (partNum === fdiskState.newPartitionNumber && newSwapPartition) {
-                newSwapPartition = null;
-                configState.partitionCreated = false;
-                configState.partitionType = false;
-                updateRequirements();
-                output = `Partition ${partNum} has been deleted`;
-            } else {
-                output = `Partition ${input} does not exist`;
-            }
-            fdiskState.waitingForInput = false;
-            fdiskInputArea.style.display = 'none';
-        }
-        
-        if (output) {
-            appendFdiskOutput(output);
-        }
-        
-        fdiskInput.value = '';
-    }
-    
-    // Function to append output to fdisk simulator
-    function appendFdiskOutput(text) {
-        const lines = text.split('\n');
-        lines.forEach(line => {
-            const div = document.createElement('div');
-            div.textContent = line;
-            fdiskOutput.appendChild(div);
-        });
-        
-        // Add command prompt if not waiting for input
-        if (!fdiskState.waitingForInput) {
-            const prompt = document.createElement('div');
-            prompt.innerHTML = `Command (m for help): <span class="fdisk-prompt">_</span>`;
-            fdiskOutput.appendChild(prompt);
-        }
-        
-        fdiskOutput.scrollTop = fdiskOutput.scrollHeight;
-    }
-    
-    // Function to print partition table in fdisk
-    function printPartitionTable() {
-        let output = `Disk /dev/sda: 50 GiB, 53687091200 bytes, 104857600 sectors
-Units: sectors of 1 * 512 = 512 bytes
-Sector size (logical/physical): 512 bytes / 512 bytes
-I/O size (minimum/optimal): 512 bytes / 512 bytes
-Disklabel type: dos
-Disk identifier: 0x12345678
-
-Device     Boot   Start       End   Sectors  Size Id Type
-`;
-        
-        partitions.forEach(part => {
-            output += `${part.device.padEnd(9)}         1   2097151   2097151    1G ${part.type} ${getTypeName(part.type)}\n`;
-        });
-        
-        // Add the new partition if created but not written yet
-        if (newSwapPartition) {
-            output += `${newSwapPartition.device.padEnd(9)}   2097152   6291455   4194304    2G ${newSwapPartition.type} ${getTypeName(newSwapPartition.type)}\n`;
-        }
-        
-        return output;
-    }
-    
-    // Function to get partition type name
-    function getTypeName(typeCode) {
-        const types = {
-            '82': 'Linux swap / Solaris',
-            '83': 'Linux',
-            '8e': 'Linux LVM',
-            '05': 'Extended',
-            '07': 'HPFS/NTFS/exFAT'
-        };
-        return types[typeCode] || 'Unknown';
-    }
-    
-    // Function to create new partition in fdisk
-    function createNewPartition() {
-        // Check if we already have a new partition
-        if (newSwapPartition) {
-            return "Partition already created. Use 'w' to write changes or 'd' to delete.";
-        }
-        
-        // Create new partition
-        newSwapPartition = {
-            device: `/dev/sda${fdiskState.newPartitionNumber}`,
-            size: '2G',
-            type: '83', // Default to Linux, will be changed to 82 later
-            mount: ''
-        };
-        
-        configState.partitionCreated = true;
-        updateRequirements();
-        
-        return `Partition type
-   p   primary (1 primary, 1 extended, 2 free)
-   e   extended (container for logical partitions)
-Select (default p): p
-Partition number (${fdiskState.newPartitionNumber}-${fdiskState.newPartitionNumber}, default ${fdiskState.newPartitionNumber}): 
-First sector (6291456-104857599, default 6291456): 
-Last sector, +sectors or +size{K,M,G,T,P} (6291456-104857599, default 104857599): +2G
-
-Created a new partition ${fdiskState.newPartitionNumber} of type 'Linux' and of size 2 GiB.`;
-    }
-    
-    // Function to write changes in fdisk
-    function writeChanges() {
-        if (newSwapPartition) {
-            // Change the type to swap if not already done
-            if (newSwapPartition.type !== '82') {
-                newSwapPartition.type = '82';
-                configState.partitionType = true;
-                updateRequirements();
-            }
-            
-            partitions.push(newSwapPartition);
-            completeStep(1);
-            
-            // Hide fdisk simulator
-            fdiskSimulator.style.display = 'none';
-            fdiskState.active = false;
-            
-            return `The partition table has been altered.
-Calling ioctl() to re-read partition table.
-Syncing disks.`;
-        }
-        return "No changes made";
-    }
-    
-    // Function to quit fdisk without saving
-    function quitWithoutSaving() {
-        newSwapPartition = null;
-        configState.partitionCreated = false;
-        configState.partitionType = false;
-        updateRequirements();
-        
-        // Hide fdisk simulator
-        fdiskSimulator.style.display = 'none';
-        fdiskState.active = false;
-        
-        return "";
-    }
     
     // Function to open the Vim editor
     function openVimEditor(filename, content, fileType) {
@@ -1577,13 +1168,14 @@ Syncing disks.`;
         // Set up instructions based on file type
         if (fileType === 'fstab') {
             vimInstructionsContent.innerHTML = `
-                <p>Edit the fstab file to add an entry for your swap partition.</p>
-                <p>Add a line like this (using your actual UUID):</p>
-                <div class="file-content">UUID=8d1567e8-3c1a-4a3d-9c2b-1f3d4e5f6a7d none swap sw 0 0</div>
+                <p>Edit the fstab file to configure automatic mounting.</p>
+                <p>Add this line to the file (use the actual UUID shown by blkid):</p>
+                <div class="file-content">UUID=${simulatedUUID} /mnt/data ext4 defaults 0 0</div>
+                <p><strong>Important:</strong> The UUID must be exactly: <code>${simulatedUUID}</code></p>
                 <p><strong>Vim Commands:</strong></p>
                 <ul>
                     <li>Press <code>i</code> to enter Insert mode</li>
-                    <li>Type the required configuration</li>
+                    <li>Type the required configuration at the end of the file</li>
                     <li>Press <code>ESC</code> to return to Command mode</li>
                     <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
                 </ul>
@@ -1613,11 +1205,14 @@ Syncing disks.`;
             // Save the file
             if (vimState.file === "/etc/fstab") {
                 fstabContent = vimTextarea.value;
-                if (fstabContent.includes("UUID=8d1567e8-3c1a-4a3d-9c2b-1f3d4e5f6a7d") || 
-                    (newSwapPartition && fstabContent.includes(newSwapPartition.device))) {
-                    configState.fstab = true;
+                // Check if the correct UUID and mount point are in the file
+                const hasCorrectUUID = fstabContent.includes(simulatedUUID);
+                const hasMountPoint = fstabContent.includes("/mnt/data");
+                const hasExt4 = fstabContent.includes("ext4");
+                
+                if (hasCorrectUUID && hasMountPoint && hasExt4) {
+                    configState.fstabConfigured = true;
                     updateRequirements();
-                    completeStep(4);
                 }
             }
             return "File saved";
@@ -1657,27 +1252,27 @@ Syncing disks.`;
     
     // Function to update requirements display
     function updateRequirements() {
-        if (configState.partitionCreated) {
-            document.getElementById('req-partition-created').classList.add('completed');
-            document.getElementById('req-partition-created').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.pvCreated) {
+            document.getElementById('req-pvcreate').classList.add('completed');
+            document.getElementById('req-pvcreate').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.partitionType) {
-            document.getElementById('req-partition-type').classList.add('completed');
-            document.getElementById('req-partition-type').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.vgCreated) {
+            document.getElementById('req-vgcreate').classList.add('completed');
+            document.getElementById('req-vgcreate').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.mkswap) {
-            document.getElementById('req-mkswap').classList.add('completed');
-            document.getElementById('req-mkswap').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.lvCreated) {
+            document.getElementById('req-lvcreate').classList.add('completed');
+            document.getElementById('req-lvcreate').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.swapon) {
-            document.getElementById('req-swapon').classList.add('completed');
-            document.getElementById('req-swapon').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.fsCreated) {
+            document.getElementById('req-mkfs').classList.add('completed');
+            document.getElementById('req-mkfs').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.fstab) {
+        if (configState.fstabConfigured) {
             document.getElementById('req-fstab').classList.add('completed');
             document.getElementById('req-fstab').querySelector('.requirement-checkbox').textContent = '✓';
         }
@@ -1691,6 +1286,7 @@ Syncing disks.`;
         // Show completion message if all requirements are met
         if (completedCount === Object.keys(configState).length) {
             completionMessage.style.display = 'block';
+            addTerminalOutput('<div class="success">🎉 All LVM creation requirements completed successfully!</div>');
         }
     }
     
@@ -1711,6 +1307,11 @@ Syncing disks.`;
                 
                 // Update terminal with next step info
                 addTerminalOutput(`[root@station ~]# Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep][0]}`);
+                }
             }
         }
     }
@@ -1752,34 +1353,186 @@ Syncing disks.`;
         }
     }
     
-    // Event listeners for fdisk simulator
-    startFdisk.addEventListener('click', () => {
-        startFdiskSimulation();
-    });
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
     
-    fdiskCommands.forEach(cmd => {
-        cmd.addEventListener('click', () => {
-            if (cmd.classList.contains('disabled')) return;
-            const command = cmd.getAttribute('data-command');
-            handleFdiskCommand(command);
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
         });
-    });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
     
-    fdiskSubmit.addEventListener('click', () => {
-        handleFdiskInput(fdiskInput.value);
-    });
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
     
-    fdiskInput.addEventListener('keydown', (e) => {
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            handleFdiskInput(fdiskInput.value);
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
         }
     });
     
-    // Event listeners for Vim editor
-    startVim.addEventListener('click', () => {
-        commands.vim(['/etc/fstab']);
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
     });
     
+    // Vim editor event listeners
     vimCloseBtn.addEventListener('click', () => {
         closeVimEditor();
     });
@@ -1862,31 +1615,6 @@ Syncing disks.`;
     vimTextarea.addEventListener('keyup', () => {
         if (vimState.mode === 'insert') {
             updateVimCursorPosition();
-        }
-    });
-    
-    // Command line event listeners
-    commandInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            executeCommand(commandInput.value);
-            commandInput.value = '';
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (commandHistory.length > 0) {
-                if (historyIndex > 0) {
-                    historyIndex--;
-                }
-                commandInput.value = commandHistory[historyIndex] || '';
-            }
-        } else if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (historyIndex < commandHistory.length - 1) {
-                historyIndex++;
-                commandInput.value = commandHistory[historyIndex];
-            } else {
-                historyIndex = commandHistory.length;
-                commandInput.value = '';
-            }
         }
     });
     

@@ -654,12 +654,13 @@
                     <strong>Type these commands exactly:</strong>
                 </div>
                 
-                <div class="command-hint">
-                    systemctl enable autofs
+                <div class="required-command">
+                    <div class="file-path">Required Command</div>
+                    <div class="command-hint">systemctl enable autofs</div>
                 </div>
-                
-                <div class="command-hint">
-                    systemctl start autofs
+                <div class="required-command">
+                    <div class="file-path">Required Command</div>
+                    <div class="command-hint">systemctl start autofs</div>
                 </div>
 
                 <div class="concept">
@@ -680,8 +681,9 @@
                     <strong>Type this command exactly:</strong>
                 </div>
                 
-                <div class="command-hint">
-                    vim /etc/auto.master
+                <div class="required-command">
+                    <div class="file-path">Required Command</div>
+                    <div class="command-hint">vim /etc/auto.master</div>
                 </div>
                 
                 <p>Once in the editor, add this line to the file:</p>
@@ -712,16 +714,18 @@
                     <strong>First, copy from auto.misc as a template:</strong>
                 </div>
                 
-                <div class="command-hint">
-                    cp /etc/auto.misc /etc/auto.ldap
+                <div class="required-command">
+                    <div class="file-path">Required Command</div>
+                    <div class="command-hint">cp /etc/auto.misc /etc/auto.ldap</div>
                 </div>
                 
                 <div class="hint-box">
                     <strong>Then edit the auto.ldap file:</strong>
                 </div>
                 
-                <div class="command-hint">
-                    vim /etc/auto.ldap
+                <div class="required-command">
+                    <div class="file-path">Required Command</div>
+                    <div class="command-hint">vim /etc/auto.ldap</div>
                 </div>
                 
                 <p>Modify the file to contain these exact settings:</p>
@@ -760,16 +764,19 @@
                     <strong>Type these commands one by one:</strong>
                 </div>
                 
-                <div class="command-hint">
-                    systemctl restart autofs
+                <div class="required-command">
+                    <div class="file-path">Required Command</div>
+                    <div class="command-hint">systemctl restart autofs</div>
                 </div>
                 
-                <div class="command-hint">
-                    showmount -e 172.24.40.10
+                <div class="required-command">
+                    <div class="file-path">Required Command</div>
+                    <div class="command-hint">showmount -e 172.24.40.10</div>
                 </div>
                 
-                <div class="command-hint">
-                    su - ldapuser40
+                <div class="required-command">
+                    <div class="file-path">Required Command</div>
+                    <div class="command-hint">su - ldapuser40</div>
                 </div>
                 
                 <p>Then check if the home directory is accessible.</p>
@@ -875,13 +882,13 @@
     
     // Available commands for tab completion
     const availableCommands = [
-        'vim', 'cat', 'cp', 'systemctl', 'showmount', 'su', 'clear', 'help'
+        'vim', 'cat', 'cp', 'systemctl', 'showmount', 'su', 'clear', 'help', 'ls'
     ];
     
     // Available file paths for tab completion
     const filePaths = {
         '/etc/': ['auto.master', 'auto.misc', 'auto.ldap'],
-        '/rhome/': ['ldapuser40']
+        '/rhome/': []
     };
     
     // Track configuration state
@@ -917,24 +924,22 @@
     const commands = {
         'systemctl': (args) => {
             if (args[0] === "enable" && args[1] === "autofs") {
-                if (currentStep === 1 || currentStep > 1) {
-                    configState.autofsService = true;
-                    updateRequirements();
+                if (currentStep === 1) {
                     return "Created symlink /etc/systemd/system/multi-user.target.wants/autofs.service → /usr/lib/systemd/system/autofs.service.";
                 } else {
                     return "Please complete the previous steps first.";
                 }
             } else if (args[0] === "start" && args[1] === "autofs") {
-                if (currentStep === 1 || currentStep > 1) {
+                if (currentStep === 1) {
                     configState.autofsService = true;
                     updateRequirements();
                     completeStep(1);
-                    return "";
+                    return "Started autofs service.";
                 } else {
                     return "Please complete the previous steps first.";
                 }
             } else if (args[0] === "restart" && args[1] === "autofs") {
-                if (currentStep === 4 || currentStep > 4) {
+                if (currentStep === 4) {
                     return "Network service restarted successfully";
                 } else {
                     return "Please complete the previous steps first.";
@@ -947,7 +952,7 @@
         
         'cp': (args) => {
             if (args[0] === "/etc/auto.misc" && args[1] === "/etc/auto.ldap") {
-                if (currentStep === 3 || currentStep > 3) {
+                if (currentStep === 3) {
                     autoLdapContent = "# Sample auto.ldap file\n# Format: key [ -mount-options-separated-by-comma ] location";
                     return "";
                 } else {
@@ -967,7 +972,7 @@
             
             if (file === "/etc/auto.master") {
                 content = autoMasterContent;
-                if (currentStep === 2 || currentStep > 2) {
+                if (currentStep === 2) {
                     const result = openVimEditor(file, content, 'auto.master');
                     return result;
                 } else {
@@ -975,7 +980,7 @@
                 }
             } else if (file === "/etc/auto.ldap") {
                 content = autoLdapContent;
-                if (currentStep === 3 || currentStep > 3) {
+                if (currentStep === 3) {
                     const result = openVimEditor(file, content, 'auto.ldap');
                     return result;
                 } else {
@@ -988,9 +993,7 @@
         
         'showmount': (args) => {
             if (args[0] === "-e" && args[1] === "172.24.40.10") {
-                if (currentStep === 4 || currentStep > 4) {
-                    configState.verifyMount = true;
-                    updateRequirements();
+                if (currentStep === 4) {
                     return "Export list for 172.24.40.10:\n/rhome/ldapuser40 *\n/rhome         *";
                 } else {
                     return "Please complete the previous steps first.";
@@ -1001,7 +1004,7 @@
         
         'su': (args) => {
             if (args[0] === "-" && args[1] === "ldapuser40") {
-                if (currentStep === 4 || currentStep > 4) {
+                if (currentStep === 4) {
                     configState.verifyMount = true;
                     updateRequirements();
                     completeStep(4);
@@ -1028,7 +1031,14 @@
         },
         
         'help': () => {
-            return "Available commands: systemctl, vim, cp, showmount, su, cat, clear, help";
+            return "Available commands: systemctl, vim, cp, showmount, su, cat, clear, help, ls";
+        },
+        
+        'ls': (args) => {
+            if (args.length === 0 || args[0] === "/etc") {
+                return "auto.master\nauto.misc\nauto.ldap";
+            }
+            return "";
         }
     };
     
@@ -1515,4 +1525,3 @@
 </script>
 </body>
 </html>
-

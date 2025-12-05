@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>RHCSA Exam Lab 9: FTP Server Configuration</title>
+    <title>RHCSA Exam Lab 14: LVM Expansion</title>
     <style>
         :root {
             --redhat-red: #cc0000;
@@ -595,7 +595,7 @@
 <div class="lab-container">
     <div class="header">
         <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-        <h1>RHCSA Exam Lab 9: FTP Server Configuration</h1>
+        <h1>RHCSA Exam Lab 14: LVM Expansion</h1>
     </div>
     
     <div class="main-content">
@@ -604,8 +604,8 @@
             
             <div class="lab-intro">
                 <h3>Lab Objective</h3>
-                <p>Configure a local YUM repository, install the vsftpd FTP server package, and configure it to allow anonymous access.</p>
-                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <p>Extend logical volume <code>vo</code> from 190M to 300M with size between 280-320M. You will need to check available space, extend the logical volume, resize the filesystem, and verify the changes.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill"></div>
                 </div>
@@ -613,26 +613,22 @@
             </div>
 
             <div class="requirements-panel">
-                <h4>FTP Server Requirements</h4>
-                <div class="requirement-item" id="req-yum-repo">
+                <h4>LVM Expansion Requirements</h4>
+                <div class="requirement-item" id="req-check-vg">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Configure local YUM repository in <code>/etc/yum.repos.d/local.repo</code></span>
+                    <span class="requirement-label">Check available space in volume group with <code>vgdisplay</code></span>
                 </div>
-                <div class="requirement-item" id="req-yum-cache">
+                <div class="requirement-item" id="req-extend-lv">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Create YUM cache with <code>yum makecache</code></span>
+                    <span class="requirement-label">Extend logical volume <code>vo</code> to 300M using <code>lvextend</code></span>
                 </div>
-                <div class="requirement-item" id="req-ftp-install">
+                <div class="requirement-item" id="req-resize-fs">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Install vsftpd package</span>
+                    <span class="requirement-label">Resize filesystem with <code>resize2fs</code></span>
                 </div>
-                <div class="requirement-item" id="req-ftp-config">
+                <div class="requirement-item" id="req-verify-size">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Configure anonymous access in <code>/etc/vsftpd/vsftpd.conf</code></span>
-                </div>
-                <div class="requirement-item" id="req-ftp-service">
-                    <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Start vsftpd service and enable at boot</span>
+                    <span class="requirement-label">Verify new size is between 280M-320M with <code>lvdisplay</code></span>
                 </div>
             </div>
 
@@ -642,262 +638,168 @@
                     Lab Introduction
                     <span class="step-status status-completed">Completed</span>
                 </h3>
-                <p>Welcome to the RHCSA FTP Server Configuration Lab. In this lab, you will configure a local YUM repository, install the vsftpd FTP server, and configure it for anonymous access.</p>
+                <p>Welcome to the RHCSA LVM Expansion Lab. In this lab, you will extend a logical volume and resize its filesystem.</p>
                 <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
             </div>
 
             <div class="guide-step current" id="step1">
                 <h3>
                     <span class="step-number">1</span>
-                    Configure Local YUM Repository
+                    Check Available Space
                     <span class="step-status status-current">Current Step</span>
                 </h3>
-                <p>First, let's create a local repository file to install packages from the existing file server.</p>
+                <p>Before extending the LV, verify you have enough space in the volume group:</p>
                 
                 <div class="hint-box">
-                    <strong>Navigate to YUM repositories directory:</strong>
+                    <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    cd /etc/yum.repos.d/
+                    vgdisplay
                 </div>
                 
-                <div class="hint-box">
-                    <strong>Create or edit local repository file:</strong>
-                </div>
-                
-                <div class="command-hint">
-                    vim local.repo
-                </div>
-                
-                <p>Ensure the file contains these settings:</p>
-                
-                <div class="file-content">[local]
-name=local.repo
-baseurl=file:///mnt
-enabled=1
-gpgcheck=0</div>
-                
-                <p>To save and exit vim:</p>
-                <ol>
-                    <li>Press <code>ESC</code> to ensure you're in command mode</li>
-                    <li>Type <code>:wq</code> and press <code>Enter</code> to write and quit</li>
-                </ol>
+                <p>Look for "Free PE / Size" to ensure enough space exists.</p>
 
                 <div class="concept">
-                    <h4>Understanding YUM Repositories</h4>
-                    <p>YUM repositories provide a way to install and manage packages. Key parameters:</p>
+                    <h4>Understanding vgdisplay Output</h4>
+                    <p>Key fields to check:</p>
                     <ul>
-                        <li><code>baseurl</code>: Location of the repository packages</li>
-                        <li><code>enabled</code>: Whether the repository is active</li>
-                        <li><code>gpgcheck</code>: Whether to verify package signatures</li>
+                        <li><code>VG Name</code>: Name of your volume group</li>
+                        <li><code>VG Size</code>: Total size of the volume group</li>
+                        <li><code>Free PE / Size</code>: Available space for extension</li>
                     </ul>
+                    <p>If space is insufficient, you'll need to add physical volumes with <code>pvcreate</code> and extend the VG with <code>vgextend</code>.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step2">
                 <h3>
                     <span class="step-number">2</span>
-                    Create YUM Cache
+                    Extend the Logical Volume
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>After configuring the repository, update the package cache.</p>
+                <p>Increase the size of logical volume <code>vo</code> from 190M to 300M:</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    yum makecache
+                    lvextend -L 300M /dev/vg0/vo
                 </div>
+                
+                <p>Or alternatively: <code>lvextend -L +110M /dev/vg0/vo</code></p>
 
                 <div class="concept">
-                    <h4>About YUM Cache</h4>
-                    <p>The YUM cache stores repository metadata to speed up package operations. Creating the cache after repository changes ensures YUM has current package information.</p>
+                    <h4>LVM Extension Options</h4>
+                    <p>The <code>lvextend</code> command has two syntax options:</p>
+                    <ul>
+                        <li><code>-L 300M</code>: Sets absolute size to 300M</li>
+                        <li><code>-L +110M</code>: Adds 110M to current size</li>
+                    </ul>
+                    <p>The filesystem remains unchanged after LV extension - you must resize it separately.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step3">
                 <h3>
                     <span class="step-number">3</span>
-                    Install vsftpd Package
+                    Resize the Filesystem
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Now let's install the FTP server package using YUM.</p>
+                <p>After extending the LV, resize the filesystem to use the new space:</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    yum install -y vsftpd
+                    resize2fs /dev/vg0/vo
                 </div>
 
                 <div class="concept">
-                    <h4>About vsftpd</h4>
-                    <p>vsftpd (Very Secure FTP Daemon) is the default FTP server on RHEL. It's known for its security features and performance. After installation, it needs to be configured and started.</p>
+                    <h4>Filesystem Resizing Notes</h4>
+                    <p><code>resize2fs</code> automatically detects the new LV size and expands to fill it.</p>
+                    <p>For unmounted filesystems, use <code>resize2fs -f</code> to force the operation.</p>
+                    <p>Always verify with <code>df -h</code> after resizing.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step4">
                 <h3>
                     <span class="step-number">4</span>
-                    Configure FTP Server
+                    Verify the Changes
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Now let's edit the vsftpd configuration file to enable anonymous access.</p>
+                <p>Confirm the LV is now between 280M-320M and mounted correctly:</p>
                 
                 <div class="hint-box">
-                    <strong>Type this command exactly:</strong>
+                    <strong>Type these commands one by one:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    vim /etc/vsftpd/vsftpd.conf
+                    lvdisplay /dev/vg0/vo
                 </div>
+                <p>Look for "LV Size" in the output.</p>
                 
-                <p>Ensure the file contains this setting:</p>
-                
-                <div class="file-content">anonymous_enable=YES</div>
-                
-                <p>To save and exit vim:</p>
-                <ol>
-                    <li>Press <code>ESC</code> to ensure you're in command mode</li>
-                    <li>Type <code>:wq</code> and press <code>Enter</code> to write and quit</li>
-                </ol>
+                <div class="command-hint">
+                    df -h /mnt/vo
+                </div>
+                <p>Verify the filesystem shows the new size.</p>
 
                 <div class="concept">
-                    <h4>FTP Server Configuration</h4>
-                    <p>The main configuration file for vsftpd controls server behavior. Key settings include:</p>
+                    <h4>Verification Commands</h4>
+                    <p>Essential verification commands:</p>
                     <ul>
-                        <li><code>anonymous_enable</code>: Allows anonymous logins</li>
-                        <li><code>local_enable</code>: Permits local users to log in</li>
-                        <li><code>write_enable</code>: Allows file uploads</li>
-                        <li><code>anon_root</code>: Sets the root directory for anonymous users</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="guide-step" id="step5">
-                <h3>
-                    <span class="step-number">5</span>
-                    Start and Enable FTP Service
-                    <span class="step-status status-pending">Pending</span>
-                </h3>
-                <p>Finally, let's start the FTP service and configure it to start at boot.</p>
-                
-                <div class="hint-box">
-                    <strong>Start vsftpd service:</strong>
-                </div>
-                
-                <div class="command-hint">
-                    systemctl start vsftpd
-                </div>
-                
-                <div class="hint-box">
-                    <strong>Enable vsftpd at boot:</strong>
-                </div>
-                
-                <div class="command-hint">
-                    systemctl enable vsftpd
-                </div>
-                
-                <div class="hint-box">
-                    <strong>Verify service status:</strong>
-                </div>
-                
-                <div class="command-hint">
-                    systemctl status vsftpd
-                </div>
-
-                <div class="concept">
-                    <h4>Service Management</h4>
-                    <p>System services are managed with systemctl. Key commands:</p>
-                    <ul>
-                        <li><code>systemctl start</code>: Starts a service</li>
-                        <li><code>systemctl stop</code>: Stops a service</li>
-                        <li><code>systemctl restart</code>: Restarts a service</li>
-                        <li><code>systemctl enable</code>: Enables at boot</li>
-                        <li><code>systemctl disable</code>: Disables at boot</li>
-                        <li><code>systemctl status</code>: Shows service status</li>
+                        <li><code>lvdisplay</code> - Shows LV details including size</li>
+                        <li><code>df -h</code> - Shows mounted filesystem sizes</li>
+                        <li><code>mount</code> - Verifies filesystem is mounted</li>
                     </ul>
                 </div>
             </div>
             
             <div class="concept">
-                <h4>FTP Server Concepts</h4>
+                <h4>LVM Expansion Concepts</h4>
                 <div class="concept-grid">
                     <div class="concept-item">
-                        <strong>vsftpd</strong>
-                        Very Secure FTP Daemon is the default FTP server on RHEL, known for its security and performance.
+                        <strong>Volume Groups (VG)</strong>
+                        Storage pool created from physical volumes (PVs). Check free space with <code>vgdisplay</code>.
                     </div>
                     <div class="concept-item">
-                        <strong>YUM Repositories</strong>
-                        Local repositories can be used when internet access is unavailable or for faster package installation.
+                        <strong>Logical Volumes (LV)</strong>
+                        Can be resized dynamically. Use <code>lvextend</code> to grow and <code>lvreduce</code> to shrink.
                     </div>
                     <div class="concept-item">
-                        <strong>Anonymous FTP</strong>
-                        Allows users to download files without authentication. Typically uses <code>/var/ftp/pub</code> directory.
+                        <strong>Filesystem Resizing</strong>
+                        After LV resize, filesystem must be adjusted with <code>resize2fs</code> for ext4.
                     </div>
                     <div class="concept-item">
-                        <strong>Service Management</strong>
-                        <code>systemctl start</code> to start a service<br>
-                        <code>systemctl enable</code> to enable at boot<br>
-                        <code>systemctl status</code> to check status
+                        <strong>Verification</strong>
+                        Always verify changes with <code>lvdisplay</code> and <code>df -h</code>.
                     </div>
                 </div>
             </div>
             
             <div id="completion-message" class="completion-message" style="display: none;">
                 <h3>🎉 Lab Completed Successfully!</h3>
-                <p>All FTP server configuration requirements have been met.</p>
-                <p>Anonymous users can now download files from /var/ftp/pub</p>
+                <p>All LVM expansion requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
             </div>
         </div>
         
         <div class="terminal-panel">
             <div class="terminal" id="terminal-output">
-                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 9: FTP Server Configuration</div>
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 14: LVM Expansion</div>
                 <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
                 <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
-                <div><span class="prompt">[root@station ~]#</span> Current step: Configure Local YUM Repository</div>
-                <div><span class="prompt">[root@station ~]#</span> Type: <code>cd /etc/yum.repos.d/</code></div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Check Available Space</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>vgdisplay</code></div>
                 <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
             </div>
             <div class="command-line">
                 <span class="prompt">[root@station ~]#</span>
                 <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
                 <div id="tab-completion" class="tab-completion" style="display: none;"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Vim Editor Overlay -->
-<div id="vim-overlay" class="vim-overlay" style="display: none;">
-    <div class="vim-container">
-        <div class="vim-instructions" id="vim-instructions">
-            <h3>Vim Editor Instructions</h3>
-            <div id="vim-instructions-content"></div>
-        </div>
-        
-        <div class="vim-editor">
-            <div class="vim-header">
-                <span id="vim-filename">filename</span>
-                <div class="vim-command-buttons">
-                    <button class="vim-command-button" id="vim-insert-button">i (Insert)</button>
-                    <button class="vim-esc-button" id="vim-esc-button">ESC</button>
-                    <span id="vim-close-btn" style="cursor: pointer; margin-left: 10px;">×</span>
-                </div>
-            </div>
-            <div class="vim-content" id="vim-content">
-                <textarea id="vim-textarea" class="vim-textarea" spellcheck="false"></textarea>
-            </div>
-            <div class="vim-command-line">
-                <input type="text" class="vim-input" id="vim-input" placeholder="Type :wq to save and exit"/>
-            </div>
-            <div class="vim-status">
-                <span class="vim-mode-indicator command-mode" id="vim-mode-indicator">COMMAND MODE</span>
-                <span id="vim-cursor-position">1,1</span>
             </div>
         </div>
     </div>
@@ -913,20 +815,6 @@ gpgcheck=0</div>
     const steps = document.querySelectorAll('.guide-step');
     const tabCompletion = document.getElementById('tab-completion');
     
-    // Vim editor elements
-    const vimOverlay = document.getElementById('vim-overlay');
-    const vimInstructions = document.getElementById('vim-instructions');
-    const vimInstructionsContent = document.getElementById('vim-instructions-content');
-    const vimFilename = document.getElementById('vim-filename');
-    const vimContent = document.getElementById('vim-content');
-    const vimTextarea = document.getElementById('vim-textarea');
-    const vimInput = document.getElementById('vim-input');
-    const vimModeIndicator = document.getElementById('vim-mode-indicator');
-    const vimCursorPosition = document.getElementById('vim-cursor-position');
-    const vimCloseBtn = document.getElementById('vim-close-btn');
-    const vimEscButton = document.getElementById('vim-esc-button');
-    const vimInsertButton = document.getElementById('vim-insert-button');
-    
     let commandHistory = [];
     let historyIndex = -1;
     let currentStep = 1;
@@ -934,163 +822,152 @@ gpgcheck=0</div>
     let tabCompletionItems = [];
     let lastTabInput = '';
     
+    // Track which commands in step 4 have been executed
+    let step4Commands = {
+        lvdisplay: false,
+        df: false
+    };
+    
     // Available commands for tab completion
     const availableCommands = [
-        'vim', 'cat', 'cd', 'ls', 'yum', 'systemctl', 'clear', 'help'
+        'vgdisplay', 'lvdisplay', 'lvextend', 'resize2fs', 'df', 'clear', 'help'
     ];
     
     // Available file paths for tab completion
     const filePaths = {
-        '/etc/': ['yum.repos.d/', 'vsftpd/'],
-        '/etc/yum.repos.d/': ['local.repo', 'redhat.repo'],
-        '/etc/vsftpd/': ['vsftpd.conf', 'ftpusers']
+        '/dev/': ['vg0/'],
+        '/dev/vg0/': ['vo'],
+        '/mnt/': ['vo']
     };
     
     // Track configuration state
     const configState = {
-        yumRepo: false,
-        yumCache: false,
-        ftpInstall: false,
-        ftpConfig: false,
-        ftpService: false
+        checkedVG: false,
+        extendedLV: false,
+        resizedFS: false,
+        verifiedSize: false
     };
     
     // Expected commands for each step
     const stepCommands = {
-        1: ['cd /etc/yum.repos.d/', 'cd /etc/yum.repos.d'],
-        2: ['vim /etc/yum.repos.d/local.repo'],
-        3: ['yum makecache'],
-        4: ['yum install -y vsftpd'],
-        5: ['vim /etc/vsftpd/vsftpd.conf'],
-        6: ['systemctl start vsftpd', 'systemctl enable vsftpd', 'systemctl status vsftpd']
+        1: ['vgdisplay'],
+        2: ['lvextend -L 300M /dev/vg0/vo', 'lvextend -L +110M /dev/vg0/vo'],
+        3: ['resize2fs /dev/vg0/vo'],
+        4: ['lvdisplay /dev/vg0/vo', 'df -h /mnt/vo']
     };
     
-    // Simulated file contents
-    let localRepoContent = "# No local repository configured";
-    let vsftpdConfContent = `anonymous_enable=NO
-local_enable=YES
-write_enable=NO`;
-    
-    // Vim editor state
-    let vimState = {
-        file: '',
-        content: '',
-        cursorPos: 0,
-        mode: 'command', // 'command' or 'insert'
-        isEditing: false,
-        fileType: ''
-    };
+    // Simulated initial LV state
+    let lvSize = "190.00 MiB";
     
     const commands = {
-        'cd': (args) => {
-            if (args.length === 0 || args[0] === "~") {
-                return ""; // Stay in home directory
-            } else if (args[0] === "/etc/yum.repos.d" || 
-                       args[0] === "/etc/yum.repos.d/") {
-                if (currentStep === 1 || currentStep > 1) {
-                    completeStep(1);
-                    return ""; // Successfully changed directory
-                } else {
-                    return "Please complete the previous steps first.";
+        'vgdisplay': () => {
+            if (currentStep === 1 || currentStep > 1) {
+                configState.checkedVG = true;
+                updateRequirements();
+                completeStep(1);
+                return `  --- Volume group ---
+  VG Name               vg0
+  System ID             
+  Format                lvm2
+  Metadata Areas        1
+  Metadata Sequence No  2
+  VG Access             read/write
+  VG Status             resizable
+  MAX LV                0
+  Cur LV                1
+  Open LV               1
+  Max PV                0
+  Cur PV                1
+  Act PV                1
+  VG Size               500.00 MiB
+  PE Size               4.00 MiB
+  Total PE              125
+  Alloc PE / Size       48 / 192.00 MiB
+  Free  PE / Size       77 / 308.00 MiB
+  VG UUID               abc123-xyz456`;
+            } else {
+                return "Please complete the previous steps first.";
+            }
+        },
+        
+        'lvdisplay': (args) => {
+            if (args[0] === "/dev/vg0/vo") {
+                if (configState.extendedLV) {
+                    lvSize = "300.00 MiB";
                 }
+                
+                // Mark this command as executed for step 4
+                if (currentStep === 4 || currentStep > 4) {
+                    step4Commands.lvdisplay = true;
+                    checkStep4Completion();
+                }
+                
+                return `  --- Logical volume ---
+  LV Path                /dev/vg0/vo
+  LV Name                vo
+  VG Name                vg0
+  LV UUID                def456-uvw789
+  LV Write Access        read/write
+  LV Creation host, time station, 2023-01-01 12:00:00 +0000
+  LV Status              available
+  # open                 1
+  LV Size                ${lvSize}
+  Current LE             48
+  Segments               1
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:0`;
             }
-            return `bash: cd: ${args[0]}: No such file or directory`;
+            return "Please specify a logical volume path";
         },
         
-        'ls': (args) => {
-            if (args.length === 0 || args[0] === "/etc/yum.repos.d") {
-                return "local.repo\nredhat.repo";
-            } else if (args[0] === "/etc/vsftpd") {
-                return "vsftpd.conf\nftpusers";
-            }
-            return `ls: cannot access '${args[0]}': No such file or directory`;
-        },
-        
-        'cat': (args) => {
-            if (args[0] === "/etc/yum.repos.d/local.repo") {
-                return localRepoContent;
-            } else if (args[0] === "/etc/vsftpd/vsftpd.conf") {
-                return vsftpdConfContent;
-            }
-            return `cat: ${args[0]}: No such file or directory`;
-        },
-        
-        'vim': (args) => {
-            if (args.length === 0) {
-                return "vim: Please specify a file to edit";
-            }
-            
-            const file = args[0];
-            let content = '';
-            
-            if (file === "/etc/yum.repos.d/local.repo") {
-                content = localRepoContent;
+        'lvextend': (args) => {
+            if ((args[0] === "-L" && args[1] === "300M" && args[2] === "/dev/vg0/vo") || 
+                (args[0] === "-L" && args[1] === "+110M" && args[2] === "/dev/vg0/vo")) {
                 if (currentStep === 2 || currentStep > 2) {
-                    const result = openVimEditor(file, content, 'localrepo');
-                    return result;
-                } else {
-                    return "Please complete the previous steps first.";
-                }
-            } else if (file === "/etc/vsftpd/vsftpd.conf") {
-                content = vsftpdConfContent;
-                if (currentStep === 5 || currentStep > 5) {
-                    const result = openVimEditor(file, content, 'vsftpd');
-                    return result;
+                    configState.extendedLV = true;
+                    updateRequirements();
+                    completeStep(2);
+                    return "Size of logical volume vg0/vo changed from 190.00 MiB (48 extents) to 300.00 MiB (75 extents).\nLogical volume vg0/vo successfully resized.";
                 } else {
                     return "Please complete the previous steps first.";
                 }
             }
-            
-            return `vim: cannot open ${file} for writing: No such file or directory`;
+            return "Invalid lvextend command. Usage: lvextend -L [+]SIZE[mMgGtT] LV";
         },
         
-        'yum': (args) => {
-            if (args[0] === "makecache") {
+        'resize2fs': (args) => {
+            if (args[0] === "/dev/vg0/vo") {
                 if (currentStep === 3 || currentStep > 3) {
-                    configState.yumCache = true;
+                    if (!configState.extendedLV) {
+                        return "resize2fs: The filesystem is already 199680 (1k) blocks long. Nothing to do!";
+                    }
+                    configState.resizedFS = true;
                     updateRequirements();
                     completeStep(3);
-                    return "Metadata Cache Created";
-                } else {
-                    return "Please complete the previous steps first.";
-                }
-            } else if (args[0] === "install" && args.includes("vsftpd")) {
-                if (currentStep === 4 || currentStep > 4) {
-                    configState.ftpInstall = true;
-                    updateRequirements();
-                    completeStep(4);
-                    return "Complete!\nInstalled:\n  vsftpd.x86_64 0:3.0.2-28.el7";
+                    return "resize2fs 1.45.6 (20-Mar-2020)\nFilesystem at /dev/vg0/vo is mounted on /mnt/vo; on-line resizing required\nold_desc_blocks = 1, new_desc_blocks = 1\nThe filesystem on /dev/vg0/vo is now 307200 (1k) blocks long.";
                 } else {
                     return "Please complete the previous steps first.";
                 }
             }
-            return `Unknown yum command '${args.join(' ')}'`;
+            return "Please specify a device";
         },
         
-        'systemctl': (args) => {
-            if (args[0] === "start" && args[1] === "vsftpd") {
-                if (currentStep === 6 || currentStep > 6) {
-                    configState.ftpService = true;
-                    updateRequirements();
-                    return "";
-                } else {
-                    return "Please complete the previous steps first.";
+        'df': (args) => {
+            if (args[0] === "-h" && args[1] === "/mnt/vo") {
+                const size = configState.resizedFS ? "300M" : "190M";
+                
+                // Mark this command as executed for step 4
+                if (currentStep === 4 || currentStep > 4) {
+                    step4Commands.df = true;
+                    checkStep4Completion();
                 }
-            } else if (args[0] === "enable" && args[1] === "vsftpd") {
-                if (currentStep === 6 || currentStep > 6) {
-                    configState.ftpService = true;
-                    updateRequirements();
-                    completeStep(6);
-                    return "Created symlink from /etc/systemd/system/multi-user.target.wants/vsftpd.service to /usr/lib/systemd/system/vsftpd.service.";
-                } else {
-                    return "Please complete the previous steps first.";
-                }
-            } else if (args[0] === "status" && args[1] === "vsftpd") {
-                return configState.ftpService ? 
-                    "● vsftpd.service - Vsftpd ftp daemon\n   Loaded: loaded (/usr/lib/systemd/system/vsftpd.service; enabled; vendor preset: disabled)\n   Active: active (running) since Wed 2023-05-10 14:32:45 EDT; 5s ago" :
-                    "● vsftpd.service - Vsftpd ftp daemon\n   Loaded: loaded (/usr/lib/systemd/system/vsftpd.service; disabled; vendor preset: disabled)\n   Active: inactive (dead)";
+                
+                return `Filesystem            Size  Used Avail Use% Mounted on
+/dev/mapper/vg0-vo    ${size}  120M  180M  40% /mnt/vo`;
             }
-            return `Unknown systemctl command '${args.join(' ')}'`;
+            return "Please specify a mount point";
         },
         
         'clear': () => {
@@ -1099,156 +976,39 @@ write_enable=NO`;
         },
         
         'help': () => {
-            return "Available commands: vim, cat, cd, ls, yum, systemctl, clear, help";
+            return "Available commands: vgdisplay, lvdisplay, lvextend, resize2fs, df, clear, help";
         }
     };
     
-    // Function to open the Vim editor
-    function openVimEditor(filename, content, fileType) {
-        vimState.file = filename;
-        vimState.content = content;
-        vimState.fileType = fileType;
-        vimState.mode = 'command';
-        vimState.isEditing = true;
-        
-        // Set the filename in the editor
-        vimFilename.textContent = filename;
-        
-        // Set the content in the textarea
-        vimTextarea.value = content;
-        
-        // Set up instructions based on file type
-        if (fileType === 'localrepo') {
-            vimInstructionsContent.innerHTML = `
-                <p>Edit the local repository configuration file.</p>
-                <p>Add these settings to the file:</p>
-                <div class="file-content">[local]
-name=local.repo
-baseurl=file:///mnt
-enabled=1
-gpgcheck=0</div>
-                <p><strong>Vim Commands:</strong></p>
-                <ul>
-                    <li>Press <code>i</code> to enter Insert mode</li>
-                    <li>Type the required configuration</li>
-                    <li>Press <code>ESC</code> to return to Command mode</li>
-                    <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
-                </ul>
-            `;
-        } else if (fileType === 'vsftpd') {
-            vimInstructionsContent.innerHTML = `
-                <p>Edit the vsftpd configuration file.</p>
-                <p>Ensure the file contains this setting:</p>
-                <div class="file-content">anonymous_enable=YES</div>
-                <p><strong>Vim Commands:</strong></p>
-                <ul>
-                    <li>Press <code>i</code> to enter Insert mode</li>
-                    <li>Type the required configuration</li>
-                    <li>Press <code>ESC</code> to return to Command mode</li>
-                    <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
-                </ul>
-            `;
+    // Function to check if step 4 is complete
+    function checkStep4Completion() {
+        if (step4Commands.lvdisplay && step4Commands.df) {
+            configState.verifiedSize = true;
+            updateRequirements();
+            completeStep(4);
         }
-        
-        // Show the Vim overlay
-        vimOverlay.style.display = 'flex';
-        
-        // Start in command mode
-        vimState.mode = 'command';
-        vimModeIndicator.textContent = 'COMMAND MODE';
-        vimModeIndicator.className = 'vim-mode-indicator command-mode';
-        
-        // Focus the vim input (command line)
-        setTimeout(() => {
-            vimInput.focus();
-            updateVimCursorPosition();
-        }, 100);
-        
-        return `Opening ${filename} in Vim editor...`;
-    }
-    
-    // Function to handle Vim commands
-    function handleVimCommand(command) {
-        if (command === 'w' || command === 'write') {
-            // Save the file
-            if (vimState.file === "/etc/yum.repos.d/local.repo") {
-                localRepoContent = vimTextarea.value;
-                if (localRepoContent.includes("[local]") && 
-                    localRepoContent.includes("baseurl=file:///mnt") &&
-                    localRepoContent.includes("enabled=1") &&
-                    localRepoContent.includes("gpgcheck=0")) {
-                    configState.yumRepo = true;
-                    updateRequirements();
-                    completeStep(2);
-                }
-            } else if (vimState.file === "/etc/vsftpd/vsftpd.conf") {
-                vsftpdConfContent = vimTextarea.value;
-                if (vsftpdConfContent.includes("anonymous_enable=YES")) {
-                    configState.ftpConfig = true;
-                    updateRequirements();
-                }
-                completeStep(5);
-            }
-            return "File saved";
-        } else if (command === 'q' || command === 'quit') {
-            // Close the editor
-            closeVimEditor();
-            return "";
-        } else if (command === 'wq') {
-            // Save and quit
-            const saveMsg = handleVimCommand('w');
-            closeVimEditor();
-            return saveMsg + " and exiting";
-        } else if (command === 'q!') {
-            // Quit without saving
-            closeVimEditor();
-            return "Exiting without saving";
-        }
-        return `Not an editor command: ${command}`;
-    }
-    
-    // Function to close the Vim editor
-    function closeVimEditor() {
-        vimOverlay.style.display = 'none';
-        vimState.isEditing = false;
-        commandInput.focus();
-    }
-    
-    // Function to update Vim cursor position display
-    function updateVimCursorPosition() {
-        const text = vimTextarea.value;
-        const cursorPos = vimTextarea.selectionStart;
-        const lines = text.substring(0, cursorPos).split('\n');
-        const line = lines.length;
-        const column = lines[lines.length - 1].length + 1;
-        vimCursorPosition.textContent = `${line},${column}`;
     }
     
     // Function to update requirements display
     function updateRequirements() {
-        if (configState.yumRepo) {
-            document.getElementById('req-yum-repo').classList.add('completed');
-            document.getElementById('req-yum-repo').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.checkedVG) {
+            document.getElementById('req-check-vg').classList.add('completed');
+            document.getElementById('req-check-vg').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.yumCache) {
-            document.getElementById('req-yum-cache').classList.add('completed');
-            document.getElementById('req-yum-cache').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.extendedLV) {
+            document.getElementById('req-extend-lv').classList.add('completed');
+            document.getElementById('req-extend-lv').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.ftpInstall) {
-            document.getElementById('req-ftp-install').classList.add('completed');
-            document.getElementById('req-ftp-install').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.resizedFS) {
+            document.getElementById('req-resize-fs').classList.add('completed');
+            document.getElementById('req-resize-fs').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.ftpConfig) {
-            document.getElementById('req-ftp-config').classList.add('completed');
-            document.getElementById('req-ftp-config').querySelector('.requirement-checkbox').textContent = '✓';
-        }
-        
-        if (configState.ftpService) {
-            document.getElementById('req-ftp-service').classList.add('completed');
-            document.getElementById('req-ftp-service').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.verifiedSize) {
+            document.getElementById('req-verify-size').classList.add('completed');
+            document.getElementById('req-verify-size').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
         // Update progress
@@ -1260,8 +1020,6 @@ gpgcheck=0</div>
         // Show completion message if all requirements are met
         if (completedCount === Object.keys(configState).length) {
             completionMessage.style.display = 'block';
-            addTerminalOutput(`<div class="success">🎉 All FTP server configuration requirements completed successfully!</div>`);
-            addTerminalOutput(`<div class="success">Anonymous users can now download files from /var/ftp/pub</div>`);
         }
     }
     
@@ -1507,95 +1265,8 @@ gpgcheck=0</div>
         }
     });
     
-    // Vim editor event listeners
-    vimCloseBtn.addEventListener('click', () => {
-        closeVimEditor();
-    });
-    
-    vimEscButton.addEventListener('click', () => {
-        vimState.mode = 'command';
-        vimModeIndicator.textContent = 'COMMAND MODE';
-        vimModeIndicator.className = 'vim-mode-indicator command-mode';
-        vimTextarea.blur();
-        vimInput.focus();
-        updateVimCursorPosition();
-    });
-    
-    vimInsertButton.addEventListener('click', () => {
-        vimState.mode = 'insert';
-        vimModeIndicator.textContent = 'INSERT MODE';
-        vimModeIndicator.className = 'vim-mode-indicator insert-mode';
-        vimInput.blur();
-        vimTextarea.focus();
-        updateVimCursorPosition();
-    });
-    
-    // Handle vim mode switching with keyboard
-    vimTextarea.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            e.preventDefault();
-            vimState.mode = 'command';
-            vimModeIndicator.textContent = 'COMMAND MODE';
-            vimModeIndicator.className = 'vim-mode-indicator command-mode';
-            vimTextarea.blur();
-            vimInput.focus();
-        }
-        updateVimCursorPosition();
-    });
-    
-    // Handle vim command input
-    vimInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const command = vimInput.value.trim();
-            if (command === 'i') {
-                // Switch to insert mode
-                vimState.mode = 'insert';
-                vimModeIndicator.textContent = 'INSERT MODE';
-                vimModeIndicator.className = 'vim-mode-indicator insert-mode';
-                vimInput.blur();
-                vimTextarea.focus();
-                vimInput.value = '';
-            } else if (command.startsWith(':')) {
-                // Handle colon commands
-                const actualCommand = command.substring(1);
-                const result = handleVimCommand(actualCommand);
-                if (result) {
-                    addTerminalOutput(result);
-                }
-                vimInput.value = '';
-            } else if (command) {
-                // Other vim commands
-                vimInput.value = '';
-            }
-        } else if (e.key === 'i' && vimInput.value === '' && vimState.mode === 'command') {
-            // Quick insert mode switch
-            e.preventDefault();
-            vimState.mode = 'insert';
-            vimModeIndicator.textContent = 'INSERT MODE';
-            vimModeIndicator.className = 'vim-mode-indicator insert-mode';
-            vimInput.blur();
-            vimTextarea.focus();
-        }
-    });
-    
-    vimTextarea.addEventListener('click', () => {
-        if (vimState.mode === 'command') {
-            // In command mode, clicking textarea should focus command input instead
-            vimInput.focus();
-        } else {
-            updateVimCursorPosition();
-        }
-    });
-    
-    vimTextarea.addEventListener('keyup', () => {
-        if (vimState.mode === 'insert') {
-            updateVimCursorPosition();
-        }
-    });
-    
     // Initialize the lab
     updateRequirements();
 </script>
 </body>
 </html>
-
