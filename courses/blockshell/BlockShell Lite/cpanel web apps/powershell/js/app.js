@@ -1,4 +1,4 @@
-// js/app.js
+// app.js
 import { BlockShellEngine } from './blockshell-engine.js';
 import { initLayout } from './ui-layout.js';
 
@@ -12,13 +12,12 @@ import { registerSqlModule } from './modules/sql-powershell.js';
 const engine = new BlockShellEngine();
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Default module + toolbox
   engine.init({
     blocklyDivId: 'blocklyDiv',
-    toolboxId: 'toolbox-core'
+    toolboxId: 'toolbox'
   });
 
-  // Register all modules
+  // Register all PowerShell modules
   registerCoreModule(engine);
   registerAdModule(engine);
   registerExchangeModule(engine);
@@ -26,10 +25,9 @@ window.addEventListener('DOMContentLoaded', () => {
   registerNetworkingModule(engine);
   registerSqlModule(engine);
 
-  // Layout (tabs + resize)
   initLayout(engine);
 
-  // Search
+  // Search hook
   const searchInput = document.getElementById('block-search');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
