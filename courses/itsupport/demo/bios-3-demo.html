@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>BIOS Lab 3: BIOS Date/Time Configuration - Animated Demo</title>
+    <style>
+        :root {
+            --primary-color: #2e51bb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --bios-blue: #0066cc;
+            --bios-text: #ffffff;
+            --panel-bg: #252525;
+            --border-color-dark: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: #1e1e1e;
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color-dark);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: #cc0000;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 35%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color-dark);
+        }
+        
+        .demo-panel {
+            width: 65%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+            padding: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--success-color);
+            border-bottom: 1px solid var(--border-color-dark);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(16, 185, 129, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--success-color);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #cc0000;
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: #cc0000;
+            border-bottom: 1px solid var(--border-color-dark);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--success-color);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--success-color);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--success-color);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--success-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--success-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .progress-container {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 24px;
+            background: #333;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        
+        .completion-message {
+            display: none !important;
+            background: linear-gradient(135deg, var(--success-color), var(--primary-color));
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            text-align: center;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .completion-message h3 {
+            margin: 0 0 10px 0;
+            color: white;
+        }
+        
+        /* BIOS Screen Styles */
+        .bios-screen {
+            width: 800px;
+            height: 500px;
+            background: var(--bios-blue);
+            color: var(--bios-text);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Courier New', monospace;
+            border: 3px solid #333;
+            position: relative;
+        }
+        
+        .bios-header {
+            border-bottom: 2px solid #fff;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        
+        .bios-title {
+            font-size: 18px;
+            color: #ff0;
+            font-weight: bold;
+        }
+        
+        .bios-content {
+            flex: 1;
+            display: flex;
+            gap: 16px;
+        }
+        
+        .bios-menu {
+            width: 200px;
+        }
+        
+        .menu-item {
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.2);
+        }
+        
+        .menu-item.active {
+            background: #fff;
+            color: #003a99;
+            border-color: #fff;
+            font-weight: bold;
+        }
+        
+        .bios-info {
+            flex: 1;
+            background: rgba(255,255,255,.06);
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,.25);
+            padding: 12px;
+        }
+        
+        .info-title {
+            color: #ff0;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .datetime-section {
+            background: rgba(0,0,0,.25);
+            border: 1px solid rgba(255,255,255,.35);
+            border-radius: 6px;
+            padding: 10px;
+        }
+        
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+            padding: 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,.08);
+            transition: all 0.3s ease;
+        }
+        
+        .row.selected {
+            background: rgba(255,255,255,.9);
+            color: #003a99;
+            animation: rowBlink 0.5s ease;
+        }
+        
+        @keyframes rowBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .label {
+            min-width: 120px;
+            font-weight: 600;
+        }
+        
+        .value {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            font-weight: 600;
+        }
+        
+        .box {
+            min-width: 32px;
+            text-align: center;
+            padding: 4px;
+            border-radius: 4px;
+            background: rgba(255,255,255,.15);
+            border: 1px solid rgba(255,255,255,.35);
+            transition: all 0.3s ease;
+        }
+        
+        .box.active {
+            outline: 2px solid #cc0000;
+            background: #ffffcc;
+            color: #000;
+            animation: boxPulse 0.5s ease;
+        }
+        
+        @keyframes boxPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .sep {
+            opacity: .9;
+        }
+        
+        .cmos-warning {
+            color: var(--warning-color);
+            font-weight: bold;
+        }
+        
+        .bios-controls {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,.3);
+        }
+        
+        .controls-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        
+        .key-button {
+            padding: 6px 12px;
+            background: #444;
+            border: 1px solid #666;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .key-button.special {
+            background: #0b61d6;
+            border-color: #0b61d6;
+            font-weight: bold;
+        }
+        
+        .key-button.tab {
+            background: #374151;
+            border-color: #374151;
+            font-weight: bold;
+        }
+        
+        .key-button.pressed {
+            outline: 2px solid #fff;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+        
+        .instructions {
+            text-align: center;
+            font-size: 12px;
+            opacity: .9;
+            margin-top: 8px;
+        }
+        
+        .save-dialog {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            background: var(--bios-blue);
+            border: 2px solid #fff;
+            border-radius: 6px;
+            padding: 16px;
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        
+        .save-dialog.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .save-dialog-title {
+            color: #ff0;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        
+        .save-dialog-content {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .save-dialog-options {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .save-option {
+            padding: 6px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            min-width: 80px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .save-option.selected {
+            background: #fff;
+            color: #003a99;
+            font-weight: bold;
+            animation: optionPulse 0.5s ease;
+        }
+        
+        @keyframes optionPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .save-dialog-hint {
+            text-align: center;
+            font-size: 11px;
+            margin-top: 8px;
+            opacity: 0.8;
+        }
+        
+        .action-hint {
+            position: absolute;
+            background: rgba(46, 81, 187, 0.95);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 100;
+            display: none !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            font-family: 'Segoe UI', sans-serif;
+        }
+        
+        .action-hint.show {
+            display: block;
+            animation: hintPulse 0.5s ease;
+        }
+        
+        @keyframes hintPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .mouse-cursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 9999;
+            display: none !important;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <div class="header-left">
+                <h1>BIOS Lab 3: BIOS Date/Time Configuration</h1>
+            </div>
+            <div class="demo-badge">AUTOMATED DEMO</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="guide-panel">
+                <div class="guide">
+                    <h2>Lab Guide</h2>
+                    
+                    <div class="lab-intro">
+                        <h3>Learning Objectives</h3>
+                        <p><strong>Scenario:</strong> CMOS battery has failed, resetting BIOS settings.</p>
+                        <p>In this lab, you will learn to:</p>
+                        <ul>
+                            <li>Navigate BIOS date/time settings</li>
+                            <li>Correct System Time to 09:30:00</li>
+                            <li>Correct System Date to 05/09/2025</li>
+                            <li>Save BIOS configuration changes</li>
+                        </ul>
+                        <p style="margin-top:10px;"><strong>Why this matters:</strong> Incorrect system time causes SSL certificate errors, file timestamp issues, and scheduling problems.</p>
+                    </div>
+                    
+                    <div class="requirements-panel">
+                        <h4>Lab Requirements</h4>
+                        <div class="requirement-item" id="req-navigate">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Navigate to time fields</span>
+                        </div>
+                        <div class="requirement-item" id="req-time">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Set time to 09:30:00</span>
+                        </div>
+                        <div class="requirement-item" id="req-date">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Set date to 05/09/2025</span>
+                        </div>
+                        <div class="requirement-item" id="req-save">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Save and exit BIOS</span>
+                        </div>
+                    </div>
+                    
+                    <div class="guide-step current" data-step="1">
+                        <h3>
+                            <span class="step-number">1</span>
+                            Set System Time
+                            <span class="step-status status-current">Current Step</span>
+                        </h3>
+                        <p>Navigate through time fields (HH:MM:SS) using Tab, adjust values using ↑↓ arrows to set 09:30:00.</p>
+                    </div>
+                    
+                    <div class="guide-step" data-step="2">
+                        <h3>
+                            <span class="step-number">2</span>
+                            Set System Date
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Navigate to date row using ↑↓, then adjust MM/DD/YYYY to 05/09/2025.</p>
+                    </div>
+                    
+                    <div class="guide-step" data-step="3">
+                        <h3>
+                            <span class="step-number">3</span>
+                            Save Changes
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Press F10 to save the corrected date/time settings and exit BIOS.</p>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%">
+                                <span id="progress-text">0% Complete</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="completion-message" id="completion-message">
+                        <h3>✓ Lab Complete!</h3>
+                        <p>System date/time corrected after CMOS battery failure.</p>
+                        <p>Changes saved to BIOS configuration.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="demo-panel">
+                <div class="bios-screen">
+                    <div class="bios-header">
+                        <div class="bios-title">AMI BIOS Setup Utility</div>
+                        <div style="font-size:12px;margin-top:4px;">Copyright (C) 2023 American Megatrends, Inc.</div>
+                    </div>
+                    <div class="bios-content">
+                        <div class="bios-menu">
+                            <div class="menu-item active">Main</div>
+                            <div class="menu-item">Advanced</div>
+                            <div class="menu-item">Security</div>
+                            <div class="menu-item">Boot</div>
+                            <div class="menu-item">Exit</div>
+                        </div>
+                        <div class="bios-info">
+                            <div class="info-title">System Information</div>
+                            <div style="margin-bottom:12px;font-size:13px;">
+                                <div>System Time: <span id="systemTimeDisplay">00:00:00</span></div>
+                                <div>System Date: <span id="systemDateDisplay">01/01/2023</span></div>
+                                <div>BIOS Version: 2.1.0</div>
+                            </div>
+                            
+                            <div class="info-title">System Date / Time Configuration</div>
+                            <div class="datetime-section">
+                                <div class="row selected" id="timeRow">
+                                    <div class="label">System Time</div>
+                                    <div class="value">
+                                        <span class="box active" id="hh">00</span><span class="sep">:</span>
+                                        <span class="box" id="mm">00</span><span class="sep">:</span>
+                                        <span class="box" id="ss">00</span>
+                                    </div>
+                                </div>
+                                <div class="row" id="dateRow">
+                                    <div class="label">System Date</div>
+                                    <div class="value">
+                                        <span class="box" id="mo">01</span><span class="sep">/</span>
+                                        <span class="box" id="dd">01</span><span class="sep">/</span>
+                                        <span class="box" id="yy">2023</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top:12px;font-size:11px;color:#ffa500;">
+                                <span class="cmos-warning">⚠ CMOS settings wrong</span> - Date and time not set. Please configure.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bios-controls">
+                        <div class="controls-row">
+                            <div class="key-button special" id="f10Key">F10</div>
+                            <div class="key-button tab" id="tabKey">Tab</div>
+                            <div class="key-button" id="upKey">↑</div>
+                            <div class="key-button" id="downKey">↓</div>
+                        </div>
+                        <div class="instructions">↑↓ Adjust | Tab Next Field | F10 Save & Exit</div>
+                    </div>
+                </div>
+                
+                <!-- Save Dialog -->
+                <div class="save-dialog" id="saveDialog">
+                    <div class="save-dialog-title">Save Configuration</div>
+                    <div class="save-dialog-content">
+                        Save configuration changes and exit?
+                    </div>
+                    <div class="save-dialog-options">
+                        <div class="save-option selected" id="saveOption">Save</div>
+                        <div class="save-option" id="discardOption">Discard</div>
+                        <div class="save-option" id="cancelOption">Cancel</div>
+                    </div>
+                    <div class="save-dialog-hint">Use ← → to select, Enter to confirm</div>
+                </div>
+                
+                <div class="action-hint" id="actionHint"></div>
+                <div class="mouse-cursor" id="mouseCursor"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const steps = document.querySelectorAll('.guide-step');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const completionMessage = document.getElementById('completion-message');
+        
+        let currentStep = 0;
+        
+        const completionState = {
+            navigate: false,
+            time: false,
+            date: false,
+            save: false
+        };
+        
+        function updateRequirements() {
+            const items = {
+                navigate: 'req-navigate',
+                time: 'req-time',
+                date: 'req-date',
+                save: 'req-save'
+            };
+            
+            Object.keys(items).forEach(key => {
+                if (completionState[key]) {
+                    const element = document.getElementById(items[key]);
+                    element.classList.add('completed');
+                    element.querySelector('.requirement-checkbox').textContent = '✓';
+                }
+            });
+            
+            const completedCount = Object.values(completionState).filter(v => v).length;
+            const progressPercent = (completedCount / Object.keys(completionState).length) * 100;
+            progressFill.style.width = `${progressPercent}%`;
+            progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        }
+        
+        function completeStep(step) {
+            if (step < steps.length) {
+                steps[step].classList.remove('current');
+                steps[step].classList.add('completed');
+                steps[step].querySelector('.step-status').textContent = 'Completed';
+                steps[step].querySelector('.step-status').className = 'step-status status-completed';
+                
+                if (step + 1 < steps.length) {
+                    steps[step + 1].classList.add('current');
+                    steps[step + 1].querySelector('.step-status').textContent = 'Current Step';
+                    steps[step + 1].querySelector('.step-status').className = 'step-status status-current';
+                    steps[step + 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            currentStep = step + 1;
+        }
+        
+        function showHint(text, x, y) {
+            const hint = document.getElementById('actionHint');
+            hint.textContent = text;
+            hint.style.left = x + 'px';
+            hint.style.top = y + 'px';
+            hint.classList.add('show');
+            
+            setTimeout(() => {
+                hint.classList.remove('show');
+            }, 2000);
+        }
+        
+        function moveCursor(x, y, duration = 1000) {
+            const cursor = document.getElementById('mouseCursor');
+            cursor.classList.add('show');
+            cursor.style.transition = `all ${duration}ms ease`;
+            cursor.style.left = x + 'px';
+            cursor.style.top = y + 'px';
+            
+            return new Promise(resolve => setTimeout(resolve, duration));
+        }
+        
+        function hideCursor() {
+            const cursor = document.getElementById('mouseCursor');
+            cursor.classList.remove('show');
+        }
+        
+        function pressKey(keyId) {
+            const key = document.getElementById(keyId);
+            key.classList.add('pressed');
+            
+            setTimeout(() => {
+                key.classList.remove('pressed');
+            }, 300);
+            
+            return new Promise(resolve => setTimeout(resolve, 400));
+        }
+        
+        function updateDisplay(field, value) {
+            const element = document.getElementById(field);
+            element.textContent = String(value).padStart(field === 'yy' ? 4 : 2, '0');
+            
+            // Update system display
+            const hh = document.getElementById('hh').textContent;
+            const mm = document.getElementById('mm').textContent;
+            const ss = document.getElementById('ss').textContent;
+            const mo = document.getElementById('mo').textContent;
+            const dd = document.getElementById('dd').textContent;
+            const yy = document.getElementById('yy').textContent;
+            
+            document.getElementById('systemTimeDisplay').textContent = `${hh}:${mm}:${ss}`;
+            document.getElementById('systemDateDisplay').textContent = `${mo}/${dd}/${yy}`;
+        }
+        
+        async function incrementField(field, targetValue) {
+            const element = document.getElementById(field);
+            let currentValue = parseInt(element.textContent);
+            
+            while (currentValue !== targetValue) {
+                await pressKey('upKey');
+                currentValue++;
+                if (field === 'hh' && currentValue > 23) currentValue = 0;
+                if (field === 'mm' && currentValue > 59) currentValue = 0;
+                if (field === 'ss' && currentValue > 59) currentValue = 0;
+                if (field === 'mo' && currentValue > 12) currentValue = 1;
+                if (field === 'dd' && currentValue > 31) currentValue = 1;
+                
+                updateDisplay(field, currentValue);
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+        }
+        
+        async function runDemo() {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            completionState.navigate = true;
+            updateRequirements();
+            
+            // Step 1: Set hours to 09
+            const hhBox = document.getElementById('hh');
+            const hhRect = hhBox.getBoundingClientRect();
+            
+            showHint('Setting hours to 09', hhRect.left + 100, hhRect.top - 80);
+            await incrementField('hh', 9);
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Tab to minutes
+            const tabKey = document.getElementById('tabKey');
+            const tabKeyRect = tabKey.getBoundingClientRect();
+            
+            await moveCursor(tabKeyRect.left + tabKeyRect.width / 2, tabKeyRect.top + tabKeyRect.height / 2, 1000);
+            showHint('Moving to minutes field', tabKeyRect.left - 100, tabKeyRect.top - 80);
+            await pressKey('tabKey');
+            
+            document.getElementById('hh').classList.remove('active');
+            document.getElementById('mm').classList.add('active');
+            
+            await new Promise(resolve => setTimeout(resolve, 800));
+            hideCursor();
+            
+            // Set minutes to 30
+            const mmBox = document.getElementById('mm');
+            const mmRect = mmBox.getBoundingClientRect();
+            
+            showHint('Setting minutes to 30', mmRect.left + 100, mmRect.top - 80);
+            await incrementField('mm', 30);
+            
+            completionState.time = true;
+            updateRequirements();
+            completeStep(0);
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Step 2: Move to date row
+            const downKey = document.getElementById('downKey');
+            const downKeyRect = downKey.getBoundingClientRect();
+            
+            await moveCursor(downKeyRect.left + downKeyRect.width / 2, downKeyRect.top + downKeyRect.height / 2, 1000);
+            showHint('Navigating to date row', downKeyRect.left - 100, downKeyRect.top - 80);
+            await pressKey('downKey');
+            
+            document.getElementById('timeRow').classList.remove('selected');
+            document.getElementById('dateRow').classList.add('selected');
+            document.getElementById('mm').classList.remove('active');
+            document.getElementById('mo').classList.add('active');
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            hideCursor();
+            
+            // Set month to 05
+            const moBox = document.getElementById('mo');
+            const moRect = moBox.getBoundingClientRect();
+            
+            showHint('Setting month to 05', moRect.left + 100, moRect.top - 80);
+            await incrementField('mo', 5);
+            
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // Tab to day
+            await moveCursor(tabKeyRect.left + tabKeyRect.width / 2, tabKeyRect.top + tabKeyRect.height / 2, 1000);
+            await pressKey('tabKey');
+            
+            document.getElementById('mo').classList.remove('active');
+            document.getElementById('dd').classList.add('active');
+            
+            await new Promise(resolve => setTimeout(resolve, 800));
+            hideCursor();
+            
+            // Set day to 09
+            const ddBox = document.getElementById('dd');
+            const ddRect = ddBox.getBoundingClientRect();
+            
+            showHint('Setting day to 09', ddRect.left + 100, ddRect.top - 80);
+            await incrementField('dd', 9);
+            
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // Tab to year
+            await moveCursor(tabKeyRect.left + tabKeyRect.width / 2, tabKeyRect.top + tabKeyRect.height / 2, 1000);
+            await pressKey('tabKey');
+            
+            document.getElementById('dd').classList.remove('active');
+            document.getElementById('yy').classList.add('active');
+            
+            await new Promise(resolve => setTimeout(resolve, 800));
+            hideCursor();
+            
+            // Set year to 2025
+            const yyBox = document.getElementById('yy');
+            const yyRect = yyBox.getBoundingClientRect();
+            
+            showHint('Setting year to 2025', yyRect.left + 100, yyRect.top - 80);
+            await incrementField('yy', 2025);
+            
+            completionState.date = true;
+            updateRequirements();
+            completeStep(1);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 3: Save changes
+            const f10Key = document.getElementById('f10Key');
+            const f10KeyRect = f10Key.getBoundingClientRect();
+            
+            await moveCursor(f10KeyRect.left + f10KeyRect.width / 2, f10KeyRect.top + f10KeyRect.height / 2, 1200);
+            showHint('Saving changes and exiting BIOS', f10KeyRect.left - 120, f10KeyRect.top - 80);
+            await pressKey('f10Key');
+            
+            document.getElementById('saveDialog').classList.add('show');
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Select Save option (already selected)
+            const saveOption = document.getElementById('saveOption');
+            const saveOptionRect = saveOption.getBoundingClientRect();
+            
+            await moveCursor(saveOptionRect.left + saveOptionRect.width / 2, saveOptionRect.top + saveOptionRect.height / 2, 1200);
+            showHint('Confirming save', saveOptionRect.left - 80, saveOptionRect.top - 100);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            document.getElementById('saveDialog').classList.remove('show');
+            
+            completionState.save = true;
+            updateRequirements();
+            completeStep(2);
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            hideCursor();
+            
+            // Show completion
+            completionMessage.style.display = 'block';
+            completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Reload after delay
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            location.reload();
+        }
+        
+        // Start the demo
+        setTimeout(() => {
+            runDemo();
+        }, 1000);
+    </script>
+</body>
+</html>

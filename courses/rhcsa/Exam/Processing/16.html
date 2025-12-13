@@ -604,7 +604,7 @@
             
             <div class="lab-intro">
                 <h3>Lab Objective</h3>
-                <p>Upgrade the kernel to version 2.6.36.7.1, configure the system to start the default kernel, and keep the old kernel available.</p>
+                <p>Upgrade the kernel to version 2.6.36.7.1, configure the system to boot from the new kernel by default, and keep the old kernel available as a backup.</p>
                 <p><strong>Time Estimate:</strong> 15-20 minutes</p>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill"></div>
@@ -614,25 +614,25 @@
 
             <div class="requirements-panel">
                 <h4>Kernel Upgrade Requirements</h4>
-                <div class="requirement-item" id="req-check-kernel">
+                <div class="requirement-item" id="req-check-grub">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Check current kernel version</span>
+                    <span class="requirement-label">Check current GRUB configuration</span>
+                </div>
+                <div class="requirement-item" id="req-navigate-boot">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Navigate to /boot directory</span>
                 </div>
                 <div class="requirement-item" id="req-download-kernel">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Download kernel package from FTP server</span>
+                    <span class="requirement-label">Download kernel RPM package</span>
                 </div>
                 <div class="requirement-item" id="req-install-kernel">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Install new kernel package</span>
+                    <span class="requirement-label">Install new kernel using rpm</span>
                 </div>
                 <div class="requirement-item" id="req-configure-grub">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Configure GRUB to use new kernel as default</span>
-                </div>
-                <div class="requirement-item" id="req-verify-old-kernel">
-                    <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Verify old kernel is still available</span>
+                    <span class="requirement-label">Configure GRUB to boot new kernel by default</span>
                 </div>
             </div>
 
@@ -642,40 +642,48 @@
                     Lab Introduction
                     <span class="step-status status-completed">Completed</span>
                 </h3>
-                <p>Welcome to the RHCSA Kernel Upgrade Lab. In this lab, you will upgrade the kernel while ensuring the old kernel remains available as a boot option.</p>
-                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+                <p>Welcome to the RHCSA Kernel Upgrade Lab. In this lab, you will upgrade the kernel, configure GRUB to boot from the new kernel by default, and keep the old kernel as a fallback option.</p>
+                <p><strong>Important:</strong> Always keep at least one old kernel available for troubleshooting if the new kernel fails to boot.</p>
             </div>
 
             <div class="guide-step current" id="step1">
                 <h3>
                     <span class="step-number">1</span>
-                    Check Current Kernel Version
+                    Check Current GRUB Configuration
                     <span class="step-status status-current">Current Step</span>
                 </h3>
-                <p>First, let's check the current kernel version to establish a baseline.</p>
+                <p>First, let's examine the current GRUB configuration to understand the boot setup.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    uname -r
+                    cat /etc/grub.conf
                 </div>
                 
+                <p>This will display the current bootloader configuration. Note the current kernel version and boot order.</p>
+
                 <div class="concept">
-                    <h4>Understanding Kernel Versions</h4>
-                    <p>The kernel is the core component of the Linux operating system. It manages system resources and facilitates communication between hardware and software.</p>
-                    <p>Kernel version format: <code>major.minor.patch-build</code></p>
+                    <h4>Understanding GRUB Configuration</h4>
+                    <p>The GRUB configuration file (<code>/etc/grub.conf</code>) controls:</p>
+                    <ul>
+                        <li>Which kernel boots by default</li>
+                        <li>Available kernel options</li>
+                        <li>Boot timeout settings</li>
+                        <li>Boot parameters</li>
+                    </ul>
+                    <p>The <code>default</code> parameter determines which menu entry boots automatically (0 = first entry).</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step2">
                 <h3>
                     <span class="step-number">2</span>
-                    Download New Kernel Package
+                    Navigate to /boot Directory
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Now let's download the new kernel package from the FTP server.</p>
+                <p>Now let's navigate to the /boot directory where kernel files are stored.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
@@ -685,20 +693,63 @@
                     cd /boot
                 </div>
                 
+                <p>Once in the /boot directory, you can list the current kernel files:</p>
+                
                 <div class="command-hint">
-                    wget ftp://server.domain11.example.com/pub/updates/kernel-2.6.36.7.1.rpm
+                    ls -la vmlinuz*
                 </div>
                 
-                <p class="warning">Note: The exact URL may vary in your exam environment. Follow the instructions provided.</p>
+                <p class="warning">Note: The /boot directory contains critical boot files. Be careful when modifying files here.</p>
             </div>
 
             <div class="guide-step" id="step3">
                 <h3>
                     <span class="step-number">3</span>
-                    Install New Kernel Package
+                    Download New Kernel RPM
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Now let's install the new kernel package using RPM.</p>
+                <p>Now we need to download the new kernel RPM package. We'll use lftp to connect to the repository.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    lftp it
+                </div>
+                
+                <p>Once in lftp, navigate to the kernel directory and download the package:</p>
+                
+                <div class="command-hint">
+                    get dr/dom/kernel-2.6.36.7.1.rpm
+                </div>
+                
+                <p>Then exit lftp:</p>
+                
+                <div class="command-hint">
+                    exit
+                </div>
+
+                <div class="concept">
+                    <h4>About Kernel Versions</h4>
+                    <p>The kernel version 2.6.36.7.1 follows this format:</p>
+                    <ul>
+                        <li><strong>2</strong>: Major version</li>
+                        <li><strong>6</strong>: Minor version</li>
+                        <li><strong>36</strong>: Patch level</li>
+                        <li><strong>7.1</strong>: Additional patches and build number</li>
+                    </ul>
+                    <p>Always test new kernels before making them the default.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Install New Kernel
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's install the downloaded kernel RPM package.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
@@ -708,25 +759,24 @@
                     rpm -ivh kernel-2.6.36.7.1.rpm
                 </div>
                 
-                <div class="concept">
-                    <h4>RPM Package Management</h4>
-                    <p>RPM (Red Hat Package Manager) is used to install, update, and remove software packages.</p>
-                    <p>Common RPM options:</p>
-                    <ul>
-                        <li><code>-i</code>: Install package</li>
-                        <li><code>-v</code>: Verbose output</li>
-                        <li><code>-h</code>: Show progress with hash marks</li>
-                    </ul>
+                <p>Using <code>-ivh</code> (install, verbose, hash marks) provides feedback during installation.</p>
+                
+                <p>Verify the installation by checking available kernels:</p>
+                
+                <div class="command-hint">
+                    rpm -qa | grep kernel
                 </div>
+                
+                <p class="warning">Important: Use <code>rpm -i</code> (install) not <code>rpm -U</code> (upgrade) to keep the old kernel.</p>
             </div>
 
-            <div class="guide-step" id="step4">
+            <div class="guide-step" id="step5">
                 <h3>
-                    <span class="step-number">4</span>
-                    Configure GRUB Bootloader
+                    <span class="step-number">5</span>
+                    Configure GRUB to Boot New Kernel
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Now we need to configure GRUB to use the new kernel as the default.</p>
+                <p>Finally, we need to edit the GRUB configuration to make the new kernel boot by default.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
@@ -736,20 +786,13 @@
                     vim /etc/grub.conf
                 </div>
                 
-                <p>Once in the editor, ensure the <code>default</code> parameter is set to <code>0</code>:</p>
+                <p>Look for the line that says <code>default=X</code> and change it to:</p>
                 
-                <div class="file-content">default=0
-timeout=5
-splashimage=(hd0,0)/grub/splash.xpm.gz
-hiddenmenu
-title Red Hat Enterprise Linux Server (2.6.36.7.1)
-        root (hd0,0)
-        kernel /vmlinuz-2.6.36.7.1 ro root=/dev/mapper/vol0-root rd_NO_LUKS rd_NO_MD
-        initrd /initramfs-2.6.36.7.1.img
-title Red Hat Enterprise Linux Server (Previous Kernel)
-        root (hd0,0)
-        kernel /vmlinuz-2.6.32-71.el6.x86_64 ro root=/dev/mapper/vol0-root rd_NO_LUKS rd_NO_MD
-        initrd /initramfs-2.6.32-71.el6.x86_64.img</div>
+                <div class="file-content">default=0</div>
+                
+                <p>This sets the first menu entry (which should now be the new kernel) as the default.</p>
+                
+                <p>Verify that the new kernel is listed first in the menu entries section.</p>
                 
                 <p>To save and exit vim:</p>
                 <ol>
@@ -758,33 +801,29 @@ title Red Hat Enterprise Linux Server (Previous Kernel)
                 </ol>
 
                 <div class="concept">
-                    <h4>Understanding GRUB Configuration</h4>
-                    <p>GRUB (GRand Unified Bootloader) is responsible for loading the operating system.</p>
-                    <p>Key parameters in grub.conf:</p>
+                    <h4>GRUB Menu Entry Order</h4>
+                    <p>After installing a new kernel:</p>
                     <ul>
-                        <li><code>default</code>: Index of the default boot entry (0-based)</li>
-                        <li><code>timeout</code>: Time in seconds to wait for user input</li>
-                        <li><code>title</code>: Label for each boot entry</li>
+                        <li>The new kernel is added as the first menu entry (index 0)</li>
+                        <li>The old kernel becomes the second entry (index 1)</li>
+                        <li>Setting <code>default=0</code> makes the new kernel boot automatically</li>
+                        <li>You can still select the old kernel manually during boot</li>
                     </ul>
+                    <p>Always verify the boot order before rebooting.</p>
                 </div>
             </div>
 
-            <div class="guide-step" id="step5">
+            <div class="guide-step" id="step6">
                 <h3>
-                    <span class="step-number">5</span>
+                    <span class="step-number">6</span>
                     Verify Configuration
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Finally, let's verify that our configuration is correct.</p>
+                <p>Let's verify that all configurations are correct.</p>
                 
                 <div class="hint-box">
                     <strong>Type these commands one by one:</strong>
                 </div>
-                
-                <div class="command-hint">
-                    ls /boot/vmlinuz*
-                </div>
-                <p>Should show both old and new kernel files</p>
                 
                 <div class="command-hint">
                     cat /etc/grub.conf | grep default
@@ -792,26 +831,38 @@ title Red Hat Enterprise Linux Server (Previous Kernel)
                 <p>Should show: <code>default=0</code></p>
                 
                 <div class="command-hint">
-                    cat /etc/grub.conf | grep title
+                    rpm -qa | grep kernel-2.6.36.7.1
                 </div>
-                <p>Should show both kernel entries</p>
+                <p>Should confirm the new kernel is installed</p>
+                
+                <div class="command-hint">
+                    ls /boot/vmlinuz* | head -5
+                </div>
+                <p>Should show both old and new kernel files</p>
+                
+                <div class="command-hint">
+                    uname -r
+                </div>
+                <p>Shows the currently running kernel (will change after reboot)</p>
 
                 <div class="concept">
                     <h4>Verification Commands</h4>
-                    <p>After kernel upgrade, always verify with these commands:</p>
+                    <p>After kernel installation:</p>
                     <ul>
-                        <li><code>ls /boot/vmlinuz*</code> - Lists all available kernels</li>
-                        <li><code>cat /etc/grub.conf</code> - Shows GRUB configuration</li>
-                        <li><code>rpm -q kernel</code> - Shows installed kernel packages</li>
+                        <li><code>rpm -qa | grep kernel</code> - Lists all installed kernels</li>
+                        <li><code>ls /boot/vmlinuz*</code> - Shows kernel image files</li>
+                        <li><code>grubby --default-kernel</code> - Shows default kernel path</li>
+                        <li><code>uname -r</code> - Shows current running kernel</li>
                     </ul>
+                    <p>Remember: The kernel change takes effect after reboot.</p>
                 </div>
             </div>
             
             <div id="completion-message" class="completion-message" style="display: none;">
                 <h3>🎉 Lab Completed Successfully!</h3>
                 <p>All kernel upgrade requirements have been met.</p>
-                <p>The new kernel is configured as default, and the old kernel remains available.</p>
-                <p>You can now proceed to the next lab.</p>
+                <p>The system will boot from the new kernel (2.6.36.7.1) by default, with the old kernel available as a fallback.</p>
+                <p><strong>Important:</strong> Test the new kernel thoroughly before rebooting production systems.</p>
             </div>
         </div>
         
@@ -820,8 +871,8 @@ title Red Hat Enterprise Linux Server (Previous Kernel)
                 <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 16: Kernel Upgrade</div>
                 <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
                 <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
-                <div><span class="prompt">[root@station ~]#</span> Current step: Check Current Kernel Version</div>
-                <div><span class="prompt">[root@station ~]#</span> Type: <code>uname -r</code></div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Check Current GRUB Configuration</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>cat /etc/grub.conf</code></div>
                 <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
             </div>
             <div class="command-line">
@@ -897,43 +948,63 @@ title Red Hat Enterprise Linux Server (Previous Kernel)
     
     // Available commands for tab completion
     const availableCommands = [
-        'uname', 'cd', 'ls', 'wget', 'rpm', 'vim', 'cat', 'systemctl', 'clear', 'help'
+        'vim', 'cat', 'cd', 'ls', 'lftp', 'get', 'exit', 'rpm', 'grep', 'uname', 'clear', 'help'
     ];
     
     // Available file paths for tab completion
     const filePaths = {
         '/': ['boot/', 'etc/'],
-        '/boot/': ['vmlinuz-2.6.32-71.el6.x86_64', 'initramfs-2.6.32-71.el6.x86_64.img'],
-        '/etc/': ['grub.conf', 'fstab', 'passwd']
+        '/etc/': ['grub.conf', 'fstab', 'passwd'],
+        '/boot/': ['vmlinuz', 'initramfs', 'grub/']
     };
     
     // Track configuration state
     const configState = {
-        checkKernel: false,
+        checkGrub: false,
+        navigateBoot: false,
         downloadKernel: false,
         installKernel: false,
-        configureGrub: false,
-        verifyOldKernel: false
-    };
-    
-    // Expected commands for each step
-    const stepCommands = {
-        1: ['uname -r'],
-        2: ['cd /boot', 'wget ftp://server.domain11.example.com/pub/updates/kernel-2.6.36.7.1.rpm'],
-        3: ['rpm -ivh kernel-2.6.36.7.1.rpm'],
-        4: ['vim /etc/grub.conf'],
-        5: ['ls /boot/vmlinuz*', 'cat /etc/grub.conf | grep default', 'cat /etc/grub.conf | grep title']
+        configureGrub: false
     };
     
     // Simulated file contents
-    let grubFileContent = `default=1
+    let grubConfContent = `# grub.conf generated by anaconda
+#
+# Note that you do not have to rerun grub after making changes to this file
+# NOTICE:  You have a /boot partition.  This means that
+#          all kernel and initrd paths are relative to /boot/, eg.
+#          root (hd0,0)
+#          kernel /vmlinuz-version ro root=/dev/mapper/vg_station-lv_root
+#          initrd /initramfs-version.img
+#boot=/dev/sda
+default=1
 timeout=5
 splashimage=(hd0,0)/grub/splash.xpm.gz
 hiddenmenu
-title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
-        root (hd0,0)
-        kernel /vmlinuz-2.6.32-71.el6.x86_64 ro root=/dev/mapper/vol0-root rd_NO_LUKS rd_NO_MD
-        initrd /initramfs-2.6.32-71.el6.x86_64.img`;
+title Red Hat Enterprise Linux (2.6.32-71.el6.x86_64)
+\troot (hd0,0)
+\tkernel /vmlinuz-2.6.32-71.el6.x86_64 ro root=/dev/mapper/vg_station-lv_root rd_NO_LUKS LANG=en_US.UTF-8 rd_NO_MD SYSFONT=latarcyrheb-sun16 crashkernel=auto rd_LVM_LV=vg_station/lv_root  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet
+\tinitrd /initramfs-2.6.32-71.el6.x86_64.img
+title Red Hat Enterprise Linux (2.6.32-70.el6.x86_64)
+\troot (hd0,0)
+\tkernel /vmlinuz-2.6.32-70.el6.x86_64 ro root=/dev/mapper/vg_station-lv_root rd_NO_LUKS LANG=en_US.UTF-8 rd_NO_MD SYSFONT=latarcyrheb-sun16 crashkernel=auto rd_LVM_LV=vg_station/lv_root  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet
+\tinitrd /initramfs-2.6.32-70.el6.x86_64.img`;
+    
+    // Expected commands for each step
+    const stepCommands = {
+        1: ['cat /etc/grub.conf'],
+        2: ['cd /boot'],
+        3: ['lftp it', 'get dr/dom/kernel-2.6.36.7.1.rpm', 'exit'],
+        4: ['rpm -ivh kernel-2.6.36.7.1.rpm'],
+        5: ['vim /etc/grub.conf'],
+        6: ['cat /etc/grub.conf | grep default', 'rpm -qa | grep kernel-2.6.36.7.1', 'ls /boot/vmlinuz*', 'uname -r']
+    };
+    
+    // Simulated state
+    let currentKernel = '2.6.32-71.el6.x86_64';
+    let newKernelInstalled = false;
+    let inLftpMode = false;
+    let kernelDownloaded = false;
     
     // Vim editor state
     let vimState = {
@@ -946,18 +1017,34 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
     };
     
     const commands = {
-        'uname': (args) => {
-            if (args[0] === "-r") {
+        'cat': (args) => {
+            if (args.length === 0) {
+                return "cat: missing file operand";
+            }
+            
+            if (args[0] === "/etc/grub.conf") {
                 if (currentStep === 1 || currentStep > 1) {
-                    configState.checkKernel = true;
+                    configState.checkGrub = true;
                     updateRequirements();
                     completeStep(1);
-                    return "2.6.32-71.el6.x86_64";
+                    return grubConfContent;
                 } else {
                     return "Please complete the previous steps first.";
                 }
+            } else if (args.length >= 2 && args[0] === "/etc/grub.conf" && args[1] === "|") {
+                // Handle pipe command
+                if (args[2] === "grep" && args[3] === "default") {
+                    if (currentStep === 6 || currentStep > 6) {
+                        const lines = grubConfContent.split('\n');
+                        const defaultLine = lines.find(line => line.startsWith('default='));
+                        return defaultLine || "default=1";
+                    } else {
+                        return "Please complete the previous steps first.";
+                    }
+                }
             }
-            return "Linux";
+            
+            return `cat: ${args[0]}: No such file or directory`;
         },
         
         'cd': (args) => {
@@ -965,6 +1052,9 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
                 return ""; // Stay in home directory
             } else if (args[0] === "/boot") {
                 if (currentStep === 2 || currentStep > 2) {
+                    configState.navigateBoot = true;
+                    updateRequirements();
+                    completeStep(2);
                     return ""; // Successfully changed directory
                 } else {
                     return "Please complete the previous steps first.";
@@ -974,45 +1064,112 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
         },
         
         'ls': (args) => {
-            if (args.length === 0) {
-                return "kernel-2.6.36.7.1.rpm\nvmlinuz-2.6.32-71.el6.x86_64\ninitramfs-2.6.32-71.el6.x86_64.img";
-            } else if (args[0] === "/boot/vmlinuz*") {
-                if (currentStep === 5 || currentStep > 5) {
-                    configState.verifyOldKernel = true;
-                    updateRequirements();
-                    return "vmlinuz-2.6.32-71.el6.x86_64\nvmlinuz-2.6.36.7.1";
+            if (args.length === 0 || args[0] === "/boot") {
+                if (newKernelInstalled) {
+                    return "config-2.6.32-71.el6.x86_64\nconfig-2.6.36.7.1\ninitramfs-2.6.32-71.el6.x86_64.img\ninitramfs-2.6.36.7.1.img\nSystem.map-2.6.32-71.el6.x86_64\nSystem.map-2.6.36.7.1\nvmlinuz-2.6.32-71.el6.x86_64\nvmlinuz-2.6.36.7.1\ngrub/";
+                } else {
+                    return "config-2.6.32-71.el6.x86_64\ninitramfs-2.6.32-71.el6.x86_64.img\nSystem.map-2.6.32-71.el6.x86_64\nvmlinuz-2.6.32-71.el6.x86_64\ngrub/";
+                }
+            } else if (args.length > 0 && args[0].includes('vmlinuz')) {
+                if (newKernelInstalled) {
+                    return "vmlinuz-2.6.36.7.1\nvmlinuz-2.6.32-71.el6.x86_64";
                 } else {
                     return "vmlinuz-2.6.32-71.el6.x86_64";
                 }
             }
-            return `ls: cannot access '${args[0]}': No such file or directory`;
+            return `ls: cannot access '${args[0] || ""}': No such file or directory`;
         },
         
-        'wget': (args) => {
-            if (args[0] === "ftp://server.domain11.example.com/pub/updates/kernel-2.6.36.7.1.rpm") {
-                if (currentStep === 2 || currentStep > 2) {
-                    configState.downloadKernel = true;
-                    updateRequirements();
-                    return "--2023-11-10 14:23:45--  ftp://server.domain11.example.com/pub/updates/kernel-2.6.36.7.1.rpm\nResolving server.domain11.example.com... 172.24.40.1\nConnecting to server.domain11.example.com|172.24.40.1|:21... connected.\nLogging in as anonymous ... Logged in!\n=> 'kernel-2.6.36.7.1.rpm'\n100%[======================================>] 45,678,456  --.-K/s   in 0.1s\n\n2023-11-10 14:23:46 (356 MB/s) - 'kernel-2.6.36.7.1.rpm' saved [45678456]";
+        'lftp': (args) => {
+            if (args[0] === "it") {
+                if (currentStep === 3 || currentStep > 3) {
+                    inLftpMode = true;
+                    addTerminalOutput(`<span class="prompt">lftp it></span> Connected to it`);
+                    addTerminalOutput(`<span class="prompt">lftp it></span> Type 'get dr/dom/kernel-2.6.36.7.1.rpm' to download`);
+                    addTerminalOutput(`<span class="prompt">lftp it></span> Type 'exit' to quit`);
+                    return ""; // Enter lftp mode
                 } else {
                     return "Please complete the previous steps first.";
                 }
             }
-            return `wget: unable to resolve host address '${args[0]}'`;
+            return `lftp: ${args[0]}: unknown command`;
+        },
+        
+        'get': (args) => {
+            if (!inLftpMode) {
+                return "bash: get: command not found";
+            }
+            
+            if (args[0] === "dr/dom/kernel-2.6.36.7.1.rpm") {
+                configState.downloadKernel = true;
+                kernelDownloaded = true;
+                updateRequirements();
+                return "kernel-2.6.36.7.1.rpm downloaded successfully (12.4 MB)";
+            }
+            return `get: ${args[0]}: file not found`;
+        },
+        
+        'exit': () => {
+            if (inLftpMode) {
+                inLftpMode = false;
+                configState.downloadKernel = true;
+                updateRequirements();
+                completeStep(3);
+                return "Disconnected from lftp";
+            }
+            return ""; // Normal exit command
         },
         
         'rpm': (args) => {
             if (args[0] === "-ivh" && args[1] === "kernel-2.6.36.7.1.rpm") {
-                if (currentStep === 3 || currentStep > 3) {
-                    configState.installKernel = true;
-                    updateRequirements();
-                    completeStep(3);
-                    return "Preparing...                ########################################### [100%]\n   1:kernel                 ########################################### [100%]";
+                if (currentStep === 4 || currentStep > 4) {
+                    if (kernelDownloaded) {
+                        configState.installKernel = true;
+                        newKernelInstalled = true;
+                        
+                        // Update grub.conf to add new kernel as first entry
+                        const lines = grubConfContent.split('\n');
+                        const newKernelEntry = `title Red Hat Enterprise Linux (2.6.36.7.1)
+\troot (hd0,0)
+\tkernel /vmlinuz-2.6.36.7.1 ro root=/dev/mapper/vg_station-lv_root rd_NO_LUKS LANG=en_US.UTF-8 rd_NO_MD SYSFONT=latarcyrheb-sun16 crashkernel=auto rd_LVM_LV=vg_station/lv_root  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet
+\tinitrd /initramfs-2.6.36.7.1.img`;
+                        
+                        // Find where to insert (after hiddenmenu line)
+                        const hiddenmenuIndex = lines.findIndex(line => line.includes('hiddenmenu'));
+                        if (hiddenmenuIndex !== -1) {
+                            lines.splice(hiddenmenuIndex + 1, 0, newKernelEntry);
+                            grubConfContent = lines.join('\n');
+                        }
+                        
+                        updateRequirements();
+                        completeStep(4);
+                        return "Preparing...\n########################################################################\n[100%]\nPackage kernel-2.6.36.7.1 successfully installed";
+                    } else {
+                        return "error: package kernel-2.6.36.7.1.rpm not found";
+                    }
                 } else {
                     return "Please complete the previous steps first.";
                 }
+            } else if (args[0] === "-qa" && args[1] === "|") {
+                if (args[2] === "grep" && args[3] === "kernel-2.6.36.7.1") {
+                    if (newKernelInstalled) {
+                        return "kernel-2.6.36.7.1-1.el6.x86_64\nkernel-2.6.32-71.el6.x86_64\nkernel-headers-2.6.32-71.el6.x86_64";
+                    } else {
+                        return "kernel-2.6.32-71.el6.x86_64\nkernel-headers-2.6.32-71.el6.x86_64";
+                    }
+                }
             }
-            return `rpm: invalid option -- '${args[0]}'`;
+            return `rpm: unknown option '${args[0]}'`;
+        },
+        
+        'grep': (args) => {
+            // This is typically handled via pipe, but handle direct calls
+            if (args[0] === "default" && args[1] === "/etc/grub.conf") {
+                const lines = grubConfContent.split('\n');
+                const defaultLine = lines.find(line => line.startsWith('default='));
+                return defaultLine || "";
+            }
+            return "";
         },
         
         'vim': (args) => {
@@ -1024,8 +1181,8 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
             let content = '';
             
             if (file === "/etc/grub.conf") {
-                content = grubFileContent;
-                if (currentStep === 4 || currentStep > 4) {
+                content = grubConfContent;
+                if (currentStep === 5 || currentStep > 5) {
                     const result = openVimEditor(file, content, 'grub');
                     return result;
                 } else {
@@ -1036,26 +1193,11 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
             return `vim: cannot open ${file} for writing: No such file or directory`;
         },
         
-        'cat': (args) => {
-            if (args[0] === "/etc/grub.conf") {
-                return grubFileContent;
-            } else if (args[0] === "/etc/grub.conf" && args[1] === "|" && args[2] === "grep" && args[3] === "default") {
-                if (grubFileContent.includes("default=0")) {
-                    configState.configureGrub = true;
-                    updateRequirements();
-                    completeStep(4);
-                    return "default=0";
-                } else {
-                    return "default=1";
-                }
-            } else if (args[0] === "/etc/grub.conf" && args[1] === "|" && args[2] === "grep" && args[3] === "title") {
-                if (grubFileContent.includes("2.6.36.7.1") && grubFileContent.includes("2.6.32-71.el6.x86_64")) {
-                    return "title Red Hat Enterprise Linux Server (2.6.36.7.1)\ntitle Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)";
-                } else {
-                    return "title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)";
-                }
+        'uname': (args) => {
+            if (args[0] === "-r") {
+                return currentKernel;
             }
-            return `cat: ${args[0]}: No such file or directory`;
+            return `uname: invalid option -- '${args[0]}'`;
         },
         
         'clear': () => {
@@ -1064,7 +1206,7 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
         },
         
         'help': () => {
-            return "Available commands: uname, cd, ls, wget, rpm, vim, cat, clear, help";
+            return "Available commands: vim, cat, cd, ls, lftp, get, exit, rpm, grep, uname, clear, help";
         }
     };
     
@@ -1086,17 +1228,15 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
         if (fileType === 'grub') {
             vimInstructionsContent.innerHTML = `
                 <p>Edit the GRUB configuration file to set the new kernel as default.</p>
-                <p>Change the <code>default</code> parameter to <code>0</code>:</p>
+                <p>Find the line that says:</p>
+                <div class="file-content">default=1</div>
+                <p>Change it to:</p>
                 <div class="file-content">default=0</div>
-                <p>Add an entry for the new kernel:</p>
-                <div class="file-content">title Red Hat Enterprise Linux Server (2.6.36.7.1)
-        root (hd0,0)
-        kernel /vmlinuz-2.6.36.7.1 ro root=/dev/mapper/vol0-root rd_NO_LUKS rd_NO_MD
-        initrd /initramfs-2.6.36.7.1.img</div>
+                <p><strong>Important:</strong> This makes the first menu entry (new kernel) boot by default.</p>
                 <p><strong>Vim Commands:</strong></p>
                 <ul>
                     <li>Press <code>i</code> to enter Insert mode</li>
-                    <li>Type the required configuration</li>
+                    <li>Make the required change</li>
                     <li>Press <code>ESC</code> to return to Command mode</li>
                     <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
                 </ul>
@@ -1125,9 +1265,11 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
         if (command === 'w' || command === 'write') {
             // Save the file
             if (vimState.file === "/etc/grub.conf") {
-                grubFileContent = vimTextarea.value;
-                if (grubFileContent.includes("default=0") && grubFileContent.includes("2.6.36.7.1")) {
-                    completeStep(4);
+                grubConfContent = vimTextarea.value;
+                if (grubConfContent.includes("default=0")) {
+                    configState.configureGrub = true;
+                    updateRequirements();
+                    completeStep(5);
                 }
             }
             return "File saved";
@@ -1167,9 +1309,14 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
     
     // Function to update requirements display
     function updateRequirements() {
-        if (configState.checkKernel) {
-            document.getElementById('req-check-kernel').classList.add('completed');
-            document.getElementById('req-check-kernel').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.checkGrub) {
+            document.getElementById('req-check-grub').classList.add('completed');
+            document.getElementById('req-check-grub').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.navigateBoot) {
+            document.getElementById('req-navigate-boot').classList.add('completed');
+            document.getElementById('req-navigate-boot').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
         if (configState.downloadKernel) {
@@ -1185,11 +1332,6 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
         if (configState.configureGrub) {
             document.getElementById('req-configure-grub').classList.add('completed');
             document.getElementById('req-configure-grub').querySelector('.requirement-checkbox').textContent = '✓';
-        }
-        
-        if (configState.verifyOldKernel) {
-            document.getElementById('req-verify-old-kernel').classList.add('completed');
-            document.getElementById('req-verify-old-kernel').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
         // Update progress
@@ -1243,6 +1385,41 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
         const trimmedInput = input.trim();
         if (!trimmedInput) return;
         
+        // Handle lftp commands separately
+        if (inLftpMode) {
+            // Add to command history
+            commandHistory.push(trimmedInput);
+            historyIndex = commandHistory.length;
+            
+            // Display the command in terminal
+            addTerminalOutput(`<span class="prompt">lftp it></span> ${trimmedInput}`);
+            
+            // Parse command and arguments
+            const parts = trimmedInput.split(' ');
+            const command = parts[0];
+            const args = parts.slice(1);
+            
+            // Handle lftp commands
+            if (command === 'get') {
+                const result = commands['get'](args);
+                if (result) {
+                    addTerminalOutput(result);
+                }
+            } else if (command === 'exit') {
+                const result = commands['exit']();
+                if (result) {
+                    addTerminalOutput(result);
+                }
+            } else if (command === 'help') {
+                addTerminalOutput("Available lftp commands: get, exit, help");
+            } else {
+                addTerminalOutput(`lftp: ${command}: command not found`);
+            }
+            
+            commandInput.value = '';
+            return;
+        }
+        
         // Add to command history
         commandHistory.push(trimmedInput);
         historyIndex = commandHistory.length;
@@ -1265,6 +1442,8 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
             addTerminalOutput(`bash: ${command}: command not found`);
             addTerminalOutput('Type "help" for available commands');
         }
+        
+        commandInput.value = '';
     }
     
     // Function to handle tab completion
@@ -1537,4 +1716,3 @@ title Red Hat Enterprise Linux Server (2.6.32-71.el6.x86_64)
 </script>
 </body>
 </html>
-

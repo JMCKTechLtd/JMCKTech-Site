@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>BIOS Lab 5: Enable Virtualization Technology - Animated Demo</title>
+    <style>
+        :root {
+            --primary-color: #2e51bb;
+            --success-color: #10b981;
+            --bios-blue: #0066cc;
+            --bios-text: #ffffff;
+            --panel-bg: #252525;
+            --border-color-dark: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: #1e1e1e;
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color-dark);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: #cc0000;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 35%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color-dark);
+        }
+        
+        .demo-panel {
+            width: 65%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+            padding: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--success-color);
+            border-bottom: 1px solid var(--border-color-dark);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(16, 185, 129, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--success-color);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #cc0000;
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: #cc0000;
+            border-bottom: 1px solid var(--border-color-dark);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--success-color);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--success-color);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--success-color);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--success-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--success-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .progress-container {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 24px;
+            background: #333;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        
+        .completion-message {
+            display: none !important;
+            background: linear-gradient(135deg, var(--success-color), var(--primary-color));
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            text-align: center;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .completion-message h3 {
+            margin: 0 0 10px 0;
+            color: white;
+        }
+        
+        /* BIOS Screen Styles */
+        .bios-screen {
+            width: 800px;
+            height: 500px;
+            background: var(--bios-blue);
+            color: var(--bios-text);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Courier New', monospace;
+            border: 3px solid #333;
+            position: relative;
+        }
+        
+        .bios-header {
+            border-bottom: 2px solid #fff;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        
+        .bios-title {
+            font-size: 18px;
+            color: #ff0;
+            font-weight: bold;
+        }
+        
+        .bios-content {
+            flex: 1;
+            display: flex;
+            gap: 16px;
+        }
+        
+        .bios-menu {
+            width: 200px;
+        }
+        
+        .menu-item {
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.2);
+            transition: all 0.3s ease;
+        }
+        
+        .menu-item.active {
+            background: #fff;
+            color: #003a99;
+            border-color: #fff;
+            font-weight: bold;
+            animation: menuPulse 0.5s ease;
+        }
+        
+        @keyframes menuPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .menu-item.has-submenu:after {
+            content: " ►";
+            float: right;
+            font-size: 12px;
+        }
+        
+        .bios-info {
+            flex: 1;
+            background: rgba(255,255,255,.06);
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,.25);
+            padding: 12px;
+        }
+        
+        .info-title {
+            color: #ff0;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .settings-section {
+            background: rgba(0,0,0,.25);
+            border: 1px solid rgba(255,255,255,.35);
+            border-radius: 6px;
+            padding: 10px;
+        }
+        
+        .setting {
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background: rgba(255,255,255,.1);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+        
+        .setting .name {
+            font-weight: 600;
+        }
+        
+        .setting .value {
+            opacity: .95;
+        }
+        
+        .setting.selected {
+            background: #fff;
+            color: #003a99;
+            animation: settingPulse 0.5s ease;
+        }
+        
+        @keyframes settingPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .setting.submenu:after {
+            content: " ►";
+            font-size: 12px;
+        }
+        
+        .bios-controls {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,.3);
+        }
+        
+        .controls-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        
+        .key-button {
+            padding: 6px 12px;
+            background: #444;
+            border: 1px solid #666;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .key-button.special {
+            background: #0b61d6;
+            border-color: #0b61d6;
+            font-weight: bold;
+        }
+        
+        .key-button.enter {
+            background: #0a7e2a;
+            border-color: #0a7e2a;
+            font-weight: bold;
+        }
+        
+        .key-button.pressed {
+            outline: 2px solid #fff;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+        
+        .instructions {
+            text-align: center;
+            font-size: 12px;
+            opacity: .9;
+            margin-top: 8px;
+        }
+        
+        .save-exit-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        
+        .save-exit-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .save-exit-dialog {
+            background: var(--bios-blue);
+            border: 2px solid #fff;
+            border-radius: 6px;
+            padding: 20px;
+            width: 500px;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            transform: translateY(30px);
+            transition: transform 0.3s ease;
+        }
+        
+        .save-exit-overlay.show .save-exit-dialog {
+            transform: translateY(0);
+        }
+        
+        .save-exit-title {
+            color: #ff0;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+        
+        .save-exit-message {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .save-exit-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .save-exit-option {
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .save-exit-option.selected {
+            background: #fff;
+            color: #003a99;
+            font-weight: bold;
+        }
+        
+        .save-exit-option.highlighted {
+            outline: 2px solid #cc0000;
+            box-shadow: 0 0 10px rgba(204, 0, 0, 0.5);
+        }
+        
+        .action-hint {
+            position: absolute;
+            background: rgba(46, 81, 187, 0.95);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 100;
+            display: none !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            font-family: 'Segoe UI', sans-serif;
+        }
+        
+        .action-hint.show {
+            display: block;
+            animation: hintPulse 0.5s ease;
+        }
+        
+        @keyframes hintPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .mouse-cursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 9999;
+            display: none !important;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <div class="header-left">
+                <h1>BIOS Lab 5: Enable Virtualization Technology</h1>
+            </div>
+            <div class="demo-badge">AUTOMATED DEMO</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="guide-panel">
+                <div class="guide">
+                    <h2>Lab Guide</h2>
+                    
+                    <div class="lab-intro">
+                        <h3>Learning Objectives</h3>
+                        <p>In this lab, you will learn to:</p>
+                        <ul>
+                            <li>Navigate BIOS Advanced menu</li>
+                            <li>Access CPU Configuration settings</li>
+                            <li>Locate Virtualization Technology option</li>
+                            <li>Enable Intel VT-x / AMD-V</li>
+                            <li>Save BIOS configuration</li>
+                        </ul>
+                        <p style="margin-top:10px;"><strong>Why this matters:</strong> Virtualization Technology is required to run virtual machines (VMs) with VMware, VirtualBox, Hyper-V, and KVM.</p>
+                    </div>
+                    
+                    <div class="requirements-panel">
+                        <h4>Lab Requirements</h4>
+                        <div class="requirement-item" id="req-nav-adv">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Navigate to Advanced menu</span>
+                        </div>
+                        <div class="requirement-item" id="req-nav-cpu">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Enter CPU Configuration</span>
+                        </div>
+                        <div class="requirement-item" id="req-nav-virt">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Navigate to Virtualization setting</span>
+                        </div>
+                        <div class="requirement-item" id="req-enable">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Enable Virtualization Technology</span>
+                        </div>
+                        <div class="requirement-item" id="req-save">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Save and exit BIOS</span>
+                        </div>
+                    </div>
+                    
+                    <div class="guide-step current" data-step="1">
+                        <h3>
+                            <span class="step-number">1</span>
+                            Navigate to Advanced
+                            <span class="step-status status-current">Current Step</span>
+                        </h3>
+                        <p>Use arrow keys to navigate to the "Advanced" menu in the left panel.</p>
+                    </div>
+                    
+                    <div class="guide-step" data-step="2">
+                        <h3>
+                            <span class="step-number">2</span>
+                            Enter CPU Configuration
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Press Enter to access the CPU Configuration submenu.</p>
+                    </div>
+                    
+                    <div class="guide-step" data-step="3">
+                        <h3>
+                            <span class="step-number">3</span>
+                            Enable Virtualization
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Navigate to "Intel Virtualization Technology" and press Enter to enable it.</p>
+                    </div>
+                    
+                    <div class="guide-step" data-step="4">
+                        <h3>
+                            <span class="step-number">4</span>
+                            Save Changes
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Press F10 to save changes and exit BIOS setup.</p>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%">
+                                <span id="progress-text">0% Complete</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="completion-message" id="completion-message">
+                        <h3>✓ Lab Complete!</h3>
+                        <p>Virtualization Technology has been enabled.</p>
+                        <p>System ready for running virtual machines with VMware, VirtualBox, or Hyper-V.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="demo-panel">
+                <div class="bios-screen">
+                    <div class="bios-header">
+                        <div class="bios-title">Phoenix BIOS Setup Utility</div>
+                        <div style="font-size:12px;margin-top:4px;">Version 08.00.12</div>
+                    </div>
+                    <div class="bios-content">
+                        <div class="bios-menu" id="mainMenu">
+                            <div class="menu-item active" id="mainMenuItem">Main</div>
+                            <div class="menu-item" id="advancedMenuItem">Advanced</div>
+                            <div class="menu-item">Security</div>
+                            <div class="menu-item">Boot</div>
+                            <div class="menu-item">Exit</div>
+                        </div>
+                        <div class="bios-info" id="biosInfo">
+                            <div class="info-title">System Information</div>
+                            <div class="settings-section">
+                                <div>BIOS Version: 08.00.12</div>
+                                <div>CPU: Intel Core i7-9700K</div>
+                                <div>Memory: 16384 MB</div>
+                                <div>System Date: 12/10/2025</div>
+                                <div>System Time: 14:30:45</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bios-controls">
+                        <div class="controls-row">
+                            <div class="key-button special" id="f10Key">F10</div>
+                            <div class="key-button enter" id="enterKey">Enter</div>
+                            <div class="key-button" id="upKey">↑</div>
+                            <div class="key-button" id="downKey">↓</div>
+                            <div class="key-button" id="escKey">Esc</div>
+                        </div>
+                        <div class="instructions">↑↓ Navigate | Enter Select | Esc Back | F10 Save & Exit</div>
+                    </div>
+                </div>
+                
+                <!-- Save Exit Dialog -->
+                <div class="save-exit-overlay" id="saveExitOverlay">
+                    <div class="save-exit-dialog">
+                        <div class="save-exit-title">Save Configuration</div>
+                        <div class="save-exit-message">
+                            Save configuration changes and exit?
+                        </div>
+                        <div class="save-exit-options">
+                            <div class="save-exit-option selected" id="saveOption">Save Changes and Exit</div>
+                            <div class="save-exit-option" id="discardOption">Discard Changes and Exit</div>
+                            <div class="save-exit-option" id="cancelOption">Cancel</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-hint" id="actionHint"></div>
+                <div class="mouse-cursor" id="mouseCursor"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const steps = document.querySelectorAll('.guide-step');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const completionMessage = document.getElementById('completion-message');
+        
+        let currentStep = 0;
+        
+        const completionState = {
+            navAdv: false,
+            navCpu: false,
+            navVirt: false,
+            enable: false,
+            save: false
+        };
+        
+        function updateRequirements() {
+            const items = {
+                navAdv: 'req-nav-adv',
+                navCpu: 'req-nav-cpu',
+                navVirt: 'req-nav-virt',
+                enable: 'req-enable',
+                save: 'req-save'
+            };
+            
+            Object.keys(items).forEach(key => {
+                if (completionState[key]) {
+                    const element = document.getElementById(items[key]);
+                    element.classList.add('completed');
+                    element.querySelector('.requirement-checkbox').textContent = '✓';
+                }
+            });
+            
+            const completedCount = Object.values(completionState).filter(v => v).length;
+            const progressPercent = (completedCount / Object.keys(completionState).length) * 100;
+            progressFill.style.width = `${progressPercent}%`;
+            progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        }
+        
+        function completeStep(step) {
+            if (step < steps.length) {
+                steps[step].classList.remove('current');
+                steps[step].classList.add('completed');
+                steps[step].querySelector('.step-status').textContent = 'Completed';
+                steps[step].querySelector('.step-status').className = 'step-status status-completed';
+                
+                if (step + 1 < steps.length) {
+                    steps[step + 1].classList.add('current');
+                    steps[step + 1].querySelector('.step-status').textContent = 'Current Step';
+                    steps[step + 1].querySelector('.step-status').className = 'step-status status-current';
+                    steps[step + 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            currentStep = step + 1;
+        }
+        
+        function showHint(text, x, y) {
+            const hint = document.getElementById('actionHint');
+            hint.textContent = text;
+            hint.style.left = x + 'px';
+            hint.style.top = y + 'px';
+            hint.classList.add('show');
+            
+            setTimeout(() => {
+                hint.classList.remove('show');
+            }, 2000);
+        }
+        
+        function moveCursor(x, y, duration = 1000) {
+            const cursor = document.getElementById('mouseCursor');
+            cursor.classList.add('show');
+            cursor.style.transition = `all ${duration}ms ease`;
+            cursor.style.left = x + 'px';
+            cursor.style.top = y + 'px';
+            
+            return new Promise(resolve => setTimeout(resolve, duration));
+        }
+        
+        function hideCursor() {
+            const cursor = document.getElementById('mouseCursor');
+            cursor.classList.remove('show');
+        }
+        
+        function pressKey(keyId) {
+            const key = document.getElementById(keyId);
+            key.classList.add('pressed');
+            
+            setTimeout(() => {
+                key.classList.remove('pressed');
+            }, 300);
+            
+            return new Promise(resolve => setTimeout(resolve, 400));
+        }
+        
+        function highlightElement(element, duration = 1000) {
+            element.classList.add('highlighted');
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    element.classList.remove('highlighted');
+                    resolve();
+                }, duration);
+            });
+        }
+        
+        async function runDemo() {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 1: Navigate to Advanced menu
+            const downKey = document.getElementById('downKey');
+            const downKeyRect = downKey.getBoundingClientRect();
+            const advancedMenuItem = document.getElementById('advancedMenuItem');
+            const advancedRect = advancedMenuItem.getBoundingClientRect();
+            
+            await moveCursor(downKeyRect.left + downKeyRect.width / 2, downKeyRect.top + downKeyRect.height / 2, 1200);
+            showHint('Navigating to Advanced menu', downKeyRect.left - 120, downKeyRect.top - 80);
+            await pressKey('downKey');
+            
+            document.getElementById('mainMenuItem').classList.remove('active');
+            advancedMenuItem.classList.add('active');
+            advancedMenuItem.classList.add('has-submenu');
+            
+            const biosInfo = document.getElementById('biosInfo');
+            biosInfo.innerHTML = `
+                <div class="info-title">Advanced</div>
+                <div class="settings-section">
+                    <div class="setting selected submenu">
+                        <span class="name">CPU Configuration</span>
+                        <span class="value"></span>
+                    </div>
+                    <div class="setting submenu">
+                        <span class="name">SATA Configuration</span>
+                        <span class="value"></span>
+                    </div>
+                    <div class="setting submenu">
+                        <span class="name">USB Configuration</span>
+                        <span class="value"></span>
+                    </div>
+                </div>
+            `;
+            
+            completionState.navAdv = true;
+            updateRequirements();
+            completeStep(0);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Step 2: Enter CPU Configuration
+            const enterKey = document.getElementById('enterKey');
+            const enterKeyRect = enterKey.getBoundingClientRect();
+            
+            await moveCursor(enterKeyRect.left + enterKeyRect.width / 2, enterKeyRect.top + enterKeyRect.height / 2, 1200);
+            showHint('Opening CPU Configuration', enterKeyRect.left - 120, enterKeyRect.top - 80);
+            await pressKey('enterKey');
+            
+            biosInfo.innerHTML = `
+                <div class="info-title">CPU Configuration</div>
+                <div class="settings-section">
+                    <div class="setting">
+                        <span class="name">CPU Speed</span>
+                        <span class="value">3.6 GHz</span>
+                    </div>
+                    <div class="setting">
+                        <span class="name">Cores Enabled</span>
+                        <span class="value">8</span>
+                    </div>
+                    <div class="setting selected">
+                        <span class="name">Intel Virtualization Technology</span>
+                        <span class="value" id="virtValue">Disabled</span>
+                    </div>
+                    <div class="setting">
+                        <span class="name">Hyper-Threading</span>
+                        <span class="value">Enabled</span>
+                    </div>
+                </div>
+            `;
+            
+            completionState.navCpu = true;
+            updateRequirements();
+            completeStep(1);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Step 3: Enable Virtualization Technology
+            completionState.navVirt = true;
+            updateRequirements();
+            
+            await moveCursor(enterKeyRect.left + enterKeyRect.width / 2, enterKeyRect.top + enterKeyRect.height / 2, 1200);
+            showHint('Enabling Virtualization Technology', enterKeyRect.left - 150, enterKeyRect.top - 80);
+            await pressKey('enterKey');
+            
+            document.getElementById('virtValue').textContent = 'Enabled';
+            
+            completionState.enable = true;
+            updateRequirements();
+            completeStep(2);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Step 4: Save and exit
+            const f10Key = document.getElementById('f10Key');
+            const f10KeyRect = f10Key.getBoundingClientRect();
+            
+            await moveCursor(f10KeyRect.left + f10KeyRect.width / 2, f10KeyRect.top + f10KeyRect.height / 2, 1200);
+            showHint('Saving configuration and exiting', f10KeyRect.left - 140, f10KeyRect.top - 80);
+            await pressKey('f10Key');
+            
+            document.getElementById('saveExitOverlay').classList.add('show');
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Select Save option
+            const saveOption = document.getElementById('saveOption');
+            const saveRect = saveOption.getBoundingClientRect();
+            
+            await moveCursor(saveRect.left + saveRect.width / 2, saveRect.top + saveRect.height / 2, 1200);
+            showHint('Confirming save and exit', saveRect.left - 100, saveRect.top - 100);
+            await highlightElement(saveOption, 800);
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            document.getElementById('saveExitOverlay').classList.remove('show');
+            
+            completionState.save = true;
+            updateRequirements();
+            completeStep(3);
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            hideCursor();
+            
+            // Show completion
+            completionMessage.style.display = 'block';
+            completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Reload after delay
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            location.reload();
+        }
+        
+        // Start the demo
+        setTimeout(() => {
+            runDemo();
+        }, 1000);
+    </script>
+</body>
+</html>

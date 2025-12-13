@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>BIOS Lab 2: Disable Secure Boot - Animated Demo</title>
+    <style>
+        :root {
+            --primary-color: #2e51bb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --bios-blue: #0066cc;
+            --bios-text: #ffffff;
+            --panel-bg: #252525;
+            --border-color-dark: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: #1e1e1e;
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color-dark);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: #cc0000;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 35%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color-dark);
+        }
+        
+        .demo-panel {
+            width: 65%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+            padding: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--success-color);
+            border-bottom: 1px solid var(--border-color-dark);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(16, 185, 129, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--success-color);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #cc0000;
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: #cc0000;
+            border-bottom: 1px solid var(--border-color-dark);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--success-color);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--success-color);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--success-color);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--success-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--success-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .progress-container {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 24px;
+            background: #333;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        
+        .completion-message {
+            display: none !important;
+            background: linear-gradient(135deg, var(--success-color), var(--primary-color));
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            text-align: center;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .completion-message h3 {
+            margin: 0 0 10px 0;
+            color: white;
+        }
+        
+        /* BIOS Screen Styles */
+        .bios-screen {
+            width: 800px;
+            height: 500px;
+            background: var(--bios-blue);
+            color: var(--bios-text);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Courier New', monospace;
+            border: 3px solid #333;
+            position: relative;
+        }
+        
+        .bios-header {
+            border-bottom: 2px solid #fff;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        
+        .bios-title {
+            font-size: 18px;
+            color: #ff0;
+            font-weight: bold;
+        }
+        
+        .bios-content {
+            flex: 1;
+            display: flex;
+            gap: 16px;
+        }
+        
+        .bios-menu {
+            width: 200px;
+        }
+        
+        .menu-item {
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.2);
+        }
+        
+        .menu-item.active {
+            background: #fff;
+            color: #003a99;
+            border-color: #fff;
+            font-weight: bold;
+        }
+        
+        .bios-info {
+            flex: 1;
+            background: rgba(255,255,255,.06);
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,.25);
+            padding: 12px;
+        }
+        
+        .info-title {
+            color: #ff0;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .settings-section {
+            background: rgba(0,0,0,.25);
+            border: 1px solid rgba(255,255,255,.35);
+            border-radius: 6px;
+            padding: 10px;
+        }
+        
+        .setting {
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background: rgba(255,255,255,.08);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+        
+        .setting .name {
+            font-weight: 600;
+        }
+        
+        .setting .value {
+            opacity: .95;
+        }
+        
+        .setting.selected {
+            background: #fff;
+            color: #003a99;
+            font-weight: bold;
+            animation: settingBlink 0.5s ease;
+        }
+        
+        @keyframes settingBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .setting.warning {
+            background: rgba(245,158,11,0.2);
+            border: 1px solid rgba(245,158,11,0.5);
+        }
+        
+        .bios-controls {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,.3);
+        }
+        
+        .controls-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        
+        .key-button {
+            padding: 6px 12px;
+            background: #444;
+            border: 1px solid #666;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .key-button.special {
+            background: #0b61d6;
+            border-color: #0b61d6;
+            font-weight: bold;
+        }
+        
+        .key-button.enter {
+            background: #0a7e2a;
+            border-color: #0a7e2a;
+            font-weight: bold;
+        }
+        
+        .key-button.pressed {
+            outline: 2px solid #fff;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+        
+        .instructions {
+            text-align: center;
+            font-size: 12px;
+            opacity: .9;
+            margin-top: 8px;
+        }
+        
+        .dialog-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        
+        .dialog-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .dialog {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            color: #333;
+            transform: translateY(30px);
+            transition: transform 0.3s ease;
+        }
+        
+        .dialog-overlay.show .dialog {
+            transform: translateY(0);
+        }
+        
+        .dialog-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+        }
+        
+        .dialog-message {
+            margin-bottom: 16px;
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-input.highlighted {
+            border: 2px solid #cc0000;
+            box-shadow: 0 0 10px rgba(204, 0, 0, 0.3);
+        }
+        
+        .dialog-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        
+        .dialog-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .dialog-button.primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .dialog-button.secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .dialog-button.danger {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .dialog-button.highlighted {
+            outline: 2px solid #cc0000;
+            box-shadow: 0 0 10px rgba(204, 0, 0, 0.5);
+        }
+        
+        .action-hint {
+            position: absolute;
+            background: rgba(46, 81, 187, 0.95);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 100;
+            display: none !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            font-family: 'Segoe UI', sans-serif;
+        }
+        
+        .action-hint.show {
+            display: block;
+            animation: hintPulse 0.5s ease;
+        }
+        
+        @keyframes hintPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .mouse-cursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 9999;
+            display: none !important;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <div class="header-left">
+                <h1>BIOS Lab 2: Disable Secure Boot</h1>
+            </div>
+            <div class="demo-badge">AUTOMATED DEMO</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="guide-panel">
+                <div class="guide">
+                    <h2>Lab Guide</h2>
+                    
+                    <div class="lab-intro">
+                        <h3>Learning Objectives</h3>
+                        <p>In this lab, you will learn to:</p>
+                        <ul>
+                            <li>Navigate BIOS Security settings</li>
+                            <li>Set a Supervisor Password</li>
+                            <li>Understand Secure Boot implications</li>
+                            <li>Disable Secure Boot functionality</li>
+                            <li>Save BIOS configuration changes</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="requirements-panel">
+                        <h4>Lab Requirements</h4>
+                        <div class="requirement-item" id="req-navigate">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Navigate to Security settings</span>
+                        </div>
+                        <div class="requirement-item" id="req-password">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Set Supervisor Password</span>
+                        </div>
+                        <div class="requirement-item" id="req-disable">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Disable Secure Boot</span>
+                        </div>
+                        <div class="requirement-item" id="req-save">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Save and exit BIOS</span>
+                        </div>
+                    </div>
+                    
+                    <div class="guide-step current" data-step="1">
+                        <h3>
+                            <span class="step-number">1</span>
+                            Navigate Security Menu
+                            <span class="step-status status-current">Current Step</span>
+                        </h3>
+                        <p>Access the Security menu in BIOS. Already positioned in the correct menu.</p>
+                    </div>
+                    
+                    <div class="guide-step" data-step="2">
+                        <h3>
+                            <span class="step-number">2</span>
+                            Set Supervisor Password
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Navigate to "Supervisor Password" and press Enter to set a password.</p>
+                    </div>
+                    
+                    <div class="guide-step" data-step="3">
+                        <h3>
+                            <span class="step-number">3</span>
+                            Disable Secure Boot
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Navigate to "Secure Boot" setting and press Enter to disable it.</p>
+                    </div>
+                    
+                    <div class="guide-step" data-step="4">
+                        <h3>
+                            <span class="step-number">4</span>
+                            Save Changes
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Press F10 to save changes and exit the BIOS Setup Utility.</p>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%">
+                                <span id="progress-text">0% Complete</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="completion-message" id="completion-message">
+                        <h3>✓ Lab Complete!</h3>
+                        <p>You have successfully disabled Secure Boot.</p>
+                        <p>Changes have been saved to BIOS configuration.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="demo-panel">
+                <div class="bios-screen">
+                    <div class="bios-header">
+                        <div class="bios-title">ACME BIOS Setup Utility</div>
+                    </div>
+                    <div class="bios-content">
+                        <div class="bios-menu">
+                            <div class="menu-item">Main</div>
+                            <div class="menu-item">Advanced</div>
+                            <div class="menu-item active">Security</div>
+                            <div class="menu-item">Boot</div>
+                        </div>
+                        <div class="bios-info">
+                            <div class="info-title">Security Configuration</div>
+                            <div class="settings-section" id="settingsSection">
+                                <div class="setting" id="setting1">
+                                    <span class="name">Supervisor Password</span>
+                                    <span class="value" id="passwordValue">Not Set</span>
+                                </div>
+                                <div class="setting" id="setting2">
+                                    <span class="name">User Password</span>
+                                    <span class="value">Not Set</span>
+                                </div>
+                                <div class="setting warning" id="setting3">
+                                    <span class="name">Secure Boot</span>
+                                    <span class="value" id="secureBootValue">Enabled</span>
+                                </div>
+                                <div class="setting" id="setting4">
+                                    <span class="name">Secure Boot Mode</span>
+                                    <span class="value">Standard</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bios-controls">
+                        <div class="controls-row">
+                            <div class="key-button special" id="f10Key">F10</div>
+                            <div class="key-button enter" id="enterKey">Enter</div>
+                            <div class="key-button" id="upKey">↑</div>
+                            <div class="key-button" id="downKey">↓</div>
+                        </div>
+                        <div class="instructions">↑↓ Navigate | Enter Select | F10 Save & Exit</div>
+                    </div>
+                </div>
+                
+                <!-- Password Dialog -->
+                <div class="dialog-overlay" id="passwordDialog">
+                    <div class="dialog">
+                        <div class="dialog-title">Set Supervisor Password</div>
+                        <div class="dialog-message">Enter a password to protect BIOS settings:</div>
+                        <div class="form-group">
+                            <label class="form-label">Password:</label>
+                            <input type="password" class="form-input" id="passwordInput" placeholder="Min 8 characters">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm Password:</label>
+                            <input type="password" class="form-input" id="confirmPassword" placeholder="Re-enter password">
+                        </div>
+                        <div class="dialog-buttons">
+                            <button class="dialog-button secondary" id="cancelPassword">Cancel</button>
+                            <button class="dialog-button primary" id="setPassword">Set Password</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Warning Dialog -->
+                <div class="dialog-overlay" id="warningDialog">
+                    <div class="dialog">
+                        <div class="dialog-title">⚠ Warning</div>
+                        <div class="dialog-message">Disabling Secure Boot will allow unsigned drivers and operating systems to load. This may reduce system security. Do you want to continue?</div>
+                        <div class="dialog-buttons">
+                            <button class="dialog-button secondary" id="cancelDisable">Cancel</button>
+                            <button class="dialog-button danger" id="confirmDisable">Disable</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Save Dialog -->
+                <div class="dialog-overlay" id="saveDialog">
+                    <div class="dialog">
+                        <div class="dialog-title">Save Configuration</div>
+                        <div class="dialog-message">Save configuration changes and exit?</div>
+                        <div class="dialog-buttons">
+                            <button class="dialog-button secondary" id="cancelSave">No</button>
+                            <button class="dialog-button primary" id="confirmSave">Yes</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-hint" id="actionHint"></div>
+                <div class="mouse-cursor" id="mouseCursor"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const steps = document.querySelectorAll('.guide-step');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const completionMessage = document.getElementById('completion-message');
+        
+        let currentStep = 0;
+        
+        const completionState = {
+            navigate: false,
+            password: false,
+            disable: false,
+            save: false
+        };
+        
+        function updateRequirements() {
+            const items = {
+                navigate: 'req-navigate',
+                password: 'req-password',
+                disable: 'req-disable',
+                save: 'req-save'
+            };
+            
+            Object.keys(items).forEach(key => {
+                if (completionState[key]) {
+                    const element = document.getElementById(items[key]);
+                    element.classList.add('completed');
+                    element.querySelector('.requirement-checkbox').textContent = '✓';
+                }
+            });
+            
+            const completedCount = Object.values(completionState).filter(v => v).length;
+            const progressPercent = (completedCount / Object.keys(completionState).length) * 100;
+            progressFill.style.width = `${progressPercent}%`;
+            progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        }
+        
+        function completeStep(step) {
+            if (step < steps.length) {
+                steps[step].classList.remove('current');
+                steps[step].classList.add('completed');
+                steps[step].querySelector('.step-status').textContent = 'Completed';
+                steps[step].querySelector('.step-status').className = 'step-status status-completed';
+                
+                if (step + 1 < steps.length) {
+                    steps[step + 1].classList.add('current');
+                    steps[step + 1].querySelector('.step-status').textContent = 'Current Step';
+                    steps[step + 1].querySelector('.step-status').className = 'step-status status-current';
+                    steps[step + 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            currentStep = step + 1;
+        }
+        
+        function showHint(text, x, y) {
+            const hint = document.getElementById('actionHint');
+            hint.textContent = text;
+            hint.style.left = x + 'px';
+            hint.style.top = y + 'px';
+            hint.classList.add('show');
+            
+            setTimeout(() => {
+                hint.classList.remove('show');
+            }, 2000);
+        }
+        
+        function moveCursor(x, y, duration = 1000) {
+            const cursor = document.getElementById('mouseCursor');
+            cursor.classList.add('show');
+            cursor.style.transition = `all ${duration}ms ease`;
+            cursor.style.left = x + 'px';
+            cursor.style.top = y + 'px';
+            
+            return new Promise(resolve => setTimeout(resolve, duration));
+        }
+        
+        function hideCursor() {
+            const cursor = document.getElementById('mouseCursor');
+            cursor.classList.remove('show');
+        }
+        
+        function pressKey(keyId) {
+            const key = document.getElementById(keyId);
+            key.classList.add('pressed');
+            
+            setTimeout(() => {
+                key.classList.remove('pressed');
+            }, 300);
+            
+            return new Promise(resolve => setTimeout(resolve, 400));
+        }
+        
+        function highlightElement(element, duration = 1000) {
+            element.classList.add('highlighted');
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    element.classList.remove('highlighted');
+                    resolve();
+                }, duration);
+            });
+        }
+        
+        async function typeText(element, text, speed = 100) {
+            element.value = '';
+            for (let i = 0; i < text.length; i++) {
+                element.value = text.substring(0, i + 1);
+                await new Promise(resolve => setTimeout(resolve, speed));
+            }
+        }
+        
+        async function runDemo() {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 1: Already in Security menu
+            completionState.navigate = true;
+            updateRequirements();
+            completeStep(0);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Step 2: Navigate to Supervisor Password
+            const setting1 = document.getElementById('setting1');
+            const setting1Rect = setting1.getBoundingClientRect();
+            
+            const downKey = document.getElementById('downKey');
+            showHint('Navigating to Supervisor Password', setting1Rect.left + 200, setting1Rect.top - 40);
+            
+            setting1.classList.add('selected');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Press Enter to open password dialog
+            const enterKey = document.getElementById('enterKey');
+            const enterKeyRect = enterKey.getBoundingClientRect();
+            
+            await moveCursor(enterKeyRect.left + enterKeyRect.width / 2, enterKeyRect.top + enterKeyRect.height / 2, 1200);
+            showHint('Opening password dialog', enterKeyRect.left - 100, enterKeyRect.top - 40);
+            await pressKey('enterKey');
+            
+            setting1.classList.remove('selected');
+            document.getElementById('passwordDialog').classList.add('show');
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Type password
+            const passwordInput = document.getElementById('passwordInput');
+            const passwordRect = passwordInput.getBoundingClientRect();
+            
+            await moveCursor(passwordRect.left + 100, passwordRect.top + passwordRect.height / 2, 1200);
+            showHint('Entering password', passwordRect.left + 150, passwordRect.top - 40);
+            await highlightElement(passwordInput, 800);
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await typeText(passwordInput, 'SecureBIOS2024', 80);
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            hideCursor();
+            
+            // Type confirm password
+            const confirmPassword = document.getElementById('confirmPassword');
+            const confirmRect = confirmPassword.getBoundingClientRect();
+            
+            await moveCursor(confirmRect.left + 100, confirmRect.top + confirmRect.height / 2, 1200);
+            await highlightElement(confirmPassword, 800);
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await typeText(confirmPassword, 'SecureBIOS2024', 80);
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            hideCursor();
+            
+            // Click Set Password button
+            const setPasswordBtn = document.getElementById('setPassword');
+            const setPwdBtnRect = setPasswordBtn.getBoundingClientRect();
+            
+            await moveCursor(setPwdBtnRect.left + setPwdBtnRect.width / 2, setPwdBtnRect.top + setPwdBtnRect.height / 2, 1200);
+            showHint('Setting password', setPwdBtnRect.left - 80, setPwdBtnRect.top - 40);
+            await highlightElement(setPasswordBtn, 800);
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            document.getElementById('passwordDialog').classList.remove('show');
+            document.getElementById('passwordValue').textContent = 'Set';
+            
+            completionState.password = true;
+            updateRequirements();
+            completeStep(1);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Step 3: Navigate to Secure Boot and disable it
+            const setting3 = document.getElementById('setting3');
+            const setting3Rect = setting3.getBoundingClientRect();
+            
+            showHint('Navigating to Secure Boot', setting3Rect.left + 200, setting3Rect.top - 40);
+            setting3.classList.add('selected');
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Press Enter to disable
+            await moveCursor(enterKeyRect.left + enterKeyRect.width / 2, enterKeyRect.top + enterKeyRect.height / 2, 1200);
+            showHint('Opening warning dialog', enterKeyRect.left - 100, enterKeyRect.top - 40);
+            await pressKey('enterKey');
+            
+            setting3.classList.remove('selected');
+            document.getElementById('warningDialog').classList.add('show');
+            
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            hideCursor();
+            
+            // Click Disable button
+            const confirmDisableBtn = document.getElementById('confirmDisable');
+            const disableBtnRect = confirmDisableBtn.getBoundingClientRect();
+            
+            await moveCursor(disableBtnRect.left + disableBtnRect.width / 2, disableBtnRect.top + disableBtnRect.height / 2, 1200);
+            showHint('Confirming disable', disableBtnRect.left - 100, disableBtnRect.top - 40);
+            await highlightElement(confirmDisableBtn, 800);
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            document.getElementById('warningDialog').classList.remove('show');
+            document.getElementById('secureBootValue').textContent = 'Disabled';
+            setting3.classList.remove('warning');
+            
+            completionState.disable = true;
+            updateRequirements();
+            completeStep(2);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Step 4: Press F10 to save
+            const f10Key = document.getElementById('f10Key');
+            const f10KeyRect = f10Key.getBoundingClientRect();
+            
+            await moveCursor(f10KeyRect.left + f10KeyRect.width / 2, f10KeyRect.top + f10KeyRect.height / 2, 1200);
+            showHint('Saving changes and exiting BIOS', f10KeyRect.left - 120, f10KeyRect.top - 40);
+            await pressKey('f10Key');
+            
+            document.getElementById('saveDialog').classList.add('show');
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Confirm save
+            const confirmSaveBtn = document.getElementById('confirmSave');
+            const saveBtnRect = confirmSaveBtn.getBoundingClientRect();
+            
+            await moveCursor(saveBtnRect.left + saveBtnRect.width / 2, saveBtnRect.top + saveBtnRect.height / 2, 1200);
+            showHint('Confirming save', saveBtnRect.left - 80, saveBtnRect.top - 40);
+            await highlightElement(confirmSaveBtn, 800);
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            document.getElementById('saveDialog').classList.remove('show');
+            
+            completionState.save = true;
+            updateRequirements();
+            completeStep(3);
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            hideCursor();
+            
+            // Show completion
+            completionMessage.style.display = 'block';
+            completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Reload after delay
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            location.reload();
+        }
+        
+        // Start the demo
+        setTimeout(() => {
+            runDemo();
+        }, 1000);
+    </script>
+</body>
+</html>

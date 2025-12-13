@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Windows Lab 4: GPUpdate /force - Automated Demo</title>
+    <style>
+        :root {
+            --primary-color: #2e51bb;
+            --secondary-color: #71a8fc;
+            --dark-text: #2a3e4c;
+            --light-text: #6c757d;
+            --border-color: #d8dbe0;
+            --bg-light: #f8f9fa;
+            --bg-lighter: #ffffff;
+            --low-color: #6ed051;
+            --medium-color: #ffcb3d;
+            --high-color: #ff9e3d;
+            --critical-color: #ec5050;
+            --panel-bg: #252525;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--dark-text);
+            color: var(--bg-lighter);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--dark-text);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1e40a0 100%);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: var(--critical-color);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 35%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .demo-panel {
+            width: 65%;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(120deg, #1976d2, #0d47a1);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(113, 168, 252, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--critical-color);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--critical-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--low-color);
+            background: rgba(110, 208, 81, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--low-color);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--secondary-color);
+            box-shadow: 0 0 20px rgba(113, 168, 252, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--secondary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: var(--light-text);
+            color: white;
+        }
+        
+        .status-current {
+            background: var(--secondary-color);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-completed {
+            background: var(--low-color);
+            color: white;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #444;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: var(--secondary-color);
+        }
+        
+        .completion-message {
+            background: rgba(110, 208, 81, 0.2);
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border-left: 4px solid var(--low-color);
+            display: none;
+        }
+        
+        .completion-message h3 {
+            margin-top: 0;
+            color: var(--low-color);
+        }
+        
+        /* Desktop simulation */
+        #desktop {
+            position: absolute;
+            inset: 0 0 48px 0;
+            padding: 14px;
+        }
+        
+        /* Windows */
+        .window {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #c9c9c9;
+            border-radius: 10px;
+            box-shadow: 0 14px 40px rgba(0,0,0,.35);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .window-header {
+            background: #e9e9e9;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #cfcfcf;
+            user-select: none;
+        }
+        
+        .window-title {
+            font-weight: 600;
+            flex: 1;
+            color: #111;
+        }
+        
+        .window-controls {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .window-control {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: #dcdcdc;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            color: #111;
+        }
+        
+        .window-body {
+            padding: 10px;
+            overflow: auto;
+            background: #0c0c0c;
+            flex: 1;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            color: #0f0;
+        }
+        
+        .cmd-output {
+            white-space: pre-wrap;
+            line-height: 1.35;
+        }
+        
+        /* Taskbar */
+        .taskbar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 48px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            z-index: 100;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .start-button {
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            background: rgba(255,255,255,0.22);
+            border: 1px solid rgba(255,255,255,0.35);
+            cursor: pointer;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+        }
+        
+        .windows-logo {
+            width: 20px;
+            height: 20px;
+            margin-right: 2px;
+            display: inline-block;
+        }
+        
+        /* Start menu */
+        .start-menu {
+            position: absolute;
+            bottom: 52px;
+            left: 12px;
+            width: 520px;
+            height: 360px;
+            background: rgba(30,30,30,0.97);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+            backdrop-filter: blur(16px);
+            display: none;
+            overflow: hidden;
+            z-index: 200;
+        }
+        
+        .start-menu-header {
+            padding: 16px 20px;
+            background: rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .start-menu-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: calc(100% - 60px);
+        }
+        
+        .start-menu-left {
+            padding: 16px;
+            background: rgba(255,255,255,0.02);
+            border-right: 1px solid rgba(255,255,255,0.08);
+        }
+        
+        .start-menu-right {
+            padding: 16px;
+        }
+        
+        .app-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background .2s ease;
+            margin-bottom: 8px;
+        }
+        
+        .app-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+        
+        .app-item .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: #0078d4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2e7d32;
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            display: none;
+            z-index: 600;
+            box-shadow: 0 8px 24px rgba(0,0,0,.35);
+        }
+        
+        /* Mouse cursor */
+        #mouseCursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 10000;
+            display: none !important;
+            transition: opacity 0.3s ease;
+        }
+        
+        
+        /* Action hint */
+        #actionHint {
+            position: absolute;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 9999;
+            display: none !important;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        #actionHint.show {
+            opacity: 1;
+        }
+        
+        /* Blinking cursor */
+        .caret {
+            display: inline-block;
+            width: 10px;
+            height: 1em;
+            background: #0f0;
+            margin-left: 2px;
+            animation: blink 1s steps(1, end) infinite;
+            vertical-align: bottom;
+        }
+        
+        @keyframes blink {
+            50% { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <div class="header-left">
+                <h1>Windows Lab 4: GPUpdate /force</h1>
+            </div>
+            <div class="demo-badge">AUTOMATED DEMO</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="guide-panel">
+                <div class="guide">
+                    <h2>Lab Instructions</h2>
+                    
+                    <div class="lab-intro">
+                        <h3>Objective</h3>
+                        <p>Learn how to force an immediate Group Policy update using the gpupdate /force command.</p>
+                    </div>
+                    
+                    <div class="requirements-panel">
+                        <h4>Lab Requirements</h4>
+                        <div class="requirement-item" id="req-open-start">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Open Start menu</span>
+                        </div>
+                        <div class="requirement-item" id="req-open-cmd">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Open Command Prompt</span>
+                        </div>
+                        <div class="requirement-item" id="req-type-command">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Type gpupdate /force</span>
+                        </div>
+                        <div class="requirement-item" id="req-execute">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Execute command</span>
+                        </div>
+                        <div class="requirement-item" id="req-verify">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Verify completion</span>
+                        </div>
+                    </div>
+                    
+                    <div class="guide-step current">
+                        <h3>
+                            <span class="step-number">1</span>
+                            Open Start Menu
+                            <span class="step-status status-current">Current Step</span>
+                        </h3>
+                        <p>Click the Start button to open the Start menu.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">2</span>
+                            Open Command Prompt
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Click on Command Prompt to launch it.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">3</span>
+                            Type Command
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Type <code>gpupdate /force</code> at the command prompt.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">4</span>
+                            Execute
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Press Enter to execute the command.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">5</span>
+                            Verify Success
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Wait for the policy update to complete successfully.</p>
+                    </div>
+                    
+                    <div class="completion-message" id="completionMessage">
+                        <h3>✓ Lab Completed!</h3>
+                        <p>You have successfully forced a Group Policy update.</p>
+                        <p><strong>Demo will restart automatically...</strong></p>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">0% Complete</div>
+                </div>
+            </div>
+            
+            <div class="demo-panel">
+                <div id="desktop">
+                    <!-- Command Prompt window -->
+                    <div class="window" id="cmdWindow" style="width: 700px; height: 450px; left: 40px; top: 40px;">
+                        <div class="window-header">
+                            <div class="window-title">Command Prompt</div>
+                            <div class="window-controls">
+                                <div class="window-control">−</div>
+                                <div class="window-control">□</div>
+                                <div class="window-control">×</div>
+                            </div>
+                        </div>
+                        <div class="window-body">
+                            <div class="cmd-output" id="cmdOutput">Microsoft Windows [Version 10.0.19045.4529]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Users\Admin></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Taskbar -->
+                <div class="taskbar">
+                    <div class="start-button" id="startButton">
+                        <svg class="windows-logo" viewBox="0 0 88 88">
+                            <path fill="currentColor" d="M0 12.5l35.5-5.1V41H0V12.5zm40.5-5.8L88 0v45H40.5V6.7zM0 49h35.5v34.4L0 78.1V49zm40.5 0H88v45l-47.5-6.7V49z"/>
+                        </svg>
+                        Start
+                    </div>
+                </div>
+                
+                <!-- Start menu -->
+                <div class="start-menu" id="startMenu">
+                    <div class="start-menu-header">Windows</div>
+                    <div class="start-menu-body">
+                        <div class="start-menu-left">
+                            <div class="app-list">
+                                <div class="app-item" id="cmdItem">
+                                    <div class="icon">⌘</div>
+                                    <div>Command Prompt</div>
+                                </div>
+                                <div class="app-item">
+                                    <div class="icon">📁</div>
+                                    <div>File Explorer</div>
+                                </div>
+                                <div class="app-item">
+                                    <div class="icon">⚙️</div>
+                                    <div>Settings</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="start-menu-right">
+                            <div class="app-list">
+                                <div class="app-item">
+                                    <div class="icon">🌐</div>
+                                    <div>Microsoft Edge</div>
+                                </div>
+                                <div class="app-item">
+                                    <div class="icon">📧</div>
+                                    <div>Mail</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Toast -->
+                <div id="toast"></div>
+                
+                <!-- Mouse cursor -->
+                <div id="mouseCursor"></div>
+                
+                <!-- Action hint -->
+                <div id="actionHint"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // DOM elements
+        const steps = document.querySelectorAll('.guide-step');
+        const completionMessage = document.getElementById('completionMessage');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const startButton = document.getElementById('startButton');
+        const startMenu = document.getElementById('startMenu');
+        const cmdItem = document.getElementById('cmdItem');
+        const cmdWindow = document.getElementById('cmdWindow');
+        const cmdOutput = document.getElementById('cmdOutput');
+        const toast = document.getElementById('toast');
+        
+        let currentStep = 0;
+        
+        const completionState = {
+            openStart: false,
+            openCmd: false,
+            typeCommand: false,
+            execute: false,
+            verify: false
+        };
+        
+        function updateRequirements() {
+            const requirements = {
+                'req-open-start': completionState.openStart,
+                'req-open-cmd': completionState.openCmd,
+                'req-type-command': completionState.typeCommand,
+                'req-execute': completionState.execute,
+                'req-verify': completionState.verify
+            };
+            
+            for (const [id, completed] of Object.entries(requirements)) {
+                const element = document.getElementById(id);
+                if (completed) {
+                    element.classList.add('completed');
+                    element.querySelector('.requirement-checkbox').textContent = '✓';
+                }
+            }
+            
+            const totalRequirements = Object.keys(requirements).length;
+            const completedRequirements = Object.values(requirements).filter(v => v).length;
+            const progressPercent = (completedRequirements / totalRequirements) * 100;
+            
+            progressFill.style.width = `${progressPercent}%`;
+            progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        }
+        
+        function completeStep(step) {
+            if (step < steps.length) {
+                steps[step].classList.remove('current');
+                steps[step].classList.add('completed');
+                steps[step].querySelector('.step-status').textContent = 'Completed';
+                steps[step].querySelector('.step-status').className = 'step-status status-completed';
+                
+                if (step + 1 < steps.length) {
+                    steps[step + 1].classList.add('current');
+                    steps[step + 1].querySelector('.step-status').textContent = 'Current Step';
+                    steps[step + 1].querySelector('.step-status').className = 'step-status status-current';
+                    steps[step + 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            currentStep = step + 1;
+        }
+        
+        function showHint(text, x, y) {
+            const hint = document.getElementById('actionHint');
+            hint.textContent = text;
+            hint.style.left = x + 'px';
+            hint.style.top = y + 'px';
+            hint.classList.add('show');
+            
+            setTimeout(() => {
+                hint.classList.remove('show');
+            }, 2000);
+        }
+        
+        function moveCursor(x, y, duration = 1000) {
+            const cursor = document.getElementById('mouseCursor');
+            cursor.classList.add('show');
+            cursor.style.transition = `all ${duration}ms ease`;
+            cursor.style.left = x + 'px';
+            cursor.style.top = y + 'px';
+            
+            return new Promise(resolve => setTimeout(resolve, duration));
+        }
+        
+        function hideCursor() {
+            const cursor = document.getElementById('mouseCursor');
+            cursor.classList.remove('show');
+        }
+        
+        function flashToast(text) {
+            toast.textContent = text;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
+        }
+        
+        async function typeText(text, speed = 80) {
+            for (let i = 0; i < text.length; i++) {
+                cmdOutput.textContent += text[i];
+                await new Promise(resolve => setTimeout(resolve, speed));
+            }
+        }
+        
+        async function runDemo() {
+            // Initial setup
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 1: Open Start menu
+            const startRect = startButton.getBoundingClientRect();
+            await moveCursor(startRect.left + startRect.width / 2, startRect.top + startRect.height / 2, 1500);
+            showHint('Opening Start menu', startRect.left + 100, startRect.top - 40);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            startMenu.style.display = 'block';
+            
+            completionState.openStart = true;
+            updateRequirements();
+            completeStep(0);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Step 2: Open Command Prompt
+            const cmdItemRect = cmdItem.getBoundingClientRect();
+            await moveCursor(cmdItemRect.left + cmdItemRect.width / 2, cmdItemRect.top + cmdItemRect.height / 2, 1500);
+            showHint('Opening Command Prompt', cmdItemRect.left + 150, cmdItemRect.top - 40);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            startMenu.style.display = 'none';
+            cmdWindow.style.display = 'flex';
+            
+            completionState.openCmd = true;
+            updateRequirements();
+            completeStep(1);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Step 3: Type command
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const cmdBodyRect = cmdWindow.querySelector('.window-body').getBoundingClientRect();
+            await moveCursor(cmdBodyRect.left + 100, cmdBodyRect.top + 100, 1500);
+            showHint('Typing gpupdate /force', cmdBodyRect.left + 150, cmdBodyRect.top - 40);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await typeText('gpupdate /force');
+            
+            completionState.typeCommand = true;
+            updateRequirements();
+            completeStep(2);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Step 4: Execute command
+            await new Promise(resolve => setTimeout(resolve, 500));
+            showHint('Pressing Enter', cmdBodyRect.left + 150, cmdBodyRect.top - 40);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            cmdOutput.textContent += '\n\nUpdating policy...\n\n';
+            
+            completionState.execute = true;
+            updateRequirements();
+            completeStep(3);
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            hideCursor();
+            
+            // Step 5: Show update progress
+            await typeText('Computer Policy update has completed successfully.\n', 60);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await typeText('User Policy update has completed successfully.\n', 60);
+            
+            flashToast('✅ Group Policy updated successfully');
+            
+            completionState.verify = true;
+            updateRequirements();
+            completeStep(4);
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Show completion
+            completionMessage.style.display = 'block';
+            completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            flashToast('✅ Lab completed successfully!');
+            
+            // Reload after delay
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            location.reload();
+        }
+        
+        // Start the demo
+        setTimeout(() => {
+            runDemo();
+        }, 1000);
+    </script>
+</body>
+</html>

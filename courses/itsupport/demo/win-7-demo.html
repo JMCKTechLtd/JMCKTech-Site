@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Windows Lab 7: Windows Service Management - Automated Demo</title>
+    <style>
+        :root {
+            --primary-color: #2e51bb;
+            --secondary-color: #71a8fc;
+            --dark-text: #2a3e4c;
+            --light-text: #6c757d;
+            --border-color: #d8dbe0;
+            --bg-light: #f8f9fa;
+            --bg-lighter: #ffffff;
+            --low-color: #6ed051;
+            --medium-color: #ffcb3d;
+            --high-color: #ff9e3d;
+            --critical-color: #ec5050;
+            --panel-bg: #252525;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--dark-text);
+            color: var(--bg-lighter);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--dark-text);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1e40a0 100%);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: var(--critical-color);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 35%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .demo-panel {
+            width: 65%;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(120deg, #1976d2, #0d47a1);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(113, 168, 252, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--critical-color);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--critical-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--low-color);
+            background: rgba(110, 208, 81, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--low-color);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--secondary-color);
+            box-shadow: 0 0 20px rgba(113, 168, 252, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--secondary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: var(--light-text);
+            color: white;
+        }
+        
+        .status-current {
+            background: var(--secondary-color);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-completed {
+            background: var(--low-color);
+            color: white;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #444;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: var(--secondary-color);
+        }
+        
+        .completion-message {
+            background: rgba(110, 208, 81, 0.2);
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border-left: 4px solid var(--low-color);
+            display: none;
+        }
+        
+        .completion-message h3 {
+            margin-top: 0;
+            color: var(--low-color);
+        }
+        
+        /* Desktop simulation */
+        #desktop {
+            position: absolute;
+            inset: 0 0 48px 0;
+            padding: 14px;
+        }
+        
+        /* Windows */
+        .window {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #c9c9c9;
+            border-radius: 10px;
+            box-shadow: 0 14px 40px rgba(0,0,0,.35);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .window-header {
+            background: #e9e9e9;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #cfcfcf;
+            user-select: none;
+        }
+        
+        .window-title {
+            font-weight: 600;
+            flex: 1;
+            color: #111;
+        }
+        
+        .window-controls {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .window-control {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: #dcdcdc;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            color: #111;
+        }
+        
+        .window-body {
+            padding: 10px;
+            overflow: auto;
+            background: #fff;
+            flex: 1;
+            color: #111;
+        }
+        
+        /* Computer Management layout */
+        .mgmt-layout {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            height: 100%;
+        }
+        
+        .tree-pane {
+            background: #f8f8f8;
+            border-right: 1px solid #e0e0e0;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        
+        .tree-item {
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #333;
+            margin: 2px 0;
+        }
+        
+        .tree-item:hover {
+            background: #e8e8e8;
+        }
+        
+        .tree-item.selected {
+            background: #0078d4;
+            color: white;
+        }
+        
+        .tree-indent {
+            margin-left: 16px;
+        }
+        
+        .content-pane {
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        /* Service list */
+        .service-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        .service-table th {
+            background: #f0f0f0;
+            padding: 8px;
+            text-align: left;
+            border-bottom: 2px solid #ddd;
+            font-weight: 600;
+        }
+        
+        .service-table td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .service-table tr:hover {
+            background: #f8f8f8;
+        }
+        
+        .service-table tr.selected {
+            background: #0078d4;
+            color: white;
+        }
+        
+        .service-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .status-running {
+            background: #d1f4d1;
+            color: #2d6e2d;
+        }
+        
+        .status-stopped {
+            background: #fdd;
+            color: #8b0000;
+        }
+        
+        /* Service control buttons */
+        .service-controls {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .service-controls button {
+            padding: 6px 12px;
+            border: 1px solid #0078d4;
+            background: #0078d4;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .service-controls button:hover {
+            background: #106ebe;
+        }
+        
+        .service-controls button:disabled {
+            background: #ccc;
+            border-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* Context menu */
+        .context-menu {
+            position: absolute;
+            display: none;
+            background: rgba(30,30,30,0.97);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+            z-index: 400;
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+            min-width: 180px;
+        }
+        
+        .context-menu-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 14px;
+            transition: all .2s ease;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            user-select: none;
+        }
+        
+        .context-menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        .context-menu-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+        
+        /* Desktop icons */
+        .desktop-icon {
+            width: 80px;
+            position: absolute;
+            text-align: center;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        
+        .desktop-icon:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .icon-image {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 6px;
+            background: #0078d4;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .icon-label {
+            font-size: 12px;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+        
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2e7d32;
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            display: none;
+            z-index: 600;
+            box-shadow: 0 8px 24px rgba(0,0,0,.35);
+        }
+        
+        /* Action hint */
+        #actionHint {
+            position: absolute;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        #actionHint.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <div class="header-left">
+                <h1>Windows Lab 7: Windows Service Management - Print Spooler</h1>
+            </div>
+            <div class="demo-badge">AUTOMATED DEMO</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="guide-panel">
+                <div class="guide">
+                    <h2>Lab Instructions</h2>
+                    
+                    <div class="lab-intro">
+                        <h3>Objective</h3>
+                        <p>Learn to manage Windows services, specifically the Print Spooler service, using Computer Management.</p>
+                    </div>
+                    
+                    <div class="requirements-panel">
+                        <h4>Lab Requirements</h4>
+                        <div class="requirement-item" id="req-open-mgmt">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Open Computer Management</span>
+                        </div>
+                        <div class="requirement-item" id="req-navigate-services">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Navigate to Services</span>
+                        </div>
+                        <div class="requirement-item" id="req-find-spooler">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Locate Print Spooler service</span>
+                        </div>
+                        <div class="requirement-item" id="req-stop-service">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Stop the service</span>
+                        </div>
+                        <div class="requirement-item" id="req-restart-service">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Restart the service</span>
+                        </div>
+                    </div>
+                    
+                    <div class="guide-step current">
+                        <h3>
+                            <span class="step-number">1</span>
+                            Right-click This PC
+                            <span class="step-status status-current">Current Step</span>
+                        </h3>
+                        <p>Right-click the "This PC" icon and select "Manage".</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">2</span>
+                            Navigate to Services
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Expand "Services and Applications" then click "Services".</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">3</span>
+                            Find Print Spooler
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Locate and select the "Print Spooler" service in the list.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">4</span>
+                            Stop Service
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Click the "Stop" button to stop the Print Spooler service.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">5</span>
+                            Restart Service
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Click the "Start" button to restart the Print Spooler service.</p>
+                    </div>
+                    
+                    <div class="completion-message" id="completionMessage">
+                        <h3>✓ Lab Completed!</h3>
+                        <p>You have successfully managed the Print Spooler service.</p>
+                        <p><strong>Demo will restart automatically...</strong></p>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">0% Complete</div>
+                </div>
+            </div>
+            
+            <div class="demo-panel">
+                <div id="desktop">
+                    <!-- This PC Icon -->
+                    <div class="desktop-icon" id="thisPcIcon" style="left: 20px; top: 20px;">
+                        <div class="icon-image">💻</div>
+                        <div class="icon-label">This PC</div>
+                    </div>
+                    
+                    <!-- Computer Management Window -->
+                    <div class="window" id="compMgmt" style="width: 700px; height: 500px; left: 30px; top: 20px;">
+                        <div class="window-header">
+                            <div class="window-title">⚙️ Computer Management</div>
+                            <div class="window-controls">
+                                <div class="window-control">−</div>
+                                <div class="window-control">□</div>
+                                <div class="window-control">×</div>
+                            </div>
+                        </div>
+                        <div class="window-body">
+                            <div class="mgmt-layout">
+                                <div class="tree-pane">
+                                    <div class="tree-item">System Tools</div>
+                                    <div class="tree-item tree-indent">Task Scheduler</div>
+                                    <div class="tree-item tree-indent">Event Viewer</div>
+                                    <div class="tree-item" id="servicesAppNode">Services and Applications</div>
+                                    <div class="tree-item tree-indent" id="servicesNode" style="display:none;">Services</div>
+                                    <div class="tree-item">Storage</div>
+                                </div>
+                                <div class="content-pane" id="contentPane">
+                                    <p style="text-align: center; color: #666; padding-top: 100px;">Select an item from the tree to view details</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Context Menu -->
+                    <div class="context-menu" id="contextMenu">
+                        <div class="context-menu-item" id="manageItem">Manage</div>
+                        <div class="context-menu-item">Properties</div>
+                    </div>
+                </div>
+                
+                <!-- Toast -->
+                <div id="toast"></div>
+                
+                <!-- Action hint -->
+                <div id="actionHint"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // DOM elements
+        const steps = document.querySelectorAll('.guide-step');
+        const completionMessage = document.getElementById('completionMessage');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const thisPcIcon = document.getElementById('thisPcIcon');
+        const contextMenu = document.getElementById('contextMenu');
+        const manageItem = document.getElementById('manageItem');
+        const compMgmt = document.getElementById('compMgmt');
+        const servicesAppNode = document.getElementById('servicesAppNode');
+        const servicesNode = document.getElementById('servicesNode');
+        const contentPane = document.getElementById('contentPane');
+        const toast = document.getElementById('toast');
+        
+        let currentStep = 0;
+        
+        const completionState = {
+            openMgmt: false,
+            navigateServices: false,
+            findSpooler: false,
+            stopService: false,
+            restartService: false
+        };
+        
+        function updateRequirements() {
+            const requirements = {
+                'req-open-mgmt': completionState.openMgmt,
+                'req-navigate-services': completionState.navigateServices,
+                'req-find-spooler': completionState.findSpooler,
+                'req-stop-service': completionState.stopService,
+                'req-restart-service': completionState.restartService
+            };
+            
+            for (const [id, completed] of Object.entries(requirements)) {
+                const element = document.getElementById(id);
+                if (completed) {
+                    element.classList.add('completed');
+                    element.querySelector('.requirement-checkbox').textContent = '✓';
+                }
+            }
+            
+            const totalRequirements = Object.keys(requirements).length;
+            const completedRequirements = Object.values(requirements).filter(v => v).length;
+            const progressPercent = (completedRequirements / totalRequirements) * 100;
+            
+            progressFill.style.width = `${progressPercent}%`;
+            progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        }
+        
+        function completeStep(step) {
+            if (step < steps.length) {
+                steps[step].classList.remove('current');
+                steps[step].classList.add('completed');
+                steps[step].querySelector('.step-status').textContent = 'Completed';
+                steps[step].querySelector('.step-status').className = 'step-status status-completed';
+                
+                if (step + 1 < steps.length) {
+                    steps[step + 1].classList.add('current');
+                    steps[step + 1].querySelector('.step-status').textContent = 'Current Step';
+                    steps[step + 1].querySelector('.step-status').className = 'step-status status-current';
+                    steps[step + 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            currentStep = step + 1;
+        }
+        
+        function showHint(text, x, y) {
+            const hint = document.getElementById('actionHint');
+            hint.textContent = text;
+            hint.style.left = x + 'px';
+            hint.style.top = y + 'px';
+            hint.classList.add('show');
+            
+            setTimeout(() => {
+                hint.classList.remove('show');
+            }, 2000);
+        }
+        
+        function flashToast(text) {
+            toast.textContent = text;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
+        }
+        
+        async function runDemo() {
+            // Initial setup
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 1: Right-click This PC
+            const iconRect = thisPcIcon.getBoundingClientRect();
+            showHint('Right-clicking This PC', 20, iconRect.top);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Show context menu
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = (iconRect.left + 80) + 'px';
+            contextMenu.style.top = (iconRect.top + 20) + 'px';
+            
+            completionState.openMgmt = true;
+            updateRequirements();
+            completeStep(0);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Click Manage
+            showHint('Clicking Manage', 20, iconRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            contextMenu.style.display = 'none';
+            compMgmt.style.display = 'flex';
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 2: Expand Services and Applications
+            const servicesAppRect = servicesAppNode.getBoundingClientRect();
+            showHint('Expanding Services and Applications', 20, servicesAppRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            servicesNode.style.display = 'block';
+            
+            completionState.navigateServices = true;
+            updateRequirements();
+            completeStep(1);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 3: Click Services
+            const servicesRect = servicesNode.getBoundingClientRect();
+            showHint('Clicking Services', 20, servicesRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            servicesNode.classList.add('selected');
+            
+            // Show services list
+            contentPane.innerHTML = `
+                <h3 style="margin-top: 0;">Services</h3>
+                <table class="service-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Startup Type</th>
+                        </tr>
+                    </thead>
+                    <tbody id="servicesList">
+                        <tr>
+                            <td>DHCP Client</td>
+                            <td><span class="service-status status-running">Running</span></td>
+                            <td>Automatic</td>
+                        </tr>
+                        <tr id="spoolerRow">
+                            <td>Print Spooler</td>
+                            <td><span class="service-status status-running" id="spoolerStatus">Running</span></td>
+                            <td>Automatic</td>
+                        </tr>
+                        <tr>
+                            <td>Windows Update</td>
+                            <td><span class="service-status status-running">Running</span></td>
+                            <td>Automatic</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="service-controls">
+                    <button id="startBtn" disabled>Start</button>
+                    <button id="stopBtn" disabled>Stop</button>
+                    <button id="restartBtn" disabled>Restart</button>
+                </div>
+            `;
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 4: Select Print Spooler
+            const spoolerRow = document.getElementById('spoolerRow');
+            const spoolerRowRect = spoolerRow.getBoundingClientRect();
+            showHint('Selecting Print Spooler', 20, spoolerRowRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            spoolerRow.classList.add('selected');
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('restartBtn').disabled = false;
+            
+            completionState.findSpooler = true;
+            updateRequirements();
+            completeStep(2);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 5: Stop service
+            const stopBtn = document.getElementById('stopBtn');
+            const stopBtnRect = stopBtn.getBoundingClientRect();
+            showHint('Stopping Print Spooler', 20, stopBtnRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const spoolerStatus = document.getElementById('spoolerStatus');
+            spoolerStatus.textContent = 'Stopped';
+            spoolerStatus.className = 'service-status status-stopped';
+            
+            stopBtn.disabled = true;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('restartBtn').disabled = true;
+            
+            flashToast('✓ Print Spooler stopped');
+            
+            completionState.stopService = true;
+            updateRequirements();
+            completeStep(3);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 6: Start service
+            const startBtn = document.getElementById('startBtn');
+            const startBtnRect = startBtn.getBoundingClientRect();
+            showHint('Starting Print Spooler', 20, startBtnRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            spoolerStatus.textContent = 'Running';
+            spoolerStatus.className = 'service-status status-running';
+            
+            startBtn.disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('restartBtn').disabled = false;
+            
+            flashToast('✓ Print Spooler started');
+            
+            completionState.restartService = true;
+            updateRequirements();
+            completeStep(4);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Show completion
+            completionMessage.style.display = 'block';
+            completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            flashToast('✅ Lab completed successfully!');
+            
+            // Reload after delay
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            location.reload();
+        }
+        
+        // Start the demo
+        setTimeout(() => {
+            runDemo();
+        }, 1000);
+    </script>
+</body>
+</html>

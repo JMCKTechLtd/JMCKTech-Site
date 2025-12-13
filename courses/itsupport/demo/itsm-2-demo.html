@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>ITSM Lab 2: Ticket Editing - Animated Demo</title>
+    <style>
+        :root {
+            --primary-color: #2e51bb;
+            --secondary-color: #71a8fc;
+            --dark-text: #2a3e4c;
+            --light-text: #6c757d;
+            --border-color: #d8dbe0;
+            --bg-light: #f8f9fa;
+            --bg-lighter: #ffffff;
+            --low-color: #6ed051;
+            --medium-color: #ffcb3d;
+            --high-color: #ff9e3d;
+            --critical-color: #ec5050;
+            --open-color: #71a8fc;
+            --in-progress-color: #ffcb3d;
+            --resolved-color: #6ed051;
+            --panel-bg: #252525;
+            --border-color-dark: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: #1e1e1e;
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color-dark);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: #cc0000;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 35%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color-dark);
+        }
+        
+        .demo-panel {
+            width: 65%;
+            display: flex;
+            flex-direction: column;
+            background: #f2f2f2;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            border-bottom: 1px solid var(--border-color-dark);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(113, 168, 252, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #cc0000;
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: #cc0000;
+            border-bottom: 1px solid var(--border-color-dark);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--low-color);
+            background: rgba(110, 208, 81, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--low-color);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--secondary-color);
+            box-shadow: 0 0 20px rgba(113, 168, 252, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--secondary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--low-color);
+            color: white;
+        }
+        
+        .progress-container {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 24px;
+            background: #333;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--low-color));
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        
+        .completion-message {
+            display: none !important;
+            background: linear-gradient(135deg, var(--low-color), var(--secondary-color));
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            text-align: center;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .completion-message h3 {
+            margin: 0 0 10px 0;
+            color: white;
+        }
+        
+        /* ServiceNow Interface Styles */
+        .sn-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: white;
+        }
+        
+        .sn-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1e40a0 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            height: 50px;
+        }
+        
+        .sn-logo {
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+        }
+        
+        .sn-navbar {
+            background-color: white;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            padding: 0 10px;
+            height: 40px;
+            align-items: center;
+        }
+        
+        .sn-nav-item {
+            padding: 0 12px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: var(--dark-text);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .sn-nav-item.active {
+            border-bottom: 3px solid var(--primary-color);
+            font-weight: 600;
+            background-color: rgba(113, 168, 252, 0.1);
+        }
+        
+        .sn-toolbar {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: white;
+        }
+        
+        .sn-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        
+        .sn-btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .sn-btn.highlighted {
+            outline: 3px solid #cc0000;
+            box-shadow: 0 0 15px rgba(204, 0, 0, 0.5);
+            animation: btnPulse 0.5s ease;
+        }
+        
+        @keyframes btnPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .sn-content {
+            flex: 1;
+            overflow-y: auto;
+            background: white;
+        }
+        
+        .sn-list-header {
+            display: grid;
+            grid-template-columns: 40px 100px 1fr 130px 130px;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--light-text);
+            padding: 12px 15px;
+            background: var(--bg-light);
+        }
+        
+        .sn-list-item {
+            display: grid;
+            grid-template-columns: 40px 100px 1fr 130px 130px;
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 15px;
+            font-size: 13px;
+            color: var(--dark-text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .sn-list-item:hover {
+            background: rgba(113, 168, 252, 0.07);
+        }
+        
+        .sn-list-item.selected {
+            background: rgba(113, 168, 252, 0.15);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .sn-list-cell {
+            display: flex;
+            align-items: center;
+        }
+        
+        .sn-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .sn-checkbox.checked {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .sn-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .ticket-number {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-open {
+            background: rgba(113, 168, 252, 0.15);
+            color: var(--open-color);
+        }
+        
+        .status-in-progress {
+            background: rgba(255, 203, 61, 0.15);
+            color: #b8860b;
+        }
+        
+        .status-resolved {
+            background: rgba(110, 208, 81, 0.15);
+            color: var(--resolved-color);
+        }
+        
+        .priority-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+        
+        .priority-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .priority-high {
+            background: var(--high-color);
+        }
+        
+        .priority-medium {
+            background: var(--medium-color);
+        }
+        
+        .priority-low {
+            background: var(--low-color);
+        }
+        
+        /* Modal Styles */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 8px;
+            width: 700px;
+            max-width: 95%;
+            max-height: 85vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(30px) scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-backdrop.show .modal {
+            transform: translateY(0) scale(1);
+        }
+        
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--light-text);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            max-height: calc(85vh - 180px);
+        }
+        
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background: var(--bg-light);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        .form-control, .form-select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .form-select.highlighted {
+            border: 2px solid #cc0000;
+            box-shadow: 0 0 10px rgba(204, 0, 0, 0.3);
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .form-col {
+            flex: 1;
+        }
+        
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .btn-secondary {
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--dark-text);
+        }
+        
+        .action-hint {
+            z-index: 10000;
+            position: absolute;
+            background: rgba(46, 81, 187, 0.95);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 10000;
+            display: none !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .action-hint.show {
+            display: block;
+            animation: hintPulse 0.5s ease;
+        }
+        
+        @keyframes hintPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .mouse-cursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 9999;
+            display: none !important;
+        }
+        
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 350px;
+            z-index: 1010;
+            transform: translateX(400px);
+            transition: transform 0.3s ease-out;
+            border-left: 4px solid var(--low-color);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--low-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .notification-content {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--dark-text);
+        }
+        
+        .notification-message {
+            font-size: 13px;
+            color: var(--light-text);
+        }
+    </style>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <div class="header-left">
+                <h1>ITSM Lab 2: Ticket Editing</h1>
+            </div>
+            <div class="demo-badge">AUTOMATED DEMO</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="guide-panel">
+                <div class="guide">
+                    <h2>Lab Guide</h2>
+                    
+                    <div class="lab-intro">
+                        <h3>Learning Objectives</h3>
+                        <p>In this lab, you will learn to:</p>
+                        <ul>
+                            <li>Select tickets from the incident list</li>
+                            <li>Open ticket details for editing</li>
+                            <li>Update ticket status and priority</li>
+                            <li>Modify assignment information</li>
+                            <li>Save changes to ticket records</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="requirements-panel">
+                        <h4>Lab Requirements</h4>
+                        <div class="requirement-item" id="req-select">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Select a ticket from the list</span>
+                        </div>
+                        <div class="requirement-item" id="req-open">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Open ticket for editing</span>
+                        </div>
+                        <div class="requirement-item" id="req-status">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Update ticket status</span>
+                        </div>
+                        <div class="requirement-item" id="req-priority">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Change ticket priority</span>
+                        </div>
+                        <div class="requirement-item" id="req-save">
+                            <span class="requirement-checkbox">○</span>
+                            <span class="requirement-label">Save ticket changes</span>
+                        </div>
+                    </div>
+                    
+                    <div class="guide-step current" data-step="1">
+                        <h3>
+                            <span class="step-number">1</span>
+                            Select Ticket
+                            <span class="step-status status-current">Current Step</span>
+                        </h3>
+                        <p>Select a ticket from the incidents list by clicking its checkbox.</p>
+                    </div>
+                    
+                    <div class="guide-step" data-step="2">
+                        <h3>
+                            <span class="step-number">2</span>
+                            Open for Editing
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Click the "Edit Selected" button to open the ticket editing modal.</p>
+                    </div>
+                    
+                    <div class="guide-step" data-step="3">
+                        <h3>
+                            <span class="step-number">3</span>
+                            Update Status
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Change the ticket status from "Open" to "In Progress" using the status dropdown.</p>
+                    </div>
+                    
+                    <div class="guide-step" data-step="4">
+                        <h3>
+                            <span class="step-number">4</span>
+                            Change Priority
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Update the ticket priority from "High" to "Medium" in the priority field.</p>
+                    </div>
+                    
+                    <div class="guide-step" data-step="5">
+                        <h3>
+                            <span class="step-number">5</span>
+                            Save Changes
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Click the "Save" button to apply all changes to the ticket.</p>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%">
+                                <span id="progress-text">0% Complete</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="completion-message" id="completion-message">
+                        <h3>✓ Lab Complete!</h3>
+                        <p>You have successfully edited and updated a ticket.</p>
+                        <p>The ticket status and priority have been changed.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="demo-panel">
+                <div class="sn-container">
+                    <div class="sn-header">
+                        <div class="sn-logo">ServiceNow</div>
+                    </div>
+                    
+                    <div class="sn-navbar">
+                        <div class="sn-nav-item active">Incidents</div>
+                        <div class="sn-nav-item">Requests</div>
+                        <div class="sn-nav-item">Changes</div>
+                    </div>
+                    
+                    <div class="sn-toolbar">
+                        <button class="sn-btn sn-btn-primary" id="editBtn">Edit Selected</button>
+                    </div>
+                    
+                    <div class="sn-content">
+                        <div class="sn-list-header">
+                            <div></div>
+                            <div>Number</div>
+                            <div>Short Description</div>
+                            <div>Status</div>
+                            <div>Priority</div>
+                        </div>
+                        
+                        <div class="sn-list-item" id="ticket1">
+                            <div class="sn-list-cell">
+                                <div class="sn-checkbox" id="checkbox1"></div>
+                            </div>
+                            <div class="sn-list-cell ticket-number">INC0001234</div>
+                            <div class="sn-list-cell">Network connectivity issue</div>
+                            <div class="sn-list-cell">
+                                <span class="status-badge status-open" id="statusBadge1">Open</span>
+                            </div>
+                            <div class="sn-list-cell">
+                                <div class="priority-badge">
+                                    <div class="priority-dot priority-high"></div>
+                                    <span id="priorityLabel1">High</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="sn-list-item">
+                            <div class="sn-list-cell">
+                                <div class="sn-checkbox"></div>
+                            </div>
+                            <div class="sn-list-cell ticket-number">INC0001235</div>
+                            <div class="sn-list-cell">Printer not responding</div>
+                            <div class="sn-list-cell">
+                                <span class="status-badge status-in-progress">In Progress</span>
+                            </div>
+                            <div class="sn-list-cell">
+                                <div class="priority-badge">
+                                    <div class="priority-dot priority-low"></div>
+                                    <span>Low</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="sn-list-item">
+                            <div class="sn-list-cell">
+                                <div class="sn-checkbox"></div>
+                            </div>
+                            <div class="sn-list-cell ticket-number">INC0001236</div>
+                            <div class="sn-list-cell">Database connection timeout</div>
+                            <div class="sn-list-cell">
+                                <span class="status-badge status-open">Open</span>
+                            </div>
+                            <div class="sn-list-cell">
+                                <div class="priority-badge">
+                                    <div class="priority-dot priority-medium"></div>
+                                    <span>Medium</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-backdrop" id="modalBackdrop">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <div class="modal-title">Edit INC0001234</div>
+                            <button class="modal-close" id="closeModal">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-row">
+                                <div class="form-col">
+                                    <div class="form-group">
+                                        <label class="form-label">Status</label>
+                                        <select class="form-select" id="statusSelect">
+                                            <option value="Open">Open</option>
+                                            <option value="In Progress">In Progress</option>
+                                            <option value="Resolved">Resolved</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-col">
+                                    <div class="form-group">
+                                        <label class="form-label">Priority</label>
+                                        <select class="form-select" id="prioritySelect">
+                                            <option value="Low">Low</option>
+                                            <option value="Medium">Medium</option>
+                                            <option value="High">High</option>
+                                            <option value="Critical">Critical</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Short Description</label>
+                                <input type="text" class="form-control" value="Network connectivity issue" />
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control">Users in Building A are unable to connect to the network. Issue started at 9:00 AM today.</textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="sn-btn btn-secondary" id="cancelBtn">Cancel</button>
+                            <button class="sn-btn sn-btn-primary" id="saveBtn">Save</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="notification" id="notification">
+                    <div class="notification-icon">✓</div>
+                    <div class="notification-content">
+                        <div class="notification-title">Success</div>
+                        <div class="notification-message">INC0001234 updated successfully</div>
+                    </div>
+                </div>
+                
+                <div class="action-hint" id="actionHint"></div>
+                <div class="mouse-cursor" id="mouseCursor"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const steps = document.querySelectorAll('.guide-step');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const completionMessage = document.getElementById('completion-message');
+        
+        let currentStep = 0;
+        
+        const completionState = {
+            select: false,
+            open: false,
+            status: false,
+            priority: false,
+            save: false
+        };
+        
+        function updateRequirements() {
+            const items = {
+                select: 'req-select',
+                open: 'req-open',
+                status: 'req-status',
+                priority: 'req-priority',
+                save: 'req-save'
+            };
+            
+            Object.keys(items).forEach(key => {
+                if (completionState[key]) {
+                    const element = document.getElementById(items[key]);
+                    element.classList.add('completed');
+                    element.querySelector('.requirement-checkbox').textContent = '✓';
+                }
+            });
+            
+            const completedCount = Object.values(completionState).filter(v => v).length;
+            const progressPercent = (completedCount / Object.keys(completionState).length) * 100;
+            progressFill.style.width = `${progressPercent}%`;
+            progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        }
+        
+        function completeStep(step) {
+            if (step < steps.length) {
+                steps[step].classList.remove('current');
+                steps[step].classList.add('completed');
+                steps[step].querySelector('.step-status').textContent = 'Completed';
+                steps[step].querySelector('.step-status').className = 'step-status status-completed';
+                
+                if (step + 1 < steps.length) {
+                    steps[step + 1].classList.add('current');
+                    steps[step + 1].querySelector('.step-status').textContent = 'Current Step';
+                    steps[step + 1].querySelector('.step-status').className = 'step-status status-current';
+                    steps[step + 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            currentStep = step + 1;
+        }
+        
+        function showHint(text, x, y) {
+            const hint = document.getElementById('actionHint');
+            hint.textContent = text;
+            hint.style.left = x + 'px';
+            hint.style.top = y + 'px';
+            hint.classList.add('show');
+            
+            setTimeout(() => {
+                hint.classList.remove('show');
+            }, 2000);
+        }
+        
+        function moveCursor(x, y, duration = 1000) {
+            const cursor = document.getElementById('mouseCursor');
+            cursor.classList.add('show');
+            cursor.style.transition = `all ${duration}ms ease`;
+            cursor.style.left = x + 'px';
+            cursor.style.top = y + 'px';
+            
+            return new Promise(resolve => setTimeout(resolve, duration));
+        }
+        
+        function hideCursor() {
+            const cursor = document.getElementById('mouseCursor');
+            cursor.classList.remove('show');
+        }
+        
+        function highlightElement(element, duration = 1000) {
+            element.classList.add('highlighted');
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    element.classList.remove('highlighted');
+                    resolve();
+                }, duration);
+            });
+        }
+        
+        async function runDemo() {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 1: Select ticket
+            const checkbox = document.getElementById('checkbox1');
+            const ticket = document.getElementById('ticket1');
+            const checkboxRect = checkbox.getBoundingClientRect();
+            
+            await moveCursor(checkboxRect.left + checkboxRect.width / 2, checkboxRect.top + checkboxRect.height / 2, 1500);
+            showHint('Selecting ticket INC0001234', checkboxRect.left + 80, checkboxRect.top - 100);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            checkbox.classList.add('checked');
+            ticket.classList.add('selected');
+            
+            completionState.select = true;
+            updateRequirements();
+            completeStep(0);
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            hideCursor();
+            
+            // Step 2: Click Edit button
+            const editBtn = document.getElementById('editBtn');
+            const editBtnRect = editBtn.getBoundingClientRect();
+            
+            await moveCursor(editBtnRect.left + editBtnRect.width / 2, editBtnRect.top + editBtnRect.height / 2, 1500);
+            showHint('Opening ticket editor', editBtnRect.left + 100, editBtnRect.top - 100);
+            await highlightElement(editBtn, 800);
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            document.getElementById('modalBackdrop').classList.add('show');
+            
+            completionState.open = true;
+            updateRequirements();
+            completeStep(1);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideCursor();
+            
+            // Step 3: Update Status
+            const statusSelect = document.getElementById('statusSelect');
+            const statusRect = statusSelect.getBoundingClientRect();
+            
+            await moveCursor(statusRect.left + statusRect.width / 2, statusRect.top + statusRect.height / 2, 1500);
+            showHint('Changing status to In Progress', statusRect.left + 150, statusRect.top - 100);
+            await highlightElement(statusSelect, 800);
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            statusSelect.value = 'In Progress';
+            
+            completionState.status = true;
+            updateRequirements();
+            completeStep(2);
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            hideCursor();
+            
+            // Step 4: Update Priority
+            const prioritySelect = document.getElementById('prioritySelect');
+            const priorityRect = prioritySelect.getBoundingClientRect();
+            
+            await moveCursor(priorityRect.left + priorityRect.width / 2, priorityRect.top + priorityRect.height / 2, 1500);
+            showHint('Changing priority to Medium', priorityRect.left + 150, priorityRect.top - 100);
+            await highlightElement(prioritySelect, 800);
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            prioritySelect.value = 'Medium';
+            
+            completionState.priority = true;
+            updateRequirements();
+            completeStep(3);
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            hideCursor();
+            
+            // Step 5: Save changes
+            const saveBtn = document.getElementById('saveBtn');
+            const saveBtnRect = saveBtn.getBoundingClientRect();
+            
+            await moveCursor(saveBtnRect.left + saveBtnRect.width / 2, saveBtnRect.top + saveBtnRect.height / 2, 1500);
+            showHint('Saving ticket changes', saveBtnRect.left - 80, saveBtnRect.top - 100);
+            await highlightElement(saveBtn, 800);
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Close modal and update list
+            document.getElementById('modalBackdrop').classList.remove('show');
+            
+            // Update the list item
+            document.getElementById('statusBadge1').textContent = 'In Progress';
+            document.getElementById('statusBadge1').className = 'status-badge status-in-progress';
+            document.getElementById('priorityLabel1').textContent = 'Medium';
+            document.querySelector('#ticket1 .priority-dot').className = 'priority-dot priority-medium';
+            
+            // Show notification
+            document.getElementById('notification').classList.add('show');
+            setTimeout(() => {
+                document.getElementById('notification').classList.remove('show');
+            }, 3000);
+            
+            completionState.save = true;
+            updateRequirements();
+            completeStep(4);
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            hideCursor();
+            
+            // Show completion
+            completionMessage.style.display = 'block';
+            completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Reload after delay
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            location.reload();
+        }
+        
+        // Initialize
+        document.getElementById('statusSelect').value = 'Open';
+        document.getElementById('prioritySelect').value = 'High';
+        
+        // Start demo
+        setTimeout(() => {
+            runDemo();
+        }, 1000);
+        
+        // Allow manual close
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('modalBackdrop').classList.remove('show');
+        });
+        
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            document.getElementById('modalBackdrop').classList.remove('show');
+        });
+    </script>
+</body>
+</html>
