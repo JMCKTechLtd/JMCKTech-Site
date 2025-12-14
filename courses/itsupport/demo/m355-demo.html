@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Lab 25: Microsoft 365 License Management - Automated Demo</title>
+    <style>
+        :root {
+            --primary-color: #2e51bb;
+            --secondary-color: #71a8fc;
+            --dark-text: #2a3e4c;
+            --light-text: #6c757d;
+            --border-color: #d8dbe0;
+            --bg-light: #f8f9fa;
+            --bg-lighter: #ffffff;
+            --low-color: #6ed051;
+            --medium-color: #ffcb3d;
+            --high-color: #ff9e3d;
+            --critical-color: #ec5050;
+            --panel-bg: #252525;
+            --current-step: #3a3a3a;
+            --m365-blue: #0078d4;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--dark-text);
+            color: var(--bg-lighter);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--dark-text);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1e40a0 100%);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: var(--critical-color);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 35%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .demo-panel {
+            width: 65%;
+            display: flex;
+            flex-direction: column;
+            background: #f0f0f0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(113, 168, 252, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--critical-color);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--critical-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--low-color);
+            background: rgba(110, 208, 81, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--low-color);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--secondary-color);
+            box-shadow: 0 0 20px rgba(113, 168, 252, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--secondary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: var(--light-text);
+            color: white;
+        }
+        
+        .status-current {
+            background: var(--secondary-color);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-completed {
+            background: var(--low-color);
+            color: white;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #444;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: var(--secondary-color);
+        }
+        
+        .completion-message {
+            background: rgba(110, 208, 81, 0.2);
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border-left: 4px solid var(--low-color);
+            display: none;
+        }
+        
+        .completion-message h3 {
+            margin-top: 0;
+            color: var(--low-color);
+        }
+        
+        /* M365 Admin Interface */
+        .m365-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: #f0f0f0;
+        }
+        
+        .m365-header {
+            background: var(--m365-blue);
+            padding: 12px 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .m365-header h1 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .m365-main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .m365-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+        
+        .card-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .card-content {
+            padding: 20px;
+        }
+        
+        .toolbar {
+            background: white;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .btn-primary {
+            background: var(--m365-blue);
+            color: white;
+            border-color: var(--m365-blue);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.4;
+        }
+        
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        .user-table th {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .user-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+        
+        .user-table tr:hover {
+            background: #f9fafb;
+        }
+        
+        .user-table tr.selected {
+            background: #e5f0ff;
+        }
+        
+        .license-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            background: #e5e7eb;
+            color: #666;
+            margin-right: 5px;
+        }
+        
+        .license-badge.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        /* License Panel */
+        .license-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 450px;
+            height: 100%;
+            background: white;
+            box-shadow: -4px 0 15px rgba(0,0,0,0.2);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .license-panel.show {
+            display: flex;
+        }
+        
+        .license-panel-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .license-panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .license-panel-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .license-option {
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .license-option:hover {
+            background: #f9fafb;
+        }
+        
+        .license-option.selected {
+            border-color: var(--m365-blue);
+            background: #e5f0ff;
+        }
+        
+        .license-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .license-desc {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2e7d32;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: none;
+            z-index: 600;
+            box-shadow: 0 8px 24px rgba(0,0,0,.35);
+        }
+        
+        /* Action hint */
+        #actionHint {
+            position: absolute;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        #actionHint.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <div class="header-left">
+                <h1>Lab 25: Microsoft 365 License Management</h1>
+            </div>
+            <div class="demo-badge">AUTOMATED DEMO</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="guide-panel">
+                <div class="guide">
+                    <h2>Lab Instructions</h2>
+                    
+                    <div class="lab-intro">
+                        <h3>Objective</h3>
+                        <p>Assign Microsoft 365 licenses to users in the Admin Center.</p>
+                    </div>
+                    
+                    <div class="requirements-panel">
+                        <h4>Lab Requirements</h4>
+                        <div class="requirement-item" id="req-task-a">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Assign Exchange Online to App Mailbox</span>
+                        </div>
+                        <div class="requirement-item" id="req-task-b">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Assign M365 Apps to Katie & Owen</span>
+                        </div>
+                        <div class="requirement-item" id="req-task-c">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Enable Teams for Customer Support</span>
+                        </div>
+                    </div>
+                    
+                    <div class="guide-step current">
+                        <h3>
+                            <span class="step-number">1</span>
+                            Select App Mailbox
+                            <span class="step-status status-current">Current Step</span>
+                        </h3>
+                        <p>Click on App Mailbox user.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">2</span>
+                            Assign Exchange License
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Assign Exchange Online (Plan 1) license.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">3</span>
+                            Select Katie & Owen
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Select both Katie Jordan and Owen Patel.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">4</span>
+                            Bulk Assign M365 Apps
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Use bulk assign to add M365 Apps license.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">5</span>
+                            Enable Teams License
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Verify Teams Essentials for Customer Support.</p>
+                    </div>
+                    
+                    <div class="completion-message" id="completionMessage">
+                        <h3>✓ Lab Completed!</h3>
+                        <p>All licenses successfully assigned.</p>
+                        <p><strong>Demo will restart automatically...</strong></p>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">0% Complete</div>
+                </div>
+            </div>
+            
+            <div class="demo-panel">
+                <div class="m365-container">
+                    <div class="m365-header">
+                        <h1>Microsoft 365 admin center</h1>
+                        <div style="font-size: 13px;">admin@blockshell.app</div>
+                    </div>
+                    
+                    <div class="m365-main">
+                        <div class="m365-content">
+                            <div class="toolbar">
+                                <button class="btn">Add user</button>
+                                <button class="btn">Refresh</button>
+                                <div style="flex: 1;"></div>
+                                <button class="btn btn-primary" id="bulkAssignBtn" disabled>Assign licenses</button>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header">Active users</div>
+                                <div class="card-content" style="padding: 0;">
+                                    <table class="user-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 40px;"><input type="checkbox" id="selectAll"></th>
+                                                <th>Display name</th>
+                                                <th>Email</th>
+                                                <th>Licenses</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="userTableBody">
+                                            <tr id="appMailbox">
+                                                <td><input type="checkbox" class="user-checkbox"></td>
+                                                <td>App Mailbox</td>
+                                                <td>app.mailbox@blockshell.app</td>
+                                                <td><span class="license-badge" id="appLicense">No licenses</span></td>
+                                            </tr>
+                                            <tr id="katieJordan">
+                                                <td><input type="checkbox" class="user-checkbox"></td>
+                                                <td>Katie Jordan</td>
+                                                <td>katie.jordan@blockshell.app</td>
+                                                <td><span class="license-badge" id="katieLicense">No licenses</span></td>
+                                            </tr>
+                                            <tr id="owenPatel">
+                                                <td><input type="checkbox" class="user-checkbox"></td>
+                                                <td>Owen Patel</td>
+                                                <td>owen.patel@blockshell.app</td>
+                                                <td><span class="license-badge" id="owenLicense">No licenses</span></td>
+                                            </tr>
+                                            <tr id="customerSupport">
+                                                <td><input type="checkbox" class="user-checkbox"></td>
+                                                <td>Customer Support</td>
+                                                <td>support@blockshell.app</td>
+                                                <td><span class="license-badge active" id="supportLicense">Teams Essentials</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- License Assignment Panel -->
+                <div class="license-panel" id="licensePanel">
+                    <div class="license-panel-header" id="licensePanelTitle">Assign licenses</div>
+                    <div class="license-panel-content">
+                        <div class="license-option" id="exchangeLicense">
+                            <div class="license-name">Exchange Online (Plan 1)</div>
+                            <div class="license-desc">Email and calendar services</div>
+                        </div>
+                        <div class="license-option" id="m365AppsLicense">
+                            <div class="license-name">Microsoft 365 Apps for enterprise</div>
+                            <div class="license-desc">Office applications suite</div>
+                        </div>
+                        <div class="license-option" id="teamsLicense">
+                            <div class="license-name">Teams Essentials</div>
+                            <div class="license-desc">Collaboration and meetings</div>
+                        </div>
+                    </div>
+                    <div class="license-panel-footer">
+                        <button class="btn btn-primary" id="assignBtn">Assign</button>
+                        <button class="btn" id="cancelBtn">Cancel</button>
+                    </div>
+                </div>
+                
+                <!-- Toast -->
+                <div id="toast"></div>
+                
+                <!-- Action hint -->
+                <div id="actionHint"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const steps = document.querySelectorAll('.guide-step');
+        const completionMessage = document.getElementById('completionMessage');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const toast = document.getElementById('toast');
+        
+        let currentStep = 0;
+        
+        const completionState = {
+            taskA: false,
+            taskB: false,
+            taskC: false
+        };
+        
+        function updateRequirements() {
+            const requirements = {
+                'req-task-a': completionState.taskA,
+                'req-task-b': completionState.taskB,
+                'req-task-c': completionState.taskC
+            };
+            
+            for (const [id, completed] of Object.entries(requirements)) {
+                const element = document.getElementById(id);
+                if (completed) {
+                    element.classList.add('completed');
+                    element.querySelector('.requirement-checkbox').textContent = '✓';
+                }
+            }
+            
+            const totalRequirements = Object.keys(requirements).length;
+            const completedRequirements = Object.values(requirements).filter(v => v).length;
+            const progressPercent = (completedRequirements / totalRequirements) * 100;
+            
+            progressFill.style.width = `${progressPercent}%`;
+            progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        }
+        
+        function completeStep(step) {
+            if (step < steps.length) {
+                steps[step].classList.remove('current');
+                steps[step].classList.add('completed');
+                steps[step].querySelector('.step-status').textContent = 'Completed';
+                steps[step].querySelector('.step-status').className = 'step-status status-completed';
+                
+                if (step + 1 < steps.length) {
+                    steps[step + 1].classList.add('current');
+                    steps[step + 1].querySelector('.step-status').textContent = 'Current Step';
+                    steps[step + 1].querySelector('.step-status').className = 'step-status status-current';
+                    steps[step + 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            currentStep = step + 1;
+        }
+        
+        function showHint(text, x, y) {
+            const hint = document.getElementById('actionHint');
+            hint.textContent = text;
+            hint.style.left = x + 'px';
+            hint.style.top = y + 'px';
+            hint.classList.add('show');
+            
+            setTimeout(() => {
+                hint.classList.remove('show');
+            }, 2000);
+        }
+        
+        function flashToast(text) {
+            toast.textContent = text;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2500);
+        }
+        
+        async function runDemo() {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Task A: Assign Exchange to App Mailbox
+            const appRow = document.getElementById('appMailbox');
+            const appRect = appRow.getBoundingClientRect();
+            
+            showHint('Selecting App Mailbox', 20, appRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            appRow.classList.add('selected');
+            appRow.querySelector('.user-checkbox').checked = true;
+            
+            completeStep(0);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Open license panel
+            const licensePanel = document.getElementById('licensePanel');
+            const exchangeLicense = document.getElementById('exchangeLicense');
+            
+            showHint('Opening license assignment', 20, 200);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            licensePanel.classList.add('show');
+            document.getElementById('licensePanelTitle').textContent = 'Assign licenses - App Mailbox';
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const exchRect = exchangeLicense.getBoundingClientRect();
+            showHint('Selecting Exchange Online', 20, exchRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            exchangeLicense.classList.add('selected');
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const assignBtn = document.getElementById('assignBtn');
+            const assignRect = assignBtn.getBoundingClientRect();
+            
+            showHint('Assigning license', 20, assignRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            licensePanel.classList.remove('show');
+            exchangeLicense.classList.remove('selected');
+            appRow.classList.remove('selected');
+            appRow.querySelector('.user-checkbox').checked = false;
+            
+            const appLicense = document.getElementById('appLicense');
+            appLicense.textContent = 'Exchange Online (Plan 1)';
+            appLicense.classList.add('active');
+            
+            flashToast('✅ License assigned to App Mailbox');
+            
+            completionState.taskA = true;
+            updateRequirements();
+            completeStep(1);
+            
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            
+            // Task B: Bulk assign to Katie & Owen
+            const katieRow = document.getElementById('katieJordan');
+            const owenRow = document.getElementById('owenPatel');
+            
+            const katieRect = katieRow.getBoundingClientRect();
+            showHint('Selecting Katie Jordan', 20, katieRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            katieRow.classList.add('selected');
+            katieRow.querySelector('.user-checkbox').checked = true;
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const owenRect = owenRow.getBoundingClientRect();
+            showHint('Selecting Owen Patel', 20, owenRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            owenRow.classList.add('selected');
+            owenRow.querySelector('.user-checkbox').checked = true;
+            
+            const bulkAssignBtn = document.getElementById('bulkAssignBtn');
+            bulkAssignBtn.disabled = false;
+            
+            completeStep(2);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const bulkRect = bulkAssignBtn.getBoundingClientRect();
+            showHint('Clicking Assign licenses', 20, bulkRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            licensePanel.classList.add('show');
+            document.getElementById('licensePanelTitle').textContent = 'Assign licenses - 2 users';
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const m365License = document.getElementById('m365AppsLicense');
+            const m365Rect = m365License.getBoundingClientRect();
+            
+            showHint('Selecting M365 Apps', 20, m365Rect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            m365License.classList.add('selected');
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const assignRect2 = assignBtn.getBoundingClientRect();
+            showHint('Assigning to both users', 20, assignRect2.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            licensePanel.classList.remove('show');
+            m365License.classList.remove('selected');
+            katieRow.classList.remove('selected');
+            owenRow.classList.remove('selected');
+            katieRow.querySelector('.user-checkbox').checked = false;
+            owenRow.querySelector('.user-checkbox').checked = false;
+            bulkAssignBtn.disabled = true;
+            
+            const katieLicense = document.getElementById('katieLicense');
+            katieLicense.textContent = 'M365 Apps for enterprise';
+            katieLicense.classList.add('active');
+            
+            const owenLicense = document.getElementById('owenLicense');
+            owenLicense.textContent = 'M365 Apps for enterprise';
+            owenLicense.classList.add('active');
+            
+            flashToast('✅ Licenses assigned to Katie Jordan and Owen Patel');
+            
+            completionState.taskB = true;
+            updateRequirements();
+            completeStep(3);
+            
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            
+            // Task C: Verify Teams for Customer Support
+            const supportRow = document.getElementById('customerSupport');
+            const supportRect = supportRow.getBoundingClientRect();
+            
+            showHint('Verifying Customer Support licenses', 20, supportRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            supportRow.classList.add('selected');
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            supportRow.classList.remove('selected');
+            
+            flashToast('✅ Teams Essentials verified for Customer Support');
+            
+            completionState.taskC = true;
+            updateRequirements();
+            completeStep(4);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Show completion
+            completionMessage.style.display = 'block';
+            completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Reload after delay
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            location.reload();
+        }
+        
+        // Start the demo
+        setTimeout(() => {
+            runDemo();
+        }, 1000);
+    </script>
+</body>
+</html>

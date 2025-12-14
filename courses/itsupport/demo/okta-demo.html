@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Okta Verify Lab: Smart Phone App Enrollment - Automated Demo</title>
+    <style>
+        :root {
+            --primary-color: #2e51bb;
+            --secondary-color: #71a8fc;
+            --dark-text: #2a3e4c;
+            --light-text: #6c757d;
+            --border-color: #d8dbe0;
+            --bg-light: #f8f9fa;
+            --bg-lighter: #ffffff;
+            --low-color: #6ed051;
+            --medium-color: #ffcb3d;
+            --high-color: #ff9e3d;
+            --critical-color: #ec5050;
+            --panel-bg: #252525;
+            --current-step: #3a3a3a;
+            --okta-blue: #007dc1;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--dark-text);
+            color: var(--bg-lighter);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--dark-text);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1e40a0 100%);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .demo-badge {
+            background: var(--critical-color);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 35%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .demo-panel {
+            width: 65%;
+            display: flex;
+            flex-direction: column;
+            background: #f5f5f5;
+            position: relative;
+            overflow: hidden;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(113, 168, 252, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--critical-color);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--critical-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--low-color);
+            background: rgba(110, 208, 81, 0.1);
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--low-color);
+            min-width: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--secondary-color);
+            box-shadow: 0 0 20px rgba(113, 168, 252, 0.3);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--secondary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: var(--light-text);
+            color: white;
+        }
+        
+        .status-current {
+            background: var(--secondary-color);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-completed {
+            background: var(--low-color);
+            color: white;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #444;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: var(--secondary-color);
+        }
+        
+        .completion-message {
+            background: rgba(110, 208, 81, 0.2);
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border-left: 4px solid var(--low-color);
+            display: none;
+        }
+        
+        .completion-message h3 {
+            margin-top: 0;
+            color: var(--low-color);
+        }
+        
+        /* Phone Device */
+        .phone-container {
+            width: 360px;
+            height: 700px;
+            background-color: #000;
+            border-radius: 40px;
+            padding: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .status-bar {
+            height: 44px;
+            background-color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #000;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .app-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            background: #fff;
+        }
+        
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .screen.active {
+            display: flex;
+        }
+        
+        .okta-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 30px;
+        }
+        
+        .screen-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .screen-desc {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .primary-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--okta-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .primary-btn:hover {
+            background: #006aa8;
+        }
+        
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            background: #f5f5f5;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #999;
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--low-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            width: 100%;
+            margin: 10px 0;
+            text-align: left;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .info-value {
+            color: #333;
+        }
+        
+        .mfa-options {
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        .mfa-option {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            margin-bottom: 10px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        
+        .mfa-option:hover {
+            border-color: var(--okta-blue);
+            background: #f8f9ff;
+        }
+        
+        .mfa-option.selected {
+            border-color: var(--okta-blue);
+            background: #e5f0ff;
+        }
+        
+        /* Action hint */
+        #actionHint {
+            position: fixed;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        #actionHint.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="lab-container">
+        <div class="header">
+            <div class="header-left">
+                <h1>Okta Verify Lab: Smart Phone App Enrollment</h1>
+            </div>
+            <div class="demo-badge">AUTOMATED DEMO</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="guide-panel">
+                <div class="guide">
+                    <h2>Lab Instructions</h2>
+                    
+                    <div class="lab-intro">
+                        <h3>Objective</h3>
+                        <p>Complete Okta Verify MFA enrollment on a mobile device.</p>
+                    </div>
+                    
+                    <div class="requirements-panel">
+                        <h4>Lab Requirements</h4>
+                        <div class="requirement-item" id="req-start">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Start enrollment</span>
+                        </div>
+                        <div class="requirement-item" id="req-domain">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Enter organization domain</span>
+                        </div>
+                        <div class="requirement-item" id="req-login">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Authenticate with credentials</span>
+                        </div>
+                        <div class="requirement-item" id="req-mfa">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Complete MFA challenge</span>
+                        </div>
+                        <div class="requirement-item" id="req-qr">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Scan QR code</span>
+                        </div>
+                        <div class="requirement-item" id="req-complete">
+                            <span class="requirement-checkbox">☐</span>
+                            <span class="requirement-label">Complete enrollment</span>
+                        </div>
+                    </div>
+                    
+                    <div class="guide-step current">
+                        <h3>
+                            <span class="step-number">1</span>
+                            Get Started
+                            <span class="step-status status-current">Current Step</span>
+                        </h3>
+                        <p>Click "Get Started" to begin enrollment.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">2</span>
+                            Enter Domain
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Enter: blockshell.app.okta.com</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">3</span>
+                            Sign In
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Username: testuser, Password: Password123</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">4</span>
+                            MFA Challenge
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Select Push Notification and approve.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">5</span>
+                            Scan QR Code
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Click to simulate QR code scan.</p>
+                    </div>
+                    
+                    <div class="guide-step">
+                        <h3>
+                            <span class="step-number">6</span>
+                            Enrollment Complete
+                            <span class="step-status status-pending">Pending</span>
+                        </h3>
+                        <p>Review enrollment details.</p>
+                    </div>
+                    
+                    <div class="completion-message" id="completionMessage">
+                        <h3>✓ Lab Completed!</h3>
+                        <p>Okta Verify successfully enrolled.</p>
+                        <p><strong>Demo will restart automatically...</strong></p>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">0% Complete</div>
+                </div>
+            </div>
+            
+            <div class="demo-panel">
+                <div class="phone-container">
+                    <div class="phone-screen">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>📶 📡 🔋</span>
+                        </div>
+                        
+                        <div class="app-content">
+                            <!-- Screen 1: Welcome -->
+                            <div class="screen active" id="screen1">
+                                <div class="okta-logo" style="background: var(--okta-blue); border-radius: 20px; color: white; font-size: 40px; display: flex; align-items: center; justify-content: center;">O</div>
+                                <div class="screen-title">Okta Verify</div>
+                                <div class="screen-desc">Secure your account with multi-factor authentication</div>
+                                <button class="primary-btn" id="getStartedBtn">Get Started</button>
+                            </div>
+                            
+                            <!-- Screen 2: Domain Entry -->
+                            <div class="screen" id="screen2">
+                                <div class="screen-title">Organization Domain</div>
+                                <div class="screen-desc">Enter your organization's Okta domain</div>
+                                <input type="text" class="input-field" id="domainInput" placeholder="yourcompany.okta.com">
+                                <button class="primary-btn" id="domainNextBtn">Next</button>
+                            </div>
+                            
+                            <!-- Screen 3: Credentials -->
+                            <div class="screen" id="screen3">
+                                <div class="screen-title">Sign In</div>
+                                <div class="screen-desc">BlockShell App</div>
+                                <input type="text" class="input-field" id="usernameInput" placeholder="Username">
+                                <input type="password" class="input-field" id="passwordInput" placeholder="Password">
+                                <button class="primary-btn" id="signInBtn">Sign In</button>
+                            </div>
+                            
+                            <!-- Screen 4: MFA Challenge -->
+                            <div class="screen" id="screen4">
+                                <div class="screen-title">MFA Challenge</div>
+                                <div class="screen-desc">Choose verification method</div>
+                                <div class="mfa-options">
+                                    <button class="mfa-option" id="pushOption">
+                                        <div style="font-weight: 600;">📱 Push Notification</div>
+                                        <div style="font-size: 13px; color: #666; margin-top: 4px;">Approve on your device</div>
+                                    </button>
+                                    <button class="mfa-option">
+                                        <div style="font-weight: 600;">📲 SMS Code</div>
+                                        <div style="font-size: 13px; color: #666; margin-top: 4px;">Enter code: 123456</div>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Screen 5: QR Code -->
+                            <div class="screen" id="screen5">
+                                <div class="screen-title">Scan QR Code</div>
+                                <div class="screen-desc">Complete enrollment</div>
+                                <div class="qr-code" id="qrCode">
+                                    <svg width="160" height="160" viewBox="0 0 160 160">
+                                        <rect width="160" height="160" fill="white"/>
+                                        <rect x="10" y="10" width="30" height="30" fill="black"/>
+                                        <rect x="120" y="10" width="30" height="30" fill="black"/>
+                                        <rect x="10" y="120" width="30" height="30" fill="black"/>
+                                        <rect x="50" y="30" width="10" height="10" fill="black"/>
+                                        <rect x="70" y="30" width="10" height="10" fill="black"/>
+                                        <rect x="90" y="30" width="10" height="10" fill="black"/>
+                                    </svg>
+                                </div>
+                                <button class="primary-btn" id="scanBtn">Scan the QR code</button>
+                            </div>
+                            
+                            <!-- Screen 6: Success -->
+                            <div class="screen" id="screen6">
+                                <div class="success-icon">✓</div>
+                                <div class="screen-title">Enrollment Complete!</div>
+                                <div class="screen-desc">Your device is now enrolled</div>
+                                <div class="info-box">
+                                    <div class="info-row">
+                                        <span class="info-label">User:</span>
+                                        <span class="info-value">testuser</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Organization:</span>
+                                        <span class="info-value">BlockShell App</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="info-label">Method:</span>
+                                        <span class="info-value">Push Notification</span>
+                                    </div>
+                                </div>
+                                <button class="primary-btn" id="finishBtn">Finish</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action hint -->
+                <div id="actionHint"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const steps = document.querySelectorAll('.guide-step');
+        const completionMessage = document.getElementById('completionMessage');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        
+        let currentStep = 0;
+        
+        const completionState = {
+            start: false,
+            domain: false,
+            login: false,
+            mfa: false,
+            qr: false,
+            complete: false
+        };
+        
+        function updateRequirements() {
+            const requirements = {
+                'req-start': completionState.start,
+                'req-domain': completionState.domain,
+                'req-login': completionState.login,
+                'req-mfa': completionState.mfa,
+                'req-qr': completionState.qr,
+                'req-complete': completionState.complete
+            };
+            
+            for (const [id, completed] of Object.entries(requirements)) {
+                const element = document.getElementById(id);
+                if (completed) {
+                    element.classList.add('completed');
+                    element.querySelector('.requirement-checkbox').textContent = '✓';
+                }
+            }
+            
+            const totalRequirements = Object.keys(requirements).length;
+            const completedRequirements = Object.values(requirements).filter(v => v).length;
+            const progressPercent = (completedRequirements / totalRequirements) * 100;
+            
+            progressFill.style.width = `${progressPercent}%`;
+            progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        }
+        
+        function completeStep(step) {
+            if (step < steps.length) {
+                steps[step].classList.remove('current');
+                steps[step].classList.add('completed');
+                steps[step].querySelector('.step-status').textContent = 'Completed';
+                steps[step].querySelector('.step-status').className = 'step-status status-completed';
+                
+                if (step + 1 < steps.length) {
+                    steps[step + 1].classList.add('current');
+                    steps[step + 1].querySelector('.step-status').textContent = 'Current Step';
+                    steps[step + 1].querySelector('.step-status').className = 'step-status status-current';
+                    steps[step + 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            currentStep = step + 1;
+        }
+        
+        function showHint(text, x, y) {
+            const hint = document.getElementById('actionHint');
+            hint.textContent = text;
+            hint.style.left = x + 'px';
+            hint.style.top = y + 'px';
+            hint.classList.add('show');
+            
+            setTimeout(() => {
+                hint.classList.remove('show');
+            }, 2000);
+        }
+        
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+        
+        async function typeText(element, text, speed = 100) {
+            element.value = '';
+            for (let i = 0; i < text.length; i++) {
+                element.value = text.substring(0, i + 1);
+                await new Promise(resolve => setTimeout(resolve, speed));
+            }
+        }
+        
+        async function runDemo() {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 1: Click Get Started
+            const getStartedBtn = document.getElementById('getStartedBtn');
+            const btnRect = getStartedBtn.getBoundingClientRect();
+            
+            showHint('Clicking Get Started', 20, btnRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            showScreen('screen2');
+            
+            completionState.start = true;
+            updateRequirements();
+            completeStep(0);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 2: Enter domain
+            const domainInput = document.getElementById('domainInput');
+            const domainRect = domainInput.getBoundingClientRect();
+            
+            showHint('Entering organization domain', 20, domainRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await typeText(domainInput, 'blockshell.app.okta.com', 80);
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const domainNextBtn = document.getElementById('domainNextBtn');
+            const nextRect = domainNextBtn.getBoundingClientRect();
+            
+            showHint('Proceeding to sign in', 20, nextRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            showScreen('screen3');
+            
+            completionState.domain = true;
+            updateRequirements();
+            completeStep(1);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 3: Enter credentials
+            const usernameInput = document.getElementById('usernameInput');
+            const userRect = usernameInput.getBoundingClientRect();
+            
+            showHint('Entering username', 20, userRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await typeText(usernameInput, 'testuser', 80);
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const passwordInput = document.getElementById('passwordInput');
+            const passRect = passwordInput.getBoundingClientRect();
+            
+            showHint('Entering password', 20, passRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await typeText(passwordInput, 'Password123', 80);
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const signInBtn = document.getElementById('signInBtn');
+            const signRect = signInBtn.getBoundingClientRect();
+            
+            showHint('Signing in', 20, signRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            showScreen('screen4');
+            
+            completionState.login = true;
+            updateRequirements();
+            completeStep(2);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 4: MFA Challenge
+            const pushOption = document.getElementById('pushOption');
+            const pushRect = pushOption.getBoundingClientRect();
+            
+            showHint('Selecting Push Notification', 20, pushRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            pushOption.classList.add('selected');
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            showHint('Approving MFA challenge', 20, pushRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            showScreen('screen5');
+            
+            completionState.mfa = true;
+            updateRequirements();
+            completeStep(3);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 5: Scan QR Code
+            const scanBtn = document.getElementById('scanBtn');
+            const scanRect = scanBtn.getBoundingClientRect();
+            
+            showHint('Scanning QR code', 20, scanRect.top - 80);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            showScreen('screen6');
+            
+            completionState.qr = true;
+            updateRequirements();
+            completeStep(4);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Step 6: Complete
+            completionState.complete = true;
+            updateRequirements();
+            completeStep(5);
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Show completion
+            completionMessage.style.display = 'block';
+            completionMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Reload after delay
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            location.reload();
+        }
+        
+        // Start the demo
+        setTimeout(() => {
+            runDemo();
+        }, 1000);
+    </script>
+</body>
+</html>
