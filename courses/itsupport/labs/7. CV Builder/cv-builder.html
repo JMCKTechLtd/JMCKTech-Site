@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professional CV Builder</title>
+
+  <!-- Optional export libs (app still works without them) -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --primary:#0f172a;
+      --secondary:#334155;
+      --muted:#64748b;
+      --border:#e5e7eb;
+      --accent:#2563eb;
+      --bg:#f8fafc;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--primary)}
+    .app{max-width:1200px;margin:0 auto;padding:32px;display:grid;grid-template-columns:1fr 1fr;gap:32px}
+    h1{grid-column:1/-1;margin:0 0 6px 0;font-size:28px;font-weight:900}
+    .subtitle{grid-column:1/-1;color:var(--muted);margin-bottom:14px}
+    .panel{background:#fff;border:1px solid var(--border);border-radius:12px;padding:24px}
+    .panel h2{margin:0 0 16px 0;font-size:18px;font-weight:800}
+    label{display:block;font-size:13px;font-weight:800;margin-bottom:6px;color:var(--secondary)}
+    input,textarea,select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);font:inherit;font-size:14px;margin-bottom:12px}
+    textarea{resize:vertical;min-height:90px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .hint{display:block;font-size:12px;color:var(--muted);margin:-6px 0 14px 0}
+    .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+    .btn{padding:12px 18px;border-radius:8px;border:none;cursor:pointer;font-weight:900;font-size:14px;white-space:nowrap}
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-secondary{background:#e5e7eb;color:#111827}
+    .alert{display:none;margin-top:10px;padding:10px 12px;border-radius:8px;background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca;font-size:13px;font-weight:800}
+    .notice{display:none;margin-top:10px;padding:10px 12px;border-radius:8px;background:#eff6ff;color:#1e3a8a;border:1px solid #bfdbfe;font-size:13px;font-weight:800}
+
+    /* Preview */
+    .preview{border:1px solid var(--border);border-radius:12px;background:#fff;padding:40px}
+    .cv-header{border-bottom:2px solid var(--accent);padding-bottom:16px;margin-bottom:24px}
+    .cv-name{font-size:28px;font-weight:900}
+    .cv-title{color:var(--accent);font-weight:800;margin-top:4px}
+    .cv-contact{margin-top:10px;font-size:13px;color:var(--secondary)}
+    .cv-section{margin-bottom:32px}
+    .cv-section h3{font-size:13px;letter-spacing:.10em;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:10px;color:var(--primary)}
+    .cv-section p,.cv-section li{font-size:14px;line-height:1.55;color:var(--secondary)}
+    ul{padding-left:18px;margin:8px 0 0 0}
+
+    /* Section order controls */
+    .order-list{display:grid;gap:10px;margin-bottom:14px}
+    .order-item{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
+    .order-item strong{font-size:13px;color:var(--secondary)}
+    .mini-btn{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-weight:900;color:var(--secondary)}
+    .mini-btn:disabled{opacity:.4;cursor:not-allowed}
+
+    /* Jobs (repeatable work experience) */
+    .job-card{border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;background:#fff}
+    .job-card .job-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+    .job-card .job-actions .mini-btn{padding:8px 10px}
+    .job-card .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    @media (max-width:900px){.job-card .grid3{grid-template-columns:1fr}}
+
+    @media (max-width:900px){.app{grid-template-columns:1fr}}
+
+    /* Hide builder tips when printing */
+    @media print{
+      .hint,.builder-only,.actions,.panel h2,.subtitle,h1{display:none!important}
+      body{background:#fff}
+      .panel{border:none;padding:0}
+      .preview{border:none;padding:0}
+      .cv-section{page-break-inside:avoid}
+      .cv-section h3{page-break-after:avoid}
+      .cv-header{page-break-after:avoid}
+      p{orphans:3;widows:3}
+      ul{page-break-inside:avoid}
+    }
+
+    /* Page break controls for better PDF export */
+    .cv-section{page-break-inside:avoid}
+    .cv-section h3{page-break-after:avoid}
+    .cv-header{page-break-after:avoid}
+    p{orphans:3;widows:3}
+    ul{page-break-inside:avoid}
+    .job-card{page-break-inside:avoid}
+
+    /* ===================================================== */
+    /* === ENHANCED PIZZAZZ (VISUAL ONLY — NO LAYOUT) ==== */
+    /* ===================================================== */
+
+    /* Animated premium background with mesh gradient */
+    @keyframes bgShift {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.85; }
+    }
+    body{
+      background:
+        radial-gradient(1400px 700px at 12% -5%, rgba(37,99,235,.14), rgba(37,99,235,0) 65%),
+        radial-gradient(1000px 550px at 88% 8%, rgba(139,92,246,.10), rgba(139,92,246,0) 60%),
+        radial-gradient(800px 400px at 50% 100%, rgba(15,23,42,.06), rgba(15,23,42,0) 50%),
+        linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+      animation: bgShift 12s ease-in-out infinite;
+    }
+
+    /* Premium depth with layered shadows */
+    .panel,
+    .preview{
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.95) inset,
+        0 1px 3px rgba(15,23,42,.04),
+        0 8px 16px rgba(15,23,42,.06),
+        0 24px 48px rgba(37,99,235,.08);
+      border-color: rgba(229,231,235,.60);
+      transition: box-shadow .3s cubic-bezier(0.4, 0, 0.2, 1), transform .3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .panel:hover,
+    .preview:hover{
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,1) inset,
+        0 2px 4px rgba(15,23,42,.05),
+        0 12px 24px rgba(15,23,42,.08),
+        0 32px 64px rgba(37,99,235,.12);
+      transform: translateY(-1px);
+    }
+
+    /* Multi-tone accent glow with animation */
+    @keyframes glowPulse {
+      0%, 100% { opacity: .70; }
+      50% { opacity: .85; }
+    }
+    .panel{
+      position: relative;
+      overflow: hidden;
+    }
+    .panel::before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius:12px;
+      pointer-events:none;
+      background: 
+        linear-gradient(135deg, 
+          rgba(37,99,235,.28) 0%, 
+          rgba(139,92,246,.18) 35%, 
+          rgba(37,99,235,0) 50%, 
+          rgba(15,23,42,.12) 100%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      padding:1px;
+      animation: glowPulse 4s ease-in-out infinite;
+    }
+    .panel::after{
+      content:"";
+      position:absolute;
+      top:-50%;
+      left:-50%;
+      width:200%;
+      height:200%;
+      background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+      opacity:0;
+      transition: opacity .5s ease;
+      pointer-events:none;
+    }
+    .panel:hover::after{
+      opacity:1;
+    }
+
+    /* Enhanced header with gradient text */
+    h1{
+      letter-spacing:-0.03em;
+      background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+      padding-bottom: 2px;
+    }
+    h1::after{
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 120px;
+      height: 3px;
+      background: linear-gradient(90deg, rgba(37,99,235,1), rgba(139,92,246,.6), transparent);
+      border-radius: 999px;
+    }
+    .subtitle{
+      color: rgba(100,116,139,.90);
+      font-weight: 500;
+    }
+
+    /* Premium inputs with micro-interactions */
+    input, textarea, select{
+      background: 
+        linear-gradient(180deg, #ffffff 0%, #fafbfc 100%) padding-box,
+        linear-gradient(180deg, rgba(37,99,235,.08), rgba(37,99,235,.02)) border-box;
+      border-color: rgba(229,231,235,.80);
+      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    input:hover, textarea:hover, select:hover{
+      border-color: rgba(37,99,235,.35);
+      box-shadow: 0 2px 8px rgba(37,99,235,.06);
+    }
+    input:focus, textarea:focus, select:focus{
+      outline:none;
+      border-color: rgba(37,99,235,.75);
+      background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+      box-shadow: 
+        0 0 0 1px rgba(255,255,255,.95) inset,
+        0 0 0 4px rgba(37,99,235,.18), 
+        0 4px 12px rgba(37,99,235,.12),
+        0 12px 24px rgba(37,99,235,.08);
+      transform: translateY(-1px);
+    }
+
+    /* Enhanced buttons with sophisticated effects */
+    .btn-primary{
+      background: 
+        linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%);
+      box-shadow: 
+        0 0 0 1px rgba(255,255,255,.20) inset,
+        0 2px 4px rgba(37,99,235,.20),
+        0 8px 16px rgba(37,99,235,.25),
+        0 16px 32px rgba(37,99,235,.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary:hover{
+      background: 
+        linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%);
+      box-shadow: 
+        0 0 0 1px rgba(255,255,255,.30) inset,
+        0 4px 8px rgba(37,99,235,.25),
+        0 12px 24px rgba(37,99,235,.30),
+        0 20px 40px rgba(37,99,235,.20);
+      transform: translateY(-2px);
+    }
+    .btn-secondary{
+      background: linear-gradient(180deg, #ffffff, #f1f5f9);
+      box-shadow: 
+        0 0 0 1px rgba(255,255,255,.80) inset,
+        0 1px 2px rgba(15,23,42,.06),
+        0 4px 8px rgba(15,23,42,.08);
+      color: #1e293b;
+    }
+    .btn-secondary:hover{
+      background: linear-gradient(180deg, #fafbfc, #e5e7eb);
+      box-shadow: 
+        0 0 0 1px rgba(255,255,255,.90) inset,
+        0 2px 4px rgba(15,23,42,.08),
+        0 8px 16px rgba(15,23,42,.10);
+      transform: translateY(-1px);
+    }
+    .btn{
+      position: relative;
+      overflow: hidden;
+      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn:active{ 
+      transform: translateY(0px) scale(0.98);
+      transition: all .1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn::before{
+      content:"";
+      position:absolute;
+      top:0;
+      left:-100%;
+      width:100%;
+      height:100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+      transition: left .5s ease;
+      pointer-events:none;
+    }
+    .btn:hover::before{ 
+      left: 100%; 
+    }
+    .btn::after{
+      content:"";
+      position:absolute;
+      top:-50%;
+      left:-50%;
+      width:200%;
+      height:200%;
+      background: radial-gradient(circle, rgba(255,255,255,.20) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity .3s ease;
+      pointer-events:none;
+    }
+    .btn:hover::after{ 
+      opacity: .6; 
+    }
+
+    /* Mini buttons with enhanced states */
+    .mini-btn{
+      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(180deg, #ffffff, #fafbfc);
+      box-shadow: 0 1px 2px rgba(15,23,42,.06);
+    }
+    .mini-btn:hover:not(:disabled){
+      background: linear-gradient(180deg, #fafbfc, #f1f5f9);
+      box-shadow: 0 2px 4px rgba(15,23,42,.10);
+      transform: translateY(-1px);
+      border-color: rgba(37,99,235,.35);
+    }
+    .mini-btn:active:not(:disabled){
+      transform: translateY(0px) scale(0.97);
+    }
+
+    /* Enhanced CV section headers with gradient accent */
+    .cv-section h3{
+      position: relative;
+      padding-left: 12px;
+    }
+    .cv-section h3::before{
+      content:"";
+      position:absolute;
+      left:0;
+      top:50%;
+      transform: translateY(-50%);
+      width:4px;
+      height:70%;
+      background: linear-gradient(180deg, rgba(37,99,235,1), rgba(139,92,246,.6));
+      border-radius:999px;
+    }
+    .cv-section h3::after{
+      content:"";
+      position:absolute;
+      left:12px;
+      bottom:-2px;
+      width:80px;
+      height:2px;
+      background: linear-gradient(90deg, rgba(37,99,235,.8), rgba(139,92,246,.4), transparent);
+      border-radius:999px;
+    }
+
+    /* Enhanced CV header with simple accent underline */
+    .cv-header{
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .cv-name{
+      color: #0f172a !important;
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      -webkit-text-fill-color: unset !important;
+      background-clip: unset !important;
+    }
+
+    /* Job cards with layered depth */
+    .job-card{
+      box-shadow: 
+        0 0 0 1px rgba(255,255,255,.90) inset,
+        0 1px 2px rgba(15,23,42,.03),
+        0 4px 8px rgba(15,23,42,.05),
+        0 12px 24px rgba(37,99,235,.06);
+      transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .job-card::before{
+      content:"";
+      position:absolute;
+      top:0;
+      left:0;
+      width:4px;
+      height:100%;
+      background: linear-gradient(180deg, rgba(37,99,235,.7), rgba(139,92,246,.4));
+      opacity: 0;
+      transition: opacity .25s ease;
+    }
+    .job-card:hover{
+      box-shadow: 
+        0 0 0 1px rgba(255,255,255,.95) inset,
+        0 2px 4px rgba(15,23,42,.05),
+        0 8px 16px rgba(15,23,42,.07),
+        0 16px 32px rgba(37,99,235,.10);
+      transform: translateY(-2px);
+    }
+    .job-card:hover::before{
+      opacity: 1;
+    }
+
+    /* Order items with micro-interactions */
+    .order-item{
+      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 2px rgba(15,23,42,.04);
+    }
+    .order-item:hover{
+      box-shadow: 0 2px 4px rgba(15,23,42,.08), 0 8px 16px rgba(37,99,235,.06);
+      transform: translateX(2px);
+      border-color: rgba(37,99,235,.35);
+    }
+
+    /* Labels with subtle animation */
+    label{
+      transition: color .2s ease;
+    }
+    input:focus + label,
+    textarea:focus + label,
+    select:focus + label{
+      color: var(--accent);
+    }
+
+    /* Enhanced selection highlight */
+    ::selection{ 
+      background: linear-gradient(135deg, rgba(37,99,235,.28), rgba(139,92,246,.22));
+      color: #0f172a;
+    }
+
+    /* Alert & notice enhancements */
+    .alert, .notice{
+      box-shadow: 0 2px 8px rgba(127,29,29,.15);
+      border-width: 1px 1px 1px 4px;
+      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .notice{
+      box-shadow: 0 2px 8px rgba(30,58,138,.15);
+    }
+
+    /* Preview panel special treatment */
+    .preview{
+      position: relative;
+    }
+    .preview::before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius:12px;
+      pointer-events:none;
+      background: 
+        linear-gradient(135deg, 
+          rgba(37,99,235,.20) 0%, 
+          rgba(139,92,246,.12) 50%, 
+          transparent 100%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      padding:1px;
+      opacity:.60;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Professional CV Builder</h1>
+    <div class="subtitle">Presets, clean preview, reliable exports.</div>
+
+    <div class="panel builder-only">
+      <h2>CV Details</h2>
+
+      <label>Full Name *</label>
+      <input id="name" autocomplete="name" />
+      <div class="alert" id="nameAlert">Please enter your full name (required for exporting).</div>
+
+      <label>Professional Title</label>
+      <input id="title" autocomplete="organization-title" />
+
+      <div class="row">
+        <div>
+          <label>Email</label>
+          <input id="email" type="email" autocomplete="email" />
+        </div>
+        <div>
+          <label>Phone</label>
+          <input id="phone" type="tel" autocomplete="tel" />
+        </div>
+      </div>
+
+      <label>Location</label>
+      <input id="location" autocomplete="address-level2" />
+
+      <div class="row">
+        <div>
+          <label>Role preset</label>
+          <select id="rolePreset">
+            <option value="">Select a role preset (optional)</option>
+            <option value="it">IT Support</option>
+            <option value="soc">SOC Analyst</option>
+            <option value="cloud">Cloud Engineer</option>
+            <option value="devops">DevOps</option>
+            <option value="network">Network Engineer</option>
+            <option value="grc">GRC</option>
+          </select>
+          <small class="hint">Tip: This auto-fills Summary + Skills. Edit to match your real experience.</small>
+        </div>
+        <div>
+          <label>Seniority intensity</label>
+          <select id="seniority">
+            <option value="junior">Junior / Entry</option>
+            <option value="mid" selected>Mid</option>
+            <option value="senior">Senior</option>
+          </select>
+          <small class="hint">Tip: Adjusts wording strength & ownership (no invented skills).</small>
+        </div>
+      </div>
+
+      <label>Professional Summary</label>
+      <textarea id="summary"></textarea>
+      <small class="hint">Tip: 3–4 lines. Tools + impact + direction.</small>
+
+      <label>Skills (comma separated)</label>
+      <textarea id="skills"></textarea>
+      <small class="hint">Tip: Put the most searched tools first.</small>
+
+      <label>Work Experience</label>
+      <div id="jobsHost"></div>
+
+      <div class="actions" style="margin-top:0">
+        <button class="btn btn-secondary" type="button" id="btnAddJob">+ Add another job</button>
+      </div>
+      <small class="hint" id="expHint">Tip: Add 2–5 jobs. Use 3–6 bullets per job (mix responsibilities + outcomes).</small>
+
+      <label>Education / Certifications</label>
+      <textarea id="education"></textarea>
+      <small class="hint">Tip: If certs matter more, list certs first.</small>
+
+      <div style="margin: 18px 0 10px 0;">
+        <label>Section order (up/down)</label>
+        <div class="order-list" id="orderList"></div>
+        <small class="hint">Tip: Common order is Summary → Skills → Experience → Education.</small>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-secondary" type="button" id="btnPDF">Download PDF</button>
+        <button class="btn btn-secondary" type="button" id="btnDOCX">Download DOCX</button>
+      </div>
+
+      <div class="notice" id="exportNotice"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Live Preview</h2>
+      <div class="preview" id="cv">
+        <div class="cv-header">
+          <div class="cv-name" id="pName">Your Name</div>
+          <div class="cv-title" id="pTitle"></div>
+          <div class="cv-contact" id="pContact"></div>
+        </div>
+        <div id="sectionsHost"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- Robust helpers (no reliance on global ID variables) ----
+    const $ = (id) => document.getElementById(id);
+
+    const SECTION_DEFS = [
+      { key: 'summary', title: 'Summary' },
+      { key: 'skills', title: 'Skills' },
+      { key: 'experience', title: 'Experience' },
+      { key: 'education', title: 'Education' },
+    ];
+
+    let sectionOrder = ['summary', 'skills', 'experience', 'education'];
+
+    // ---- Work Experience (repeatable jobs) ----
+    let jobs = [
+      { jobTitle: '', company: '', dates: '', description: '' }
+    ];
+
+    function buildJobsPlainText() {
+      // Produce a readable plain-text representation for DOCX export
+      return jobs.map(j => {
+        const header = [j.jobTitle, j.company, j.dates].filter(Boolean).join(' — ').trim();
+        const desc = (j.description || '').trim();
+        return [header, desc].filter(Boolean).join('\n');
+      }).filter(Boolean).join('\n\n');
+    }
+
+    function makeJobsHTML() {
+      if (!jobs.length) return '';
+      const blocks = jobs
+        .map(j => ({
+          header: [j.jobTitle, j.company, j.dates].filter(Boolean).join(' — ').trim(),
+          desc: (j.description || '').trim()
+        }))
+        .filter(b => b.header || b.desc);
+
+      if (!blocks.length) return '';
+
+      const html = blocks.map(b => {
+        const header = b.header ? '<p><strong>' + escapeHtml(b.header) + '</strong></p>' : '';
+        const body = makeExperienceHTML(b.desc);
+        return '<div>' + header + body + '</div>';
+      }).join('');
+
+      return html;
+    }
+
+    function renderJobsForm() {
+      const host = $('jobsHost');
+      host.innerHTML = '';
+
+      jobs.forEach((job, idx) => {
+        const card = document.createElement('div');
+        card.className = 'job-card';
+
+        card.innerHTML = `
+          <div class="grid3">
+            <div>
+              <label>Job Title</label>
+              <input data-field="jobTitle" data-idx="${idx}" value="${escapeHtml(job.jobTitle)}" placeholder="e.g. IT Support Engineer" />
+            </div>
+            <div>
+              <label>Company</label>
+              <input data-field="company" data-idx="${idx}" value="${escapeHtml(job.company)}" placeholder="e.g. Acme Ltd" />
+            </div>
+            <div>
+              <label>Dates</label>
+              <input data-field="dates" data-idx="${idx}" value="${escapeHtml(job.dates)}" placeholder="e.g. Jan 2023 – Present" />
+            </div>
+          </div>
+
+          <label style="margin-top:10px">Job description / bullets</label>
+          <textarea data-field="description" data-idx="${idx}" placeholder="Use bullets with • or - on new lines">${escapeHtml(job.description)}</textarea>
+
+          <div class="job-actions">
+            <button class="mini-btn" type="button" data-action="up" data-idx="${idx}" ${idx===0?'disabled':''}>↑</button>
+            <button class="mini-btn" type="button" data-action="down" data-idx="${idx}" ${idx===jobs.length-1?'disabled':''}>↓</button>
+            <button class="mini-btn" type="button" data-action="remove" data-idx="${idx}" ${jobs.length===1?'disabled':''}>Remove</button>
+          </div>
+        `;
+
+        host.appendChild(card);
+      });
+
+      // Wire inputs (event delegation)
+      host.querySelectorAll('input[data-field], textarea[data-field]').forEach(elm => {
+        elm.addEventListener('input', (e) => {
+          const i = parseInt(e.target.getAttribute('data-idx'), 10);
+          const field = e.target.getAttribute('data-field');
+          jobs[i][field] = e.target.value;
+          renderCV();
+        });
+      });
+
+      host.querySelectorAll('button[data-action]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const i = parseInt(e.target.getAttribute('data-idx'), 10);
+          const action = e.target.getAttribute('data-action');
+          if (action === 'remove') {
+            if (jobs.length > 1) jobs.splice(i, 1);
+          } else if (action === 'up' && i > 0) {
+            const tmp = jobs[i-1]; jobs[i-1] = jobs[i]; jobs[i] = tmp;
+          } else if (action === 'down' && i < jobs.length-1) {
+            const tmp = jobs[i+1]; jobs[i+1] = jobs[i]; jobs[i] = tmp;
+          }
+          renderJobsForm();
+          renderCV();
+        });
+      });
+    }
+
+    function addJob() {
+      jobs.push({ jobTitle: '', company: '', dates: '', description: '' });
+      renderJobsForm();
+      renderCV();
+    }
+
+    function seniority() {
+      return $('seniority').value || 'mid';
+    }
+
+    function preset(role, level) {
+      const p = PRESETS[role];
+      return p && p[level] ? p[level] : null;
+    }
+
+    // Presets (no regex backslashes here by design)
+    const PRESETS = {
+      it: {
+        junior: {
+          summary: 'Practical IT Support professional with hands-on experience supporting end users, troubleshooting Windows issues, and handling tickets to SLA. Calm, customer-first communicator with strong documentation habits.',
+          skills: 'Windows 10/11, Active Directory, Microsoft 365, Ticketing/ITSM, Troubleshooting, Customer Service, Knowledge Base'
+        },
+        mid: {
+          summary: 'IT Support professional with strong experience resolving incidents across Windows, Microsoft 365 and Active Directory environments. Trusted for structured troubleshooting, clear user communication, and improving support documentation and processes.',
+          skills: 'Windows 10/11, Active Directory, Microsoft 365, Intune/Jamf, ITSM (ServiceNow/Jira), Incident Management, Troubleshooting, Documentation'
+        },
+        senior: {
+          summary: 'Senior IT Support professional with a track record of leading incident resolution, reducing repeat issues through process improvements, and mentoring junior engineers. Strong across Microsoft 365, endpoint management, identity, and stakeholder communication.',
+          skills: 'Microsoft 365, Active Directory/Azure AD, Intune/Jamf, ITSM, Problem Management, Root Cause Analysis, Mentoring, Process Improvement'
+        }
+      },
+      soc: {
+        junior: {
+          summary: 'Entry-level SOC Analyst with foundational experience in security monitoring, alert triage, and incident handling concepts. Strong understanding of log analysis, basic threat intel workflows, and security best practices.',
+          skills: 'SIEM Concepts, Alert Triage, Log Analysis, Incident Response Basics, MITRE ATT&CK, Security Fundamentals'
+        },
+        mid: {
+          summary: 'SOC Analyst experienced in monitoring and triaging security alerts, analysing logs to identify suspicious activity, and supporting incident response workflows. Comfortable working with playbooks, escalation, and communicating clearly under pressure.',
+          skills: 'SIEM, Alert Triage, Incident Response, Log Analysis, Threat Hunting Basics, MITRE ATT&CK, Vulnerability Awareness'
+        },
+        senior: {
+          summary: 'Senior SOC Analyst with strong experience leading triage and investigation, improving detection quality, and strengthening incident response playbooks. Confident in stakeholder communication, prioritisation, and mentoring analysts during high-pressure events.',
+          skills: 'SIEM, Detection Improvement, Incident Leadership, Threat Hunting, MITRE ATT&CK, Playbooks, Stakeholder Communication'
+        }
+      },
+      cloud: {
+        junior: {
+          summary: 'Cloud Engineer with hands-on experience deploying and managing core cloud resources. Good understanding of networking, identity basics, and automation fundamentals in cloud environments.',
+          skills: 'Azure/AWS Basics, Virtual Machines, Storage, Networking Fundamentals, IAM Basics, CLI/PowerShell'
+        },
+        mid: {
+          summary: 'Cloud Engineer experienced in deploying and operating cloud infrastructure with a focus on networking, identity, automation, and security fundamentals. Comfortable improving reliability through repeatable deployments and monitoring.',
+          skills: 'Azure, AWS, Virtual Machines, Virtual Networks, IAM, Monitoring, PowerShell, Infrastructure as Code Basics'
+        },
+        senior: {
+          summary: 'Senior Cloud Engineer with experience designing reliable, secure cloud infrastructure, improving delivery through automation, and partnering with teams to implement standards and guardrails. Strong across networking, identity, monitoring, and IaC.',
+          skills: 'Azure/AWS, Architecture, Networking, IAM, Security Guardrails, Observability, PowerShell, Terraform'
+        }
+      },
+      devops: {
+        junior: {
+          summary: 'DevOps-focused engineer with hands-on exposure to CI/CD pipelines, automation basics, and cloud fundamentals. Eager to improve delivery speed and reliability through repeatable builds and clear documentation.',
+          skills: 'Git, CI/CD Basics, Linux Fundamentals, Scripting, Docker Basics, Cloud Fundamentals'
+        },
+        mid: {
+          summary: 'DevOps Engineer with experience building and maintaining CI/CD pipelines, automating deployment workflows, and improving delivery reliability. Comfortable with infrastructure-as-code concepts, container tooling, and monitoring fundamentals.',
+          skills: 'Git, CI/CD (GitHub Actions/Azure DevOps), Docker, IaC Concepts, Linux, Scripting, Monitoring'
+        },
+        senior: {
+          summary: 'Senior DevOps Engineer with a track record of improving deployment reliability, standardising CI/CD, and driving automation across environments. Strong in IaC, observability, and cross-team enablement.',
+          skills: 'CI/CD Architecture, IaC (Terraform), Containers, Observability, Release Management, Linux, Automation, Enablement'
+        }
+      },
+      network: {
+        junior: {
+          summary: 'Network Engineer with foundational routing and switching knowledge and hands-on troubleshooting experience. Comfortable documenting changes, following change control, and supporting incident resolution.',
+          skills: 'TCP/IP, VLANs, Routing Basics, Switching Basics, Wireshark Basics, Troubleshooting, Documentation'
+        },
+        mid: {
+          summary: 'Network Engineer experienced in supporting and maintaining LAN/WAN environments, troubleshooting connectivity issues, and implementing changes through structured processes. Strong with routing, switching, and network fundamentals.',
+          skills: 'Routing and Switching, VLANs, OSPF Basics, Firewall Concepts, VPN Basics, Wireshark, Change Control'
+        },
+        senior: {
+          summary: 'Senior Network Engineer experienced in designing and improving network reliability, leading major incident troubleshooting, and implementing secure, scalable connectivity solutions. Strong in change governance and mentoring.',
+          skills: 'Network Design, Routing and Switching, Firewalls, VPNs, High Availability, Major Incident Support, Governance, Mentoring'
+        }
+      },
+      grc: {
+        junior: {
+          summary: 'GRC-focused professional with a solid understanding of security principles, policy basics, and risk awareness. Comfortable supporting audits, collecting evidence, and maintaining clear documentation.',
+          skills: 'Policy Basics, Risk Awareness, Evidence Collection, Documentation, Security Fundamentals, Standards Awareness'
+        },
+        mid: {
+          summary: 'GRC professional experienced in supporting risk and compliance activities, maintaining policies and controls documentation, and working with teams to gather audit evidence. Strong communicator with a practical approach to governance.',
+          skills: 'Risk and Compliance, Control Documentation, Audit Support, Evidence Management, Policies and Standards, Stakeholder Communication'
+        },
+        senior: {
+          summary: 'Senior GRC professional with experience strengthening governance frameworks, improving control effectiveness, and advising stakeholders on risk and compliance. Strong in audit readiness and pragmatic security governance.',
+          skills: 'Governance Frameworks, Risk Management, Control Design, Audit Readiness, Policy Management, Advisory, Reporting'
+        }
+      }
+    };
+
+    function applyPreset() {
+      const role = $('rolePreset').value;
+      if (!role) return;
+      const level = seniority();
+      const p = preset(role, level);
+      if (!p) return;
+      $('summary').value = p.summary;
+      $('skills').value = p.skills;
+      renderCV();
+    }
+
+    function initSectionOrderUI() {
+      const host = $('orderList');
+      host.innerHTML = '';
+      sectionOrder.forEach((key, idx) => {
+        const def = SECTION_DEFS.find(s => s.key === key);
+        const row = document.createElement('div');
+        row.className = 'order-item';
+
+        const title = def ? def.title : key;
+
+        const upDisabled = idx === 0;
+        const downDisabled = idx === sectionOrder.length - 1;
+
+        row.innerHTML =
+          '<strong>' + escapeHtml(title) + '</strong>' +
+          '<button class="mini-btn" type="button" ' + (upDisabled ? 'disabled' : '') + '>↑</button>' +
+          '<button class="mini-btn" type="button" ' + (downDisabled ? 'disabled' : '') + '>↓</button>';
+
+        const buttons = row.querySelectorAll('button');
+        buttons[0].addEventListener('click', () => moveSection(idx, -1));
+        buttons[1].addEventListener('click', () => moveSection(idx, +1));
+
+        host.appendChild(row);
+      });
+    }
+
+    function moveSection(index, delta) {
+      const newIndex = index + delta;
+      if (newIndex < 0 || newIndex >= sectionOrder.length) return;
+      const copy = sectionOrder.slice();
+      const moved = copy.splice(index, 1)[0];
+      copy.splice(newIndex, 0, moved);
+      sectionOrder = copy;
+      initSectionOrderUI();
+      renderCV();
+    }
+
+    function validateForExport() {
+      const nameVal = ($('name').value || '').trim();
+      const ok = nameVal.length > 0;
+      $('nameAlert').style.display = ok ? 'none' : 'block';
+      return ok;
+    }
+
+    function escapeHtml(str) {
+      return (str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function makeParagraphHTML(text) {
+      const t = (text || '').trim();
+      if (!t) return '';
+      return '<p>' + escapeHtml(t).split('\n').join('<br>') + '</p>';
+    }
+
+    function makeSkillsHTML(text) {
+      const raw = (text || '').trim();
+      if (!raw) return '';
+      const items = raw.split(',').map(s => s.trim()).filter(Boolean);
+      return '<ul>' + items.map(i => '<li>' + escapeHtml(i) + '</li>').join('') + '</ul>';
+    }
+
+    function stripBullet(line) {
+      const t = (line || '').trim();
+      if (!t) return '';
+      if (t.startsWith('•') || t.startsWith('-')) {
+        return t.substring(1).trimStart();
+      }
+      return t;
+    }
+
+    function makeExperienceHTML(text) {
+      const raw = (text || '').trim();
+      if (!raw) return '';
+      const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+      const bulletish = lines.filter(l => l.trim().startsWith('•') || l.trim().startsWith('-'));
+
+      if (bulletish.length >= 2) {
+        const first = lines[0];
+        const firstIsBullet = first.startsWith('•') || first.startsWith('-');
+        const header = firstIsBullet ? '' : '<p>' + escapeHtml(first) + '</p>';
+        const bulletLines = firstIsBullet ? lines : lines.slice(1);
+        const list = '<ul>' + bulletLines.map(l => '<li>' + escapeHtml(stripBullet(l)) + '</li>').join('') + '</ul>';
+        return header + list;
+      }
+
+      return makeParagraphHTML(raw);
+    }
+
+    function renderSection(title, html) {
+      if (!html) return '';
+      return '<div class="cv-section"><h3>' + escapeHtml(title) + '</h3>' + html + '</div>';
+    }
+
+    // Preview MUST work even if name is blank
+    function renderCV() {
+      const nameVal = ($('name').value || '').trim() || 'Your Name';
+      const titleVal = ($('title').value || '').trim();
+      const contactParts = [
+        ($('email').value || '').trim(),
+        ($('phone').value || '').trim(),
+        ($('location').value || '').trim()
+      ].filter(Boolean);
+
+      $('pName').textContent = nameVal;
+      $('pTitle').textContent = titleVal;
+      $('pContact').textContent = contactParts.join(' | ');
+
+      const sections = {
+        summary: renderSection('Summary', makeParagraphHTML($('summary').value)),
+        skills: renderSection('Skills', makeSkillsHTML($('skills').value)),
+        experience: renderSection('Work Experience', makeJobsHTML()),
+        education: renderSection('Education', makeParagraphHTML($('education').value)),
+      };
+
+      $('sectionsHost').innerHTML = sectionOrder.map(k => sections[k]).join('');
+    }
+
+    function safeFileName(name) {
+      const base = (name || 'CV').trim();
+      const parts = base.split(' ').filter(Boolean);
+      return parts.join('_');
+    }
+
+    function showNotice(msg) {
+      const box = $('exportNotice');
+      box.textContent = msg;
+      box.style.display = 'block';
+      window.setTimeout(() => (box.style.display = 'none'), 5000);
+    }
+
+    async function downloadPDF() {
+      renderCV();
+      if (!validateForExport()) {
+        showNotice('Add your Full Name to export.');
+        return;
+      }
+      if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
+        showNotice('PDF export needs internet (CDN libraries). Preview still works offline.');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const target = $('cv');
+
+      // Render high-res canvas
+      const canvas = await window.html2canvas(target, {
+        scale: 2,
+        backgroundColor: '#ffffff'
+      });
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      const pageWmm = pdf.internal.pageSize.getWidth();
+      const pageHmm = pdf.internal.pageSize.getHeight();
+      const marginMm = 10;
+
+      const contentWmm = pageWmm - marginMm * 2;
+      const contentHmm = pageHmm - marginMm * 2;
+
+      // Convert PDF content height to canvas pixels
+      const pxPerMm = canvas.width / contentWmm;
+      const pageHeightPx = Math.floor(contentHmm * pxPerMm);
+
+      // Helper: choose a clean break (avoid slicing through text)
+      function findBestBreakY(startY, idealEndY) {
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const searchRange = 150;      // px up/down to look for whitespace (increased)
+        const bandHeight = 15;        // px band to test (increased)
+        const step = 1;               // px step (smaller for precision)
+        const xSampleStep = 4;        // sample every N pixels across (more samples)
+
+        let bestY = idealEndY;
+        let bestScore = -1;
+
+        const minY = Math.max(startY + 200, idealEndY - searchRange);
+        const maxY = Math.min(canvas.height - 1, idealEndY + searchRange);
+
+        for (let y = minY; y <= maxY; y += step) {
+          // Look at a thin horizontal band and score "whiteness"
+          const h = Math.min(bandHeight, canvas.height - y);
+          const img = ctx.getImageData(0, y, canvas.width, h).data;
+
+          let white = 0;
+          let total = 0;
+
+          // Sample pixels across the band
+          for (let yy = 0; yy < h; yy++) {
+            const rowOffset = yy * canvas.width * 4;
+            for (let x = 0; x < canvas.width; x += xSampleStep) {
+              const i = rowOffset + x * 4;
+              const r = img[i], g = img[i + 1], b = img[i + 2];
+              // Near-white background threshold (more lenient)
+              if (r > 240 && g > 240 && b > 240) white++;
+              total++;
+            }
+          }
+
+          const score = white / total;
+          if (score > bestScore) {
+            bestScore = score;
+            bestY = y;
+            // Early exit if we found a very clean whitespace line
+            if (bestScore > 0.98) break;
+          }
+        }
+
+        return bestY;
+      }
+
+      // Slice canvas into pages using whitespace-aware breaks
+      let y = 0;
+      let pageIndex = 0;
+
+      while (y < canvas.height) {
+        const idealEnd = Math.min(y + pageHeightPx, canvas.height);
+
+        // If this is the last page, don't search for a break
+        let endY = idealEnd;
+        if (idealEnd < canvas.height) {
+          endY = findBestBreakY(y, idealEnd);
+          // Safety: ensure progress
+          if (endY <= y + 60) endY = idealEnd;
+        }
+
+        const sliceH = endY - y;
+
+        // Create a slice canvas
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sliceH;
+        const pageCtx = pageCanvas.getContext('2d');
+        pageCtx.fillStyle = '#ffffff';
+        pageCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        pageCtx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+
+        const imgData = pageCanvas.toDataURL('image/png');
+
+        // Add to PDF
+        if (pageIndex > 0) pdf.addPage();
+
+        const imgHmm = sliceH / pxPerMm; // convert slice height to mm at same scale
+        pdf.addImage(imgData, 'PNG', marginMm, marginMm, contentWmm, imgHmm);
+
+        y = endY;
+        pageIndex++;
+      }
+
+      pdf.save(safeFileName($('name').value) + '_CV.pdf');
+    }
+
+    async function downloadDOCX() {
+      renderCV();
+      if (!validateForExport()) {
+        showNotice('Add your Full Name to export.');
+        return;
+      }
+      if (!window.docx) {
+        showNotice('DOCX export needs internet (CDN library). Preview still works offline.');
+        return;
+      }
+
+      const { Document, Packer, Paragraph, TextRun, HeadingLevel } = window.docx;
+
+      const nameVal = ($('name').value || '').trim();
+      const titleVal = ($('title').value || '').trim();
+      const contactVal = [
+        ($('email').value || '').trim(),
+        ($('phone').value || '').trim(),
+        ($('location').value || '').trim()
+      ].filter(Boolean).join(' | ');
+
+      const expTitle = 'Work Experience';
+
+      const blocks = {
+        summary: { title: 'Summary', text: ($('summary').value || '').trim() },
+        skills: { title: 'Skills', text: ($('skills').value || '').trim() },
+        experience: { title: expTitle, text: buildJobsPlainText() },
+        education: { title: 'Education', text: ($('education').value || '').trim() },
+      };
+
+      const children = [];
+      children.push(new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun({ text: nameVal, bold: true })] }));
+      if (titleVal) children.push(new Paragraph({ children: [new TextRun({ text: titleVal, bold: true })] }));
+      if (contactVal) children.push(new Paragraph({ children: [new TextRun({ text: contactVal })] }));
+      children.push(new Paragraph(''));
+
+      for (const key of sectionOrder) {
+        const block = blocks[key];
+        if (!block || !block.text) continue;
+
+        children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, text: block.title }));
+
+        if (key === 'skills') {
+          const items = block.text.split(',').map(s => s.trim()).filter(Boolean);
+          items.forEach(item => {
+            children.push(new Paragraph({ text: item, bullet: { level: 0 } }));
+          });
+          children.push(new Paragraph(''));
+          continue;
+        }
+
+        if (key === 'experience') {
+          const lines = block.text.split('\n').map(l => l.trim()).filter(Boolean);
+          const bulletish = lines.filter(l => l.startsWith('•') || l.startsWith('-'));
+
+          if (bulletish.length >= 2) {
+            const first = lines[0];
+            const firstIsBullet = first.startsWith('•') || first.startsWith('-');
+            if (!firstIsBullet) children.push(new Paragraph({ text: first }));
+            const blines = firstIsBullet ? lines : lines.slice(1);
+            blines.forEach(l => {
+              const cleaned = stripBullet(l);
+              if (cleaned) children.push(new Paragraph({ text: cleaned, bullet: { level: 0 } }));
+            });
+            children.push(new Paragraph(''));
+            continue;
+          }
+        }
+
+        block.text.split('\n').map(l => l.trim()).filter(Boolean).forEach(l => {
+          children.push(new Paragraph({ text: l }));
+        });
+        children.push(new Paragraph(''));
+      }
+
+      const doc = new Document({ sections: [{ properties: {}, children }] });
+      const blob = await Packer.toBlob(doc);
+
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = safeFileName(nameVal) + '_CV.docx';
+      a.click();
+    }
+
+    function wireEvents() {
+      $('btnPDF').addEventListener('click', downloadPDF);
+      $('btnDOCX').addEventListener('click', downloadDOCX);
+
+      // Presets
+      $('rolePreset').addEventListener('change', applyPreset);
+      $('seniority').addEventListener('change', applyPreset);
+
+      // Jobs
+      $('btnAddJob').addEventListener('click', addJob);
+
+      // Live typing
+      ['name','title','email','phone','location','summary','skills','education'].forEach(id => {
+        $(id).addEventListener('input', renderCV);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initSectionOrderUI();
+      renderJobsForm();
+      wireEvents();
+      renderCV();
+    });
+  </script>
+</body>
+</html>
