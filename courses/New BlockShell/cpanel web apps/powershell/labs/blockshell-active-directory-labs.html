@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockShell AD: Active Directory Labs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <style>
+    :root {
+      --primary-color: #0078D4;
+      --secondary-color: #107c10;
+      --accent-color: #8661c5;
+      --danger-color: #d13438;
+      --warning-color: #ffb900;
+      --text-color: #2c3e50;
+      --light-bg: #f8f9fa;
+      --border-color: #eaecef;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(to bottom, var(--light-bg), #eef1f5);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-color);
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    header {
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 120, 212, 0.1);
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+      border-radius: 2px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-top: 8px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    #lab-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #lab-header {
+      background: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .lab-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .lab-progress {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-bar {
+      width: 200px;
+      height: 8px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: var(--primary-color);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    #lab-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #instructions-panel {
+      width: 300px;
+      background: white;
+      padding: 20px;
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.03);
+    }
+
+    #blockly-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #blockly-toolbar {
+      padding: 10px 20px;
+      display: flex;
+      gap: 10px;
+      background-color: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    #blocklyDiv {
+      height: calc(100% - 60px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: #005a9e;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 120, 212, 0.3);
+    }
+
+    button.secondary {
+      background-color: var(--secondary-color);
+    }
+
+    button.secondary:hover {
+      background-color: #0a6b0a;
+    }
+
+    button.danger {
+      background-color: var(--danger-color);
+    }
+
+    button.danger:hover {
+      background-color: #b32d30;
+    }
+
+    button.warning {
+      background-color: var(--warning-color);
+      color: #333;
+    }
+
+    button.warning:hover {
+      background-color: #e6a200;
+    }
+
+    .lab-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .lab-tab {
+      padding: 8px 16px;
+      background: #f1f5f9;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .lab-tab.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .task {
+      background: #f1f5f9;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border-left: 3px solid var(--primary-color);
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .task.completed {
+      background: #e6f7e6;
+      border-left-color: var(--secondary-color);
+    }
+
+    .task h4 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .task p {
+      margin: 0;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .task-icon {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: white;
+      font-size: 12px;
+    }
+
+    .task.completed .task-icon {
+      background: var(--secondary-color);
+    }
+
+    #feedback {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      background: #f8f9fa;
+      border: 1px solid var(--border-color);
+    }
+
+    .feedback-success {
+      background: #e6f7e6;
+      border-color: var(--secondary-color);
+      color: #0a6b0a;
+    }
+
+    .feedback-warning {
+      background: #fff8e6;
+      border-color: var(--warning-color);
+      color: #856404;
+    }
+
+    .feedback-error {
+      background: #fdeaea;
+      border-color: var(--danger-color);
+      color: #b32d30;
+    }
+
+    .blocklyToolboxDiv {
+      border-right: 1px solid var(--border-color) !important;
+    }
+
+    .blocklyMainBackground {
+      stroke-width: 0;
+    }
+
+    .blocklyFlyoutBackground {
+      fill: var(--light-bg);
+    }
+
+    .modal {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--text-color);
+      font-size: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .code-block {
+      background-color: var(--light-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 15px;
+      overflow-x: auto;
+      font-family: Consolas, Monaco, "Andale Mono", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      z-index: 1000;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .zoom-btn {
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+
+    .zoom-btn:hover {
+      background-color: var(--light-bg);
+    }
+
+    .zoom-btn:first-child {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Confirmation dialog styles */
+    .confirmation-dialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .confirmation-content {
+      background-color: white;
+      padding: 25px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .confirmation-title {
+      margin: 0 0 15px 0;
+      color: var(--text-color);
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .confirmation-message {
+      margin: 0 0 20px 0;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .confirmation-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .confirmation-buttons button {
+      min-width: 80px;
+    }
+
+    .app-notification {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transition: all 0.3s ease;
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    .app-notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .app-notification.success {
+      background-color: var(--secondary-color);
+    }
+
+    .app-notification.warning {
+      background-color: var(--warning-color);
+      color: #333;
+    }
+
+    .app-notification.error {
+      background-color: var(--danger-color);
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <h1>BlockShell AD: Active Directory Labs</h1>
+      <div class="subtitle">Visual PowerShell Script Builder for AD Administration</div>
+    </header>
+
+    <div id="lab-container">
+      <div id="lab-header">
+        <div class="lab-title">Lab 1: User Account Management</div>
+        <div class="lab-progress">
+          <span>Progress:</span>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+          <span id="progress-text">0/2</span>
+        </div>
+      </div>
+
+      <div id="lab-content">
+        <div id="instructions-panel">
+          <div class="lab-tabs">
+            <div class="lab-tab active" onclick="switchLab('lab1')">Lab 1</div>
+            <div class="lab-tab" onclick="switchLab('lab2')">Lab 2</div>
+            <div class="lab-tab" onclick="switchLab('lab3')">Lab 3</div>
+            <div class="lab-tab" onclick="switchLab('lab4')">Lab 4</div>
+          </div>
+
+          <div id="lab1-instructions" class="lab-instructions">
+            <h3>🟢️ User Account Management</h3>
+            <p>Learn how to create, configure, and manage Active Directory user accounts.</p>
+            
+            <div class="task" id="lab1-task1">
+              <h4><span class="task-icon">1</span> Create a New User</h4>
+              <p>Use the <strong>Create AD User</strong> block to create a user named <code>j.doe</code> with the display name "John Doe".</p>
+            </div>
+            
+            <div class="task" id="lab1-task2">
+              <h4><span class="task-icon">2</span> Set User Properties</h4>
+              <p>Configure the user's email address as <code>j.doe@company.com</code> and department as "IT" using the <strong>Set User Properties</strong> block.</p>
+            </div>
+          </div>
+
+          <div id="lab2-instructions" class="lab-instructions" style="display: none;">
+            <h3>👥 Group Management</h3>
+            <p>Learn how to create and manage Active Directory groups.</p>
+            
+            <div class="task" id="lab2-task1">
+              <h4><span class="task-icon">1</span> Create Security Group</h4>
+              <p>Create a security group named <code>IT_Admins</code> with scope <code>Global</code>.</p>
+            </div>
+            
+            <div class="task" id="lab2-task2">
+              <h4><span class="task-icon">2</span> Add Members to Group</h4>
+              <p>Add <code>j.doe</code> to the <code>IT_Admins</code> group.</p>
+            </div>
+            
+            <div class="task" id="lab2-task3">
+              <h4><span class="task-icon">3</span> Set Group Properties</h4>
+              <p>Set the group description to "IT Department Administrators".</p>
+            </div>
+            
+            <div class="task" id="lab2-task4">
+              <h4><span class="task-icon">4</span> Create Distribution Group</h4>
+              <p>Create a distribution group named <code>All_Employees</code> for company-wide announcements.</p>
+            </div>
+          </div>
+
+          <div id="lab3-instructions" class="lab-instructions" style="display: none;">
+            <h3>📁 Organizational Units</h3>
+            <p>Learn how to create and manage Organizational Units in Active Directory.</p>
+            
+            <div class="task" id="lab3-task1">
+              <h4><span class="task-icon">1</span> Create OU Structure</h4>
+              <p>Create an OU named <code>IT Department</code> under the domain root.</p>
+            </div>
+            
+            <div class="task" id="lab3-task2">
+              <h4><span class="task-icon">2</span> Create Sub-OUs</h4>
+              <p>Create sub-OUs named <code>Users</code>, <code>Computers</code>, and <code>Groups</code> under the IT Department OU.</p>
+            </div>
+            
+            <div class="task" id="lab3-task3">
+              <h4><span class="task-icon">3</span> Move Objects to OU</h4>
+              <p>Move user <code>j.doe</code> and group <code>IT_Admins</code> to the appropriate OUs.</p>
+            </div>
+            
+            <div class="task" id="lab3-task4">
+              <h4><span class="task-icon">4</span> Delegate Control</h4>
+              <p>Delegate control of the IT Department OU to the IT_Admins group.</p>
+            </div>
+          </div>
+
+          <div id="lab4-instructions" class="lab-instructions" style="display: none;">
+            <h3>🔐 Security & Policies</h3>
+            <p>Learn how to configure security policies and permissions in Active Directory.</p>
+            
+            <div class="task" id="lab4-task1">
+              <h4><span class="task-icon">1</span> Password Policy</h4>
+              <p>Configure password policy: minimum 12 characters, complexity enabled, maximum age 90 days.</p>
+            </div>
+            
+            <div class="task" id="lab4-task2">
+              <h4><span class="task-icon">2</span> Account Lockout Policy</h4>
+              <p>Set account lockout: 5 invalid attempts, lockout duration 30 minutes.</p>
+            </div>
+            
+            <div class="task" id="lab4-task3">
+              <h4><span class="task-icon">3</span> User Rights Assignment</h4>
+              <p>Assign "Log on as a service" right to the IT_Admins group.</p>
+            </div>
+            
+            <div class="task" id="lab4-task4">
+              <h4><span class="task-icon">4</span> Audit Policy</h4>
+              <p>Enable auditing for account management events.</p>
+            </div>
+          </div>
+
+          <div id="feedback"></div>
+        </div>
+
+        <div id="blockly-area">
+          <div id="blockly-toolbar">
+            <button onclick="simulate()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 10 4 15 9 20"></polyline>
+                <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+              </svg>
+              Show Script
+            </button>
+            <button class="secondary" onclick="checkProgress()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              Check Progress
+            </button>
+            <button class="danger" onclick="clearWorkspace()" style="margin-left: auto;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Clear Workspace
+            </button>
+          </div>
+          <div id="blocklyDiv"></div>
+          <div class="zoom-controls">
+            <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+            <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <div id="confirmationDialog" class="confirmation-dialog" style="display: none;">
+    <div class="confirmation-content">
+      <h3 class="confirmation-title">Clear Workspace</h3>
+      <p class="confirmation-message">Are you sure you want to clear the workspace? All blocks will be deleted.</p>
+      <div class="confirmation-buttons">
+        <button class="danger" onclick="confirmClearWorkspace()">Clear</button>
+        <button class="secondary" onclick="cancelClearWorkspace()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Notification -->
+  <div id="appNotification" class="app-notification" style="display: none;"></div>
+
+  <xml id="toolbox" style="display:none">
+    <category name="User Management" colour="180">
+      <block type="create_aduser"></block>
+      <block type="set_userproperties"></block>
+      <block type="enable_disable_user"></block>
+      <block type="reset_password"></block>
+      <block type="get_aduser"></block>
+    </category>
+    <category name="Group Management" colour="210">
+      <block type="create_adgroup"></block>
+      <block type="add_groupmember"></block>
+      <block type="remove_groupmember"></block>
+      <block type="set_groupproperties"></block>
+      <block type="get_adgroup"></block>
+    </category>
+    <category name="OU Management" colour="230">
+      <block type="create_ou"></block>
+      <block type="move_adobject"></block>
+      <block type="delegate_control"></block>
+      <block type="get_ou"></block>
+      <block type="remove_ou"></block>
+    </category>
+    <category name="Security" colour="290">
+      <block type="set_passwordpolicy"></block>
+      <block type="set_accountlockout"></block>
+      <block type="set_userrights"></block>
+      <block type="set_auditpolicy"></block>
+      <block type="test_security"></block>
+    </category>
+  </xml>
+
+  <script>
+    // Declare workspace variable at the top level
+    let workspace;
+    let currentLab = 'lab1';
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize Blockly workspace
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        trashcan: true,
+        grid: {
+          spacing: 25,
+          length: 3,
+          colour: '#e0e0e0',
+          snap: true
+        },
+        zoom: {
+          controls: true,
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2
+        },
+        theme: {
+          'blockStyles': {
+            'colour_blocks': { 'colourPrimary': '#CF63CF', 'colourSecondary': '#C94FC9', 'colourTertiary': '#BD42BD' },
+            'list_blocks': { 'colourPrimary': '#9966FF', 'colourSecondary': '#855CD6', 'colourTertiary': '#774DCB' },
+            'logic_blocks': { 'colourPrimary': '#4C97FF', 'colourSecondary': '#4280D7', 'colourTertiary': '#3373CC' },
+            'loop_blocks': { 'colourPrimary': '#0fBD8C', 'colourSecondary': '#0DA57A', 'colourTertiary': '#0B8E69' },
+            'math_blocks': { 'colourPrimary': '#59C059', 'colourSecondary': '#46B946', 'colourTertiary': '#389438' },
+            'procedure_blocks': { 'colourPrimary': '#FF6680', 'colourSecondary': '#FF4D6A', 'colourTertiary': '#FF3355' },
+            'text_blocks': { 'colourPrimary': '#FFBF00', 'colourSecondary': '#E6AC00', 'colourTertiary': '#CC9900' },
+            'variable_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' },
+            'variable_dynamic_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' }
+          },
+          'componentStyles': {
+            'workspaceBackgroundColour': '#F9FAFB',
+            'toolboxBackgroundColour': '#FFFFFF',
+            'toolboxForegroundColour': '#1E293B',
+            'flyoutBackgroundColour': '#F1F5F9',
+            'flyoutForegroundColour': '#1E293B',
+            'flyoutOpacity': 0.9,
+            'scrollbarColour': '#CCCCCC',
+            'scrollbarOpacity': 0.6
+          }
+        }
+      });
+
+      // Define Active Directory blocks
+      Blockly.Blocks['create_aduser'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create AD User")
+              .appendField("Username:")
+              .appendField(new Blockly.FieldTextInput("j.doe"), "USERNAME")
+              .appendField("Display Name:")
+              .appendField(new Blockly.FieldTextInput("John Doe"), "DISPLAYNAME");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Create a new Active Directory user account");
+        }
+      };
+
+      Blockly.Blocks['set_userproperties'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set User Properties")
+              .appendField("Username:")
+              .appendField(new Blockly.FieldTextInput("j.doe"), "USERNAME")
+              .appendField("Email:")
+              .appendField(new Blockly.FieldTextInput("j.doe@company.com"), "EMAIL")
+              .appendField("Department:")
+              .appendField(new Blockly.FieldTextInput("IT"), "DEPARTMENT");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Set user properties in Active Directory");
+        }
+      };
+
+      Blockly.Blocks['enable_disable_user'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Enable/Disable User")
+              .appendField("Username:")
+              .appendField(new Blockly.FieldTextInput("j.doe"), "USERNAME")
+              .appendField("Action:")
+              .appendField(new Blockly.FieldDropdown([["Enable","Enable"], ["Disable","Disable"]]), "ACTION");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Enable or disable a user account");
+        }
+      };
+
+      Blockly.Blocks['reset_password'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Reset Password")
+              .appendField("Username:")
+              .appendField(new Blockly.FieldTextInput("j.doe"), "USERNAME")
+              .appendField("New Password:")
+              .appendField(new Blockly.FieldTextInput("P@ssw0rd123"), "PASSWORD");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Reset user password");
+        }
+      };
+
+      Blockly.Blocks['get_aduser'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Get AD User")
+              .appendField("Username:")
+              .appendField(new Blockly.FieldTextInput("j.doe"), "USERNAME");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Get user information from Active Directory");
+        }
+      };
+
+      Blockly.Blocks['create_adgroup'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create AD Group")
+              .appendField("Group Name:")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUPNAME")
+              .appendField("Scope:")
+              .appendField(new Blockly.FieldDropdown([["Global","Global"], ["Universal","Universal"], ["DomainLocal","DomainLocal"]]), "SCOPE")
+              .appendField("Type:")
+              .appendField(new Blockly.FieldDropdown([["Security","Security"], ["Distribution","Distribution"]]), "TYPE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Create a new Active Directory group");
+        }
+      };
+
+      Blockly.Blocks['add_groupmember'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Add to Group")
+              .appendField("Group:")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUP")
+              .appendField("Member:")
+              .appendField(new Blockly.FieldTextInput("j.doe"), "MEMBER");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Add member to group");
+        }
+      };
+
+      Blockly.Blocks['remove_groupmember'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Remove from Group")
+              .appendField("Group:")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUP")
+              .appendField("Member:")
+              .appendField(new Blockly.FieldTextInput("j.doe"), "MEMBER");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Remove member from group");
+        }
+      };
+
+      Blockly.Blocks['set_groupproperties'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set Group Properties")
+              .appendField("Group:")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUP")
+              .appendField("Description:")
+              .appendField(new Blockly.FieldTextInput("IT Department Administrators"), "DESCRIPTION");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Set group properties");
+        }
+      };
+
+      Blockly.Blocks['get_adgroup'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Get AD Group")
+              .appendField("Group Name:")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUPNAME");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(210);
+          this.setTooltip("Get group information");
+        }
+      };
+
+      Blockly.Blocks['create_ou'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create OU")
+              .appendField("OU Name:")
+              .appendField(new Blockly.FieldTextInput("IT Department"), "OUNAME")
+              .appendField("Path:")
+              .appendField(new Blockly.FieldTextInput("DC=company,DC=com"), "PATH");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Create Organizational Unit");
+        }
+      };
+
+      Blockly.Blocks['move_adobject'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Move AD Object")
+              .appendField("Object:")
+              .appendField(new Blockly.FieldTextInput("CN=j.doe,CN=Users,DC=company,DC=com"), "OBJECT")
+              .appendField("Target OU:")
+              .appendField(new Blockly.FieldTextInput("OU=Users,OU=IT Department,DC=company,DC=com"), "TARGET");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Move object to different OU");
+        }
+      };
+
+      Blockly.Blocks['delegate_control'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Delegate Control")
+              .appendField("OU:")
+              .appendField(new Blockly.FieldTextInput("OU=IT Department,DC=company,DC=com"), "OU")
+              .appendField("Group:")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUP")
+              .appendField("Permissions:")
+              .appendField(new Blockly.FieldDropdown([["Full Control","FullControl"], ["Read/Write","ReadWrite"], ["Read Only","ReadOnly"]]), "PERMISSIONS");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Delegate control over OU");
+        }
+      };
+
+      Blockly.Blocks['get_ou'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Get OU")
+              .appendField("OU Name:")
+              .appendField(new Blockly.FieldTextInput("IT Department"), "OUNAME");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Get OU information");
+        }
+      };
+
+      Blockly.Blocks['remove_ou'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Remove OU")
+              .appendField("OU Name:")
+              .appendField(new Blockly.FieldTextInput("Old Department"), "OUNAME")
+              .appendField("Confirm:")
+              .appendField(new Blockly.FieldCheckbox("TRUE"), "CONFIRM");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Remove Organizational Unit");
+        }
+      };
+
+      Blockly.Blocks['set_passwordpolicy'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set Password Policy")
+              .appendField("Min Length:")
+              .appendField(new Blockly.FieldNumber(12), "MINLENGTH")
+              .appendField("Complexity:")
+              .appendField(new Blockly.FieldCheckbox("TRUE"), "COMPLEXITY")
+              .appendField("Max Age (days):")
+              .appendField(new Blockly.FieldNumber(90), "MAXAGE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Configure password policy");
+        }
+      };
+
+      Blockly.Blocks['set_accountlockout'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set Account Lockout")
+              .appendField("Threshold:")
+              .appendField(new Blockly.FieldNumber(5), "THRESHOLD")
+              .appendField("Duration (min):")
+              .appendField(new Blockly.FieldNumber(30), "DURATION");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Configure account lockout policy");
+        }
+      };
+
+      Blockly.Blocks['set_userrights'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set User Rights")
+              .appendField("Right:")
+              .appendField(new Blockly.FieldTextInput("SeServiceLogonRight"), "RIGHT")
+              .appendField("Group:")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUP");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Assign user rights");
+        }
+      };
+
+      Blockly.Blocks['set_auditpolicy'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set Audit Policy")
+              .appendField("Category:")
+              .appendField(new Blockly.FieldTextInput("Account Management"), "CATEGORY")
+              .appendField("Success:")
+              .appendField(new Blockly.FieldCheckbox("TRUE"), "SUCCESS")
+              .appendField("Failure:")
+              .appendField(new Blockly.FieldCheckbox("TRUE"), "FAILURE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Configure audit policy");
+        }
+      };
+
+      Blockly.Blocks['test_security'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Test Security")
+              .appendField("Test Type:")
+              .appendField(new Blockly.FieldDropdown([["Password Policy","Password"], ["Account Lockout","Lockout"], ["User Rights","Rights"]]), "TESTTYPE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Test security configuration");
+        }
+      };
+
+      // Setup event listeners for zoom controls
+      document.getElementById('zoom-in').addEventListener('click', function() {
+        workspace.zoomCenter(1.2);
+      });
+
+      document.getElementById('zoom-out').addEventListener('click', function() {
+        workspace.zoomCenter(0.8);
+      });
+
+      // Add tab click event listeners
+      document.querySelectorAll('.lab-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+          const labId = this.getAttribute('onclick').match(/switchLab\('([^']+)'\)/)[1];
+          switchLab(labId);
+        });
+      });
+
+      // Add example block for first lab
+      const exampleXml = `<xml>
+        <block type="create_aduser" x="50" y="50">
+          <field name="USERNAME">j.doe</field>
+          <field name="DISPLAYNAME">John Doe</field>
+        </block>
+      </xml>`;
+      
+      try {
+        const dom = Blockly.Xml.textToDom(exampleXml);
+        Blockly.Xml.domToWorkspace(dom, workspace);
+      } catch (e) {
+        console.log('Error loading example block:', e);
+      }
+    });
+
+    // Lab switching function
+    function switchLab(labId) {
+      // Update current lab
+      currentLab = labId;
+      
+      // Update lab title
+      const labTitles = {
+        'lab1': 'Lab 1: User Account Management',
+        'lab2': 'Lab 2: Group Management',
+        'lab3': 'Lab 3: Organizational Units',
+        'lab4': 'Lab 4: Security & Policies'
+      };
+      document.querySelector('.lab-title').textContent = labTitles[labId];
+      
+      // Update tab buttons
+      document.querySelectorAll('.lab-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Activate the clicked tab
+      const tabs = document.querySelectorAll('.lab-tab');
+      const tabIndex = {
+        'lab1': 0,
+        'lab2': 1,
+        'lab3': 2,
+        'lab4': 3
+      }[labId];
+      
+      if (tabIndex !== undefined && tabs[tabIndex]) {
+        tabs[tabIndex].classList.add('active');
+      }
+      
+      // Show/hide instructions
+      document.querySelectorAll('.lab-instructions').forEach(instructions => {
+        instructions.style.display = 'none';
+      });
+      const instructions = document.getElementById(labId + '-instructions');
+      if (instructions) {
+        instructions.style.display = 'block';
+      }
+      
+      // Clear feedback when switching labs
+      document.getElementById('feedback').innerHTML = '';
+      document.getElementById('feedback').className = '';
+      
+      // Reset progress based on current lab
+      const taskCounts = {
+        'lab1': 2,
+        'lab2': 4,
+        'lab3': 4,
+        'lab4': 4
+      };
+      updateProgress(0, taskCounts[labId]);
+      
+      // Clear completed task indicators
+      document.querySelectorAll('.task').forEach(task => {
+        task.classList.remove('completed');
+      });
+    }
+
+    // Progress checking
+    function checkProgress() {
+      const blocks = workspace.getAllBlocks();
+      const feedback = document.getElementById('feedback');
+      
+      let tasks = {};
+      let totalTasks = 0;
+      
+      // Define tasks for each lab
+      if (currentLab === 'lab1') {
+        totalTasks = 2;
+        tasks = {
+          task1: blocks.some(b => b.type === "create_aduser" && 
+                 b.getFieldValue('USERNAME') === 'j.doe' && 
+                 b.getFieldValue('DISPLAYNAME') === 'John Doe'),
+          task2: blocks.some(b => b.type === "set_userproperties" && 
+                 b.getFieldValue('USERNAME') === 'j.doe' && 
+                 b.getFieldValue('EMAIL') === 'j.doe@company.com' &&
+                 b.getFieldValue('DEPARTMENT') === 'IT')
+        };
+      } else if (currentLab === 'lab2') {
+        totalTasks = 4;
+        tasks = {
+          task1: blocks.some(b => b.type === "create_adgroup" && 
+                 b.getFieldValue('GROUPNAME') === 'IT_Admins' && 
+                 b.getFieldValue('SCOPE') === 'Global'),
+          task2: blocks.some(b => b.type === "add_groupmember" && 
+                 b.getFieldValue('GROUP') === 'IT_Admins' && 
+                 b.getFieldValue('MEMBER') === 'j.doe'),
+          task3: blocks.some(b => b.type === "set_groupproperties" && 
+                 b.getFieldValue('GROUP') === 'IT_Admins' && 
+                 b.getFieldValue('DESCRIPTION') === 'IT Department Administrators'),
+          task4: blocks.some(b => b.type === "create_adgroup" && 
+                 b.getFieldValue('GROUPNAME') === 'All_Employees' && 
+                 b.getFieldValue('TYPE') === 'Distribution')
+        };
+      } else if (currentLab === 'lab3') {
+        totalTasks = 4;
+        tasks = {
+          task1: blocks.some(b => b.type === "create_ou" && 
+                 b.getFieldValue('OUNAME') === 'IT Department'),
+          task2: blocks.filter(b => b.type === "create_ou" && 
+                 ['Users', 'Computers', 'Groups'].includes(b.getFieldValue('OUNAME'))).length >= 3,
+          task3: blocks.some(b => b.type === "move_adobject" && 
+                 b.getFieldValue('OBJECT').includes('j.doe')),
+          task4: blocks.some(b => b.type === "delegate_control" && 
+                 b.getFieldValue('OU').includes('IT Department') && 
+                 b.getFieldValue('GROUP') === 'IT_Admins')
+        };
+      } else if (currentLab === 'lab4') {
+        totalTasks = 4;
+        tasks = {
+          task1: blocks.some(b => b.type === "set_passwordpolicy" && 
+                 b.getFieldValue('MINLENGTH') === '12' && 
+                 b.getFieldValue('COMPLEXITY') === 'TRUE'),
+          task2: blocks.some(b => b.type === "set_accountlockout" && 
+                 b.getFieldValue('THRESHOLD') === '5' && 
+                 b.getFieldValue('DURATION') === '30'),
+          task3: blocks.some(b => b.type === "set_userrights" && 
+                 b.getFieldValue('RIGHT') === 'SeServiceLogonRight' && 
+                 b.getFieldValue('GROUP') === 'IT_Admins'),
+          task4: blocks.some(b => b.type === "set_auditpolicy" && 
+                 b.getFieldValue('CATEGORY') === 'Account Management')
+        };
+      }
+      
+      // Update UI
+      Object.keys(tasks).forEach(taskId => {
+        const taskElement = document.getElementById(currentLab + '-' + taskId);
+        if (taskElement) {
+          taskElement.classList.toggle('completed', tasks[taskId]);
+        }
+      });
+      
+      // Update progress
+      const completed = Object.values(tasks).filter(Boolean).length;
+      updateProgress(completed, totalTasks);
+      
+      // Show feedback
+      if (completed === totalTasks) {
+        feedback.innerHTML = '<div style="color:green;">✅ All tasks completed! Ready to generate your script.</div>';
+        feedback.className = 'feedback-success';
+      } else if (completed > 0) {
+        feedback.innerHTML = `<div style="color:#d35400;">⏳ Progress: ${completed}/${totalTasks} tasks done</div>`;
+        feedback.className = 'feedback-warning';
+      } else {
+        feedback.innerHTML = '<div>Start building your script by dragging blocks from the toolbox on the left.</div>';
+        feedback.className = '';
+      }
+    }
+
+    // Update progress bar
+    function updateProgress(completed, total) {
+      const percentage = (completed / total) * 100;
+      const progressFill = document.querySelector('.progress-fill');
+      const progressText = document.getElementById('progress-text');
+      
+      if (progressFill) {
+        progressFill.style.width = `${percentage}%`;
+      }
+      if (progressText) {
+        progressText.textContent = `${completed}/${total}`;
+      }
+    }
+
+    // Generate PowerShell code
+    function generatePowerShellCode() {
+      const blocks = workspace.getTopBlocks(true);
+      let code = "";
+      
+      // Add header
+      code += `# Generated by BlockShell AD Tool\n`;
+      code += `# Lab: ${document.querySelector('.lab-title').textContent}\n`;
+      code += `# Date: ${new Date().toISOString()}\n`;
+      code += `# Requires Active Directory module\n\n`;
+      code += `# Import required module\n`;
+      code += `Import-Module ActiveDirectory\n`;
+      code += `\n`;
+      
+      // Generate code from blocks
+      for (const block of blocks) {
+        code += generateBlockCodeRecursive(block);
+      }
+      
+      return code.trim();
+    }
+
+    function generateBlockCodeRecursive(block) {
+      if (!block) return "";
+      let code = "";
+
+      switch (block.type) {
+        case "create_aduser":
+          code += `New-ADUser -Name "${block.getFieldValue('USERNAME')}" `;
+          code += `-DisplayName "${block.getFieldValue('DISPLAYNAME')}" `;
+          code += `-SamAccountName "${block.getFieldValue('USERNAME')}" `;
+          code += `-UserPrincipalName "${block.getFieldValue('USERNAME')}@company.com" `;
+          code += `-Enabled $true\n`;
+          break;
+        case "set_userproperties":
+          code += `Set-ADUser -Identity "${block.getFieldValue('USERNAME')}" `;
+          code += `-EmailAddress "${block.getFieldValue('EMAIL')}" `;
+          code += `-Department "${block.getFieldValue('DEPARTMENT')}"\n`;
+          break;
+        case "enable_disable_user":
+          if (block.getFieldValue('ACTION') === 'Enable') {
+            code += `Enable-ADAccount -Identity "${block.getFieldValue('USERNAME')}"\n`;
+          } else {
+            code += `Disable-ADAccount -Identity "${block.getFieldValue('USERNAME')}"\n`;
+          }
+          break;
+        case "reset_password":
+          code += `Set-ADAccountPassword -Identity "${block.getFieldValue('USERNAME')}" `;
+          code += `-Reset -NewPassword (ConvertTo-SecureString "${block.getFieldValue('PASSWORD')}" -AsPlainText -Force)\n`;
+          break;
+        case "get_aduser":
+          code += `Get-ADUser -Identity "${block.getFieldValue('USERNAME')}" -Properties *\n`;
+          break;
+        case "create_adgroup":
+          code += `New-ADGroup -Name "${block.getFieldValue('GROUPNAME')}" `;
+          code += `-GroupScope ${block.getFieldValue('SCOPE')} `;
+          code += `-GroupCategory ${block.getFieldValue('TYPE')}\n`;
+          break;
+        case "add_groupmember":
+          code += `Add-ADGroupMember -Identity "${block.getFieldValue('GROUP')}" `;
+          code += `-Members "${block.getFieldValue('MEMBER')}"\n`;
+          break;
+        case "remove_groupmember":
+          code += `Remove-ADGroupMember -Identity "${block.getFieldValue('GROUP')}" `;
+          code += `-Members "${block.getFieldValue('MEMBER')}" -Confirm:$false\n`;
+          break;
+        case "set_groupproperties":
+          code += `Set-ADGroup -Identity "${block.getFieldValue('GROUP')}" `;
+          code += `-Description "${block.getFieldValue('DESCRIPTION')}"\n`;
+          break;
+        case "get_adgroup":
+          code += `Get-ADGroup -Identity "${block.getFieldValue('GROUPNAME')}" -Properties *\n`;
+          break;
+        case "create_ou":
+          code += `New-ADOrganizationalUnit -Name "${block.getFieldValue('OUNAME')}" `;
+          code += `-Path "${block.getFieldValue('PATH')}"\n`;
+          break;
+        case "move_adobject":
+          code += `Move-ADObject -Identity "${block.getFieldValue('OBJECT')}" `;
+          code += `-TargetPath "${block.getFieldValue('TARGET')}"\n`;
+          break;
+        case "delegate_control":
+          code += `# Delegate control would be configured using ADSI or dsacls.exe\n`;
+          code += `# Target OU: ${block.getFieldValue('OU')}\n`;
+          code += `# Group: ${block.getFieldValue('GROUP')}\n`;
+          code += `# Permissions: ${block.getFieldValue('PERMISSIONS')}\n`;
+          break;
+        case "get_ou":
+          code += `Get-ADOrganizationalUnit -Filter "Name -eq '${block.getFieldValue('OUNAME')}'"\n`;
+          break;
+        case "remove_ou":
+          if (block.getFieldValue('CONFIRM') === 'TRUE') {
+            code += `Remove-ADOrganizationalUnit -Identity "${block.getFieldValue('OUNAME')}" -Confirm:$false\n`;
+          } else {
+            code += `Remove-ADOrganizationalUnit -Identity "${block.getFieldValue('OUNAME')}"\n`;
+          }
+          break;
+        case "set_passwordpolicy":
+          code += `# Password policy would be configured via Group Policy\n`;
+          code += `# Min Length: ${block.getFieldValue('MINLENGTH')}\n`;
+          code += `# Complexity: ${block.getFieldValue('COMPLEXITY')}\n`;
+          code += `# Max Age: ${block.getFieldValue('MAXAGE')} days\n`;
+          break;
+        case "set_accountlockout":
+          code += `# Account lockout policy would be configured via Group Policy\n`;
+          code += `# Threshold: ${block.getFieldValue('THRESHOLD')} attempts\n`;
+          code += `# Duration: ${block.getFieldValue('DURATION')} minutes\n`;
+          break;
+        case "set_userrights":
+          code += `# User rights would be configured via Group Policy or secedit.exe\n`;
+          code += `# Right: ${block.getFieldValue('RIGHT')}\n`;
+          code += `# Group: ${block.getFieldValue('GROUP')}\n`;
+          break;
+        case "set_auditpolicy":
+          code += `# Audit policy would be configured via Group Policy\n`;
+          code += `# Category: ${block.getFieldValue('CATEGORY')}\n`;
+          code += `# Success: ${block.getFieldValue('SUCCESS')}\n`;
+          code += `# Failure: ${block.getFieldValue('FAILURE')}\n`;
+          break;
+        case "test_security":
+          code += `# Test security configuration\n`;
+          code += `Write-Host "Testing ${block.getFieldValue('TESTTYPE')} configuration..."\n`;
+          break;
+      }
+
+      const nextBlock = block.getNextBlock();
+      if (nextBlock) {
+        code += generateBlockCodeRecursive(nextBlock);
+      }
+      return code;
+    }
+
+    function createModal(title) {
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      
+      const content = document.createElement('div');
+      content.className = 'modal-content';
+      
+      const header = document.createElement('div');
+      header.className = 'modal-header';
+      
+      const titleElement = document.createElement('h3');
+      titleElement.className = 'modal-title';
+      titleElement.textContent = title;
+      
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'close-btn';
+      closeBtn.innerHTML = '&times;';
+      closeBtn.onclick = function() {
+        document.body.removeChild(modal);
+      };
+      
+      header.appendChild(titleElement);
+      header.appendChild(closeBtn);
+      content.appendChild(header);
+      modal.appendChild(content);
+      
+      return modal;
+    }
+
+    window.simulate = function simulate() {
+      const code = generatePowerShellCode();
+      if (!code || code.trim() === "# Generated by BlockShell AD Tool\n# Lab: Lab 1: User Account Management\n# Date:") {
+        showAppNotification("No script to show. Please add some blocks first.", "warning");
+        return;
+      }
+      
+      const modal = createModal('Generated PowerShell Script');
+      
+      const codeBlock = document.createElement('div');
+      codeBlock.className = 'code-block';
+      const pre = document.createElement('pre');
+      pre.textContent = code;
+      hljs.highlightElement(pre);
+      codeBlock.appendChild(pre);
+      
+      const copyBtn = document.createElement('button');
+      copyBtn.textContent = 'Copy to Clipboard';
+      copyBtn.style.marginTop = '15px';
+      copyBtn.onclick = function() {
+        navigator.clipboard.writeText(code).then(() => {
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyBtn.textContent = 'Copy to Clipboard';
+          }, 2000);
+        });
+      };
+      
+      modal.querySelector('.modal-content').appendChild(codeBlock);
+      modal.querySelector('.modal-content').appendChild(copyBtn);
+      
+      document.body.appendChild(modal);
+    };
+
+    window.download = function download() {
+      const code = generatePowerShellCode();
+      if (!code || code.trim() === "# Generated by BlockShell AD Tool\n# Lab: Lab 1: User Account Management\n# Date:") {
+        showAppNotification("Nothing to download. Please add some blocks first.", "warning");
+        return;
+      }
+      
+      const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'ad-admin-script.ps1';
+      link.click();
+      
+      showAppNotification("Script downloaded successfully!", "success");
+    };
+    
+    // Clear workspace functions
+    window.clearWorkspace = function() {
+      document.getElementById('confirmationDialog').style.display = 'flex';
+    };
+    
+    function confirmClearWorkspace() {
+      workspace.clear();
+      document.getElementById('confirmationDialog').style.display = 'none';
+      showAppNotification('Workspace cleared', 'success');
+      checkProgress(); // Reset progress
+    }
+    
+    function cancelClearWorkspace() {
+      document.getElementById('confirmationDialog').style.display = 'none';
+    }
+    
+    // App notification function
+    function showAppNotification(message, type = 'info') {
+      const notification = document.getElementById('appNotification');
+      notification.textContent = message;
+      notification.className = 'app-notification';
+      notification.classList.add(type);
+      notification.style.display = 'block';
+      
+      // Animate in
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 10);
+      
+      // Animate out after 3 seconds
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+          notification.style.display = 'none';
+        }, 300);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
