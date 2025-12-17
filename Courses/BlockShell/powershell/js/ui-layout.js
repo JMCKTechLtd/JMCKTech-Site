@@ -11,15 +11,19 @@ export function initLayout(engine) {
 
       const moduleId = tab.dataset.module;
       engine.setModule(moduleId);
-      // NOTE: right now toolbox is still shared.
-      // Later we can swap toolbox XML per module if you want.
+
+      // Clear search input when switching modules
+      const searchInput = document.getElementById('block-search');
+      if (searchInput) {
+        searchInput.value = '';
+      }
     });
   });
 
-  // Resize handling if needed later
+  // Resize handling
   window.addEventListener('resize', () => {
     if (engine.workspace) {
-      engine.workspace.resizeContents();
+      Blockly.svgResize(engine.workspace);
     }
   });
 }
