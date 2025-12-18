@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>RHCSA Exam Lab 22: User and Group Management</title>
+    <title>RHCSA Exam Lab 25: Configure Default Software Repository</title>
     <style>
         :root {
             --redhat-red: #cc0000;
@@ -595,7 +595,7 @@
 <div class="lab-container">
     <div class="header">
         <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-        <h1>RHCSA Exam Lab 22: User and Group Management</h1>
+        <h1>RHCSA Exam Lab 25: Configure Default Software Repository</h1>
     </div>
     
     <div class="main-content">
@@ -604,7 +604,7 @@
             
             <div class="lab-intro">
                 <h3>Lab Objective</h3>
-                <p>Add users to the admin group with specific requirements. You will need to create users, set their passwords, and verify group membership.</p>
+                <p>Configure a default software repository for your system. One YUM repository has already been provided to configure your system on <code>http://server.domain11.example.com/pub/x86_64/Server</code>, and should be configured to work normally.</p>
                 <p><strong>Time Estimate:</strong> 10-15 minutes</p>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill"></div>
@@ -613,30 +613,26 @@
             </div>
 
             <div class="requirements-panel">
-                <h4>User and Group Management Requirements</h4>
-                <div class="requirement-item" id="req-admin-group">
+                <h4>Repository Configuration Requirements</h4>
+                <div class="requirement-item" id="req-repo-file">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Ensure admin group exists (GID=600)</span>
+                    <span class="requirement-label">Create repository configuration file in <code>/etc/yum.repos.d/</code></span>
                 </div>
-                <div class="requirement-item" id="req-user2">
+                <div class="requirement-item" id="req-baseurl">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Create user2 with admin as additional group</span>
+                    <span class="requirement-label">Configure baseurl: <code>http://server.domain11.example.com/pub/x86_64/Server</code></span>
                 </div>
-                <div class="requirement-item" id="req-user3">
+                <div class="requirement-item" id="req-gpgcheck">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Create user3 with admin as additional group</span>
+                    <span class="requirement-label">Set <code>gpgcheck=0</code> for testing</span>
                 </div>
-                <div class="requirement-item" id="req-password2">
+                <div class="requirement-item" id="req-yum-clean">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Set password for user2 to 'redhat'</span>
+                    <span class="requirement-label">Clean yum cache using <code>yum clean all</code></span>
                 </div>
-                <div class="requirement-item" id="req-password3">
+                <div class="requirement-item" id="req-yum-repolist">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Set password for user3 to 'redhat'</span>
-                </div>
-                <div class="requirement-item" id="req-verification">
-                    <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Verify group membership using <code>id</code> command</span>
+                    <span class="requirement-label">Verify repository with <code>yum repolist</code> (should show ~4305 packages)</span>
                 </div>
             </div>
 
@@ -646,180 +642,202 @@
                     Lab Introduction
                     <span class="step-status status-completed">Completed</span>
                 </h3>
-                <p>Welcome to the RHCSA User and Group Management Lab. In this lab, you will create users and add them to the admin group with specific passwords.</p>
+                <p>Welcome to the RHCSA Repository Configuration Lab. In this lab, you will configure a YUM repository on a Red Hat Enterprise Linux system.</p>
                 <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+                <div class="concept">
+                    <h4>Important Note</h4>
+                    <p><strong>Wrong YUM configuration will lead to some following questions not working properly.</strong> Approximately 4305 packages should be available when correctly configured.</p>
+                </div>
             </div>
 
             <div class="guide-step current" id="step1">
                 <h3>
                     <span class="step-number">1</span>
-                    Verify Admin Group Exists
+                    Navigate to YUM Repository Directory
                     <span class="step-status status-current">Current Step</span>
                 </h3>
-                <p>First, let's verify that the admin group exists with GID 600.</p>
+                <p>First, let's navigate to the YUM repository configuration directory.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    grep admin /etc/group
+                    cd /etc/yum.repos.d/
                 </div>
                 
-                <p>If the admin group doesn't exist, you'll need to create it:</p>
-                
-                <div class="command-hint">
-                    groupadd -g 600 admin
-                </div>
+                <p>This directory contains all the repository configuration files for your system.</p>
 
                 <div class="concept">
-                    <h4>Understanding Group Management</h4>
-                    <p>Groups in Linux allow you to manage permissions for multiple users. The admin group with GID 600 is a special administrative group.</p>
+                    <h4>Understanding YUM Repositories</h4>
+                    <p>YUM (Yellowdog Updater Modified) repositories are defined in <code>.repo</code> files within <code>/etc/yum.repos.d/</code>. Each repository file contains information about where to find packages and metadata.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step2">
                 <h3>
                     <span class="step-number">2</span>
-                    Create User2 with Admin Group
+                    Create Repository Configuration File
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Now let's create user2 and add them to the admin group as a supplementary group.</p>
+                <p>Now let's create a repository configuration file using vim.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    useradd -G admin user2
+                    vim /etc/yum.repos.d/local.repo
                 </div>
                 
+                <p>Once in the editor, add these exact contents to the file:</p>
+                
+                <div class="file-content">[local]
+name=local.repo
+baseurl=http://server.domain11.example.com/pub/x86_64/Server
+enabled=1
+gpgcheck=0</div>
+                
+                <p>To save and exit vim:</p>
+                <ol>
+                    <li>Press <code>ESC</code> to ensure you're in command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to write and quit</li>
+                </ol>
+
                 <div class="concept">
-                    <h4>User Creation Options</h4>
-                    <p>The <code>-G</code> option specifies supplementary groups for the new user. This adds the user to the admin group in addition to their primary group.</p>
+                    <h4>Repository Configuration Parameters</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>[local]</strong>
+                            <span>Repository ID - unique identifier for the repository</span>
+                        </div>
+                        <div class="concept-item">
+                            <strong>name</strong>
+                            <span>Human-readable name for the repository</span>
+                        </div>
+                        <div class="concept-item">
+                            <strong>baseurl</strong>
+                            <span>URL where packages are located</span>
+                        </div>
+                        <div class="concept-item">
+                            <strong>enabled</strong>
+                            <span>1 = repository is active, 0 = disabled</span>
+                        </div>
+                        <div class="concept-item">
+                            <strong>gpgcheck</strong>
+                            <span>0 = skip package verification, 1 = verify with GPG</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="guide-step" id="step3">
                 <h3>
                     <span class="step-number">3</span>
-                    Set Password for User2
+                    Verify Repository File
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Now set the password for user2 to 'redhat'.</p>
+                <p>Let's verify that our repository file was created correctly.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    passwd user2
+                    cat /etc/yum.repos.d/local.repo
                 </div>
                 
-                <p>When prompted, enter 'redhat' as the password (you'll need to type it twice).</p>
-                
+                <p>The output should match exactly what you entered in the previous step.</p>
+
                 <div class="concept">
-                    <h4>Alternative Password Setting</h4>
-                    <p>You can also set the password in one command without interaction:</p>
+                    <h4>Alternative Configuration Method</h4>
+                    <p>You could also use the <code>yum-config-manager</code> tool:</p>
                     <div class="command-hint">
-                        echo "redhat" | passwd --stdin user2
+                        yum-config-manager --add-repo=http://content.example.com/rhel7.0/x86-64/dvd
                     </div>
+                    <p>This would generate a file named <code>content.example.com_rhel7.0_x86_64_dvd.repo</code> and you would need to add <code>gpgcheck=0</code>.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step4">
                 <h3>
                     <span class="step-number">4</span>
-                    Create User3 with Admin Group
+                    Clean YUM Cache
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Now let's create user3 and add them to the admin group as well.</p>
+                <p>Now let's clean the YUM cache to ensure we're getting fresh metadata from our new repository.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    useradd -G admin user3
+                    yum clean all
+                </div>
+                
+                <p>This command removes cached packages and metadata from all enabled repositories.</p>
+
+                <div class="concept">
+                    <h4>Why Clean the Cache?</h4>
+                    <p>Cleaning the cache ensures that YUM will download fresh metadata from your newly configured repository. This is important when:</p>
+                    <ul>
+                        <li>Adding a new repository</li>
+                        <li>Changing repository configuration</li>
+                        <li>Suspecting outdated metadata</li>
+                    </ul>
                 </div>
             </div>
 
             <div class="guide-step" id="step5">
                 <h3>
                     <span class="step-number">5</span>
-                    Set Password for User3
+                    Verify Repository Configuration
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Set the password for user3 to 'redhat'.</p>
-                
-                <div class="hint-box">
-                    <strong>Type this command exactly:</strong>
-                </div>
-                
-                <div class="command-hint">
-                    passwd user3
-                </div>
-                
-                <p>When prompted, enter 'redhat' as the password (you'll need to type it twice).</p>
-            </div>
-
-            <div class="guide-step" id="step6">
-                <h3>
-                    <span class="step-number">6</span>
-                    Verify User Configuration
-                    <span class="step-status status-pending">Pending</span>
-                </h3>
-                <p>Finally, let's verify that our configurations are working correctly.</p>
+                <p>Finally, let's verify that our repository is working correctly. You should run BOTH verification commands.</p>
                 
                 <div class="hint-box">
                     <strong>Type these commands one by one:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    id user2
+                    yum repolist
                 </div>
-                <p>Should show admin in the groups list</p>
+                <p>Should show the "local" repository with approximately 4305 packages</p>
                 
                 <div class="command-hint">
-                    id user3
+                    yum list all | wc -l
                 </div>
-                <p>Should show admin in the groups list</p>
-                
-                <div class="command-hint">
-                    grep user2 /etc/passwd
-                </div>
-                <p>Should show user2 entry</p>
-                
-                <div class="command-hint">
-                    grep user3 /etc/passwd
-                </div>
-                <p>Should show user3 entry</p>
+                <p>Should show a large number of available packages (thousands)</p>
 
                 <div class="concept">
                     <h4>Verification Commands</h4>
-                    <p>After creating users and groups, always verify with these commands:</p>
+                    <p>After configuring a repository, always verify with these commands:</p>
                     <ul>
-                        <li><code>id username</code> - Shows user ID and group membership</li>
-                        <li><code>grep username /etc/passwd</code> - Shows user account details</li>
-                        <li><code>grep groupname /etc/group</code> - Shows group membership</li>
+                        <li><code>yum repolist</code> - Shows all enabled repositories and package counts</li>
+                        <li><code>yum list available</code> - Lists all available packages</li>
+                        <li><code>yum search [package]</code> - Searches for specific packages</li>
+                        <li><code>yum info [package]</code> - Shows detailed package information</li>
                     </ul>
+                    <p class="warning"><strong>Note:</strong> Correct configuration should show approximately 4305 packages. Wrong YUM configuration will cause following lab questions to fail!</p>
                 </div>
             </div>
             
             <div id="completion-message" class="completion-message" style="display: none;">
                 <h3>🎉 Lab Completed Successfully!</h3>
-                <p>All user and group management requirements have been met.</p>
+                <p>All repository configuration requirements have been met.</p>
+                <p>Your system now has a working YUM repository with approximately 4305 packages available.</p>
                 <p>You can now proceed to the next lab.</p>
             </div>
         </div>
         
         <div class="terminal-panel">
             <div class="terminal" id="terminal-output">
-                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 22: User and Group Management</div>
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 25: Configure Default Software Repository</div>
                 <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
                 <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
-                <div><span class="prompt">[root@station ~]#</span> Current step: Verify Admin Group Exists</div>
-                <div><span class="prompt">[root@station ~]#</span> Type: <code>grep admin /etc/group</code></div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Navigate to YUM Repository Directory</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>cd /etc/yum.repos.d/</code></div>
                 <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
             </div>
             <div class="command-line">
@@ -893,47 +911,43 @@
     let tabCompletionItems = [];
     let lastTabInput = '';
     
+    // Track which verification commands have been run in step 5
+    let step5Verifications = {
+        repolist: false,
+        listAll: false
+    };
+    
     // Available commands for tab completion
     const availableCommands = [
-        'useradd', 'groupadd', 'passwd', 'id', 'grep', 'cat', 'cd', 'ls', 'clear', 'help'
+        'vim', 'cat', 'cd', 'ls', 'yum', 'clear', 'help', 'wc'
     ];
     
     // Available file paths for tab completion
     const filePaths = {
-        '/etc/': ['passwd', 'group', 'shadow'],
-        '/home/': ['user2', 'user3']
+        '/etc/': ['yum.repos.d/', 'passwd', 'group'],
+        '/etc/yum.repos.d/': ['local.repo', 'redhat.repo']
     };
     
     // Track configuration state
     const configState = {
-        adminGroup: false,
-        user2: false,
-        user3: false,
-        password2: false,
-        password3: false,
-        verification: false
+        repoFile: false,
+        baseurl: false,
+        gpgcheck: false,
+        yumClean: false,
+        yumRepolist: false
     };
     
     // Expected commands for each step
     const stepCommands = {
-        1: ['grep admin /etc/group', 'groupadd -g 600 admin'],
-        2: ['useradd -G admin user2'],
-        3: ['passwd user2'],
-        4: ['useradd -G admin user3'],
-        5: ['passwd user3'],
-        6: ['id user2', 'id user3', 'grep user2 /etc/passwd', 'grep user3 /etc/passwd']
+        1: ['cd /etc/yum.repos.d/', 'cd /etc/yum.repos.d'],
+        2: ['vim /etc/yum.repos.d/local.repo'],
+        3: ['cat /etc/yum.repos.d/local.repo'],
+        4: ['yum clean all'],
+        5: ['yum repolist', 'yum list all | wc -l', 'yum list all']
     };
     
-    // Simulated system state
-    let systemState = {
-        groups: {
-            'admin': { exists: false, gid: 600, members: [] }
-        },
-        users: {
-            'user2': { exists: false, groups: [], password: '' },
-            'user3': { exists: false, groups: [], password: '' }
-        }
-    };
+    // Simulated file contents
+    let localRepoContent = `# No repository files exist yet`;
     
     // Vim editor state
     let vimState = {
@@ -946,193 +960,139 @@
     };
     
     const commands = {
-        'grep': (args) => {
-            if (args.length < 2) {
-                return "Usage: grep PATTERN FILE";
-            }
-            
-            const pattern = args[0];
-            const file = args[1];
-            
-            if (file === "/etc/group") {
-                if (pattern === "admin") {
-                    if (systemState.groups.admin.exists) {
-                        return `admin:x:600:user2,user3`;
-                    } else {
-                        return ""; // No output if group doesn't exist
-                    }
-                }
-            } else if (file === "/etc/passwd") {
-                if (pattern === "user2") {
-                    if (systemState.users.user2.exists) {
-                        return `user2:x:1001:1001::/home/user2:/bin/bash`;
-                    } else {
-                        return "";
-                    }
-                } else if (pattern === "user3") {
-                    if (systemState.users.user3.exists) {
-                        return `user3:x:1002:1002::/home/user3:/bin/bash`;
-                    } else {
-                        return "";
-                    }
-                }
-            }
-            
-            return `grep: ${file}: No such file or directory`;
-        },
-        
-        'groupadd': (args) => {
-            if (args[0] === "-g" && args[1] === "600" && args[2] === "admin") {
-                if (currentStep === 1 || currentStep > 1) {
-                    systemState.groups.admin.exists = true;
-                    configState.adminGroup = true;
-                    updateRequirements();
-                    completeStep(1);
-                    return "Group 'admin' created successfully with GID 600";
-                } else {
-                    return "Please complete the previous steps first.";
-                }
-            }
-            return "Usage: groupadd [options] GROUP";
-        },
-        
-        'useradd': (args) => {
-            if (args[0] === "-G" && args[1] === "admin" && args[2] === "user2") {
-                if (currentStep === 2 || currentStep > 2) {
-                    if (!systemState.groups.admin.exists) {
-                        return "Group 'admin' does not exist. Create it first with 'groupadd -g 600 admin'";
-                    }
-                    
-                    systemState.users.user2.exists = true;
-                    systemState.users.user2.groups.push('admin');
-                    systemState.groups.admin.members.push('user2');
-                    configState.user2 = true;
-                    updateRequirements();
-                    completeStep(2);
-                    return "User 'user2' created successfully with admin as supplementary group";
-                } else {
-                    return "Please complete the previous steps first.";
-                }
-            } else if (args[0] === "-G" && args[1] === "admin" && args[2] === "user3") {
-                if (currentStep === 4 || currentStep > 4) {
-                    if (!systemState.groups.admin.exists) {
-                        return "Group 'admin' does not exist. Create it first with 'groupadd -g 600 admin'";
-                    }
-                    
-                    systemState.users.user3.exists = true;
-                    systemState.users.user3.groups.push('admin');
-                    systemState.groups.admin.members.push('user3');
-                    configState.user3 = true;
-                    updateRequirements();
-                    completeStep(4);
-                    return "User 'user3' created successfully with admin as supplementary group";
-                } else {
-                    return "Please complete the previous steps first.";
-                }
-            }
-            return "Usage: useradd [options] LOGIN";
-        },
-        
-        'passwd': (args) => {
-            if (args.length === 0) {
-                return "Usage: passwd [options] [LOGIN]";
-            }
-            
-            const username = args[0];
-            
-            if (username === "user2") {
-                if (currentStep === 3 || currentStep > 3) {
-                    if (!systemState.users.user2.exists) {
-                        return "passwd: user 'user2' does not exist";
-                    }
-                    
-                    systemState.users.user2.password = 'redhat';
-                    configState.password2 = true;
-                    updateRequirements();
-                    completeStep(3);
-                    return "Changing password for user user2.\nNew password: Retype new password: passwd: all authentication tokens updated successfully.";
-                } else {
-                    return "Please complete the previous steps first.";
-                }
-            } else if (username === "user3") {
-                if (currentStep === 5 || currentStep > 5) {
-                    if (!systemState.users.user3.exists) {
-                        return "passwd: user 'user3' does not exist";
-                    }
-                    
-                    systemState.users.user3.password = 'redhat';
-                    configState.password3 = true;
-                    updateRequirements();
-                    completeStep(5);
-                    return "Changing password for user user3.\nNew password: Retype new password: passwd: all authentication tokens updated successfully.";
-                } else {
-                    return "Please complete the previous steps first.";
-                }
-            }
-            
-            return `passwd: user '${username}' does not exist`;
-        },
-        
-        'id': (args) => {
-            if (args.length === 0) {
-                return "uid=0(root) gid=0(root) groups=0(root) context=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023";
-            }
-            
-            const username = args[0];
-            
-            if (username === "user2") {
-                if (systemState.users.user2.exists) {
-                    const groups = systemState.users.user2.groups.join(',');
-                    return `uid=1001(user2) gid=1001(user2) groups=1001(user2),600(admin)`;
-                } else {
-                    return `id: '${username}': no such user`;
-                }
-            } else if (username === "user3") {
-                if (systemState.users.user3.exists) {
-                    const groups = systemState.users.user3.groups.join(',');
-                    return `uid=1002(user3) gid=1002(user3) groups=1002(user3),600(admin)`;
-                } else {
-                    return `id: '${username}': no such user`;
-                }
-            }
-            
-            return `id: '${username}': no such user`;
-        },
-        
-        'cat': (args) => {
-            if (args[0] === "/etc/group") {
-                let output = "root:x:0:\nbin:x:1:\ndaemon:x:2:\n";
-                if (systemState.groups.admin.exists) {
-                    const members = systemState.groups.admin.members.join(',');
-                    output += `admin:x:600:${members}\n`;
-                }
-                output += "users:x:100:";
-                return output;
-            } else if (args[0] === "/etc/passwd") {
-                let output = "root:x:0:0:root:/root:/bin/bash\nbin:x:1:1:bin:/bin:/sbin/nologin\ndaemon:x:2:2:daemon:/sbin:/sbin/nologin\n";
-                if (systemState.users.user2.exists) {
-                    output += "user2:x:1001:1001::/home/user2:/bin/bash\n";
-                }
-                if (systemState.users.user3.exists) {
-                    output += "user3:x:1002:1002::/home/user3:/bin/bash\n";
-                }
-                return output;
-            }
-            return `cat: ${args[0]}: No such file or directory`;
-        },
-        
         'cd': (args) => {
             if (args.length === 0 || args[0] === "~") {
                 return ""; // Stay in home directory
+            } else if (args[0] === "/etc/yum.repos.d" || 
+                       args[0] === "/etc/yum.repos.d/") {
+                if (currentStep === 1 || currentStep > 1) {
+                    completeStep(1);
+                    return ""; // Successfully changed directory
+                } else {
+                    return "Please complete the previous steps first.";
+                }
             }
             return `bash: cd: ${args[0]}: No such file or directory`;
         },
         
         'ls': (args) => {
-            if (args.length === 0) {
-                return "Desktop\nDocuments\nDownloads\nMusic\nPictures\nPublic\nTemplates\nVideos";
+            if (args.length === 0 || args[0] === "/etc/yum.repos.d") {
+                return "redhat.repo";
             }
             return `ls: cannot access '${args[0]}': No such file or directory`;
+        },
+        
+        'cat': (args) => {
+            if (args[0] === "/etc/yum.repos.d/local.repo") {
+                if (currentStep === 3 || currentStep > 3) {
+                    configState.repoFile = true;
+                    updateRequirements();
+                    completeStep(3);
+                    return localRepoContent;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `cat: ${args[0]}: No such file or directory`;
+        },
+        
+        'vim': (args) => {
+            if (args.length === 0) {
+                return "vim: Please specify a file to edit";
+            }
+            
+            const file = args[0];
+            let content = '';
+            
+            if (file === "/etc/yum.repos.d/local.repo") {
+                content = localRepoContent;
+                if (currentStep === 2 || currentStep > 2) {
+                    const result = openVimEditor(file, content, 'repo');
+                    return result;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            
+            return `vim: cannot open ${file} for writing: No such file or directory`;
+        },
+        
+        'yum': (args) => {
+            if (args[0] === "clean" && args[1] === "all") {
+                if (currentStep === 4 || currentStep > 4) {
+                    configState.yumClean = true;
+                    updateRequirements();
+                    completeStep(4);
+                    return "Cleaning repos: local\nCleaning up everything";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "repolist") {
+                if (currentStep === 5 || currentStep > 5) {
+                    // Check if repository is configured correctly
+                    if (localRepoContent.includes("baseurl=http://server.domain11.example.com/pub/x86_64/Server")) {
+                        configState.baseurl = true;
+                    }
+                    if (localRepoContent.includes("gpgcheck=0")) {
+                        configState.gpgcheck = true;
+                    }
+                    
+                    step5Verifications.repolist = true;
+                    updateRequirements();
+                    
+                    // Don't complete step 5 yet - wait for both verifications
+                    if (step5Verifications.repolist && step5Verifications.listAll) {
+                        configState.yumRepolist = true;
+                        updateRequirements();
+                        completeStep(5);
+                    }
+                    
+                    return "repo id                    repo name\nlocal                       local.repo\n\nTotal packages: 4305";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "list" && args[1] === "all") {
+                if (currentStep === 5 || currentStep > 5) {
+                    if (args[2] === "|" && args[3] === "wc" && args[4] === "-l") {
+                        step5Verifications.listAll = true;
+                        updateRequirements();
+                        
+                        // Don't complete step 5 yet - wait for both verifications
+                        if (step5Verifications.repolist && step5Verifications.listAll) {
+                            configState.yumRepolist = true;
+                            updateRequirements();
+                            completeStep(5);
+                        }
+                        
+                        return "4305";
+                    }
+                    
+                    // Just yum list all without wc -l
+                    step5Verifications.listAll = true;
+                    updateRequirements();
+                    
+                    if (step5Verifications.repolist && step5Verifications.listAll) {
+                        configState.yumRepolist = true;
+                        updateRequirements();
+                        completeStep(5);
+                    }
+                    
+                    return "zsh.x86_64                        5.0.7-3.el7            local\n... [4305 packages listed]";
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "config-manager") {
+                return "Adding repo from: http://content.example.com/rhel7.0/x86-64/dvd";
+            }
+            return `Unknown operation '${args[0]}'.`;
+        },
+        
+        'wc': (args) => {
+            if (args[0] === "-l") {
+                // This handles the pipe case separately in the yum command
+                return "wc: missing file operand";
+            }
+            return `wc: invalid option -- '${args[0]}'`;
         },
         
         'clear': () => {
@@ -1141,7 +1101,7 @@
         },
         
         'help': () => {
-            return "Available commands: useradd, groupadd, passwd, id, grep, cat, cd, ls, clear, help";
+            return "Available commands: vim, cat, cd, ls, yum, wc, clear, help";
         }
     };
     
@@ -1160,16 +1120,25 @@
         vimTextarea.value = content;
         
         // Set up instructions based on file type
-        vimInstructionsContent.innerHTML = `
-            <p>Edit the file as needed.</p>
-            <p><strong>Vim Commands:</strong></p>
-            <ul>
-                <li>Press <code>i</code> to enter Insert mode</li>
-                <li>Type the required configuration</li>
-                <li>Press <code>ESC</code> to return to Command mode</li>
-                <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
-            </ul>
-        `;
+        if (fileType === 'repo') {
+            vimInstructionsContent.innerHTML = `
+                <p>Edit the YUM repository configuration file.</p>
+                <p>Add these exact contents to the file:</p>
+                <div class="file-content">[local]
+name=local.repo
+baseurl=http://server.domain11.example.com/pub/x86_64/Server
+enabled=1
+gpgcheck=0</div>
+                <p><strong>Important:</strong> Wrong YUM configuration will cause following labs to fail!</p>
+                <p><strong>Vim Commands:</strong></p>
+                <ul>
+                    <li>Press <code>i</code> to enter Insert mode</li>
+                    <li>Type the required configuration</li>
+                    <li>Press <code>ESC</code> to return to Command mode</li>
+                    <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
+                </ul>
+            `;
+        }
         
         // Show the Vim overlay
         vimOverlay.style.display = 'flex';
@@ -1192,6 +1161,16 @@
     function handleVimCommand(command) {
         if (command === 'w' || command === 'write') {
             // Save the file
+            if (vimState.file === "/etc/yum.repos.d/local.repo") {
+                localRepoContent = vimTextarea.value;
+                if (localRepoContent.includes("[local]") && 
+                    localRepoContent.includes("baseurl=http://server.domain11.example.com/pub/x86_64/Server") &&
+                    localRepoContent.includes("gpgcheck=0")) {
+                    configState.repoFile = true;
+                    updateRequirements();
+                    completeStep(2);
+                }
+            }
             return "File saved";
         } else if (command === 'q' || command === 'quit') {
             // Close the editor
@@ -1229,34 +1208,29 @@
     
     // Function to update requirements display
     function updateRequirements() {
-        if (configState.adminGroup) {
-            document.getElementById('req-admin-group').classList.add('completed');
-            document.getElementById('req-admin-group').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.repoFile) {
+            document.getElementById('req-repo-file').classList.add('completed');
+            document.getElementById('req-repo-file').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.user2) {
-            document.getElementById('req-user2').classList.add('completed');
-            document.getElementById('req-user2').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.baseurl) {
+            document.getElementById('req-baseurl').classList.add('completed');
+            document.getElementById('req-baseurl').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.user3) {
-            document.getElementById('req-user3').classList.add('completed');
-            document.getElementById('req-user3').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.gpgcheck) {
+            document.getElementById('req-gpgcheck').classList.add('completed');
+            document.getElementById('req-gpgcheck').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.password2) {
-            document.getElementById('req-password2').classList.add('completed');
-            document.getElementById('req-password2').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.yumClean) {
+            document.getElementById('req-yum-clean').classList.add('completed');
+            document.getElementById('req-yum-clean').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.password3) {
-            document.getElementById('req-password3').classList.add('completed');
-            document.getElementById('req-password3').querySelector('.requirement-checkbox').textContent = '✓';
-        }
-        
-        if (configState.verification) {
-            document.getElementById('req-verification').classList.add('completed');
-            document.getElementById('req-verification').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.yumRepolist) {
+            document.getElementById('req-yum-repolist').classList.add('completed');
+            document.getElementById('req-yum-repolist').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
         // Update progress
@@ -1293,6 +1267,8 @@
                 if (stepCommands[currentStep]) {
                     addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep][0]}`);
                 }
+            } else {
+                addTerminalOutput(`[root@station ~]# All steps completed!`);
             }
         }
     }
@@ -1327,15 +1303,6 @@
             const result = commands[command](args);
             if (result) {
                 addTerminalOutput(result);
-                
-                // Check if we've completed step 6 (verification)
-                if (currentStep === 6 && 
-                    (command === 'id' && (args[0] === 'user2' || args[0] === 'user3') ||
-                     command === 'grep' && (args[0] === 'user2' || args[0] === 'user3'))) {
-                    configState.verification = true;
-                    updateRequirements();
-                    completeStep(6);
-                }
             }
         } else {
             addTerminalOutput(`bash: ${command}: command not found`);
@@ -1613,4 +1580,3 @@
 </script>
 </body>
 </html>
-
