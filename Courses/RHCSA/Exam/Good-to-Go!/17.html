@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>RHCSA Exam Lab 16: Kernel Upgrade</title>
+    <title>RHCSA Exam Lab 17: Partition and Filesystem Management</title>
     <style>
         :root {
             --redhat-red: #cc0000;
@@ -591,11 +591,11 @@
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
 </head>
- <body>
+<body>
 <div class="lab-container">
     <div class="header">
         <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
-        <h1>RHCSA Exam Lab 16: Kernel Upgrade</h1>
+        <h1>RHCSA Exam Lab 17: Partition and Filesystem Management</h1>
     </div>
     
     <div class="main-content">
@@ -604,8 +604,8 @@
             
             <div class="lab-intro">
                 <h3>Lab Objective</h3>
-                <p>Upgrade the kernel to version 2.6.36.7.1, configure the system to boot from the new kernel by default, and keep the old kernel available as a backup.</p>
-                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <p>Create a 512M partition, format it as ext4 filesystem, and configure it to mount automatically at /mnt/data on system boot.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill"></div>
                 </div>
@@ -613,26 +613,26 @@
             </div>
 
             <div class="requirements-panel">
-                <h4>Kernel Upgrade Requirements</h4>
-                <div class="requirement-item" id="req-check-grub">
+                <h4>Partition and Filesystem Requirements</h4>
+                <div class="requirement-item" id="req-partition">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Check current GRUB configuration</span>
+                    <span class="requirement-label">Create a 512M partition using fdisk</span>
                 </div>
-                <div class="requirement-item" id="req-navigate-boot">
+                <div class="requirement-item" id="req-filesystem">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Navigate to /boot directory</span>
+                    <span class="requirement-label">Format the partition as ext4 filesystem</span>
                 </div>
-                <div class="requirement-item" id="req-download-kernel">
+                <div class="requirement-item" id="req-mount">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Download kernel RPM package</span>
+                    <span class="requirement-label">Mount the partition at /mnt/data</span>
                 </div>
-                <div class="requirement-item" id="req-install-kernel">
+                <div class="requirement-item" id="req-fstab">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Install new kernel using rpm</span>
+                    <span class="requirement-label">Configure automatic mounting in /etc/fstab</span>
                 </div>
-                <div class="requirement-item" id="req-configure-grub">
+                <div class="requirement-item" id="req-verify">
                     <span class="requirement-checkbox">☐</span>
-                    <span class="requirement-label">Configure GRUB to boot new kernel by default</span>
+                    <span class="requirement-label">Verify the configuration persists after reboot</span>
                 </div>
             </div>
 
@@ -642,157 +642,136 @@
                     Lab Introduction
                     <span class="step-status status-completed">Completed</span>
                 </h3>
-                <p>Welcome to the RHCSA Kernel Upgrade Lab. In this lab, you will upgrade the kernel, configure GRUB to boot from the new kernel by default, and keep the old kernel as a fallback option.</p>
-                <p><strong>Important:</strong> Always keep at least one old kernel available for troubleshooting if the new kernel fails to boot.</p>
+                <p>Welcome to the RHCSA Partition and Filesystem Management Lab. In this lab, you will create a partition, format it with a filesystem, and configure automatic mounting.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
             </div>
 
             <div class="guide-step current" id="step1">
                 <h3>
                     <span class="step-number">1</span>
-                    Check Current GRUB Configuration
+                    Create a New Partition
                     <span class="step-status status-current">Current Step</span>
                 </h3>
-                <p>First, let's examine the current GRUB configuration to understand the boot setup.</p>
+                <p>First, we need to create a new partition on an available disk. We'll use fdisk to create a 512MB partition.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    cat /etc/grub.conf
+                    fdisk /dev/vda
                 </div>
                 
-                <p>This will display the current bootloader configuration. Note the current kernel version and boot order.</p>
+                <p>Once in fdisk, follow these steps:</p>
+                <ol>
+                    <li>Press <code>n</code> to create a new partition</li>
+                    <li>Press <code>p</code> for primary partition</li>
+                    <li>Accept the default partition number</li>
+                    <li>Accept the default first sector</li>
+                    <li>Type <code>+512M</code> for the last sector to create a 512MB partition</li>
+                    <li>Press <code>w</code> to write the changes and exit</li>
+                </ol>
 
                 <div class="concept">
-                    <h4>Understanding GRUB Configuration</h4>
-                    <p>The GRUB configuration file (<code>/etc/grub.conf</code>) controls:</p>
+                    <h4>Understanding Disk Partitioning</h4>
+                    <p>fdisk is a command-line utility for disk partitioning. It allows you to create, delete, and manage partitions on storage devices.</p>
+                    <p>Key fdisk commands:</p>
                     <ul>
-                        <li>Which kernel boots by default</li>
-                        <li>Available kernel options</li>
-                        <li>Boot timeout settings</li>
-                        <li>Boot parameters</li>
+                        <li><code>n</code> - Create a new partition</li>
+                        <li><code>d</code> - Delete a partition</li>
+                        <li><code>p</code> - Print the partition table</li>
+                        <li><code>w</code> - Write changes and exit</li>
+                        <li><code>q</code> - Quit without saving</li>
                     </ul>
-                    <p>The <code>default</code> parameter determines which menu entry boots automatically (0 = first entry).</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step2">
                 <h3>
                     <span class="step-number">2</span>
-                    Navigate to /boot Directory
+                    Update Kernel Partition Table
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Now let's navigate to the /boot directory where kernel files are stored.</p>
+                <p>After creating the partition, we need to inform the kernel about the partition table changes.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    cd /boot
+                    partprobe /dev/vda
                 </div>
                 
-                <p>Once in the /boot directory, you can list the current kernel files:</p>
-                
-                <div class="command-hint">
-                    ls -la vmlinuz*
+                <p>This command updates the kernel's in-memory copy of the partition table without requiring a system reboot.</p>
+
+                <div class="concept">
+                    <h4>About partprobe</h4>
+                    <p>The partprobe command informs the operating system about partition table changes. This is necessary after modifying partitions with fdisk to ensure the system recognizes the new partition without a reboot.</p>
                 </div>
-                
-                <p class="warning">Note: The /boot directory contains critical boot files. Be careful when modifying files here.</p>
             </div>
 
             <div class="guide-step" id="step3">
                 <h3>
                     <span class="step-number">3</span>
-                    Download New Kernel RPM
+                    Format the Partition as ext4
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Now we need to download the new kernel RPM package. We'll use lftp to connect to the repository.</p>
+                <p>Now we need to create an ext4 filesystem on our new partition.</p>
                 
                 <div class="hint-box">
-                    <strong>Type these commands exactly:</strong>
+                    <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    lftp it
+                    mkfs -t ext4 /dev/vda5
                 </div>
                 
-                <p>Once in lftp, navigate to the kernel directory and download the package:</p>
-                
-                <div class="command-hint">
-                    get dr/dom/kernel-2.6.36.7.1.rpm
-                </div>
-                
-                <p>Then exit lftp:</p>
-                
-                <div class="command-hint">
-                    exit
-                </div>
+                <p class="warning">Note: The partition number might be different depending on your system. Use <code>fdisk -l /dev/vda</code> to check the correct partition number.</p>
 
                 <div class="concept">
-                    <h4>About Kernel Versions</h4>
-                    <p>The kernel version 2.6.36.7.1 follows this format:</p>
-                    <ul>
-                        <li><strong>2</strong>: Major version</li>
-                        <li><strong>6</strong>: Minor version</li>
-                        <li><strong>36</strong>: Patch level</li>
-                        <li><strong>7.1</strong>: Additional patches and build number</li>
-                    </ul>
-                    <p>Always test new kernels before making them the default.</p>
+                    <h4>Understanding Filesystems</h4>
+                    <p>A filesystem organizes how data is stored and retrieved on a storage device. ext4 is the default filesystem for many Linux distributions, offering good performance, journaling, and support for large files and filesystems.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step4">
                 <h3>
                     <span class="step-number">4</span>
-                    Install New Kernel
+                    Create Mount Point Directory
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Now let's install the downloaded kernel RPM package.</p>
+                <p>We need to create a directory where we'll mount our new filesystem.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    rpm -ivh kernel-2.6.36.7.1.rpm
+                    mkdir -p /mnt/data
                 </div>
                 
-                <p>Using <code>-ivh</code> (install, verbose, hash marks) provides feedback during installation.</p>
-                
-                <p>Verify the installation by checking available kernels:</p>
-                
-                <div class="command-hint">
-                    rpm -qa | grep kernel
-                </div>
-                
-                <p class="warning">Important: Use <code>rpm -i</code> (install) not <code>rpm -U</code> (upgrade) to keep the old kernel.</p>
+                <p>The <code>-p</code> flag ensures that parent directories are created if they don't exist.</p>
             </div>
 
             <div class="guide-step" id="step5">
                 <h3>
                     <span class="step-number">5</span>
-                    Configure GRUB to Boot New Kernel
+                    Configure Automatic Mounting
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Finally, we need to edit the GRUB configuration to make the new kernel boot by default.</p>
+                <p>Now we need to edit the /etc/fstab file to configure automatic mounting at boot.</p>
                 
                 <div class="hint-box">
                     <strong>Type this command exactly:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    vim /etc/grub.conf
+                    vim /etc/fstab
                 </div>
                 
-                <p>Look for the line that says <code>default=X</code> and change it to:</p>
+                <p>Add this line to the end of the file:</p>
                 
-                <div class="file-content">default=0</div>
-                
-                <p>This sets the first menu entry (which should now be the new kernel) as the default.</p>
-                
-                <p>Verify that the new kernel is listed first in the menu entries section.</p>
+                <div class="file-content">/dev/vda5 /mnt/data ext4 defaults 0 0</div>
                 
                 <p>To save and exit vim:</p>
                 <ol>
@@ -801,78 +780,91 @@
                 </ol>
 
                 <div class="concept">
-                    <h4>GRUB Menu Entry Order</h4>
-                    <p>After installing a new kernel:</p>
+                    <h4>Understanding /etc/fstab</h4>
+                    <p>The /etc/fstab file contains information about filesystems and how they should be mounted at boot. Each line has six fields:</p>
                     <ul>
-                        <li>The new kernel is added as the first menu entry (index 0)</li>
-                        <li>The old kernel becomes the second entry (index 1)</li>
-                        <li>Setting <code>default=0</code> makes the new kernel boot automatically</li>
-                        <li>You can still select the old kernel manually during boot</li>
+                        <li><strong>Device</strong>: The partition or device to mount</li>
+                        <li><strong>Mount point</strong>: Directory where the filesystem will be mounted</li>
+                        <li><strong>Filesystem type</strong>: Type of filesystem (ext4, xfs, etc.)</li>
+                        <li><strong>Options</strong>: Mount options (defaults, noauto, etc.)</li>
+                        <li><strong>Dump</strong>: Used by dump utility (usually 0)</li>
+                        <li><strong>Pass</strong>: Filesystem check order (0=no check, 1=root, 2=others)</li>
                     </ul>
-                    <p>Always verify the boot order before rebooting.</p>
                 </div>
             </div>
 
             <div class="guide-step" id="step6">
                 <h3>
                     <span class="step-number">6</span>
-                    Verify Configuration
+                    Test the Configuration
                     <span class="step-status status-pending">Pending</span>
                 </h3>
-                <p>Let's verify that all configurations are correct.</p>
+                <p>Let's test our configuration by mounting all filesystems defined in /etc/fstab.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    mount -a
+                </div>
+                
+                <p>This command mounts all filesystems mentioned in /etc/fstab. If there are no errors, our configuration is correct.</p>
+            </div>
+
+            <div class="guide-step" id="step7">
+                <h3>
+                    <span class="step-number">7</span>
+                    Verify the Configuration
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Finally, let's verify that our partition is properly mounted and configured.</p>
                 
                 <div class="hint-box">
                     <strong>Type these commands one by one:</strong>
                 </div>
                 
                 <div class="command-hint">
-                    cat /etc/grub.conf | grep default
+                    mount | grep /dev/vda5
                 </div>
-                <p>Should show: <code>default=0</code></p>
+                <p>Should show the mounted filesystem at /mnt/data</p>
                 
                 <div class="command-hint">
-                    rpm -qa | grep kernel-2.6.36.7.1
+                    df -h /mnt/data
                 </div>
-                <p>Should confirm the new kernel is installed</p>
+                <p>Should show the filesystem with approximately 512M capacity</p>
                 
                 <div class="command-hint">
-                    ls /boot/vmlinuz* | head -5
+                    lsblk /dev/vda5
                 </div>
-                <p>Should show both old and new kernel files</p>
-                
-                <div class="command-hint">
-                    uname -r
-                </div>
-                <p>Shows the currently running kernel (will change after reboot)</p>
+                <p>Should show the partition details with mountpoint /mnt/data</p>
 
                 <div class="concept">
                     <h4>Verification Commands</h4>
-                    <p>After kernel installation:</p>
+                    <p>After configuring partitions and filesystems, always verify with these commands:</p>
                     <ul>
-                        <li><code>rpm -qa | grep kernel</code> - Lists all installed kernels</li>
-                        <li><code>ls /boot/vmlinuz*</code> - Shows kernel image files</li>
-                        <li><code>grubby --default-kernel</code> - Shows default kernel path</li>
-                        <li><code>uname -r</code> - Shows current running kernel</li>
+                        <li><code>mount</code> - Shows currently mounted filesystems</li>
+                        <li><code>df -h</code> - Shows disk space usage in human-readable format</li>
+                        <li><code>lsblk</code> - Lists information about all available block devices</li>
+                        <li><code>blkid</code> - Shows UUIDs and filesystem types</li>
                     </ul>
-                    <p>Remember: The kernel change takes effect after reboot.</p>
                 </div>
             </div>
             
             <div id="completion-message" class="completion-message" style="display: none;">
                 <h3>🎉 Lab Completed Successfully!</h3>
-                <p>All kernel upgrade requirements have been met.</p>
-                <p>The system will boot from the new kernel (2.6.36.7.1) by default, with the old kernel available as a fallback.</p>
-                <p><strong>Important:</strong> Test the new kernel thoroughly before rebooting production systems.</p>
+                <p>All partition and filesystem requirements have been met.</p>
+                <p>You can now proceed to the next lab.</p>
             </div>
         </div>
         
         <div class="terminal-panel">
             <div class="terminal" id="terminal-output">
-                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 16: Kernel Upgrade</div>
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 17: Partition and Filesystem Management</div>
                 <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
                 <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
-                <div><span class="prompt">[root@station ~]#</span> Current step: Check Current GRUB Configuration</div>
-                <div><span class="prompt">[root@station ~]#</span> Type: <code>cat /etc/grub.conf</code></div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Create a New Partition</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>fdisk /dev/vda</code></div>
                 <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
             </div>
             <div class="command-line">
@@ -946,65 +938,56 @@
     let tabCompletionItems = [];
     let lastTabInput = '';
     
+    // Track verification command execution
+    let verificationCommandsExecuted = 0;
+    const totalVerificationCommands = 3; // mount, df, lsblk
+    
     // Available commands for tab completion
     const availableCommands = [
-        'vim', 'cat', 'cd', 'ls', 'lftp', 'get', 'exit', 'rpm', 'grep', 'uname', 'clear', 'help'
+        'fdisk', 'partprobe', 'mkfs', 'mkdir', 'mount', 'vim', 'cat', 'lsblk', 'df', 'clear', 'help'
     ];
     
     // Available file paths for tab completion
     const filePaths = {
-        '/': ['boot/', 'etc/'],
-        '/etc/': ['grub.conf', 'fstab', 'passwd'],
-        '/boot/': ['vmlinuz', 'initramfs', 'grub/']
+        '/dev/': ['vda', 'vdb', 'vdc'],
+        '/etc/': ['fstab'],
+        '/mnt/': ['data']
     };
     
     // Track configuration state
     const configState = {
-        checkGrub: false,
-        navigateBoot: false,
-        downloadKernel: false,
-        installKernel: false,
-        configureGrub: false
+        partition: false,
+        filesystem: false,
+        mount: false,
+        fstab: false,
+        verify: false
     };
-    
-    // Simulated file contents
-    let grubConfContent = `# grub.conf generated by anaconda
-#
-# Note that you do not have to rerun grub after making changes to this file
-# NOTICE:  You have a /boot partition.  This means that
-#          all kernel and initrd paths are relative to /boot/, eg.
-#          root (hd0,0)
-#          kernel /vmlinuz-version ro root=/dev/mapper/vg_station-lv_root
-#          initrd /initramfs-version.img
-#boot=/dev/sda
-default=1
-timeout=5
-splashimage=(hd0,0)/grub/splash.xpm.gz
-hiddenmenu
-title Red Hat Enterprise Linux (2.6.32-71.el6.x86_64)
-\troot (hd0,0)
-\tkernel /vmlinuz-2.6.32-71.el6.x86_64 ro root=/dev/mapper/vg_station-lv_root rd_NO_LUKS LANG=en_US.UTF-8 rd_NO_MD SYSFONT=latarcyrheb-sun16 crashkernel=auto rd_LVM_LV=vg_station/lv_root  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet
-\tinitrd /initramfs-2.6.32-71.el6.x86_64.img
-title Red Hat Enterprise Linux (2.6.32-70.el6.x86_64)
-\troot (hd0,0)
-\tkernel /vmlinuz-2.6.32-70.el6.x86_64 ro root=/dev/mapper/vg_station-lv_root rd_NO_LUKS LANG=en_US.UTF-8 rd_NO_MD SYSFONT=latarcyrheb-sun16 crashkernel=auto rd_LVM_LV=vg_station/lv_root  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet
-\tinitrd /initramfs-2.6.32-70.el6.x86_64.img`;
     
     // Expected commands for each step
     const stepCommands = {
-        1: ['cat /etc/grub.conf'],
-        2: ['cd /boot'],
-        3: ['lftp it', 'get dr/dom/kernel-2.6.36.7.1.rpm', 'exit'],
-        4: ['rpm -ivh kernel-2.6.36.7.1.rpm'],
-        5: ['vim /etc/grub.conf'],
-        6: ['cat /etc/grub.conf | grep default', 'rpm -qa | grep kernel-2.6.36.7.1', 'ls /boot/vmlinuz*', 'uname -r']
+        1: ['fdisk /dev/vda'],
+        2: ['partprobe /dev/vda'],
+        3: ['mkfs -t ext4 /dev/vda5'],
+        4: ['mkdir -p /mnt/data'],
+        5: ['vim /etc/fstab'],
+        6: ['mount -a'],
+        7: ['mount | grep /dev/vda5', 'df -h /mnt/data', 'lsblk /dev/vda5']
     };
     
-    // Simulated state
-    let currentKernel = '2.6.32-71.el6.x86_64';
-    let newKernelInstalled = false;
-    let inLftpMode = false;
-    let kernelDownloaded = false;
+    // Simulated file contents
+    let fstabContent = `#
+# /etc/fstab
+# Created by anaconda on Thu May 20 12:45:34 2021
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk/'.
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info.
+#
+# After editing this file, run 'systemctl daemon-reload' to update systemd
+# units generated from this file.
+#
+/dev/mapper/rhel-root   /                       xfs     defaults        0 0
+UUID=abcd1234-5678-90ef-ghij-klmnopqrstuv /boot                   xfs     defaults        0 0
+/dev/mapper/rhel-swap   none                    swap    defaults        0 0`;
     
     // Vim editor state
     let vimState = {
@@ -1016,160 +999,98 @@ title Red Hat Enterprise Linux (2.6.32-70.el6.x86_64)
         fileType: ''
     };
     
+    // Track partition state
+    let partitionCreated = false;
+    let partitionNumber = 5; // Default partition number
+    
     const commands = {
-        'cat': (args) => {
+        'fdisk': (args) => {
             if (args.length === 0) {
-                return "cat: missing file operand";
-            }
-            
-            if (args[0] === "/etc/grub.conf") {
+                return "fdisk: missing device argument";
+            } else if (args[0] === "/dev/vda") {
                 if (currentStep === 1 || currentStep > 1) {
-                    configState.checkGrub = true;
+                    // Simulate fdisk interaction
+                    addTerminalOutput("Welcome to fdisk (util-linux 2.32.1).");
+                    addTerminalOutput("Changes will remain in memory only, until you decide to write them.");
+                    addTerminalOutput("Be careful before using the write command.");
+                    addTerminalOutput("");
+                    addTerminalOutput("Command (m for help): n");
+                    addTerminalOutput("Partition type");
+                    addTerminalOutput("   p   primary (0 primary, 0 extended, 4 free)");
+                    addTerminalOutput("   e   extended (container for logical partitions)");
+                    addTerminalOutput("Select (default p): p");
+                    addTerminalOutput("Partition number (1-4, default 1): " + partitionNumber);
+                    addTerminalOutput("First sector (2048-41943039, default 2048): ");
+                    addTerminalOutput("Last sector, +sectors or +size{K,M,G,T,P} (2048-41943039, default 41943039): +512M");
+                    addTerminalOutput("");
+                    addTerminalOutput("Created a new partition " + partitionNumber + " of type 'Linux' and of size 512 MiB.");
+                    addTerminalOutput("");
+                    addTerminalOutput("Command (m for help): w");
+                    addTerminalOutput("The partition table has been altered.");
+                    addTerminalOutput("Calling ioctl() to re-read partition table.");
+                    addTerminalOutput("Syncing disks.");
+                    
+                    configState.partition = true;
                     updateRequirements();
                     completeStep(1);
-                    return grubConfContent;
+                    return "";
                 } else {
                     return "Please complete the previous steps first.";
                 }
-            } else if (args.length >= 2 && args[0] === "/etc/grub.conf" && args[1] === "|") {
-                // Handle pipe command
-                if (args[2] === "grep" && args[3] === "default") {
-                    if (currentStep === 6 || currentStep > 6) {
-                        const lines = grubConfContent.split('\n');
-                        const defaultLine = lines.find(line => line.startsWith('default='));
-                        return defaultLine || "default=1";
-                    } else {
-                        return "Please complete the previous steps first.";
-                    }
-                }
             }
-            
-            return `cat: ${args[0]}: No such file or directory`;
+            return `fdisk: cannot open ${args[0]}: No such file or directory`;
         },
         
-        'cd': (args) => {
-            if (args.length === 0 || args[0] === "~") {
-                return ""; // Stay in home directory
-            } else if (args[0] === "/boot") {
+        'partprobe': (args) => {
+            if (args.length === 0) {
+                return "partprobe: missing device argument";
+            } else if (args[0] === "/dev/vda") {
                 if (currentStep === 2 || currentStep > 2) {
-                    configState.navigateBoot = true;
-                    updateRequirements();
-                    completeStep(2);
-                    return ""; // Successfully changed directory
+                    if (configState.partition) {
+                        completeStep(2);
+                        return "Partition table updated successfully.";
+                    } else {
+                        return "Please create a partition first using fdisk.";
+                    }
                 } else {
                     return "Please complete the previous steps first.";
                 }
             }
-            return `bash: cd: ${args[0]}: No such file or directory`;
+            return `partprobe: cannot open ${args[0]}: No such file or directory`;
         },
         
-        'ls': (args) => {
-            if (args.length === 0 || args[0] === "/boot") {
-                if (newKernelInstalled) {
-                    return "config-2.6.32-71.el6.x86_64\nconfig-2.6.36.7.1\ninitramfs-2.6.32-71.el6.x86_64.img\ninitramfs-2.6.36.7.1.img\nSystem.map-2.6.32-71.el6.x86_64\nSystem.map-2.6.36.7.1\nvmlinuz-2.6.32-71.el6.x86_64\nvmlinuz-2.6.36.7.1\ngrub/";
-                } else {
-                    return "config-2.6.32-71.el6.x86_64\ninitramfs-2.6.32-71.el6.x86_64.img\nSystem.map-2.6.32-71.el6.x86_64\nvmlinuz-2.6.32-71.el6.x86_64\ngrub/";
-                }
-            } else if (args.length > 0 && args[0].includes('vmlinuz')) {
-                if (newKernelInstalled) {
-                    return "vmlinuz-2.6.36.7.1\nvmlinuz-2.6.32-71.el6.x86_64";
-                } else {
-                    return "vmlinuz-2.6.32-71.el6.x86_64";
-                }
-            }
-            return `ls: cannot access '${args[0] || ""}': No such file or directory`;
-        },
-        
-        'lftp': (args) => {
-            if (args[0] === "it") {
+        'mkfs': (args) => {
+            if (args.length < 3 || args[0] !== "-t" || args[1] !== "ext4") {
+                return "Usage: mkfs -t <filesystem> <device>";
+            } else if (args[2] === "/dev/vda5") {
                 if (currentStep === 3 || currentStep > 3) {
-                    inLftpMode = true;
-                    addTerminalOutput(`<span class="prompt">lftp it></span> Connected to it`);
-                    addTerminalOutput(`<span class="prompt">lftp it></span> Type 'get dr/dom/kernel-2.6.36.7.1.rpm' to download`);
-                    addTerminalOutput(`<span class="prompt">lftp it></span> Type 'exit' to quit`);
-                    return ""; // Enter lftp mode
-                } else {
-                    return "Please complete the previous steps first.";
-                }
-            }
-            return `lftp: ${args[0]}: unknown command`;
-        },
-        
-        'get': (args) => {
-            if (!inLftpMode) {
-                return "bash: get: command not found";
-            }
-            
-            if (args[0] === "dr/dom/kernel-2.6.36.7.1.rpm") {
-                configState.downloadKernel = true;
-                kernelDownloaded = true;
-                updateRequirements();
-                return "kernel-2.6.36.7.1.rpm downloaded successfully (12.4 MB)";
-            }
-            return `get: ${args[0]}: file not found`;
-        },
-        
-        'exit': () => {
-            if (inLftpMode) {
-                inLftpMode = false;
-                configState.downloadKernel = true;
-                updateRequirements();
-                completeStep(3);
-                return "Disconnected from lftp";
-            }
-            return ""; // Normal exit command
-        },
-        
-        'rpm': (args) => {
-            if (args[0] === "-ivh" && args[1] === "kernel-2.6.36.7.1.rpm") {
-                if (currentStep === 4 || currentStep > 4) {
-                    if (kernelDownloaded) {
-                        configState.installKernel = true;
-                        newKernelInstalled = true;
-                        
-                        // Update grub.conf to add new kernel as first entry
-                        const lines = grubConfContent.split('\n');
-                        const newKernelEntry = `title Red Hat Enterprise Linux (2.6.36.7.1)
-\troot (hd0,0)
-\tkernel /vmlinuz-2.6.36.7.1 ro root=/dev/mapper/vg_station-lv_root rd_NO_LUKS LANG=en_US.UTF-8 rd_NO_MD SYSFONT=latarcyrheb-sun16 crashkernel=auto rd_LVM_LV=vg_station/lv_root  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet
-\tinitrd /initramfs-2.6.36.7.1.img`;
-                        
-                        // Find where to insert (after hiddenmenu line)
-                        const hiddenmenuIndex = lines.findIndex(line => line.includes('hiddenmenu'));
-                        if (hiddenmenuIndex !== -1) {
-                            lines.splice(hiddenmenuIndex + 1, 0, newKernelEntry);
-                            grubConfContent = lines.join('\n');
-                        }
-                        
+                    if (configState.partition) {
+                        configState.filesystem = true;
                         updateRequirements();
-                        completeStep(4);
-                        return "Preparing...\n########################################################################\n[100%]\nPackage kernel-2.6.36.7.1 successfully installed";
+                        completeStep(3);
+                        return "mke2fs 1.45.6 (20-Mar-2020)\nCreating filesystem with 524288 1k blocks and 131072 inodes\nFilesystem UUID: 12345678-1234-1234-1234-123456789abc\nSuperblock backups stored on blocks: \n\t32768, 98304, 163840, 229376, 294912\n\nAllocating group tables: done\nWriting inode tables: done\nCreating journal (16384 blocks): done\nWriting superblocks and filesystem accounting information: done";
                     } else {
-                        return "error: package kernel-2.6.36.7.1.rpm not found";
+                        return "Please create a partition first using fdisk.";
                     }
                 } else {
                     return "Please complete the previous steps first.";
                 }
-            } else if (args[0] === "-qa" && args[1] === "|") {
-                if (args[2] === "grep" && args[3] === "kernel-2.6.36.7.1") {
-                    if (newKernelInstalled) {
-                        return "kernel-2.6.36.7.1-1.el6.x86_64\nkernel-2.6.32-71.el6.x86_64\nkernel-headers-2.6.32-71.el6.x86_64";
-                    } else {
-                        return "kernel-2.6.32-71.el6.x86_64\nkernel-headers-2.6.32-71.el6.x86_64";
-                    }
-                }
             }
-            return `rpm: unknown option '${args[0]}'`;
+            return `mkfs: cannot format ${args[2]}: No such file or directory`;
         },
         
-        'grep': (args) => {
-            // This is typically handled via pipe, but handle direct calls
-            if (args[0] === "default" && args[1] === "/etc/grub.conf") {
-                const lines = grubConfContent.split('\n');
-                const defaultLine = lines.find(line => line.startsWith('default='));
-                return defaultLine || "";
+        'mkdir': (args) => {
+            if (args.length === 0) {
+                return "mkdir: missing operand";
+            } else if (args[0] === "-p" && args[1] === "/mnt/data") {
+                if (currentStep === 4 || currentStep > 4) {
+                    completeStep(4);
+                    return ""; // Successfully created directory
+                } else {
+                    return "Please complete the previous steps first.";
+                }
             }
-            return "";
+            return `mkdir: cannot create directory '${args[0]}': File exists`;
         },
         
         'vim': (args) => {
@@ -1180,10 +1101,10 @@ title Red Hat Enterprise Linux (2.6.32-70.el6.x86_64)
             const file = args[0];
             let content = '';
             
-            if (file === "/etc/grub.conf") {
-                content = grubConfContent;
+            if (file === "/etc/fstab") {
+                content = fstabContent;
                 if (currentStep === 5 || currentStep > 5) {
-                    const result = openVimEditor(file, content, 'grub');
+                    const result = openVimEditor(file, content, 'fstab');
                     return result;
                 } else {
                     return "Please complete the previous steps first.";
@@ -1193,11 +1114,69 @@ title Red Hat Enterprise Linux (2.6.32-70.el6.x86_64)
             return `vim: cannot open ${file} for writing: No such file or directory`;
         },
         
-        'uname': (args) => {
-            if (args[0] === "-r") {
-                return currentKernel;
+        'mount': (args) => {
+            if (args.length === 0) {
+                return "mount: no mount point specified";
+            } else if (args[0] === "-a") {
+                if (currentStep === 6 || currentStep > 6) {
+                    if (configState.fstab) {
+                        configState.mount = true;
+                        updateRequirements();
+                        completeStep(6);
+                        return ""; // Successfully mounted all filesystems
+                    } else {
+                        return "Please configure /etc/fstab first.";
+                    }
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args[0] === "|" && args[1] === "grep" && args[2] === "/dev/vda5") {
+                if (configState.mount) {
+                    verificationCommandsExecuted++;
+                    checkVerificationComplete();
+                    return "/dev/vda5 on /mnt/data type ext4 (rw,relatime,seclabel)";
+                } else {
+                    return ""; // Not mounted yet
+                }
             }
-            return `uname: invalid option -- '${args[0]}'`;
+            return `mount: ${args.join(' ')}: mount failed`;
+        },
+        
+        'df': (args) => {
+            if (args.length === 0) {
+                return "df: no file system specified";
+            } else if (args[0] === "-h" && args[1] === "/mnt/data") {
+                if (configState.mount) {
+                    verificationCommandsExecuted++;
+                    checkVerificationComplete();
+                    return "Filesystem      Size  Used Avail Use% Mounted on\n/dev/vda5       488M   24K  453M   1% /mnt/data";
+                } else {
+                    return "df: '/mnt/data': No such file or directory";
+                }
+            }
+            return `df: '${args.join(' ')}': No such file or directory`;
+        },
+        
+        'lsblk': (args) => {
+            if (args.length === 0) {
+                return "lsblk: no device specified";
+            } else if (args[0] === "/dev/vda5") {
+                if (configState.mount) {
+                    verificationCommandsExecuted++;
+                    checkVerificationComplete();
+                    return "NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT\nvda5   252:5    0  512M  0 part /mnt/data";
+                } else {
+                    return "NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT\nvda5   252:5    0  512M  0 part";
+                }
+            }
+            return `lsblk: ${args[0]}: not a block device`;
+        },
+        
+        'cat': (args) => {
+            if (args[0] === "/etc/fstab") {
+                return fstabContent;
+            }
+            return `cat: ${args[0]}: No such file or directory`;
         },
         
         'clear': () => {
@@ -1206,9 +1185,21 @@ title Red Hat Enterprise Linux (2.6.32-70.el6.x86_64)
         },
         
         'help': () => {
-            return "Available commands: vim, cat, cd, ls, lftp, get, exit, rpm, grep, uname, clear, help";
+            return "Available commands: fdisk, partprobe, mkfs, mkdir, mount, vim, cat, lsblk, df, clear, help";
         }
     };
+    
+    // Function to check if all verification commands have been executed
+    function checkVerificationComplete() {
+        if (verificationCommandsExecuted >= totalVerificationCommands) {
+            configState.verify = true;
+            updateRequirements();
+            // Complete step 7 only after all verification commands
+            if (currentStep === 7) {
+                completeStep(7);
+            }
+        }
+    }
     
     // Function to open the Vim editor
     function openVimEditor(filename, content, fileType) {
@@ -1225,18 +1216,15 @@ title Red Hat Enterprise Linux (2.6.32-70.el6.x86_64)
         vimTextarea.value = content;
         
         // Set up instructions based on file type
-        if (fileType === 'grub') {
+        if (fileType === 'fstab') {
             vimInstructionsContent.innerHTML = `
-                <p>Edit the GRUB configuration file to set the new kernel as default.</p>
-                <p>Find the line that says:</p>
-                <div class="file-content">default=1</div>
-                <p>Change it to:</p>
-                <div class="file-content">default=0</div>
-                <p><strong>Important:</strong> This makes the first menu entry (new kernel) boot by default.</p>
+                <p>Edit the fstab file to configure automatic mounting.</p>
+                <p>Add this line to the end of the file:</p>
+                <div class="file-content">/dev/vda5 /mnt/data ext4 defaults 0 0</div>
                 <p><strong>Vim Commands:</strong></p>
                 <ul>
                     <li>Press <code>i</code> to enter Insert mode</li>
-                    <li>Make the required change</li>
+                    <li>Type the required configuration</li>
                     <li>Press <code>ESC</code> to return to Command mode</li>
                     <li>Type <code>:wq</code> and press <code>Enter</code> to save and exit</li>
                 </ul>
@@ -1264,10 +1252,10 @@ title Red Hat Enterprise Linux (2.6.32-70.el6.x86_64)
     function handleVimCommand(command) {
         if (command === 'w' || command === 'write') {
             // Save the file
-            if (vimState.file === "/etc/grub.conf") {
-                grubConfContent = vimTextarea.value;
-                if (grubConfContent.includes("default=0")) {
-                    configState.configureGrub = true;
+            if (vimState.file === "/etc/fstab") {
+                fstabContent = vimTextarea.value;
+                if (fstabContent.includes("/dev/vda5 /mnt/data ext4 defaults 0 0")) {
+                    configState.fstab = true;
                     updateRequirements();
                     completeStep(5);
                 }
@@ -1309,29 +1297,29 @@ title Red Hat Enterprise Linux (2.6.32-70.el6.x86_64)
     
     // Function to update requirements display
     function updateRequirements() {
-        if (configState.checkGrub) {
-            document.getElementById('req-check-grub').classList.add('completed');
-            document.getElementById('req-check-grub').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.partition) {
+            document.getElementById('req-partition').classList.add('completed');
+            document.getElementById('req-partition').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.navigateBoot) {
-            document.getElementById('req-navigate-boot').classList.add('completed');
-            document.getElementById('req-navigate-boot').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.filesystem) {
+            document.getElementById('req-filesystem').classList.add('completed');
+            document.getElementById('req-filesystem').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.downloadKernel) {
-            document.getElementById('req-download-kernel').classList.add('completed');
-            document.getElementById('req-download-kernel').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.mount) {
+            document.getElementById('req-mount').classList.add('completed');
+            document.getElementById('req-mount').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.installKernel) {
-            document.getElementById('req-install-kernel').classList.add('completed');
-            document.getElementById('req-install-kernel').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.fstab) {
+            document.getElementById('req-fstab').classList.add('completed');
+            document.getElementById('req-fstab').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
-        if (configState.configureGrub) {
-            document.getElementById('req-configure-grub').classList.add('completed');
-            document.getElementById('req-configure-grub').querySelector('.requirement-checkbox').textContent = '✓';
+        if (configState.verify) {
+            document.getElementById('req-verify').classList.add('completed');
+            document.getElementById('req-verify').querySelector('.requirement-checkbox').textContent = '✓';
         }
         
         // Update progress
@@ -1385,41 +1373,6 @@ title Red Hat Enterprise Linux (2.6.32-70.el6.x86_64)
         const trimmedInput = input.trim();
         if (!trimmedInput) return;
         
-        // Handle lftp commands separately
-        if (inLftpMode) {
-            // Add to command history
-            commandHistory.push(trimmedInput);
-            historyIndex = commandHistory.length;
-            
-            // Display the command in terminal
-            addTerminalOutput(`<span class="prompt">lftp it></span> ${trimmedInput}`);
-            
-            // Parse command and arguments
-            const parts = trimmedInput.split(' ');
-            const command = parts[0];
-            const args = parts.slice(1);
-            
-            // Handle lftp commands
-            if (command === 'get') {
-                const result = commands['get'](args);
-                if (result) {
-                    addTerminalOutput(result);
-                }
-            } else if (command === 'exit') {
-                const result = commands['exit']();
-                if (result) {
-                    addTerminalOutput(result);
-                }
-            } else if (command === 'help') {
-                addTerminalOutput("Available lftp commands: get, exit, help");
-            } else {
-                addTerminalOutput(`lftp: ${command}: command not found`);
-            }
-            
-            commandInput.value = '';
-            return;
-        }
-        
         // Add to command history
         commandHistory.push(trimmedInput);
         historyIndex = commandHistory.length;
@@ -1442,8 +1395,6 @@ title Red Hat Enterprise Linux (2.6.32-70.el6.x86_64)
             addTerminalOutput(`bash: ${command}: command not found`);
             addTerminalOutput('Type "help" for available commands');
         }
-        
-        commandInput.value = '';
     }
     
     // Function to handle tab completion
