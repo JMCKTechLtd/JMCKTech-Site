@@ -883,6 +883,13 @@
     let tabCompletionItems = [];
     let lastTabInput = '';
     
+    // Track which verification commands have been run in step 5
+    let verificationCommands = {
+        mountGrep: false,
+        lsLa: false,
+        dfGrep: false
+    };
+    
     // Available commands for tab completion
     const availableCommands = [
         'wget', 'mkdir', 'vim', 'cat', 'cd', 'ls', 'mount', 'umount', 'systemctl', 'clear', 'help'
@@ -980,6 +987,11 @@ UUID=8127b40c-7a59-4b08-b4ec-1e292a5b1e7e /boot                   xfs     defaul
                 return "boot.iso";
             } else if (args[0] === "-la" && args[1] === "/media/cdrom") {
                 if (configState.mount) {
+                    // Track that this verification command was run
+                    if (currentStep === 5) {
+                        verificationCommands.lsLa = true;
+                        checkStep5Completion();
+                    }
                     return "total 16\ndrwxr-xr-x.  3 root root 2048 Nov 15 10:30 .\ndrwxr-xr-x.  4 root root   34 Nov 15 10:30 ..\ndrwxr-xr-x.  6 root root 2048 Nov 15 10:30 EFI\ndrwxr-xr-x. 21 root root 2048 Nov 15 10:30 images\ndrwxr-xr-x.  2 root root 2048 Nov 15 10:30 isolinux\ndrwxr-xr-x.  2 root root 2048 Nov 15 10:30 LiveOS\n-r--r--r--.  1 root root   36 Nov 15 10:30 .treeinfo";
                 } else {
                     return "ls: cannot access '/media/cdrom': No such file or directory";
@@ -1035,6 +1047,11 @@ UUID=8127b40c-7a59-4b08-b4ec-1e292a5b1e7e /boot                   xfs     defaul
                 }
             } else if (args[0] === "|" && args[1] === "grep" && args[2] === "cdrom") {
                 if (configState.mount) {
+                    // Track that this verification command was run
+                    if (currentStep === 5) {
+                        verificationCommands.mountGrep = true;
+                        checkStep5Completion();
+                    }
                     return "/root/boot.iso on /media/cdrom type iso9660 (ro,relatime,nojoliet,check=s,map=n,blocksize=2048)";
                 } else {
                     return ""; // No output if not mounted
@@ -1046,6 +1063,11 @@ UUID=8127b40c-7a59-4b08-b4ec-1e292a5b1e7e /boot                   xfs     defaul
         'df': (args) => {
             if (args[0] === "-h" && args[1] === "|" && args[2] === "grep" && args[3] === "cdrom") {
                 if (configState.mount) {
+                    // Track that this verification command was run
+                    if (currentStep === 5) {
+                        verificationCommands.dfGrep = true;
+                        checkStep5Completion();
+                    }
                     return "/root/boot.iso  704M  704M     0 100% /media/cdrom";
                 } else {
                     return ""; // No output if not mounted
@@ -1063,6 +1085,13 @@ UUID=8127b40c-7a59-4b08-b4ec-1e292a5b1e7e /boot                   xfs     defaul
             return "Available commands: wget, mkdir, vim, cat, cd, ls, mount, df, clear, help";
         }
     };
+    
+    // Function to check if all step 5 verification commands have been run
+    function checkStep5Completion() {
+        if (verificationCommands.mountGrep && verificationCommands.lsLa && verificationCommands.dfGrep) {
+            completeStep(5);
+        }
+    }
     
     // Function to open the Vim editor
     function openVimEditor(filename, content, fileType) {
@@ -1525,4 +1554,3 @@ UUID=8127b40c-7a59-4b08-b4ec-1e292a5b1e7e /boot                   xfs     defaul
 </script>
 </body>
 </html>
-
