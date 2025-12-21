@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 27: User and Group Management</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: #252525;
+        }
+        
+        .user-table th {
+            background: #333;
+            color: var(--redhat-accent);
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .user-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .user-table tr:hover {
+            background: #2a2a2a;
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 27: User and Group Management</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Create users, groups, and configure group memberships according to the specified requirements. You will need to create a group and users with specific properties and passwords.</p>
+                <p><strong>Time Estimate:</strong> 15-20 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>User and Group Configuration Requirements</h4>
+                <div class="requirement-item" id="req-group">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create group named <code>adminuser</code></span>
+                </div>
+                <div class="requirement-item" id="req-natasha">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create user <code>natasha</code> with <code>adminuser</code> as secondary group</span>
+                </div>
+                <div class="requirement-item" id="req-harry">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create user <code>harry</code> with <code>adminuser</code> as secondary group</span>
+                </div>
+                <div class="requirement-item" id="req-sarah">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Create user <code>sarah</code> with non-interactive shell (<code>/sbin/nologin</code>)</span>
+                </div>
+                <div class="requirement-item" id="req-sarah-group">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Ensure <code>sarah</code> is NOT a member of <code>adminuser</code> group</span>
+                </div>
+                <div class="requirement-item" id="req-passwords">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Set passwords for all users to <code>redhat</code></span>
+                </div>
+                <div class="requirement-item" id="req-verification">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify configurations using <code>id</code> and <code>/etc/passwd</code></span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA User and Group Management Lab. In this lab, you will create and manage Linux users and groups according to specific requirements.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+                
+                <div class="concept">
+                    <h4>Expected Final State</h4>
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Primary Group</th>
+                                <th>Secondary Group</th>
+                                <th>Login Shell</th>
+                                <th>Password</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>natasha</td>
+                                <td>natasha</td>
+                                <td>adminuser</td>
+                                <td>/bin/bash</td>
+                                <td>redhat</td>
+                            </tr>
+                            <tr>
+                                <td>harry</td>
+                                <td>harry</td>
+                                <td>adminuser</td>
+                                <td>/bin/bash</td>
+                                <td>redhat</td>
+                            </tr>
+                            <tr>
+                                <td>sarah</td>
+                                <td>sarah</td>
+                                <td>sarah</td>
+                                <td>/sbin/nologin</td>
+                                <td>redhat</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Create Admin Group
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, create the <code>adminuser</code> group using the <code>groupadd</code> command.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    groupadd adminuser
+                </div>
+                
+                <div class="concept">
+                    <h4>Understanding Group Creation</h4>
+                    <p>The <code>groupadd</code> command creates a new group. Groups are used to manage permissions for multiple users.</p>
+                    <p>You can verify the group was created with:</p>
+                    <div class="command-hint">grep adminuser /etc/group</div>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Create User Natasha
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Create user <code>natasha</code> with <code>adminuser</code> as a secondary group.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    useradd -G adminuser natasha
+                </div>
+                
+                <p class="warning">Note: The <code>-G</code> option specifies supplementary groups. The user will still have a primary group with the same name as the username.</p>
+                
+                <div class="concept">
+                    <h4>User Creation Options</h4>
+                    <ul>
+                        <li><code>useradd</code>: Creates a new user account</li>
+                        <li><code>-G adminuser</code>: Adds user to supplementary group <code>adminuser</code></li>
+                        <li>Without <code>-s</code> option: Default shell is <code>/bin/bash</code></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Create User Harry
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Create user <code>harry</code> with <code>adminuser</code> as a secondary group.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    useradd -G adminuser harry
+                </div>
+                
+                <p>This command is similar to the previous step, creating another user with the same group membership.</p>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Create User Sarah with Non-Interactive Shell
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Create user <code>sarah</code> with a non-interactive shell. Do NOT add her to the <code>adminuser</code> group.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command exactly:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    useradd -s /sbin/nologin sarah
+                </div>
+                
+                <p class="warning">Important: Do NOT use the <code>-G adminuser</code> option for sarah. She should not be a member of the adminuser group.</p>
+                
+                <div class="concept">
+                    <h4>Non-Interactive Shells</h4>
+                    <p>The <code>/sbin/nologin</code> shell prevents interactive login but allows other services (like FTP) to work. Other options include:</p>
+                    <ul>
+                        <li><code>/bin/false</code>: More restrictive, denies all access</li>
+                        <li><code>/sbin/nologin</code>: Shows a message and exits</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Set Passwords for All Users
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Set the password for all three users to <code>redhat</code>.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands one by one:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    echo "redhat" | passwd --stdin natasha
+                </div>
+                
+                <div class="command-hint">
+                    echo "redhat" | passwd --stdin harry
+                </div>
+                
+                <div class="command-hint">
+                    echo "redhat" | passwd --stdin sarah
+                </div>
+                
+                <p>Alternatively, you can use the interactive method:</p>
+                <div class="command-hint">
+                    passwd natasha
+                </div>
+                <p>Then type <code>redhat</code> twice when prompted.</p>
+                
+                <div class="concept">
+                    <h4>Password Management</h4>
+                    <p>The <code>--stdin</code> option allows setting passwords non-interactively, which is useful for scripting.</p>
+                    <p>Always use strong passwords in production environments.</p>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step6">
+                <h3>
+                    <span class="step-number">6</span>
+                    Verify the Configuration
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Verify that all configurations are correct.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these verification commands:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    id natasha
+                </div>
+                <p>Should show <code>adminuser</code> in groups</p>
+                
+                <div class="command-hint">
+                    id harry
+                </div>
+                <p>Should show <code>adminuser</code> in groups</p>
+                
+                <div class="command-hint">
+                    id sarah
+                </div>
+                <p>Should NOT show <code>adminuser</code> in groups</p>
+                
+                <div class="command-hint">
+                    grep -E "^(natasha|harry|sarah):" /etc/passwd
+                </div>
+                <p>Check shells: natasha/harry should have <code>/bin/bash</code>, sarah should have <code>/sbin/nologin</code></p>
+                
+                <div class="concept">
+                    <h4>Verification Commands</h4>
+                    <ul>
+                        <li><code>id [username]</code>: Shows user and group IDs</li>
+                        <li><code>grep [username] /etc/passwd</code>: Shows user configuration</li>
+                        <li><code>grep [groupname] /etc/group</code>: Shows group members</li>
+                        <li><code>groups [username]</code>: Shows user's groups</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>All user and group configuration requirements have been met.</p>
+                <p><strong>Summary of what you accomplished:</strong></p>
+                <ul>
+                    <li>Created <code>adminuser</code> group</li>
+                    <li>Created users <code>natasha</code> and <code>harry</code> with adminuser as secondary group</li>
+                    <li>Created user <code>sarah</code> with non-interactive shell, not in adminuser group</li>
+                    <li>Set all passwords to <code>redhat</code></li>
+                    <li>Verified all configurations</li>
+                </ul>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab 27: User and Group Management</div>
+                <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Create Admin Group</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>groupadd adminuser</code></div>
+                <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@station ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Track verification commands completed
+    let verificationCommandsCompleted = {
+        'id natasha': false,
+        'id harry': false,
+        'id sarah': false,
+        'grep users': false
+    };
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'groupadd', 'useradd', 'passwd', 'id', 'grep', 'cat', 'ls', 'clear', 'help',
+        'usermod', 'groups', 'tail', 'head', 'echo'
+    ];
+    
+    // Track configuration state
+    const configState = {
+        group: false,
+        natasha: false,
+        harry: false,
+        sarah: false,
+        sarahGroup: false,
+        passwords: false,
+        verification: false
+    };
+    
+    // Simulated system state
+    let systemState = {
+        groups: ['root', 'bin', 'daemon', 'sys', 'adm', 'disk', 'wheel'],
+        users: [
+            {name: 'root', uid: 0, gid: 0, groups: ['root'], shell: '/bin/bash', password: 'x'},
+            {name: 'bin', uid: 1, gid: 1, groups: ['bin'], shell: '/sbin/nologin', password: 'x'}
+        ],
+        passwdFile: `root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin`,
+        groupFile: `root:x:0:
+bin:x:1:
+daemon:x:2:
+sys:x:3:
+adm:x:4:`,
+        
+        // Track which passwords have been set
+        passwordsSet: {
+            natasha: false,
+            harry: false,
+            sarah: false
+        }
+    };
+    
+    // Helper function to check if all passwords are set
+    function checkAllPasswordsSet() {
+        return systemState.passwordsSet.natasha && 
+               systemState.passwordsSet.harry && 
+               systemState.passwordsSet.sarah;
+    }
+    
+    // Helper function to check if all verification commands are completed
+    function checkAllVerificationCompleted() {
+        return verificationCommandsCompleted['id natasha'] &&
+               verificationCommandsCompleted['id harry'] &&
+               verificationCommandsCompleted['id sarah'] &&
+               verificationCommandsCompleted['grep users'];
+    }
+    
+    // Helper function to find user in system state
+    function findUser(username) {
+        return systemState.users.find(user => user.name === username);
+    }
+    
+    // Helper function to find group in system state
+    function findGroup(groupname) {
+        return systemState.groups.find(group => group === groupname);
+    }
+    
+    const commands = {
+        'groupadd': (args) => {
+            if (args.length === 0) {
+                return "groupadd: option requires an argument -- 'groupadd GROUP'";
+            }
+            
+            const groupname = args[0];
+            
+            if (currentStep === 1 && groupname === "adminuser") {
+                // Check if group already exists
+                if (findGroup(groupname)) {
+                    return `groupadd: group '${groupname}' already exists`;
+                }
+                
+                // Add group to system state
+                systemState.groups.push(groupname);
+                systemState.groupFile += `\n${groupname}:x:${systemState.groups.length - 1}:`;
+                
+                // Update requirements
+                configState.group = true;
+                updateRequirements();
+                completeStep(1);
+                
+                return `Group '${groupname}' created successfully with GID ${systemState.groups.length - 1}`;
+            }
+            
+            return `groupadd: invalid group name '${groupname}'`;
+        },
+        
+        'useradd': (args) => {
+            if (args.length === 0) {
+                return "useradd: option requires an argument -- 'useradd [options] LOGIN'";
+            }
+            
+            // Parse arguments
+            let username = '';
+            let groups = [];
+            let shell = '/bin/bash';
+            
+            // Simple argument parsing
+            for (let i = 0; i < args.length; i++) {
+                if (args[i] === '-G') {
+                    if (i + 1 < args.length) {
+                        groups = args[i + 1].split(',');
+                        i++;
+                    }
+                } else if (args[i] === '-s') {
+                    if (i + 1 < args.length) {
+                        shell = args[i + 1];
+                        i++;
+                    }
+                } else if (!args[i].startsWith('-')) {
+                    username = args[i];
+                }
+            }
+            
+            if (!username) {
+                return "useradd: invalid user name ''";
+            }
+            
+            // Check if user already exists
+            if (findUser(username)) {
+                return `useradd: user '${username}' already exists`;
+            }
+            
+            // Validate based on current step
+            if (currentStep === 2 && username === "natasha") {
+                if (groups.includes("adminuser") && shell === '/bin/bash') {
+                    // Create user
+                    const newUser = {
+                        name: username,
+                        uid: systemState.users.length + 1000,
+                        gid: systemState.users.length + 1000,
+                        groups: [username, ...groups],
+                        shell: shell,
+                        password: 'x'
+                    };
+                    
+                    systemState.users.push(newUser);
+                    systemState.passwdFile += `\n${username}:x:${newUser.uid}:${newUser.gid}::/home/${username}:${shell}`;
+                    
+                    configState.natasha = true;
+                    updateRequirements();
+                    completeStep(2);
+                    
+                    return `User '${username}' created successfully with UID ${newUser.uid}`;
+                } else {
+                    return `Error: Natasha must be added to adminuser group and have default shell`;
+                }
+            }
+            
+            if (currentStep === 3 && username === "harry") {
+                if (groups.includes("adminuser") && shell === '/bin/bash') {
+                    // Create user
+                    const newUser = {
+                        name: username,
+                        uid: systemState.users.length + 1000,
+                        gid: systemState.users.length + 1000,
+                        groups: [username, ...groups],
+                        shell: shell,
+                        password: 'x'
+                    };
+                    
+                    systemState.users.push(newUser);
+                    systemState.passwdFile += `\n${username}:x:${newUser.uid}:${newUser.gid}::/home/${username}:${shell}`;
+                    
+                    configState.harry = true;
+                    updateRequirements();
+                    completeStep(3);
+                    
+                    return `User '${username}' created successfully with UID ${newUser.uid}`;
+                } else {
+                    return `Error: Harry must be added to adminuser group and have default shell`;
+                }
+            }
+            
+            if (currentStep === 4 && username === "sarah") {
+                if (groups.length === 0 && shell === '/sbin/nologin') {
+                    // Create user
+                    const newUser = {
+                        name: username,
+                        uid: systemState.users.length + 1000,
+                        gid: systemState.users.length + 1000,
+                        groups: [username],
+                        shell: shell,
+                        password: 'x'
+                    };
+                    
+                    systemState.users.push(newUser);
+                    systemState.passwdFile += `\n${username}:x:${newUser.uid}:${newUser.gid}::/home/${username}:${shell}`;
+                    
+                    configState.sarah = true;
+                    configState.sarahGroup = true; // Not in adminuser
+                    updateRequirements();
+                    completeStep(4);
+                    
+                    return `User '${username}' created successfully with UID ${newUser.uid} and shell ${shell}`;
+                } else {
+                    return `Error: Sarah must NOT be in adminuser group and must have /sbin/nologin shell`;
+                }
+            }
+            
+            return `Please complete the steps in order. Current step: ${currentStep}`;
+        },
+        
+        'passwd': (args) => {
+            if (args.length === 0) {
+                return "passwd: option requires an argument -- 'passwd [options] [LOGIN]'";
+            }
+            
+            const username = args[args.length - 1];
+            const user = findUser(username);
+            
+            if (!user) {
+                return `passwd: user '${username}' does not exist`;
+            }
+            
+            // Check if this is a password setting step
+            if (currentStep === 5 || currentStep > 5) {
+                // Check for --stdin option
+                if (args.includes('--stdin')) {
+                    // Non-interactive password setting
+                    if ((username === 'natasha' || username === 'harry' || username === 'sarah')) {
+                        user.password = 'redhat';
+                        systemState.passwordsSet[username] = true;
+                        
+                        // Check if all passwords are set
+                        if (checkAllPasswordsSet()) {
+                            configState.passwords = true;
+                            updateRequirements();
+                            completeStep(5);
+                        }
+                        
+                        return `Changing password for user ${username}.\npasswd: all authentication tokens updated successfully.`;
+                    }
+                } else {
+                    // Interactive password setting
+                    // Check if we're in the right step
+                    if (currentStep === 5) {
+                        user.password = 'redhat';
+                        systemState.passwordsSet[username] = true;
+                        
+                        // Check if all passwords are set
+                        if (checkAllPasswordsSet()) {
+                            configState.passwords = true;
+                            updateRequirements();
+                            completeStep(5);
+                        }
+                    }
+                    return `Changing password for user ${username}.\nNew password: [Type 'redhat']\nRetype new password: [Type 'redhat']\npasswd: all authentication tokens updated successfully.`;
+                }
+            }
+            
+            return `Please complete the user creation steps first.`;
+        },
+        
+        'echo': (args) => {
+            // Handle echo with pipe to passwd
+            const input = args.join(' ');
+            if (input.includes('| passwd --stdin')) {
+                const parts = input.split('|');
+                const passwordPart = parts[0].replace(/"/g, '').replace('echo', '').trim();
+                const passwdPart = parts[1].trim();
+                
+                if (passwdPart.startsWith('passwd --stdin')) {
+                    const username = passwdPart.replace('passwd --stdin', '').trim();
+                    
+                    // Simulate the password command
+                    const result = commands.passwd(['--stdin', username]);
+                    return result;
+                }
+            }
+            
+            return args.join(' ');
+        },
+        
+        'id': (args) => {
+            if (args.length === 0) {
+                return "id: missing operand\nTry 'id --help' for more information.";
+            }
+            
+            const username = args[0];
+            const user = findUser(username);
+            
+            if (!user) {
+                return `id: '${username}': no such user`;
+            }
+            
+            // Build response
+            let response = `uid=${user.uid}(${user.name}) gid=${user.gid}(${user.name}) `;
+            
+            if (user.groups.length > 1) {
+                const groups = user.groups.slice(1).map(g => `${systemState.groups.indexOf(g)}(${g})`).join(',');
+                response += `groups=${user.gid}(${user.name}),${groups}`;
+            } else {
+                response += `groups=${user.gid}(${user.name})`;
+            }
+            
+            // Track verification commands for step 6
+            if (currentStep === 6) {
+                if (username === 'natasha') {
+                    verificationCommandsCompleted['id natasha'] = true;
+                } else if (username === 'harry') {
+                    verificationCommandsCompleted['id harry'] = true;
+                } else if (username === 'sarah') {
+                    verificationCommandsCompleted['id sarah'] = true;
+                }
+                
+                // Check if all verification commands are completed
+                if (checkAllVerificationCompleted()) {
+                    configState.verification = true;
+                    updateRequirements();
+                    completeStep(6);
+                }
+            }
+            
+            return response;
+        },
+        
+        'grep': (args) => {
+            if (args.length === 0) {
+                return "grep: missing pattern\nUsage: grep [OPTION]... PATTERN [FILE]...";
+            }
+            
+            const pattern = args[0];
+            let filename = '';
+            
+            // Simple parsing for our needs
+            if (args.includes('/etc/passwd')) {
+                filename = '/etc/passwd';
+            } else if (args.includes('/etc/group')) {
+                filename = '/etc/group';
+            }
+            
+            if (filename === '/etc/passwd') {
+                const lines = systemState.passwdFile.split('\n');
+                const matchedLines = lines.filter(line => {
+                    if (pattern.startsWith('^(') && pattern.endsWith('):')) {
+                        const users = pattern.replace('^(', '').replace('):', '').split('|');
+                        return users.some(user => line.startsWith(user + ':'));
+                    }
+                    return line.includes(pattern);
+                });
+                
+                // Track grep command for step 6 - FIXED LOGIC
+                if (currentStep === 6) {
+                    // Check if this is the specific grep command we're looking for
+                    const fullCommand = args.join(' ');
+                    if (fullCommand.includes('^(natasha|harry|sarah):') && filename === '/etc/passwd') {
+                        verificationCommandsCompleted['grep users'] = true;
+                    } else if (fullCommand.includes('natasha') || fullCommand.includes('harry') || fullCommand.includes('sarah')) {
+                        // Also accept other grep commands for these users
+                        verificationCommandsCompleted['grep users'] = true;
+                    }
+                    
+                    // Check if all verification commands are completed
+                    if (checkAllVerificationCompleted()) {
+                        configState.verification = true;
+                        updateRequirements();
+                        completeStep(6);
+                    }
+                }
+                
+                return matchedLines.join('\n');
+            } else if (filename === '/etc/group') {
+                const lines = systemState.groupFile.split('\n');
+                const matchedLines = lines.filter(line => line.includes(pattern));
+                return matchedLines.join('\n');
+            }
+            
+            return `grep: ${args[args.length - 1]}: No such file or directory`;
+        },
+        
+        'groups': (args) => {
+            if (args.length === 0) {
+                return "groups: missing username\nUsage: groups [USERNAME]...";
+            }
+            
+            const username = args[0];
+            const user = findUser(username);
+            
+            if (!user) {
+                return `groups: '${username}': no such user`;
+            }
+            
+            // Also track as id command for verification
+            if (currentStep === 6) {
+                if (username === 'natasha') {
+                    verificationCommandsCompleted['id natasha'] = true;
+                } else if (username === 'harry') {
+                    verificationCommandsCompleted['id harry'] = true;
+                } else if (username === 'sarah') {
+                    verificationCommandsCompleted['id sarah'] = true;
+                }
+                
+                // Check if all verification commands are completed
+                if (checkAllVerificationCompleted()) {
+                    configState.verification = true;
+                    updateRequirements();
+                    completeStep(6);
+                }
+            }
+            
+            return `${username} : ${user.groups.join(' ')}`;
+        },
+        
+        'cat': (args) => {
+            if (args.length === 0) {
+                return "cat: missing file operand\nTry 'cat --help' for more information.";
+            }
+            
+            const filename = args[0];
+            
+            if (filename === '/etc/passwd') {
+                return systemState.passwdFile;
+            } else if (filename === '/etc/group') {
+                return systemState.groupFile;
+            }
+            
+            return `cat: ${filename}: No such file or directory`;
+        },
+        
+        'ls': () => {
+            return "Desktop  Documents  Downloads  Music  Pictures  Public  Templates  Videos";
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: groupadd, useradd, passwd, id, grep, groups, cat, ls, clear, help, echo";
+        }
+    };
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        // Update each requirement item
+        Object.keys(configState).forEach((key, index) => {
+            const reqItem = document.getElementById(`req-${key}`);
+            if (reqItem) {
+                if (configState[key]) {
+                    reqItem.classList.add('completed');
+                    reqItem.querySelector('.requirement-checkbox').textContent = '✓';
+                } else {
+                    reqItem.classList.remove('completed');
+                    reqItem.querySelector('.requirement-checkbox').textContent = '☐';
+                }
+            }
+        });
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            // Mark current step as completed
+            const currentStepElement = document.getElementById(`step${step}`);
+            if (currentStepElement) {
+                currentStepElement.classList.remove('current');
+                currentStepElement.classList.add('completed');
+                currentStepElement.querySelector('.step-status').textContent = 'Completed';
+                currentStepElement.querySelector('.step-status').className = 'step-status status-completed';
+            }
+            
+            // Move to next step
+            currentStep++;
+            
+            // Activate next step if exists
+            const nextStepElement = document.getElementById(`step${currentStep}`);
+            if (nextStepElement) {
+                nextStepElement.classList.add('current');
+                nextStepElement.querySelector('.step-status').textContent = 'Current Step';
+                nextStepElement.querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`[root@station ~]# Step ${step} completed. Moving to step ${currentStep}.`);
+                
+                // Show the command for the next step if available
+                const stepCommands = {
+                    1: 'groupadd adminuser',
+                    2: 'useradd -G adminuser natasha',
+                    3: 'useradd -G adminuser harry',
+                    4: 'useradd -s /sbin/nologin sarah',
+                    5: 'echo "redhat" | passwd --stdin natasha',
+                    6: 'id natasha'
+                };
+                
+                if (stepCommands[currentStep]) {
+                    addTerminalOutput(`[root@station ~]# Next: ${stepCommands[currentStep]}`);
+                }
+            } else {
+                // All steps completed
+                addTerminalOutput(`[root@station ~]# All steps completed! Lab finished successfully.`);
+                addTerminalOutput(`[root@station ~]# All requirements have been met.`);
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Check if command exists
+        if (commands.hasOwnProperty(command)) {
+            try {
+                const result = commands[command](args);
+                if (result) {
+                    addTerminalOutput(result);
+                }
+            } catch (error) {
+                addTerminalOutput(`Error executing command: ${error.message}`);
+            }
+        } else {
+            addTerminalOutput(`bash: ${command}: command not found`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // For other cases, hide completion
+        hideTabCompletion();
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
+</body>
+</html>

@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>RHCSA Exam Lab 26: Logical Volume Adjustment</title>
+    <style>
+        :root {
+            --redhat-red: #cc0000;
+            --redhat-dark: #1e1e1e;
+            --redhat-light: #f0f0f0;
+            --redhat-accent: #4CAF50;
+            --redhat-blue: #007ACC;
+            --panel-bg: #252525;
+            --terminal-bg: #000;
+            --border-color: #444;
+            --current-step: #3a3a3a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', sans-serif;
+            background-color: var(--redhat-dark);
+            color: var(--redhat-light);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .lab-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+            background: var(--redhat-dark);
+        }
+        
+        .header {
+            background: linear-gradient(to right, #1e1e1e, #333);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .header img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: normal;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .guide-panel {
+            width: 50%;
+            padding: 20px;
+            background: var(--panel-bg);
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .terminal-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            position: relative;
+        }
+        
+        .guide h2 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .lab-intro {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .lab-intro h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+        }
+        
+        .requirements-panel {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-red);
+        }
+        
+        .requirements-panel h4 {
+            margin-top: 0;
+            color: var(--redhat-red);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .requirement-item.completed {
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .requirement-item.partial {
+            border-left: 3px solid #FFD700;
+        }
+        
+        .requirement-checkbox {
+            margin-right: 10px;
+            color: var(--redhat-accent);
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .requirement-label {
+            flex: 1;
+        }
+        
+        .guide-step {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #333;
+            border-left: 4px solid var(--redhat-blue);
+            position: relative;
+        }
+        
+        .guide-step.current {
+            background: var(--current-step);
+            border-left: 4px solid var(--redhat-accent);
+        }
+        
+        .guide-step.completed {
+            opacity: 0.7;
+            border-left: 4px solid #666;
+        }
+        
+        .guide-step h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: var(--redhat-accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8em;
+        }
+        
+        .step-status {
+            margin-left: auto;
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .status-pending {
+            background: #555;
+            color: #ccc;
+        }
+        
+        .status-current {
+            background: var(--redhat-blue);
+            color: white;
+        }
+        
+        .status-completed {
+            background: var(--redhat-accent);
+            color: white;
+        }
+        
+        .required-command {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-accent);
+        }
+        
+        .command-hint {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid var(--redhat-blue);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .concept {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid var(--redhat-blue);
+        }
+        
+        .concept h4 {
+            margin-top: 0;
+            color: var(--redhat-blue);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .concept-item {
+            background: #252525;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 2px solid var(--redhat-red);
+        }
+        
+        .concept-item strong {
+            color: var(--redhat-red);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .terminal {
+            background: var(--terminal-bg);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .command-line {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #333;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--redhat-light);
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 16px;
+            outline: none;
+            padding: 8px;
+        }
+        
+        .prompt {
+            color: var(--redhat-accent);
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .file-content {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .file-path {
+            color: var(--redhat-blue);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: var(--redhat-accent);
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .success {
+            color: var(--redhat-accent);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #FF5252;
+        }
+        
+        .warning {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .completion-message {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid var(--redhat-accent);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--redhat-accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .hint-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        
+        .tab-completion {
+            position: absolute;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            font-family: 'Red Hat Mono', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .tab-completion-item {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .tab-completion-item:hover, .tab-completion-item.selected {
+            background: #007ACC;
+            color: white;
+        }
+        
+        .vim-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .vim-container {
+            display: flex;
+            width: 90%;
+            height: 80%;
+            gap: 20px;
+        }
+        
+        .vim-instructions {
+            width: 30%;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+        
+        .vim-instructions h3 {
+            margin-top: 0;
+            color: var(--redhat-accent);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .vim-editor {
+            width: 70%;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Red Hat Mono', monospace;
+        }
+        
+        .vim-header {
+            background: #333;
+            padding: 5px 10px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .vim-content {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+            white-space: pre;
+            color: #ccc;
+            position: relative;
+        }
+        
+        .vim-command-line {
+            display: flex;
+            background: #333;
+            padding: 5px;
+            border-top: 1px solid #444;
+        }
+        
+        .vim-prompt {
+            color: #4CAF50;
+            padding: 0 5px;
+        }
+        
+        .vim-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Red Hat Mono', monospace;
+            outline: none;
+        }
+        
+        .vim-status {
+            background: #333;
+            padding: 3px 10px;
+            color: #ccc;
+            font-size: 0.9em;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .vim-mode-indicator {
+            color: #FFD700;
+        }
+        
+        .vim-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #ccc;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        
+        .vim-esc-button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .vim-esc-button:hover {
+            background: #666;
+        }
+        
+        .vim-command-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .vim-command-button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .vim-command-button:hover {
+            background: #555;
+        }
+        
+        .vim-mode-indicator.command-mode {
+            color: #FFD700;
+        }
+        
+        .vim-mode-indicator.insert-mode {
+            color: #4CAF50;
+        }
+        
+        .vim-textarea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-family: 'Red Hat Mono', monospace;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .guide-panel, .terminal-panel {
+                width: 100%;
+                height: 50%;
+            }
+            
+            .vim-container {
+                width: 95%;
+                height: 90%;
+                flex-direction: column;
+            }
+            
+            .vim-instructions, .vim-editor {
+                width: 100%;
+            }
+            
+            .vim-instructions {
+                height: 30%;
+            }
+            
+            .vim-editor {
+                height: 70%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&family=Red+Hat+Mono&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="lab-container">
+    <div class="header">
+        <img alt="Red Hat Logo" src="https://www.redhat.com/profiles/rh/themes/redhatdotcom/img/logo.svg"/>
+        <h1>RHCSA Exam Lab 26: Logical Volume Adjustment</h1>
+    </div>
+    
+    <div class="main-content">
+        <div class="guide-panel">
+            <h2>Lab Instructions</h2>
+            
+            <div class="lab-intro">
+                <h3>Lab Objective</h3>
+                <p>Adjust the size of the Logical Volume named 'vo' so that its file system size becomes 290M. Ensure that the content of this file system remains intact. Note that partition size is rarely exact, so a range of 270M to 320M is acceptable.</p>
+                <p><strong>Time Estimate:</strong> 10-15 minutes</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">0% Complete</div>
+            </div>
+
+            <div class="requirements-panel">
+                <h4>Logical Volume Adjustment Requirements</h4>
+                <div class="requirement-item" id="req-check-current">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Check current logical volume size and file system</span>
+                </div>
+                <div class="requirement-item" id="req-extend-lv">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Extend logical volume to approximately 290M</span>
+                </div>
+                <div class="requirement-item" id="req-resize-fs">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Resize file system to match logical volume</span>
+                </div>
+                <div class="requirement-item" id="req-verify-size">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Verify final size (270M-320M acceptable range)</span>
+                </div>
+                <div class="requirement-item" id="req-data-intact">
+                    <span class="requirement-checkbox">☐</span>
+                    <span class="requirement-label">Ensure file system content remains intact</span>
+                </div>
+            </div>
+
+            <div class="guide-step completed" id="step0">
+                <h3>
+                    <span class="step-number">0</span>
+                    Lab Introduction
+                    <span class="step-status status-completed">Completed</span>
+                </h3>
+                <p>Welcome to the RHCSA Logical Volume Adjustment Lab. In this lab, you will resize a logical volume and its file system while preserving data integrity.</p>
+                <p>Follow the steps in order. You must complete each step before moving to the next one.</p>
+            </div>
+
+            <div class="guide-step current" id="step1">
+                <h3>
+                    <span class="step-number">1</span>
+                    Check Current Logical Volume Status
+                    <span class="step-status status-current">Current Step</span>
+                </h3>
+                <p>First, let's check the current status of the logical volume and its file system.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these commands:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    df -hT
+                </div>
+                
+                <p>This will show mounted file systems and their types/sizes.</p>
+                
+                <div class="command-hint">
+                    lvdisplay /dev/vg0/vo
+                </div>
+                
+                <p>This displays logical volume details including current size.</p>
+
+                <div class="concept">
+                    <h4>Understanding LVM Components</h4>
+                    <p>Logical Volume Management (LVM) allows flexible disk management:</p>
+                    <ul>
+                        <li><code>Physical Volume (PV)</code>: Physical disk or partition</li>
+                        <li><code>Volume Group (VG)</code>: Pool of physical volumes</li>
+                        <li><code>Logical Volume (LV)</code>: Virtual partition created from VG</li>
+                        <li><code>File System</code>: Format (ext4, xfs) on the LV for data storage</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step2">
+                <h3>
+                    <span class="step-number">2</span>
+                    Extend the Logical Volume
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's extend the logical volume to approximately 290M.</p>
+                
+                <div class="hint-box">
+                    <strong>Type this command:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    lvextend -L 290M /dev/vg0/vo
+                </div>
+                
+                <p class="warning">Note: If you need to add space (rather than set exact size), use <code>-L +100M</code> to add 100M. Check current size first to determine how much to add.</p>
+                
+                <div class="concept">
+                    <h4>LVM Extension Options</h4>
+                    <p><code>lvextend</code> options:</p>
+                    <ul>
+                        <li><code>-L 290M</code>: Set absolute size to 290M</li>
+                        <li><code>-L +100M</code>: Add 100M to current size</li>
+                        <li><code>-l +50</code>: Add 50 extents (PEs) to current size</li>
+                        <li><code>-r</code>: Resize file system automatically (not always available)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step3">
+                <h3>
+                    <span class="step-number">3</span>
+                    Resize the File System
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>After extending the logical volume, we need to resize the file system to use the new space.</p>
+                
+                <div class="hint-box">
+                    <strong>Type the appropriate command based on file system type:</strong>
+                </div>
+                
+                <p>For ext2/ext3/ext4 file systems:</p>
+                <div class="command-hint">
+                    resize2fs /dev/vg0/vo
+                </div>
+                
+                <p>For XFS file systems:</p>
+                <div class="command-hint">
+                    xfs_growfs /home
+                </div>
+                
+                <p class="warning">Important: You must know the file system type (from <code>df -hT</code>) and use the correct command.</p>
+
+                <div class="concept">
+                    <h4>File System Resizing</h4>
+                    <p>Different file systems require different resizing tools:</p>
+                    <ul>
+                        <li><code>resize2fs</code>: For ext2, ext3, ext4 file systems</li>
+                        <li><code>xfs_growfs</code>: For XFS file systems (online expansion only)</li>
+                        <li><code>ntfsresize</code>: For NTFS file systems</li>
+                        <li>Always check file system type before resizing</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step4">
+                <h3>
+                    <span class="step-number">4</span>
+                    Verify the Adjustment
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>Now let's verify that our adjustment was successful and within the acceptable range.</p>
+                
+                <div class="hint-box">
+                    <strong>Type these verification commands:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    df -hT
+                </div>
+                <p>Should show file system size between 270M and 320M</p>
+                
+                <div class="command-hint">
+                    lvdisplay /dev/vg0/vo
+                </div>
+                <p>Should show logical volume size</p>
+                
+                <div class="command-hint">
+                    ls -la /home
+                </div>
+                <p>Verify data is intact</p>
+
+                <div class="concept">
+                    <h4>Verification Steps</h4>
+                    <p>After resizing, always verify:</p>
+                    <ul>
+                        <li>File system size is correct and mounted</li>
+                        <li>Logical volume size matches expectation</li>
+                        <li>Data integrity is maintained</li>
+                        <li>No errors in system logs (<code>dmesg | tail</code>)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="guide-step" id="step5">
+                <h3>
+                    <span class="step-number">5</span>
+                    Alternative: Reducing Logical Volume
+                    <span class="step-status status-pending">Pending</span>
+                </h3>
+                <p>In some cases, you might need to reduce a logical volume (though this lab requires extension).</p>
+                
+                <div class="hint-box">
+                    <strong>For reference only - reducing steps:</strong>
+                </div>
+                
+                <div class="command-hint">
+                    umount /home
+                </div>
+                <div class="command-hint">
+                    e2fsck -f /dev/vg0/vo
+                </div>
+                <div class="command-hint">
+                    resize2fs /dev/vg0/vo 100M
+                </div>
+                <div class="command-hint">
+                    lvreduce -L 100M /dev/vg0/vo
+                </div>
+                <div class="command-hint">
+                    mount /dev/vg0/vo /home
+                </div>
+                
+                <p class="warning">Reduction requires unmounting, file system check, and is riskier than extension.</p>
+
+                <div class="concept">
+                    <h4>Reduction vs Extension</h4>
+                    <div class="concept-grid">
+                        <div class="concept-item">
+                            <strong>Extension</strong>
+                            <p>Can usually be done online, safer, supported by most file systems</p>
+                        </div>
+                        <div class="concept-item">
+                            <strong>Reduction</strong>
+                            <p>Often requires unmounting, risk of data loss, not all file systems support</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="completion-message" class="completion-message" style="display: none;">
+                <h3>🎉 Lab Completed Successfully!</h3>
+                <p>Logical volume adjustment requirements have been met.</p>
+                <p>The 'vo' logical volume file system is now approximately 290M (within 270M-320M acceptable range) with data intact.</p>
+                <p>You can now proceed to the next lab.</p>
+            </div>
+        </div>
+        
+        <div class="terminal-panel">
+            <div class="terminal" id="terminal-output">
+                <div><span class="prompt">[root@station ~]#</span> Welcome to RHCSA Lab: Logical Volume Adjustment</div>
+                <div><span class="prompt">[root@station ~]#</span> This is a guided lab. Follow the instructions on the left.</div>
+                <div><span class="prompt">[root@station ~]#</span> You must complete each step in order.</div>
+                <div><span class="prompt">[root@station ~]#</span> Current step: Check Current Logical Volume Status</div>
+                <div><span class="prompt">[root@station ~]#</span> Type: <code>df -hT</code> and <code>lvdisplay /dev/vg0/vo</code></div>
+                <div><span class="prompt">[root@station ~]#</span> <span class="success">Tip:</span> Press <code>Tab</code> for command and path completion</div>
+            </div>
+            <div class="command-line">
+                <span class="prompt">[root@station ~]#</span>
+                <input autofocus id="command-input" placeholder="Type the command shown in the current step..." type="text"/>
+                <div id="tab-completion" class="tab-completion" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commandInput = document.getElementById('command-input');
+    const terminalOutput = document.getElementById('terminal-output');
+    const requirementItems = document.querySelectorAll('.requirement-item');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const completionMessage = document.getElementById('completion-message');
+    const steps = document.querySelectorAll('.guide-step');
+    const tabCompletion = document.getElementById('tab-completion');
+    
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentStep = 1;
+    let tabCompletionIndex = -1;
+    let tabCompletionItems = [];
+    let lastTabInput = '';
+    
+    // Track which commands have been executed in each step
+    const stepCommandsExecuted = {
+        1: { 'df -hT': false, 'lvdisplay /dev/vg0/vo': false },
+        2: { 'lvextend -L 290M /dev/vg0/vo': false, 'lvextend -L +100M /dev/vg0/vo': false },
+        3: { 'resize2fs /dev/vg0/vo': false, 'xfs_growfs /home': false },
+        4: { 'df -hT': false, 'lvdisplay /dev/vg0/vo': false, 'ls -la /home': false },
+        5: { 'umount /home': false, 'e2fsck -f /dev/vg0/vo': false, 'resize2fs /dev/vg0/vo 100M': false, 'lvreduce -L 100M /dev/vg0/vo': false, 'mount /dev/vg0/vo /home': false }
+    };
+    
+    // Available commands for tab completion
+    const availableCommands = [
+        'df', 'lvdisplay', 'lvextend', 'resize2fs', 'xfs_growfs', 'ls', 'mount', 'umount', 'e2fsck', 'lvreduce', 'lvs', 'vgs', 'pvs', 'clear', 'help'
+    ];
+    
+    // Available paths for tab completion
+    const filePaths = {
+        '/dev/': ['vg0/', 'mapper/'],
+        '/dev/vg0/': ['vo'],
+        '/dev/mapper/': ['vg0-vo']
+    };
+    
+    // Track configuration state
+    const configState = {
+        checkCurrent: false,
+        extendLv: false,
+        resizeFs: false,
+        verifySize: false,
+        dataIntact: false
+    };
+    
+    // Simulated initial state
+    let lvSize = "190M";
+    let fsSize = "190M";
+    let fsType = "ext4";
+    let mountPoint = "/home";
+    let dataIntact = true;
+    let step1Complete = false;
+    let step2Complete = false;
+    let step3Complete = false;
+    let step4Complete = false;
+    
+    const commands = {
+        'df': (args) => {
+            if (args.length === 0 || (args.length === 1 && args[0] === '-hT')) {
+                let output = `Filesystem              Type      Size  Used Avail Use% Mounted on\n`;
+                output += `/dev/mapper/vg0-vo      ${fsType.padEnd(8)} ${fsSize.padEnd(6)} 45M   ${(parseInt(fsSize) - 45) + 'M'.padEnd(5)} 15%   ${mountPoint}\n`;
+                output += `/dev/sda1               ext4       9.8G  3.2G  6.1G  35%   /\n`;
+                output += `tmpfs                   tmpfs      1.9G     0  1.9G   0%   /dev/shm`;
+                
+                if (currentStep === 1) {
+                    stepCommandsExecuted[1]['df -hT'] = true;
+                    checkStep1Completion();
+                } else if (currentStep === 4) {
+                    stepCommandsExecuted[4]['df -hT'] = true;
+                    checkStep4Completion();
+                }
+                
+                return output;
+            }
+            return `df: invalid option -- '${args[0]}'`;
+        },
+        
+        'lvdisplay': (args) => {
+            if (args.length === 1 && args[0] === '/dev/vg0/vo') {
+                let output = `  --- Logical volume ---\n`;
+                output += `  LV Path                /dev/vg0/vo\n`;
+                output += `  LV Name                vo\n`;
+                output += `  VG Name                vg0\n`;
+                output += `  LV UUID                ABcD12-efGH-34IJ-KL56-MN78-90OP-QR12ST\n`;
+                output += `  LV Write Access        read/write\n`;
+                output += `  LV Creation host, time station, 2023-10-01 09:00:00 +0000\n`;
+                output += `  LV Status              available\n`;
+                output += `  # open                 1\n`;
+                output += `  LV Size                ${lvSize}\n`;
+                output += `  Current LE             49\n`;
+                output += `  Segments               1\n`;
+                output += `  Allocation             inherit\n`;
+                output += `  Read ahead sectors     auto\n`;
+                output += `  - currently set to     256\n`;
+                output += `  Block device           253:2`;
+                
+                if (currentStep === 1) {
+                    stepCommandsExecuted[1]['lvdisplay /dev/vg0/vo'] = true;
+                    checkStep1Completion();
+                } else if (currentStep === 4) {
+                    stepCommandsExecuted[4]['lvdisplay /dev/vg0/vo'] = true;
+                    checkStep4Completion();
+                }
+                
+                return output;
+            }
+            return `lvdisplay: Invalid argument '${args[0]}'`;
+        },
+        
+        'lvextend': (args) => {
+            const cmdStr = args.join(' ');
+            
+            if ((args.length === 3 && args[0] === '-L' && args[1] === '290M' && args[2] === '/dev/vg0/vo') ||
+                (args.length === 3 && args[0] === '-L' && args[1] === '+100M' && args[2] === '/dev/vg0/vo')) {
+                
+                if (currentStep === 2) {
+                    // Update LV size
+                    if (args[1] === '290M') {
+                        lvSize = "290M";
+                        stepCommandsExecuted[2]['lvextend -L 290M /dev/vg0/vo'] = true;
+                    } else if (args[1] === '+100M') {
+                        const current = parseInt(lvSize);
+                        lvSize = (current + 100) + "M";
+                        stepCommandsExecuted[2]['lvextend -L +100M /dev/vg0/vo'] = true;
+                    }
+                    
+                    checkStep2Completion();
+                    return `Size of logical volume vg0/vo changed from 190.00 MiB to ${lvSize}.\nLogical volume vg0/vo successfully resized.`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `lvextend: invalid arguments '${cmdStr}'`;
+        },
+        
+        'resize2fs': (args) => {
+            const cmdStr = args.join(' ');
+            
+            if (args.length === 1 && args[0] === '/dev/vg0/vo') {
+                if (currentStep === 3) {
+                    // Update FS size to match LV size
+                    fsSize = lvSize;
+                    stepCommandsExecuted[3]['resize2fs /dev/vg0/vo'] = true;
+                    checkStep3Completion();
+                    return `resize2fs 1.45.6 (20-Mar-2020)\nResizing the filesystem on /dev/vg0/vo to ${parseInt(lvSize)*256} (4k) blocks.\nThe filesystem on /dev/vg0/vo is now ${parseInt(lvSize)*256} (4k) blocks long.`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            } else if (args.length === 2 && args[0] === '/dev/vg0/vo' && args[1] === '100M') {
+                // For reduction scenario (step 5)
+                if (currentStep === 5) {
+                    fsSize = "100M";
+                    stepCommandsExecuted[5]['resize2fs /dev/vg0/vo 100M'] = true;
+                    checkStep5Completion();
+                    return `resize2fs 1.45.6 (20-Mar-2020)\nResizing the filesystem on /dev/vg0/vo to 25600 (4k) blocks.\nThe filesystem on /dev/vg0/vo is now 25600 (4k) blocks long.`;
+                }
+            }
+            return `resize2fs: invalid arguments '${cmdStr}'`;
+        },
+        
+        'xfs_growfs': (args) => {
+            if (args.length === 1 && args[0] === '/home') {
+                if (currentStep === 3) {
+                    // For XFS file systems
+                    fsSize = lvSize;
+                    stepCommandsExecuted[3]['xfs_growfs /home'] = true;
+                    checkStep3Completion();
+                    return `meta-data=/dev/vg0/vo           isize=512    agcount=4, agsize=12224 blks\n         =                       sectsz=512   attr=2, projid32bit=1\n         =                       crc=1        finobt=1 spinodes=0 rmapbt=0\n         =                       reflink=0\ndata     =                       bsize=4096   blocks=48896, imaxpct=25\n         =                       sunit=0      swidth=0 blks\nnaming   =version 2              bsize=4096   ascii-ci=0 ftype=1\nlog      =internal               bsize=4096   blocks=2560, version=2\n         =                       sectsz=512   sunit=0 blks, lazy-count=1\nrealtime =none                   extsz=4096   blocks=0, rtextents=0\ndata blocks changed from 48896 to ${parseInt(lvSize)*256}`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `xfs_growfs: invalid option -- '${args[0]}'`;
+        },
+        
+        'ls': (args) => {
+            if (args.length === 2 && args[0] === '-la' && args[1] === '/home') {
+                if (currentStep === 4) {
+                    stepCommandsExecuted[4]['ls -la /home'] = true;
+                    checkStep4Completion();
+                    
+                    return `total 48\ndrwxr-xr-x.  2 root root  4096 Oct  1 09:00 .\ndrwxr-xr-x. 17 root root  4096 Oct  1 08:59 ..\n-rw-r--r--.  1 root root    26 Oct  1 09:00 important-file.txt\n-rw-r--r--.  1 root root   512 Oct  1 09:00 data.bin\n-rw-r--r--.  1 root root  1024 Oct  1 09:00 logfile.log`;
+                } else {
+                    return "Please complete the previous steps first.";
+                }
+            }
+            return `ls: cannot access '${args[0]}': No such file or directory`;
+        },
+        
+        'mount': (args) => {
+            if (args.length === 2 && args[0] === '/dev/vg0/vo' && args[1] === '/home') {
+                if (currentStep === 5) {
+                    stepCommandsExecuted[5]['mount /dev/vg0/vo /home'] = true;
+                    checkStep5Completion();
+                    return `mount: /dev/vg0/vo mounted on /home.`;
+                }
+            }
+            return `mount: invalid option -- '${args[0]}'`;
+        },
+        
+        'umount': (args) => {
+            if (args.length === 1 && args[0] === '/home') {
+                if (currentStep === 5) {
+                    stepCommandsExecuted[5]['umount /home'] = true;
+                    checkStep5Completion();
+                    return `umount: /home unmounted.`;
+                }
+            }
+            return `umount: invalid option -- '${args[0]}'`;
+        },
+        
+        'e2fsck': (args) => {
+            if (args.length === 2 && args[0] === '-f' && args[1] === '/dev/vg0/vo') {
+                if (currentStep === 5) {
+                    stepCommandsExecuted[5]['e2fsck -f /dev/vg0/vo'] = true;
+                    checkStep5Completion();
+                    return `e2fsck 1.45.6 (20-Mar-2020)\nPass 1: Checking inodes, blocks, and sizes\nPass 2: Checking directory structure\nPass 3: Checking directory connectivity\nPass 4: Checking reference counts\nPass 5: Checking group summary information\n/dev/vg0/vo: 12/25600 files (8.3% non-contiguous), 8900/102400 blocks`;
+                }
+            }
+            return `e2fsck: invalid option -- '${args[0]}'`;
+        },
+        
+        'lvreduce': (args) => {
+            if (args.length === 3 && args[0] === '-L' && args[1] === '100M' && args[2] === '/dev/vg0/vo') {
+                if (currentStep === 5) {
+                    lvSize = "100M";
+                    stepCommandsExecuted[5]['lvreduce -L 100M /dev/vg0/vo'] = true;
+                    checkStep5Completion();
+                    return `Size of logical volume vg0/vo changed from 290.00 MiB to 100.00 MiB.\nLogical volume vg0/vo successfully resized.`;
+                }
+            }
+            return `lvreduce: invalid option -- '${args[0]}'`;
+        },
+        
+        'lvs': () => {
+            return `  LV   VG  Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert\n  vo   vg0 -wi-ao----  ${lvSize}`;
+        },
+        
+        'vgs': () => {
+            return `  VG  #PV #LV #SN Attr   VSize   VFree\n  vg0   1   1   0 wz--n- 500.00m 210.00m`;
+        },
+        
+        'pvs': () => {
+            return `  PV         VG  Fmt  Attr PSize   PFree\n  /dev/sda2  vg0 lvm2 a--  500.00m 210.00m`;
+        },
+        
+        'clear': () => {
+            terminalOutput.innerHTML = '';
+            return '';
+        },
+        
+        'help': () => {
+            return "Available commands: df, lvdisplay, lvextend, resize2fs, xfs_growfs, ls, mount, umount, e2fsck, lvreduce, lvs, vgs, pvs, clear, help";
+        }
+    };
+    
+    // Function to check if step 1 is complete
+    function checkStep1Completion() {
+        const step1Cmds = stepCommandsExecuted[1];
+        const allExecuted = step1Cmds['df -hT'] && step1Cmds['lvdisplay /dev/vg0/vo'];
+        
+        if (allExecuted && !step1Complete) {
+            configState.checkCurrent = true;
+            updateRequirements();
+            completeStep(1);
+            step1Complete = true;
+        }
+    }
+    
+    // Function to check if step 2 is complete
+    function checkStep2Completion() {
+        const step2Cmds = stepCommandsExecuted[2];
+        const anyExecuted = step2Cmds['lvextend -L 290M /dev/vg0/vo'] || step2Cmds['lvextend -L +100M /dev/vg0/vo'];
+        
+        if (anyExecuted && !step2Complete) {
+            configState.extendLv = true;
+            updateRequirements();
+            completeStep(2);
+            step2Complete = true;
+        }
+    }
+    
+    // Function to check if step 3 is complete
+    function checkStep3Completion() {
+        const step3Cmds = stepCommandsExecuted[3];
+        const anyExecuted = step3Cmds['resize2fs /dev/vg0/vo'] || step3Cmds['xfs_growfs /home'];
+        
+        if (anyExecuted && !step3Complete) {
+            configState.resizeFs = true;
+            updateRequirements();
+            completeStep(3);
+            step3Complete = true;
+        }
+    }
+    
+    // Function to check if step 4 is complete
+    function checkStep4Completion() {
+        const step4Cmds = stepCommandsExecuted[4];
+        const allExecuted = step4Cmds['df -hT'] && step4Cmds['lvdisplay /dev/vg0/vo'] && step4Cmds['ls -la /home'];
+        
+        if (allExecuted && !step4Complete) {
+            // Check if size is in acceptable range
+            const size = parseInt(lvSize);
+            if (size >= 270 && size <= 320) {
+                configState.verifySize = true;
+                configState.dataIntact = true;
+                updateRequirements();
+                completeStep(4);
+                step4Complete = true;
+            } else {
+                addTerminalOutput(`<span class="error">Error: Size ${size}M is not in acceptable range (270M-320M)</span>`);
+            }
+        }
+    }
+    
+    // Function to check if step 5 is complete (optional)
+    function checkStep5Completion() {
+        const step5Cmds = stepCommandsExecuted[5];
+        const allExecuted = step5Cmds['umount /home'] && step5Cmds['e2fsck -f /dev/vg0/vo'] && 
+                          step5Cmds['resize2fs /dev/vg0/vo 100M'] && step5Cmds['lvreduce -L 100M /dev/vg0/vo'] && 
+                          step5Cmds['mount /dev/vg0/vo /home'];
+        
+        if (allExecuted && currentStep === 5) {
+            completeStep(5);
+        }
+    }
+    
+    // Function to update requirements display
+    function updateRequirements() {
+        // Update requirement checkboxes
+        if (configState.checkCurrent) {
+            document.getElementById('req-check-current').classList.add('completed');
+            document.getElementById('req-check-current').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.extendLv) {
+            document.getElementById('req-extend-lv').classList.add('completed');
+            document.getElementById('req-extend-lv').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.resizeFs) {
+            document.getElementById('req-resize-fs').classList.add('completed');
+            document.getElementById('req-resize-fs').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.verifySize) {
+            document.getElementById('req-verify-size').classList.add('completed');
+            document.getElementById('req-verify-size').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        if (configState.dataIntact) {
+            document.getElementById('req-data-intact').classList.add('completed');
+            document.getElementById('req-data-intact').querySelector('.requirement-checkbox').textContent = '✓';
+        }
+        
+        // Update progress
+        const completedCount = Object.values(configState).filter(v => v).length;
+        const progressPercent = (completedCount / Object.keys(configState).length) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
+        
+        // Show completion message if all requirements are met
+        if (completedCount === Object.keys(configState).length) {
+            completionMessage.style.display = 'block';
+        }
+    }
+    
+    // Function to complete a step
+    function completeStep(step) {
+        if (step === currentStep) {
+            steps[step].classList.remove('current');
+            steps[step].classList.add('completed');
+            steps[step].querySelector('.step-status').textContent = 'Completed';
+            steps[step].querySelector('.step-status').className = 'step-status status-completed';
+            
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                steps[currentStep].classList.add('current');
+                steps[currentStep].querySelector('.step-status').textContent = 'Current Step';
+                steps[currentStep].querySelector('.step-status').className = 'step-status status-current';
+                
+                // Update terminal with next step info
+                addTerminalOutput(`<span class="success">[root@station ~]# Step ${step} completed. Moving to step ${currentStep}.</span>`);
+                
+                // Show the command for the next step
+                if (currentStep === 2) {
+                    addTerminalOutput(`[root@station ~]# Next: <code>lvextend -L 290M /dev/vg0/vo</code>`);
+                } else if (currentStep === 3) {
+                    addTerminalOutput(`[root@station ~]# Next: <code>resize2fs /dev/vg0/vo</code>`);
+                } else if (currentStep === 4) {
+                    addTerminalOutput(`[root@station ~]# Next: <code>df -hT</code>, <code>lvdisplay /dev/vg0/vo</code>, and <code>ls -la /home</code>`);
+                } else if (currentStep === 5) {
+                    addTerminalOutput(`[root@station ~]# Step 5 is optional reference for logical volume reduction.`);
+                }
+            } else if (currentStep === steps.length) {
+                // All steps completed
+                addTerminalOutput(`<span class="success">[root@station ~]# All steps completed! Lab requirements met.</span>`);
+            }
+        }
+    }
+    
+    // Function to add output to the terminal
+    function addTerminalOutput(text) {
+        const newLine = document.createElement('div');
+        newLine.innerHTML = text;
+        terminalOutput.appendChild(newLine);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Function to handle command execution
+    function executeCommand(input) {
+        const trimmedInput = input.trim();
+        if (!trimmedInput) return;
+        
+        // Add to command history
+        commandHistory.push(trimmedInput);
+        historyIndex = commandHistory.length;
+        
+        // Display the command in terminal
+        addTerminalOutput(`<span class="prompt">[root@station ~]#</span> ${trimmedInput}`);
+        
+        // Parse command and arguments
+        const parts = trimmedInput.split(' ');
+        const command = parts[0];
+        const args = parts.slice(1);
+        
+        // Execute command if it exists
+        if (commands.hasOwnProperty(command)) {
+            const result = commands[command](args);
+            if (result) {
+                addTerminalOutput(result);
+            }
+        } else {
+            addTerminalOutput(`<span class="error">bash: ${command}: command not found</span>`);
+            addTerminalOutput('Type "help" for available commands');
+        }
+    }
+    
+    // Function to handle tab completion
+    function handleTabCompletion() {
+        const input = commandInput.value;
+        
+        // If this is a consecutive tab press with no change in input, cycle through options
+        if (input === lastTabInput && tabCompletionItems.length > 1) {
+            tabCompletionIndex = (tabCompletionIndex + 1) % tabCompletionItems.length;
+            showTabCompletion(tabCompletionItems, tabCompletionIndex);
+            return;
+        }
+        
+        lastTabInput = input;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        // Reset tab completion state for new input
+        tabCompletionIndex = 0;
+        
+        // If no input, show all available commands
+        if (parts.length === 1 && lastPart === '') {
+            tabCompletionItems = availableCommands;
+            showTabCompletion(tabCompletionItems, 0);
+            return;
+        }
+        
+        // If it's a command completion
+        if (parts.length === 1) {
+            tabCompletionItems = availableCommands.filter(cmd => 
+                cmd.startsWith(lastPart)
+            );
+            
+            if (tabCompletionItems.length > 0) {
+                showTabCompletion(tabCompletionItems, 0);
+            } else {
+                hideTabCompletion();
+            }
+            return;
+        }
+        
+        // If it's a path completion
+        const pathParts = lastPart.split('/');
+        let basePath = pathParts.slice(0, -1).join('/') || '/';
+        const partialName = pathParts[pathParts.length - 1];
+        
+        // Normalize base path
+        if (!basePath.endsWith('/') && basePath !== '/') {
+            basePath += '/';
+        }
+        
+        // Get available completions for this path
+        const availablePaths = filePaths[basePath] || [];
+        tabCompletionItems = availablePaths.filter(path => 
+            path.startsWith(partialName)
+        );
+        
+        if (tabCompletionItems.length > 0) {
+            showTabCompletion(tabCompletionItems, 0);
+        } else {
+            hideTabCompletion();
+        }
+    }
+    
+    // Function to show tab completion suggestions
+    function showTabCompletion(items, selectedIndex) {
+        if (items.length === 0) {
+            hideTabCompletion();
+            return;
+        }
+        
+        // If only one item, auto-complete
+        if (items.length === 1) {
+            completeWithSuggestion(items[0]);
+            hideTabCompletion();
+            return;
+        }
+        
+        // Create completion items
+        tabCompletion.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `tab-completion-item ${index === selectedIndex ? 'selected' : ''}`;
+            div.textContent = item;
+            div.addEventListener('click', () => {
+                completeWithSuggestion(item);
+                hideTabCompletion();
+            });
+            tabCompletion.appendChild(div);
+        });
+        
+        // Show the completion box
+        tabCompletion.style.display = 'block';
+        
+        tabCompletionIndex = selectedIndex;
+        tabCompletionItems = items;
+    }
+    
+    // Function to hide tab completion
+    function hideTabCompletion() {
+        tabCompletion.style.display = 'none';
+        tabCompletionItems = [];
+        tabCompletionIndex = -1;
+    }
+    
+    // Function to complete the input with a suggestion
+    function completeWithSuggestion(suggestion) {
+        const input = commandInput.value;
+        const parts = input.split(' ');
+        const lastPart = parts[parts.length - 1];
+        
+        if (parts.length === 1) {
+            // Command completion
+            commandInput.value = suggestion + ' ';
+        } else {
+            // Path completion
+            const pathParts = lastPart.split('/');
+            const basePath = pathParts.slice(0, -1).join('/');
+            
+            if (basePath) {
+                parts[parts.length - 1] = basePath + '/' + suggestion;
+            } else {
+                parts[parts.length - 1] = suggestion;
+            }
+            
+            commandInput.value = parts.join(' ') + (suggestion.endsWith('/') ? '' : ' ');
+        }
+        
+        // Move cursor to end
+        commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        lastTabInput = commandInput.value;
+    }
+    
+    // Event listeners
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(commandInput.value);
+            commandInput.value = '';
+            hideTabCompletion();
+            lastTabInput = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (commandHistory.length > 0) {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                }
+                commandInput.value = commandHistory[historyIndex] || '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                commandInput.value = commandHistory[historyIndex];
+            } else {
+                historyIndex = commandHistory.length;
+                commandInput.value = '';
+            }
+            hideTabCompletion();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            handleTabCompletion();
+        } else if (e.key === 'Escape') {
+            hideTabCompletion();
+        } else {
+            // Hide tab completion on other key presses if input changes
+            setTimeout(() => {
+                if (commandInput.value !== lastTabInput) {
+                    hideTabCompletion();
+                }
+            }, 0);
+        }
+    });
+    
+    // Hide tab completion when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!tabCompletion.contains(e.target) && e.target !== commandInput) {
+            hideTabCompletion();
+        }
+    });
+    
+    // Initialize the lab
+    updateRequirements();
+</script>
+</body>
+</html>
