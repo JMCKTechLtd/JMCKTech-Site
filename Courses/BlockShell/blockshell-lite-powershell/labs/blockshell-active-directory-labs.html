@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockShell Hybrid: AD + Exchange Online Labs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <style>
+    :root {
+      --primary-color: #0078D4;      /* PowerShell / Microsoft blue */
+      --primary-hover: #005A9E;
+      --text-color: #1f2937;
+      --light-bg: #f9fafb;
+      --border-color: #e5e7eb;
+
+      /* Neutralised legacy colours (kept for compatibility) */
+      --secondary-color: #0078D4;
+      --accent-color: #0078D4;
+      --exchange-color: #0078D4;
+      --hybrid-color: #0078D4;
+      --danger-color: #9ca3af;
+      --warning-color: #9ca3af;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #ffffff;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-color);
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    header {
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 120, 212, 0.1);
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--primary-color);
+      border-radius: 2px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-top: 8px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    #lab-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #lab-header {
+      background: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .lab-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .lab-progress {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-bar {
+      width: 200px;
+      height: 8px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary-color);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    #lab-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #instructions-panel {
+      width: 300px;
+      background: white;
+      padding: 20px;
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.03);
+    }
+
+    #blockly-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #blockly-toolbar {
+      padding: 10px 20px;
+      display: flex;
+      gap: 10px;
+      background-color: white;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    #blocklyDiv {
+      height: calc(100% - 60px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 120, 212, 0.25);
+    }
+
+    /* Keep class names for compatibility, but force PowerShell-blue */
+    button.secondary,
+    button.hybrid,
+    button.exchange,
+    button.warning {
+      background-color: var(--primary-color);
+      color: #ffffff;
+    }
+
+    button.secondary:hover,
+    button.hybrid:hover,
+    button.exchange:hover,
+    button.warning:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* Danger becomes a neutral "utility" button (still safe) */
+    button.danger {
+      background-color: #e5e7eb;
+      color: #374151;
+    }
+
+    button.danger:hover {
+      background-color: #d1d5db;
+      box-shadow: none;
+    }
+
+    .lab-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .lab-tab {
+      padding: 8px 16px;
+      background: #f1f5f9;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .lab-tab.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .task {
+      background: #f1f5f9;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border-left: 3px solid var(--primary-color);
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .task.completed {
+      background: #eef6ff;
+      border-left-color: var(--primary-color);
+    }
+
+    .task.hybrid-task {
+      border-left-color: var(--primary-color);
+    }
+
+    .task.exchange-task {
+      border-left-color: var(--primary-color);
+    }
+
+    .task h4 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .task p {
+      margin: 0;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .task-icon {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: white;
+      font-size: 12px;
+    }
+
+    .task.completed .task-icon {
+      background: var(--primary-color);
+    }
+
+    .task.hybrid-task .task-icon {
+      background: var(--primary-color);
+    }
+
+    .task.exchange-task .task-icon {
+      background: var(--primary-color);
+    }
+
+    #feedback {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      background: #f8f9fa;
+      border: 1px solid var(--border-color);
+    }
+
+    .feedback-success {
+      background: #eef6ff;
+      border-color: var(--primary-color);
+      color: var(--text-color);
+    }
+
+    .feedback-warning {
+      background: #f3f4f6;
+      border-color: var(--border-color);
+      color: var(--text-color);
+    }
+
+    .feedback-error {
+      background: #f3f4f6;
+      border-color: var(--border-color);
+      color: var(--text-color);
+    }
+
+    .blocklyToolboxDiv {
+      border-right: 1px solid var(--border-color) !important;
+    }
+
+    .blocklyMainBackground {
+      stroke-width: 0;
+    }
+
+    .blocklyFlyoutBackground {
+      fill: var(--light-bg);
+    }
+
+    .modal {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      margin: 0;
+      color: var(--text-color);
+      font-size: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .code-block {
+      background-color: var(--light-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 15px;
+      overflow-x: auto;
+      font-family: Consolas, Monaco, "Andale Mono", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+      z-index: 1000;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .zoom-btn {
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+
+    .zoom-btn:hover {
+      background-color: var(--light-bg);
+    }
+
+    .zoom-btn:first-child {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Confirmation dialog styles */
+    .confirmation-dialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .confirmation-content {
+      background-color: white;
+      padding: 25px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .confirmation-title {
+      margin: 0 0 15px 0;
+      color: var(--text-color);
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .confirmation-message {
+      margin: 0 0 20px 0;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .confirmation-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .confirmation-buttons button {
+      min-width: 80px;
+    }
+
+    .app-notification {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transition: all 0.3s ease;
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    .app-notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .app-notification.success {
+      background-color: var(--secondary-color);
+    }
+
+    .app-notification.warning {
+      background-color: var(--warning-color);
+      color: #333;
+    }
+
+    .app-notification.error {
+      background-color: var(--danger-color);
+    }
+
+    .app-notification.hybrid {
+      background-color: var(--hybrid-color);
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <h1>BlockShell Hybrid: AD + Exchange Online Labs</h1>
+      <div class="subtitle">Visual PowerShell Script Builder for Hybrid Identity Management</div>
+    </header>
+
+    <div id="lab-container">
+      <div id="lab-header">
+        <div class="lab-title">Lab 1: Hybrid User Provisioning</div>
+        <div class="lab-progress">
+          <span>Progress:</span>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+          <span id="progress-text">0/3</span>
+        </div>
+      </div>
+
+      <div id="lab-content">
+        <div id="instructions-panel">
+          <div class="lab-tabs">
+            <div class="lab-tab active" onclick="switchLab('lab1')">Lab 1</div>
+            <div class="lab-tab" onclick="switchLab('lab2')">Lab 2</div>
+            <div class="lab-tab" onclick="switchLab('lab3')">Lab 3</div>
+            <div class="lab-tab" onclick="switchLab('lab4')">Lab 4</div>
+          </div>
+
+          <div id="lab1-instructions" class="lab-instructions">
+            <h3>🔄 Hybrid User Provisioning</h3>
+            <p>Learn how to create users in on-prem AD and provision Exchange Online mailboxes.</p>
+
+            <div class="task hybrid-task" id="lab1-task1">
+              <h4><span class="task-icon">1</span> Create On-Prem AD User</h4>
+              <p>Use the <strong>Create AD User</strong> block to create a user named <code>j.doe</code> in your on-prem Active Directory.</p>
+            </div>
+
+            <div class="task hybrid-task" id="lab1-task2">
+              <h4><span class="task-icon">2</span> Enable for Exchange Online</h4>
+              <p>Use the <strong>Enable Remote Mailbox</strong> block to prepare the user for Exchange Online mailbox.</p>
+            </div>
+
+            <div class="task hybrid-task" id="lab1-task3">
+              <h4><span class="task-icon">3</span> Force AD Sync</h4>
+              <p>Trigger Azure AD Connect sync to propagate the user to Exchange Online.</p>
+            </div>
+          </div>
+
+          <div id="lab2-instructions" class="lab-instructions" style="display: none;">
+            <h3>📧 Exchange Online Management</h3>
+            <p>Learn how to manage mailboxes, distribution groups, and permissions in Exchange Online.</p>
+
+            <div class="task exchange-task" id="lab2-task1">
+              <h4><span class="task-icon">1</span> Create Exchange Distribution Group</h4>
+              <p>Create a cloud-only distribution group <code>All-Staff@company.com</code> in Exchange Online.</p>
+            </div>
+
+            <div class="task exchange-task" id="lab2-task2">
+              <h4><span class="task-icon">2</span> Configure Mailbox Permissions</h4>
+              <p>Grant <code>j.doe</code> Send As permissions for the <code>helpdesk@company.com</code> mailbox.</p>
+            </div>
+
+            <div class="task exchange-task" id="lab2-task3">
+              <h4><span class="task-icon">3</span> Set Mailbox Quotas</h4>
+              <p>Configure Exchange Online mailbox storage quotas for the IT department.</p>
+            </div>
+
+            <div class="task exchange-task" id="lab2-task4">
+              <h4><span class="task-icon">4</span> Create Shared Mailbox</h4>
+              <p>Create a shared mailbox <code>projects@company.com</code> and add members.</p>
+            </div>
+          </div>
+
+          <div id="lab3-instructions" class="lab-instructions" style="display: none;">
+            <h3>🔗 Hybrid Group Management</h3>
+            <p>Learn how to manage groups across on-prem AD and Exchange Online.</p>
+
+            <div class="task hybrid-task" id="lab3-task1">
+              <h4><span class="task-icon">1</span> Create On-Prem Security Group</h4>
+              <p>Create <code>IT_Security</code> group in AD that will sync to Exchange Online.</p>
+            </div>
+
+            <div class="task hybrid-task" id="lab3-task2">
+              <h4><span class="task-icon">2</span> Configure Mail-Enabled Group</h4>
+              <p>Make the on-prem group mail-enabled for Exchange Online email.</p>
+            </div>
+
+            <div class="task hybrid-task" id="lab3-task3">
+              <h4><span class="task-icon">3</span> Hybrid Group Membership</h4>
+              <p>Add both on-prem users and cloud-only users to the hybrid group.</p>
+            </div>
+
+            <div class="task hybrid-task" id="lab3-task4">
+              <h4><span class="task-icon">4</span> Group Writeback Configuration</h4>
+              <p>Configure Azure AD Connect group writeback for management.</p>
+            </div>
+          </div>
+
+          <div id="lab4-instructions" class="lab-instructions" style="display: none;">
+            <h3>🛡️ Hybrid Security & Compliance</h3>
+            <p>Learn how to implement security policies across hybrid environments.</p>
+
+            <div class="task hybrid-task" id="lab4-task1">
+              <h4><span class="task-icon">1</span> Multi-Factor Authentication</h4>
+              <p>Enable MFA for Exchange Online access while maintaining AD authentication.</p>
+            </div>
+
+            <div class="task hybrid-task" id="lab4-task2">
+              <h4><span class="task-icon">2</span> Exchange Online Protection</h4>
+              <p>Configure anti-malware and anti-spam policies in Exchange Online.</p>
+            </div>
+
+            <div class="task hybrid-task" id="lab4-task3">
+              <h4><span class="task-icon">3</span> Hybrid Authentication Methods</h4>
+              <p>Configure Modern Authentication for hybrid Exchange deployment.</p>
+            </div>
+
+            <div class="task hybrid-task" id="lab4-task4">
+              <h4><span class="task-icon">4</span> Mail Flow Rules</h4>
+              <p>Create transport rules that work across on-prem and Exchange Online.</p>
+            </div>
+          </div>
+
+          <div id="feedback"></div>
+        </div>
+
+        <div id="blockly-area">
+          <div id="blockly-toolbar">
+            <button onclick="simulate()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 10 4 15 9 20"></polyline>
+                <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+              </svg>
+              Show Script
+            </button>
+            <button class="hybrid" onclick="checkProgress()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              Check Progress
+            </button>
+            <button class="danger" onclick="clearWorkspace()" style="margin-left: auto;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Clear Workspace
+            </button>
+          </div>
+          <div id="blocklyDiv"></div>
+          <div class="zoom-controls">
+            <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+            <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <div id="confirmationDialog" class="confirmation-dialog" style="display: none;">
+    <div class="confirmation-content">
+      <h3 class="confirmation-title">Clear Workspace</h3>
+      <p class="confirmation-message">Are you sure you want to clear the workspace? All blocks will be deleted.</p>
+      <div class="confirmation-buttons">
+        <button class="danger" onclick="confirmClearWorkspace()">Clear</button>
+        <button class="secondary" onclick="cancelClearWorkspace()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Notification -->
+  <div id="appNotification" class="app-notification" style="display: none;"></div>
+
+  <xml id="toolbox" style="display:none">
+    <category name="Core AD Management" colour="180">
+      <block type="create_aduser"></block>
+      <block type="set_userproperties"></block>
+      <block type="enable_remotemailbox"></block>
+      <block type="force_adsync"></block>
+      <block type="create_adgroup"></block>
+    </category>
+    <category name="Exchange Online" colour="330">
+      <block type="create_exogroup"></block>
+      <block type="set_mailboxpermissions"></block>
+      <block type="set_mailboxquota"></block>
+      <block type="create_sharedmailbox"></block>
+      <block type="get_exomailbox"></block>
+    </category>
+    <category name="Hybrid Configuration" colour="230">
+      <block type="mail_enable_group"></block>
+      <block type="configure_hybridauth"></block>
+      <block type="setup_mfa"></block>
+      <block type="configure_eop"></block>
+      <block type="create_mailflowrule"></block>
+    </category>
+    <category name="Hybrid Security" colour="290">
+      <block type="set_passwordpolicy"></block>
+      <block type="enable_auditing"></block>
+      <block type="configure_dkim"></block>
+      <block type="test_hybridconnectivity"></block>
+      <block type="monitor_hybridhealth"></block>
+    </category>
+  </xml>
+
+  <script>
+    // Declare workspace variable at the top level
+    let workspace;
+    let currentLab = 'lab1';
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize Blockly workspace
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        trashcan: true,
+        grid: {
+          spacing: 25,
+          length: 3,
+          colour: '#e0e0e0',
+          snap: true
+        },
+        zoom: {
+          controls: true,
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2
+        },
+        theme: {
+          'blockStyles': {
+            'colour_blocks': { 'colourPrimary': '#CF63CF', 'colourSecondary': '#C94FC9', 'colourTertiary': '#BD42BD' },
+            'list_blocks': { 'colourPrimary': '#9966FF', 'colourSecondary': '#855CD6', 'colourTertiary': '#774DCB' },
+            'logic_blocks': { 'colourPrimary': '#4C97FF', 'colourSecondary': '#4280D7', 'colourTertiary': '#3373CC' },
+            'loop_blocks': { 'colourPrimary': '#0fBD8C', 'colourSecondary': '#0DA57A', 'colourTertiary': '#0B8E69' },
+            'math_blocks': { 'colourPrimary': '#59C059', 'colourSecondary': '#46B946', 'colourTertiary': '#389438' },
+            'procedure_blocks': { 'colourPrimary': '#FF6680', 'colourSecondary': '#FF4D6A', 'colourTertiary': '#FF3355' },
+            'text_blocks': { 'colourPrimary': '#FFBF00', 'colourSecondary': '#E6AC00', 'colourTertiary': '#CC9900' },
+            'variable_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' },
+            'variable_dynamic_blocks': { 'colourPrimary': '#FF8C1A', 'colourSecondary': '#FF8000', 'colourTertiary': '#DB6E00' }
+          },
+          'componentStyles': {
+            'workspaceBackgroundColour': '#ffffff',
+            'toolboxBackgroundColour': '#ffffff',
+            'toolboxForegroundColour': '#1f2937',
+            'flyoutBackgroundColour': '#f9fafb',
+            'flyoutForegroundColour': '#1f2937',
+            'flyoutOpacity': 0.9,
+            'scrollbarColour': '#cbd5e1',
+            'scrollbarOpacity': 0.6
+          }
+        }
+      });
+
+      // Define Hybrid AD + Exchange Online blocks
+      Blockly.Blocks['create_aduser'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create AD User (On-Prem)")
+              .appendField("Username:")
+              .appendField(new Blockly.FieldTextInput("j.doe"), "USERNAME")
+              .appendField("Display Name:")
+              .appendField(new Blockly.FieldTextInput("John Doe"), "DISPLAYNAME");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Create a new user in on-premises Active Directory");
+        }
+      };
+
+      Blockly.Blocks['set_userproperties'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set AD User Properties")
+              .appendField("Username:")
+              .appendField(new Blockly.FieldTextInput("j.doe"), "USERNAME")
+              .appendField("Email:")
+              .appendField(new Blockly.FieldTextInput("j.doe@company.com"), "EMAIL")
+              .appendField("Department:")
+              .appendField(new Blockly.FieldTextInput("IT"), "DEPARTMENT");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Set user properties in on-prem Active Directory");
+        }
+      };
+
+      Blockly.Blocks['enable_remotemailbox'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Enable Remote Mailbox")
+              .appendField("User:")
+              .appendField(new Blockly.FieldTextInput("j.doe"), "USERNAME")
+              .appendField("Remote Routing:")
+              .appendField(new Blockly.FieldTextInput("j.doe@company.mail.onmicrosoft.com"), "REMOTEROUTING");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Enable Exchange Online mailbox for on-prem AD user");
+        }
+      };
+
+      Blockly.Blocks['force_adsync'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Force AD Sync")
+              .appendField("Sync Type:")
+              .appendField(new Blockly.FieldDropdown([["Delta Sync","Delta"], ["Full Sync","Full"]]), "SYNCTYPE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Force Azure AD Connect synchronization");
+        }
+      };
+
+      Blockly.Blocks['create_adgroup'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create AD Group (On-Prem)")
+              .appendField("Group Name:")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUPNAME")
+              .appendField("Scope:")
+              .appendField(new Blockly.FieldDropdown([["Global","Global"], ["Universal","Universal"], ["DomainLocal","DomainLocal"]]), "SCOPE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(180);
+          this.setTooltip("Create a new group in on-prem Active Directory");
+        }
+      };
+
+      // Exchange Online blocks
+      Blockly.Blocks['create_exogroup'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create Exchange Distribution Group")
+              .appendField("Name:")
+              .appendField(new Blockly.FieldTextInput("All-Staff"), "GROUPNAME")
+              .appendField("Email:")
+              .appendField(new Blockly.FieldTextInput("all-staff@company.com"), "EMAIL")
+              .appendField("Type:")
+              .appendField(new Blockly.FieldDropdown([["Distribution","Distribution"], ["Security","Security"]]), "TYPE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(330);
+          this.setTooltip("Create a distribution group in Exchange Online");
+        }
+      };
+
+      Blockly.Blocks['set_mailboxpermissions'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set Mailbox Permissions")
+              .appendField("Mailbox:")
+              .appendField(new Blockly.FieldTextInput("helpdesk@company.com"), "MAILBOX")
+              .appendField("User:")
+              .appendField(new Blockly.FieldTextInput("j.doe"), "USER")
+              .appendField("Permission:")
+              .appendField(new Blockly.FieldDropdown([["Send As","SendAs"], ["Full Access","FullAccess"], ["Send on Behalf","SendOnBehalf"]]), "PERMISSION");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(330);
+          this.setTooltip("Set permissions on Exchange Online mailbox");
+        }
+      };
+
+      Blockly.Blocks['set_mailboxquota'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set Mailbox Quota")
+              .appendField("Mailbox:")
+              .appendField(new Blockly.FieldTextInput("j.doe@company.com"), "MAILBOX")
+              .appendField("Prohibit Send:")
+              .appendField(new Blockly.FieldNumber(49, 1), "PROHIBITSEND")
+              .appendField("GB")
+              .appendField("Prohibit Send/Receive:")
+              .appendField(new Blockly.FieldNumber(50, 1), "PROHIBITSENDRECEIVE")
+              .appendField("GB");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(330);
+          this.setTooltip("Configure Exchange Online mailbox storage quotas");
+        }
+      };
+
+      Blockly.Blocks['create_sharedmailbox'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create Shared Mailbox")
+              .appendField("Name:")
+              .appendField(new Blockly.FieldTextInput("Projects Team"), "DISPLAYNAME")
+              .appendField("Email:")
+              .appendField(new Blockly.FieldTextInput("projects@company.com"), "EMAIL");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(330);
+          this.setTooltip("Create a shared mailbox in Exchange Online");
+        }
+      };
+
+      Blockly.Blocks['get_exomailbox'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Get Exchange Mailbox")
+              .appendField("Identity:")
+              .appendField(new Blockly.FieldTextInput("j.doe@company.com"), "IDENTITY");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(330);
+          this.setTooltip("Get mailbox information from Exchange Online");
+        }
+      };
+
+      // Hybrid Configuration blocks
+      Blockly.Blocks['mail_enable_group'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Mail-Enable AD Group")
+              .appendField("Group:")
+              .appendField(new Blockly.FieldTextInput("IT_Admins"), "GROUP")
+              .appendField("Email Address:")
+              .appendField(new Blockly.FieldTextInput("it-admins@company.com"), "EMAIL");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Make on-prem AD group mail-enabled for Exchange Online");
+        }
+      };
+
+      Blockly.Blocks['configure_hybridauth'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Configure Hybrid Authentication")
+              .appendField("Auth Method:")
+              .appendField(new Blockly.FieldDropdown([["Modern Auth","Modern"], ["Basic Auth","Basic"], ["OAuth","OAuth"]]), "AUTHMETHOD");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Configure authentication for hybrid Exchange deployment");
+        }
+      };
+
+      Blockly.Blocks['setup_mfa'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Setup Multi-Factor Authentication")
+              .appendField("User:")
+              .appendField(new Blockly.FieldTextInput("j.doe@company.com"), "USER")
+              .appendField("MFA Method:")
+              .appendField(new Blockly.FieldDropdown([["Authenticator App","App"], ["SMS","SMS"], ["Phone Call","Phone"]]), "MFAMETHOD");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Configure MFA for Exchange Online access");
+        }
+      };
+
+      Blockly.Blocks['configure_eop'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Configure Exchange Online Protection")
+              .appendField("Policy Type:")
+              .appendField(new Blockly.FieldDropdown([["Anti-Spam","Spam"], ["Anti-Malware","Malware"], ["Safe Links","SafeLinks"], ["Safe Attachments","SafeAttachments"]]), "POLICYTYPE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Configure Exchange Online Protection policies");
+        }
+      };
+
+      Blockly.Blocks['create_mailflowrule'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Create Mail Flow Rule")
+              .appendField("Rule Name:")
+              .appendField(new Blockly.FieldTextInput("External Sender Warning"), "RULENAME")
+              .appendField("Apply to:")
+              .appendField(new Blockly.FieldDropdown([["All Messages","All"], ["External Only","External"], ["Internal Only","Internal"]]), "APPLYTO");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(230);
+          this.setTooltip("Create transport rule in Exchange Online");
+        }
+      };
+
+      // Hybrid Security blocks
+      Blockly.Blocks['set_passwordpolicy'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Set AD Password Policy")
+              .appendField("Min Length:")
+              .appendField(new Blockly.FieldNumber(12), "MINLENGTH")
+              .appendField("Complexity:")
+              .appendField(new Blockly.FieldCheckbox("TRUE"), "COMPLEXITY")
+              .appendField("Max Age (days):")
+              .appendField(new Blockly.FieldNumber(90), "MAXAGE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Configure password policy in on-prem Active Directory");
+        }
+      };
+
+      Blockly.Blocks['enable_auditing'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Enable Hybrid Auditing")
+              .appendField("Audit Scope:")
+              .appendField(new Blockly.FieldDropdown([["Exchange Admin","ExchangeAdmin"], ["Mailbox Access","MailboxAccess"], ["AD Changes","ADChanges"]]), "SCOPE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Enable auditing across hybrid environment");
+        }
+      };
+
+      Blockly.Blocks['configure_dkim'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Configure DKIM for Domain")
+              .appendField("Domain:")
+              .appendField(new Blockly.FieldTextInput("company.com"), "DOMAIN")
+              .appendField("Selector:")
+              .appendField(new Blockly.FieldTextInput("selector1"), "SELECTOR");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Configure DKIM signing for Exchange Online mail flow");
+        }
+      };
+
+      Blockly.Blocks['test_hybridconnectivity'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Test Hybrid Connectivity")
+              .appendField("Test Type:")
+              .appendField(new Blockly.FieldDropdown([["Mail Flow","MailFlow"], ["Free/Busy","FreeBusy"], ["MRS Proxy","MRSProxy"]]), "TESTTYPE");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Test connectivity between on-prem and Exchange Online");
+        }
+      };
+
+      Blockly.Blocks['monitor_hybridhealth'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField("Monitor Hybrid Health")
+              .appendField("Component:")
+              .appendField(new Blockly.FieldDropdown([["AD Connect","ADConnect"], ["Exchange Hybrid","Exchange"], ["AD FS","ADFS"]]), "COMPONENT");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(290);
+          this.setTooltip("Monitor health of hybrid configuration components");
+        }
+      };
+
+      // Setup event listeners for zoom controls
+      document.getElementById('zoom-in').addEventListener('click', function() {
+        workspace.zoomCenter(1.2);
+      });
+
+      document.getElementById('zoom-out').addEventListener('click', function() {
+        workspace.zoomCenter(0.8);
+      });
+
+      // Add tab click event listeners
+      document.querySelectorAll('.lab-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+          const labId = this.getAttribute('onclick').match(/switchLab\('([^']+)'\)/)[1];
+          switchLab(labId);
+        });
+      });
+
+      // Add example block for first lab
+      const exampleXml = `<xml>
+        <block type="create_aduser" x="50" y="50">
+          <field name="USERNAME">j.doe</field>
+          <field name="DISPLAYNAME">John Doe</field>
+        </block>
+        <block type="enable_remotemailbox" x="50" y="150">
+          <field name="USERNAME">j.doe</field>
+          <field name="REMOTEROUTING">j.doe@company.mail.onmicrosoft.com</field>
+        </block>
+      </xml>`;
+
+      try {
+        const dom = Blockly.Xml.textToDom(exampleXml);
+        Blockly.Xml.domToWorkspace(dom, workspace);
+      } catch (e) {
+        console.log('Error loading example block:', e);
+      }
+    });
+
+    // Lab switching function
+    function switchLab(labId) {
+      // Update current lab
+      currentLab = labId;
+
+      // Update lab title
+      const labTitles = {
+        'lab1': 'Lab 1: Hybrid User Provisioning',
+        'lab2': 'Lab 2: Exchange Online Management',
+        'lab3': 'Lab 3: Hybrid Group Management',
+        'lab4': 'Lab 4: Hybrid Security & Compliance'
+      };
+      document.querySelector('.lab-title').textContent = labTitles[labId];
+
+      // Update tab buttons
+      document.querySelectorAll('.lab-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+
+      // Activate the clicked tab
+      const tabs = document.querySelectorAll('.lab-tab');
+      const tabIndex = {
+        'lab1': 0,
+        'lab2': 1,
+        'lab3': 2,
+        'lab4': 3
+      }[labId];
+
+      if (tabIndex !== undefined && tabs[tabIndex]) {
+        tabs[tabIndex].classList.add('active');
+      }
+
+      // Show/hide instructions
+      document.querySelectorAll('.lab-instructions').forEach(instructions => {
+        instructions.style.display = 'none';
+      });
+      const instructions = document.getElementById(labId + '-instructions');
+      if (instructions) {
+        instructions.style.display = 'block';
+      }
+
+      // Clear feedback when switching labs
+      document.getElementById('feedback').innerHTML = '';
+      document.getElementById('feedback').className = '';
+
+      // Reset progress based on current lab
+      const taskCounts = {
+        'lab1': 3,
+        'lab2': 4,
+        'lab3': 4,
+        'lab4': 4
+      };
+      updateProgress(0, taskCounts[labId]);
+
+      // Clear completed task indicators
+      document.querySelectorAll('.task').forEach(task => {
+        task.classList.remove('completed');
+      });
+    }
+
+    // Progress checking
+    function checkProgress() {
+      const blocks = workspace.getAllBlocks();
+      const feedback = document.getElementById('feedback');
+
+      let tasks = {};
+      let totalTasks = 0;
+
+      // Define tasks for each lab
+      if (currentLab === 'lab1') {
+        totalTasks = 3;
+        tasks = {
+          task1: blocks.some(b => b.type === "create_aduser" &&
+                 b.getFieldValue('USERNAME') === 'j.doe' &&
+                 b.getFieldValue('DISPLAYNAME') === 'John Doe'),
+          task2: blocks.some(b => b.type === "enable_remotemailbox" &&
+                 b.getFieldValue('USERNAME') === 'j.doe'),
+          task3: blocks.some(b => b.type === "force_adsync")
+        };
+      } else if (currentLab === 'lab2') {
+        totalTasks = 4;
+        tasks = {
+          task1: blocks.some(b => b.type === "create_exogroup" &&
+                 b.getFieldValue('EMAIL') === 'all-staff@company.com'),
+          task2: blocks.some(b => b.type === "set_mailboxpermissions" &&
+                 b.getFieldValue('MAILBOX') === 'helpdesk@company.com' &&
+                 b.getFieldValue('USER') === 'j.doe'),
+          task3: blocks.some(b => b.type === "set_mailboxquota"),
+          task4: blocks.some(b => b.type === "create_sharedmailbox" &&
+                 b.getFieldValue('EMAIL') === 'projects@company.com')
+        };
+      } else if (currentLab === 'lab3') {
+        totalTasks = 4;
+        tasks = {
+          task1: blocks.some(b => b.type === "create_adgroup" &&
+                 b.getFieldValue('GROUPNAME') === 'IT_Security'),
+          task2: blocks.some(b => b.type === "mail_enable_group" &&
+                 b.getFieldValue('GROUP') === 'IT_Admins'),
+          task3: blocks.filter(b => b.type === "add_groupmember").length >= 1,
+          task4: blocks.some(b => b.type === "configure_hybridauth")
+        };
+      } else if (currentLab === 'lab4') {
+        totalTasks = 4;
+        tasks = {
+          task1: blocks.some(b => b.type === "setup_mfa" &&
+                 b.getFieldValue('USER') === 'j.doe@company.com'),
+          task2: blocks.some(b => b.type === "configure_eop"),
+          task3: blocks.some(b => b.type === "configure_hybridauth" &&
+                 b.getFieldValue('AUTHMETHOD') === 'Modern'),
+          task4: blocks.some(b => b.type === "create_mailflowrule")
+        };
+      }
+
+      // Update UI
+      Object.keys(tasks).forEach(taskId => {
+        const taskElement = document.getElementById(currentLab + '-' + taskId);
+        if (taskElement) {
+          taskElement.classList.toggle('completed', tasks[taskId]);
+        }
+      });
+
+      // Update progress
+      const completed = Object.values(tasks).filter(Boolean).length;
+      updateProgress(completed, totalTasks);
+
+      // Show feedback
+      if (completed === totalTasks) {
+        feedback.innerHTML = '✅ All tasks completed! Ready to generate your script.';
+        feedback.className = 'feedback-success';
+      } else if (completed > 0) {
+        feedback.innerHTML = `⏳ Progress: ${completed}/${totalTasks} tasks done`;
+        feedback.className = 'feedback-warning';
+      } else {
+        feedback.innerHTML = '<div>Start building your hybrid script by dragging blocks from the toolbox.</div>';
+        feedback.className = '';
+      }
+    }
+
+    // Update progress bar
+    function updateProgress(completed, total) {
+      const percentage = (completed / total) * 100;
+      const progressFill = document.querySelector('.progress-fill');
+      const progressText = document.getElementById('progress-text');
+
+      if (progressFill) {
+        progressFill.style.width = `${percentage}%`;
+      }
+      if (progressText) {
+        progressText.textContent = `${completed}/${total}`;
+      }
+    }
+
+    // Generate PowerShell code for hybrid environment
+    function generatePowerShellCode() {
+      const blocks = workspace.getTopBlocks(true);
+      let code = "";
+
+      // Add header with hybrid focus
+      code += `# Generated by BlockShell Hybrid: AD + Exchange Online Tool\n`;
+      code += `# Lab: ${document.querySelector('.lab-title').textContent}\n`;
+      code += `# Date: ${new Date().toISOString()}\n`;
+      code += `# Hybrid Environment Script - Requires both AD and Exchange Online modules\n\n`;
+
+      // Import modules section
+      code += `# Import required modules\n`;
+      code += `Import-Module ActiveDirectory\n`;
+      code += `# Connect to Exchange Online (run this first in Exchange Online PowerShell)\n`;
+      code += `# Connect-ExchangeOnline -UserPrincipalName admin@company.com\n`;
+      code += `\n`;
+
+      // Generate code from blocks
+      for (const block of blocks) {
+        code += generateBlockCodeRecursive(block);
+      }
+
+      return code.trim();
+    }
+
+    function generateBlockCodeRecursive(block) {
+      if (!block) return "";
+      let code = "";
+
+      switch (block.type) {
+        case "create_aduser":
+          code += `# Create user in on-prem Active Directory\n`;
+          code += `New-ADUser -Name "${block.getFieldValue('DISPLAYNAME')}" `;
+          code += `-SamAccountName "${block.getFieldValue('USERNAME')}" `;
+          code += `-UserPrincipalName "${block.getFieldValue('USERNAME')}@company.com" `;
+          code += `-GivenName "John" -Surname "Doe" `;
+          code += `-Enabled $true -Path "OU=Users,DC=company,DC=com"\n`;
+          break;
+        case "set_userproperties":
+          code += `# Set user properties in AD\n`;
+          code += `Set-ADUser -Identity "${block.getFieldValue('USERNAME')}" `;
+          code += `-EmailAddress "${block.getFieldValue('EMAIL')}" `;
+          code += `-Department "${block.getFieldValue('DEPARTMENT')}" `;
+          code += `-Office "Headquarters" -Title "Systems Administrator"\n`;
+          break;
+        case "enable_remotemailbox":
+          code += `# Enable remote mailbox for Exchange Online (run on Exchange Hybrid server)\n`;
+          code += `Enable-RemoteMailbox "${block.getFieldValue('USERNAME')}" `;
+          code += `-RemoteRoutingAddress "${block.getFieldValue('REMOTEROUTING')}"\n`;
+          break;
+        case "force_adsync":
+          code += `# Force Azure AD Connect synchronization\n`;
+          if (block.getFieldValue('SYNCTYPE') === 'Full') {
+            code += `Start-ADSyncSyncCycle -PolicyType Initial\n`;
+          } else {
+            code += `Start-ADSyncSyncCycle -PolicyType Delta\n`;
+          }
+          break;
+        case "create_adgroup":
+          code += `# Create security group in on-prem AD\n`;
+          code += `New-ADGroup -Name "${block.getFieldValue('GROUPNAME')}" `;
+          code += `-GroupScope ${block.getFieldValue('SCOPE')} `;
+          code += `-GroupCategory Security -Path "OU=Groups,DC=company,DC=com"\n`;
+          break;
+        case "create_exogroup":
+          code += `# Create distribution group in Exchange Online\n`;
+          code += `New-DistributionGroup -Name "${block.getFieldValue('GROUPNAME')}" `;
+          code += `-PrimarySmtpAddress "${block.getFieldValue('EMAIL')}" `;
+          code += `-Type ${block.getFieldValue('TYPE')}\n`;
+          break;
+        case "set_mailboxpermissions":
+          code += `# Set mailbox permissions in Exchange Online\n`;
+          code += `Add-RecipientPermission "${block.getFieldValue('MAILBOX')}" `;
+          code += `-AccessRights ${block.getFieldValue('PERMISSION')} `;
+          code += `-Trustee "${block.getFieldValue('USER')}"\n`;
+          break;
+        case "set_mailboxquota":
+          code += `# Set mailbox storage quotas\n`;
+          code += `Set-Mailbox "${block.getFieldValue('MAILBOX')}" `;
+          code += `-ProhibitSendQuota ${block.getFieldValue('PROHIBITSEND')}GB `;
+          code += `-ProhibitSendReceiveQuota ${block.getFieldValue('PROHIBITSENDRECEIVE')}GB `;
+          code += `-IssueWarningQuota $(${block.getFieldValue('PROHIBITSEND')} - 5)GB\n`;
+          break;
+        case "create_sharedmailbox":
+          code += `# Create shared mailbox in Exchange Online\n`;
+          code += `New-Mailbox -Shared -Name "${block.getFieldValue('DISPLAYNAME')}" `;
+          code += `-DisplayName "${block.getFieldValue('DISPLAYNAME')}" `;
+          code += `-PrimarySmtpAddress "${block.getFieldValue('EMAIL')}"\n`;
+          break;
+        case "get_exomailbox":
+          code += `# Get mailbox information from Exchange Online\n`;
+          code += `Get-Mailbox -Identity "${block.getFieldValue('IDENTITY')}" | Format-List\n`;
+          break;
+        case "mail_enable_group":
+          code += `# Mail-enable existing AD group (run on Exchange Hybrid server)\n`;
+          code += `Enable-DistributionGroup -Identity "${block.getFieldValue('GROUP')}" `;
+          code += `-PrimarySmtpAddress "${block.getFieldValue('EMAIL')}"\n`;
+          break;
+        case "configure_hybridauth":
+          code += `# Configure hybrid authentication\n`;
+          code += `Set-OrganizationConfig -OAuth2ClientProfileEnabled $true\n`;
+          code += `# Modern Authentication enables better security for hybrid deployments\n`;
+          break;
+        case "setup_mfa":
+          code += `# Enable Multi-Factor Authentication\n`;
+          code += `$auth = New-Object -TypeName Microsoft.Online.Administration.StrongAuthenticationRequirement\n`;
+          code += `$auth.RelyingParty = "*"\n`;
+          code += `$auth.State = "Enabled"\n`;
+          code += `Set-MsolUser -UserPrincipalName "${block.getFieldValue('USER')}" -StrongAuthenticationRequirements $auth\n`;
+          break;
+        case "configure_eop":
+          code += `# Configure Exchange Online Protection\n`;
+          code += `# ${block.getFieldValue('POLICYTYPE')} policy configuration would go here\n`;
+          code += `Write-Host "Configuring ${block.getFieldValue('POLICYTYPE')} policy..."\n`;
+          break;
+        case "create_mailflowrule":
+          code += `# Create mail flow rule\n`;
+          code += `New-TransportRule -Name "${block.getFieldValue('RULENAME')}" `;
+          code += `-FromScope NotInOrganization `;
+          code += `-PrependSubject "[EXTERNAL] "\n`;
+          break;
+        case "set_passwordpolicy":
+          code += `# Configure AD password policy via Group Policy\n`;
+          code += `# These settings would be configured in Default Domain Policy\n`;
+          code += `Write-Host "Password Policy: Min ${block.getFieldValue('MINLENGTH')} chars, Complexity: ${block.getFieldValue('COMPLEXITY')}, Max Age: ${block.getFieldValue('MAXAGE')} days"\n`;
+          break;
+        case "enable_auditing":
+          code += `# Enable hybrid auditing\n`;
+          code += `Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true\n`;
+          code += `# Also enable AD auditing in Group Policy\n`;
+          break;
+        case "configure_dkim":
+          code += `# Configure DKIM for domain\n`;
+          code += `New-DkimSigningConfig -DomainName "${block.getFieldValue('DOMAIN')}" `;
+          code += `-Enabled $true -Selector "${block.getFieldValue('SELECTOR')}"\n`;
+          break;
+        case "test_hybridconnectivity":
+          code += `# Test hybrid connectivity\n`;
+          code += `Test-HybridConnectivity -ClientAccessServer $(Get-ClientAccessServer).Name\n`;
+          break;
+        case "monitor_hybridhealth":
+          code += `# Monitor hybrid health\n`;
+          code += `Get-HybridConfiguration | Format-List\n`;
+          code += `# Check Azure AD Connect health\n`;
+          break;
+      }
+
+      const nextBlock = block.getNextBlock();
+      if (nextBlock) {
+        code += generateBlockCodeRecursive(nextBlock);
+      }
+      return code;
+    }
+
+    function createModal(title) {
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+
+      const content = document.createElement('div');
+      content.className = 'modal-content';
+
+      const header = document.createElement('div');
+      header.className = 'modal-header';
+
+      const titleElement = document.createElement('h3');
+      titleElement.className = 'modal-title';
+      titleElement.textContent = title;
+
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'close-btn';
+      closeBtn.innerHTML = '&times;';
+      closeBtn.onclick = function() {
+        document.body.removeChild(modal);
+      };
+
+      header.appendChild(titleElement);
+      header.appendChild(closeBtn);
+      content.appendChild(header);
+      modal.appendChild(content);
+
+      return modal;
+    }
+
+    window.simulate = function simulate() {
+      const code = generatePowerShellCode();
+      if (!code || code.trim() === "# Generated by BlockShell Hybrid: AD + Exchange Online Tool\n# Lab: Lab 1: Hybrid User Provisioning\n# Date:") {
+        showAppNotification("No hybrid script to show. Please add some blocks first.", "warning");
+        return;
+      }
+
+      const modal = createModal('Generated Hybrid PowerShell Script');
+
+      const codeBlock = document.createElement('div');
+      codeBlock.className = 'code-block';
+      const pre = document.createElement('pre');
+      pre.textContent = code;
+      hljs.highlightElement(pre);
+      codeBlock.appendChild(pre);
+
+      const copyBtn = document.createElement('button');
+      copyBtn.textContent = 'Copy to Clipboard';
+      copyBtn.className = 'hybrid';
+      copyBtn.style.marginTop = '15px';
+      copyBtn.onclick = function() {
+        navigator.clipboard.writeText(code).then(() => {
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyBtn.textContent = 'Copy to Clipboard';
+          }, 2000);
+        });
+      };
+
+      const note = document.createElement('div');
+      note.style.marginTop = '10px';
+      note.style.padding = '10px';
+      note.style.backgroundColor = '#f3f4f6';
+      note.style.borderRadius = '6px';
+      note.style.fontSize = '14px';
+      note.innerHTML = '<strong>Note:</strong> This script requires both on-premises Active Directory and Exchange Online PowerShell modules. Run Exchange Online commands in Exchange Online PowerShell session.';
+
+      modal.querySelector('.modal-content').appendChild(codeBlock);
+      modal.querySelector('.modal-content').appendChild(note);
+      modal.querySelector('.modal-content').appendChild(copyBtn);
+
+      document.body.appendChild(modal);
+    };
+
+    // Clear workspace functions
+    window.clearWorkspace = function() {
+      document.getElementById('confirmationDialog').style.display = 'flex';
+    };
+
+    function confirmClearWorkspace() {
+      workspace.clear();
+      document.getElementById('confirmationDialog').style.display = 'none';
+      showAppNotification('Workspace cleared', 'hybrid');
+      checkProgress(); // Reset progress
+    }
+
+    function cancelClearWorkspace() {
+      document.getElementById('confirmationDialog').style.display = 'none';
+    }
+
+    // App notification function
+    function showAppNotification(message, type = 'info') {
+      const notification = document.getElementById('appNotification');
+      notification.textContent = message;
+      notification.className = 'app-notification';
+      notification.classList.add(type);
+      notification.style.display = 'block';
+
+      // Animate in
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 10);
+
+      // Animate out after 3 seconds
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+          notification.style.display = 'none';
+        }, 300);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

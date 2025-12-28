@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lab 30: Remote Help Basics</title>
+  <style>
+    :root{
+      --bg:#0078D4;         /* plain Windows blue backdrop */
+      --taskbar:#111318cc;
+      --panel:#1a1d24f2;
+      --panel2:#0f1218f2;
+      --text:#eef2ff;
+      --muted:#b9c3d9;
+      --accent:#7dd3fc;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --danger:#ef4444;
+      --shadow: 0 18px 45px rgba(0,0,0,.35);
+      --glass: blur(10px);
+      --border: 1px solid rgba(255,255,255,.12);
+      --radius: 14px;
+      --radius2: 12px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; font-family:var(--font); color:var(--text); overflow:hidden;}
+    body{ background: var(--bg); }
+    .desktop{ position:relative; height:100%; width:100%; padding:18px 18px 70px 18px; user-select:none; }
+    .desktop-icons{
+      display:grid;
+      grid-template-columns: repeat(1, 92px);
+      grid-auto-rows: 96px;
+      gap:10px;
+      align-content:start;
+      justify-content:start;
+      width:92px;
+    }
+    .icon{ width:92px; padding:10px 8px; border-radius:12px; text-align:center; cursor:pointer; transition: transform .08s ease, background .12s ease; }
+    .icon:hover{background:rgba(255,255,255,.12)}
+    .icon:active{transform:scale(.98)}
+    .icon svg{width:34px;height:34px; display:block; margin:0 auto 8px auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,.25));}
+    .icon .label{ font-size:12px; line-height:1.1; color:rgba(255,255,255,.95); text-shadow:0 2px 10px rgba(0,0,0,.25); word-break:break-word; }
+    .taskbar{
+      position:absolute; left:0; right:0; bottom:0;
+      height:56px; background: var(--taskbar);
+      backdrop-filter: var(--glass); border-top: var(--border);
+      display:flex; align-items:center; padding:0 10px; gap:10px;
+    }
+    .tb-left,.tb-center,.tb-right{display:flex; align-items:center; gap:10px;}
+    .tb-left{min-width:130px;}
+    .tb-center{flex:1; justify-content:center; gap:8px;}
+    .tb-right{min-width:230px; justify-content:flex-end; gap:10px;}
+    .tb-btn{
+      height:40px; min-width:40px; padding:0 10px;
+      border-radius:12px; border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.06); color:var(--text);
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      cursor:pointer; transition: background .12s ease, transform .08s ease;
+    }
+    .tb-btn:hover{background:rgba(255,255,255,.10)}
+    .tb-btn:active{transform:scale(.98)}
+    .tb-btn svg{width:18px;height:18px}
+    .tb-pill{
+      height:40px; padding:0 12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.06);
+      display:flex; align-items:center; gap:10px; min-width:260px; cursor:pointer;
+    }
+    .tb-pill input{ width:100%; border:0; outline:none; background:transparent; color:var(--text); font-size:13px; }
+    .tb-time{ display:flex; flex-direction:column; align-items:flex-end; line-height:1.05; font-size:12px; color:var(--text); padding-right:6px; opacity:.95; }
+    .tb-tray{ display:flex; align-items:center; gap:8px; }
+    .tray-dot{width:6px;height:6px;border-radius:99px;background:rgba(255,255,255,.65)}
+    .badge{
+      position:absolute; top:-6px; right:-6px; font-size:11px;
+      background:var(--danger); color:white; border-radius:999px; padding:2px 6px;
+      border:1px solid rgba(0,0,0,.25); box-shadow:0 10px 25px rgba(0,0,0,.35);
+    }
+
+    .panel{
+      position:absolute; bottom:66px; background:var(--panel);
+      border:var(--border); border-radius:var(--radius);
+      box-shadow:var(--shadow); backdrop-filter:var(--glass);
+      padding:14px; width:360px; max-height:560px; overflow:auto; display:none;
+    }
+    .panel.show{display:block}
+    .panel h3{ margin:0 0 10px 0; font-size:14px; letter-spacing:.2px; color:rgba(255,255,255,.95); }
+    .panel .sub{ margin:0 0 12px 0; font-size:12px; color:var(--muted); }
+    .divider{height:1px; background:rgba(255,255,255,.10); margin:12px 0;}
+    #startPanel{left:50%; transform:translateX(-50%);}
+    .start-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }
+    .start-app{
+      border-radius:12px; padding:10px 10px;
+      background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.10);
+      cursor:pointer; display:flex; gap:10px; align-items:center; min-height:54px;
+    }
+    .start-app:hover{background:rgba(255,255,255,.10)}
+    .start-app .name{font-size:12px; line-height:1.1}
+    .start-app small{color:var(--muted); display:block; margin-top:3px}
+    .start-app svg{width:22px;height:22px; flex:0 0 auto}
+    .start-footer{ display:flex; justify-content:space-between; align-items:center; margin-top:12px; gap:10px; }
+    .powerbtn{
+      padding:8px 10px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.08);
+      cursor:pointer; display:flex; align-items:center; gap:8px; font-size:12px;
+    }
+    .powerbtn:hover{background:rgba(255,255,255,.12)}
+    .powerbtn svg{width:16px;height:16px}
+
+    #searchPanel{left:50%; transform:translateX(-50%); width:420px;}
+    .searchBox{
+      display:flex; gap:10px; align-items:center;
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+      border-radius:12px; padding:10px 12px;
+    }
+    .searchBox input{ flex:1; border:0; outline:none; background:transparent; color:var(--text); font-size:13px; }
+    .result{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 10px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.06);
+      cursor:pointer; margin-top:10px;
+    }
+    .result:hover{background:rgba(255,255,255,.10)}
+    .result svg{width:18px;height:18px}
+    .result .meta{font-size:12px}
+    .result .meta small{display:block; color:var(--muted); margin-top:2px}
+
+    #notifPanel{right:10px; width:380px;}
+    .notif{
+      padding:10px 10px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.06);
+      margin-top:10px;
+    }
+    .notif .top{display:flex; justify-content:space-between; gap:10px; align-items:center;}
+    .notif .title{font-size:12px;}
+    .notif .time{font-size:11px; color:var(--muted)}
+    .notif .body{font-size:12px; color:rgba(255,255,255,.92); margin-top:6px; line-height:1.35}
+    .notifActions{display:flex; justify-content:space-between; align-items:center; margin-top:10px;}
+    .ghostBtn{
+      padding:8px 10px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06);
+      cursor:pointer; font-size:12px; color:rgba(255,255,255,.92);
+    }
+    .ghostBtn:hover{background:rgba(255,255,255,.10)}
+
+    #quickPanel{right:10px; width:320px;}
+    .toggleGrid{ display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; }
+    .toggle{
+      padding:10px; border-radius:12px;
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10);
+      cursor:pointer; display:flex; align-items:center; gap:10px; font-size:12px;
+    }
+    .toggle:hover{background:rgba(255,255,255,.10)}
+    .toggle .dot{ width:10px;height:10px;border-radius:99px; background:rgba(255,255,255,.35); box-shadow:0 0 0 2px rgba(255,255,255,.10) inset; }
+    .toggle.on .dot{background:var(--accent)}
+    .sliderRow{margin-top:12px; display:flex; flex-direction:column; gap:8px;}
+    input[type="range"]{width:100%}
+
+    .window{
+      position:absolute; top:120px; left:160px;
+      width:560px; height:390px;
+      background:var(--panel2); border:var(--border);
+      border-radius:var(--radius); box-shadow:var(--shadow);
+      backdrop-filter:var(--glass); overflow:hidden; display:none;
+    }
+    .window.show{display:block}
+    .titlebar{
+      height:42px; display:flex; align-items:center; justify-content:space-between;
+      padding:0 10px 0 12px; background:rgba(255,255,255,.06);
+      border-bottom:1px solid rgba(255,255,255,.10); cursor:move;
+    }
+    .titlebar .left{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .titlebar .left svg{width:18px;height:18px}
+    .titlebar .title{ font-size:12px; color:rgba(255,255,255,.95); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:380px; }
+    .winBtns{display:flex; gap:6px;}
+    .winBtn{
+      width:34px; height:28px; border-radius:10px;
+      display:grid; place-items:center; cursor:pointer;
+      border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.06);
+    }
+    .winBtn:hover{background:rgba(255,255,255,.10)}
+    .winBtn.danger:hover{background:rgba(239,68,68,.22); border-color:rgba(239,68,68,.35)}
+    .content{ padding:12px; height:calc(100% - 42px); overflow:auto; }
+    .card{
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10);
+      border-radius:12px; padding:12px; margin-bottom:10px;
+    }
+    .card h4{margin:0 0 8px 0; font-size:13px;}
+    .card p{margin:0; color:rgba(255,255,255,.9); font-size:12px; line-height:1.4}
+    .card .actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+    .actBtn{
+      padding:8px 10px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.08);
+      cursor:pointer; font-size:12px; color:rgba(255,255,255,.92);
+    }
+    .actBtn:hover{background:rgba(255,255,255,.12)}
+    .kbd{ display:inline-flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+    .key{ font-size:11px; padding:4px 8px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:rgba(255,255,255,.92); }
+
+    .coach{
+      position:absolute; top:16px; right:16px; width:380px;
+      border-radius:var(--radius); background:rgba(17,19,24,.55);
+      border:1px solid rgba(255,255,255,.12); backdrop-filter: var(--glass);
+      box-shadow:var(--shadow); overflow:hidden;
+    }
+    .coachHeader{
+      padding:12px 12px; background:rgba(255,255,255,.06);
+      border-bottom:1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .coachHeader .t{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .coachHeader .t strong{font-size:13px}
+    .coachHeader .t span{font-size:12px; color:var(--muted)}
+    .coachHeader .btns{display:flex; gap:8px}
+    .miniBtn{
+      padding:8px 10px; border-radius:12px; border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06); cursor:pointer; font-size:12px; color:rgba(255,255,255,.92);
+    }
+    .miniBtn:hover{background:rgba(255,255,255,.10)}
+    .coachBody{padding:12px}
+    .progress{ height:10px; border-radius:999px; background:rgba(255,255,255,.10); overflow:hidden; border:1px solid rgba(255,255,255,.10); margin-bottom:12px; }
+    .bar{ height:100%; width:0%; background:linear-gradient(90deg, rgba(125,211,252,.8), rgba(34,197,94,.8)); }
+    .steps{display:flex; flex-direction:column; gap:10px;}
+    .step{ display:flex; gap:10px; align-items:flex-start; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.06); }
+    .check{ width:18px;height:18px;border-radius:6px; border:1px solid rgba(255,255,255,.25); background:rgba(0,0,0,.10); flex:0 0 auto; display:grid; place-items:center; margin-top:2px; }
+    .check.done{background:rgba(34,197,94,.25); border-color:rgba(34,197,94,.55)}
+    .check svg{width:12px;height:12px; opacity:0}
+    .check.done svg{opacity:1}
+    .step .text{flex:1}
+    .step .text .title{font-size:12px; margin:0; color:rgba(255,255,255,.95)}
+    .step .text .hint{font-size:12px; margin:4px 0 0 0; color:var(--muted); line-height:1.35}
+
+    .toast{
+      position:absolute; left:16px; bottom:76px;
+      background:rgba(17,19,24,.78); border:1px solid rgba(255,255,255,.14);
+      border-radius:14px; padding:10px 12px;
+      box-shadow:var(--shadow); backdrop-filter:var(--glass);
+      display:none; max-width:460px;
+    }
+    .toast.show{display:block}
+    .toast strong{font-size:12px}
+    .toast p{margin:4px 0 0 0; font-size:12px; color:var(--muted); line-height:1.35}
+
+    .pulse{
+      outline:2px solid rgba(125,211,252,.75);
+      box-shadow:0 0 0 6px rgba(125,211,252,.18);
+      animation:pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse{
+      0%{box-shadow:0 0 0 0 rgba(125,211,252,.25)}
+      70%{box-shadow:0 0 0 10px rgba(125,211,252,.00)}
+      100%{box-shadow:0 0 0 0 rgba(125,211,252,.00)}
+    }
+
+    @media (max-width: 980px){
+      .coach{display:none;}
+      .window{width:92vw; height:55vh; left:4vw!important;}
+      #searchPanel{width:92vw}
+      #startPanel{width:92vw}
+    }
+  </style>
+</head>
+<body>
+  <div class="desktop" id="desktop">
+
+    <!-- Desktop icons -->
+    <div class="desktop-icons" id="desktopIcons">
+      <div class="icon" data-open="explorer">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 8.2c0-1 .8-1.8 1.8-1.8h4l1.2 1.3h7.2c1 0 1.8.8 1.8 1.8v8.8c0 1-.8 1.8-1.8 1.8H5.8c-1 0-1.8-.8-1.8-1.8V8.2Z" stroke="white" opacity=".9" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M4.2 10.2h15.6" stroke="white" opacity=".55" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <div class="label">File Explorer</div>
+      </div>
+
+      <div class="icon" data-open="settings">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="white" opacity=".9" stroke-width="1.6"/>
+          <path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7.2 7.2 0 0 0-1.7-1l-.3-2.6H9.5L9.2 6a7.2 7.2 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7 7 0 0 0 0 2L3 14.5l2 3.5 2.4-1a7.2 7.2 0 0 0 1.7 1l.3 2.6h5.1l.3-2.6a7.2 7.2 0 0 0 1.7-1l2.4 1 2-3.5-1.9-1.5c.1-.3.1-.6.1-1Z"
+                stroke="white" opacity=".75" stroke-width="1.2" stroke-linejoin="round"/>
+        </svg>
+        <div class="label">Settings</div>
+      </div>
+
+      <div class="icon" data-open="edge">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 20.5c4.7 0 8.5-3.2 8.5-7.1 0-4-3.8-7.2-8.5-7.2S3.5 9.4 3.5 13.4c0 1.7.7 3.2 1.9 4.4 1.3 1.3 3.2 2.7 6.6 2.7Z" stroke="white" opacity=".9" stroke-width="1.6" />
+          <path d="M6.4 14.2c.8-2.2 3-3.6 5.6-3.6 1.9 0 3.6.8 4.7 2.1" stroke="white" opacity=".55" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <div class="label">Microsoft Edge</div>
+      </div>
+
+      <div class="icon" data-open="recycle">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M8 7h8" stroke="white" opacity=".9" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M9 7l.8-1.6c.2-.4.6-.7 1.1-.7h2.2c.5 0 .9.3 1.1.7L15 7" stroke="white" opacity=".85" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M7.5 9.2h9L15.9 20c-.1.8-.8 1.4-1.6 1.4H9.7c-.8 0-1.5-.6-1.6-1.4L7.5 9.2Z" stroke="white" opacity=".9" stroke-width="1.6" />
+          <path d="M10 12v6M12 12v6M14 12v6" stroke="white" opacity=".55" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <div class="label">Recycle Bin</div>
+      </div>
+    </div>
+
+    <!-- Lab Coach -->
+    <div class="coach" id="coach">
+      <div class="coachHeader">
+        <div class="t">
+          <strong id="labTitle">Lab 30: Remote Help Basics</strong>
+          <span id="labSub">Edge + Help + calm steps</span>
+        </div>
+        <div class="btns">
+          <button class="miniBtn" id="resetBtn" title="Reset progress">Reset</button>
+          <button class="miniBtn" id="hintBtn" title="Show next hint">Hint</button>
+        </div>
+      </div>
+      <div class="coachBody">
+        <div class="progress" aria-label="Progress"><div class="bar" id="bar"></div></div>
+        <div class="steps" id="steps"></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <strong id="toastTitle">Tip</strong>
+      <p id="toastBody">…</p>
+    </div>
+
+    <!-- START PANEL -->
+    <div class="panel" id="startPanel" aria-label="Start menu">
+      <h3>Start</h3>
+      <p class="sub">Pinned apps (simulation). Click any app to open it.</p>
+      <div class="start-grid">
+        <div class="start-app" data-open="settings">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="white" opacity=".9" stroke-width="1.6"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7.2 7.2 0 0 0-1.7-1l-.3-2.6H9.5L9.2 6a7.2 7.2 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7 7 0 0 0 0 2L3 14.5l2 3.5 2.4-1a7.2 7.2 0 0 0 1.7 1l.3 2.6h5.1l.3-2.6a7.2 7.2 0 0 0 1.7-1l2.4 1 2-3.5-1.9-1.5c.1-.3.1-.6.1-1Z" stroke="white" opacity=".75" stroke-width="1.2" stroke-linejoin="round"/></svg>
+          <div class="name">Settings<small>System &amp; devices</small></div>
+        </div>
+        <div class="start-app" data-open="explorer">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 8.2c0-1 .8-1.8 1.8-1.8h4l1.2 1.3h7.2c1 0 1.8.8 1.8 1.8v8.8c0 1-.8 1.8-1.8 1.8H5.8c-1 0-1.8-.8-1.8-1.8V8.2Z" stroke="white" opacity=".9" stroke-width="1.6" stroke-linejoin="round"/><path d="M4.2 10.2h15.6" stroke="white" opacity=".55" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <div class="name">File Explorer<small>Browse files</small></div>
+        </div>
+        <div class="start-app" data-open="edge">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5c4.7 0 8.5-3.2 8.5-7.1 0-4-3.8-7.2-8.5-7.2S3.5 9.4 3.5 13.4c0 1.7.7 3.2 1.9 4.4 1.3 1.3 3.2 2.7 6.6 2.7Z" stroke="white" opacity=".9" stroke-width="1.6" /><path d="M6.4 14.2c.8-2.2 3-3.6 5.6-3.6 1.9 0 3.6.8 4.7 2.1" stroke="white" opacity=".55" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <div class="name">Microsoft Edge<small>Web browser</small></div>
+        </div>
+        <div class="start-app" data-open="help">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="white" opacity=".9" stroke-width="1.6"/><path d="M9.5 9a2.5 2.5 0 1 1 3.8 2.1c-.9.6-1.3 1.1-1.3 2.2" stroke="white" opacity=".75" stroke-width="1.6" stroke-linecap="round"/><path d="M12 17h.01" stroke="white" opacity=".75" stroke-width="3.2" stroke-linecap="round"/></svg>
+          <div class="name">Help<small>Get support</small></div>
+        </div>
+        <div class="start-app" data-open="about">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="white" opacity=".9" stroke-width="1.6"/><path d="M12 11v6" stroke="white" opacity=".75" stroke-width="1.6" stroke-linecap="round"/><path d="M12 7.5h.01" stroke="white" opacity=".75" stroke-width="3.2" stroke-linecap="round"/></svg>
+          <div class="name">About Lab<small>What to do</small></div>
+        </div>
+        <div class="start-app" data-open="recycle">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M8 7h8" stroke="white" opacity=".9" stroke-width="1.6" stroke-linecap="round"/><path d="M9 7l.8-1.6c.2-.4.6-.7 1.1-.7h2.2c.5 0 .9.3 1.1.7L15 7" stroke="white" opacity=".85" stroke-width="1.6" stroke-linecap="round"/><path d="M7.5 9.2h9L15.9 20c-.1.8-.8 1.4-1.6 1.4H9.7c-.8 0-1.5-.6-1.6-1.4L7.5 9.2Z" stroke="white" opacity=".9" stroke-width="1.6" /></svg>
+          <div class="name">Recycle Bin<small>Deleted items</small></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="start-footer">
+        <div style="font-size:12px;color:var(--muted);line-height:1.3">
+          Tip: Use the <b>Lab Coach</b> steps to finish the lab.
+        </div>
+        <button class="powerbtn" id="powerBtn">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2v10" stroke="white" opacity=".9" stroke-width="1.8" stroke-linecap="round"/><path d="M7 5.5a8 8 0 1 0 10 0" stroke="white" opacity=".75" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Power
+        </button>
+      </div>
+    </div>
+
+    <!-- SEARCH PANEL -->
+    <div class="panel" id="searchPanel" aria-label="Search">
+      <h3>Search</h3>
+      <p class="sub" id="searchSub">Type to search (simulation).</p>
+      <div class="searchBox">
+        <svg viewBox="0 0 24 24" fill="none" style="width:18px;height:18px;">
+          <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="white" opacity=".85" stroke-width="1.6"/>
+          <path d="M16.5 16.5 21 21" stroke="white" opacity=".75" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <input id="searchInput" placeholder="Search for apps, settings, and documents" autocomplete="off" />
+      </div>
+      <div id="searchResults"></div>
+    </div>
+
+    <!-- NOTIFICATIONS PANEL -->
+    <div class="panel" id="notifPanel" aria-label="Notifications">
+      <h3>Notifications</h3>
+      <p class="sub">Simulation Notification Center.</p>
+      <div id="notifList"></div>
+      <div class="notifActions">
+        <button class="ghostBtn" id="clearAllBtn">Clear all</button>
+        <button class="ghostBtn" id="newNotifBtn">Send test notification</button>
+      </div>
+    </div>
+
+    <!-- QUICK SETTINGS PANEL -->
+    <div class="panel" id="quickPanel" aria-label="Quick Settings">
+      <h3>Quick Settings</h3>
+      <p class="sub">Toggle common controls (simulation).</p>
+      <div class="toggleGrid">
+        <div class="toggle" data-toggle="wifi"><span class="dot"></span>Wi-Fi</div>
+        <div class="toggle" data-toggle="bt"><span class="dot"></span>Bluetooth</div>
+        <div class="toggle" data-toggle="air"><span class="dot"></span>Airplane mode</div>
+        <div class="toggle" data-toggle="night"><span class="dot"></span>Night light</div>
+      </div>
+      <div class="sliderRow">
+        <label style="font-size:12px;color:var(--muted);">Brightness</label>
+        <input type="range" id="bright" min="40" max="100" value="85" />
+        <label style="font-size:12px;color:var(--muted);">Volume</label>
+        <input type="range" id="vol" min="0" max="100" value="25" />
+      </div>
+    </div>
+
+    <!-- WINDOWS -->
+    <div class="window" id="win-settings" data-app="settings">
+      <div class="titlebar" data-drag>
+        <div class="left">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="white" opacity=".9" stroke-width="1.6"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7.2 7.2 0 0 0-1.7-1l-.3-2.6H9.5L9.2 6a7.2 7.2 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7 7 0 0 0 0 2L3 14.5l2 3.5 2.4-1a7.2 7.2 0 0 0 1.7 1l.3 2.6h5.1l.3-2.6a7.2 7.2 0 0 0 1.7-1l2.4 1 2-3.5-1.9-1.5c.1-.3.1-.6.1-1Z" stroke="white" opacity=".75" stroke-width="1.2" stroke-linejoin="round"/></svg>
+          <div class="title">Settings</div>
+        </div>
+        <div class="winBtns"><div class="winBtn" data-min>—</div><div class="winBtn" data-max>▢</div><div class="winBtn danger" data-close>✕</div></div>
+      </div>
+      <div class="content" id="settingsContent"></div>
+    </div>
+
+    <div class="window" id="win-explorer" data-app="explorer">
+      <div class="titlebar" data-drag>
+        <div class="left">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 8.2c0-1 .8-1.8 1.8-1.8h4l1.2 1.3h7.2c1 0 1.8.8 1.8 1.8v8.8c0 1-.8 1.8-1.8 1.8H5.8c-1 0-1.8-.8-1.8-1.8V8.2Z" stroke="white" opacity=".9" stroke-width="1.6" stroke-linejoin="round"/><path d="M4.2 10.2h15.6" stroke="white" opacity=".55" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <div class="title">File Explorer</div>
+        </div>
+        <div class="winBtns"><div class="winBtn" data-min>—</div><div class="winBtn" data-max>▢</div><div class="winBtn danger" data-close>✕</div></div>
+      </div>
+      <div class="content" id="explorerContent"></div>
+    </div>
+
+    <div class="window" id="win-edge" data-app="edge">
+      <div class="titlebar" data-drag>
+        <div class="left">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 20.5c4.7 0 8.5-3.2 8.5-7.1 0-4-3.8-7.2-8.5-7.2S3.5 9.4 3.5 13.4c0 1.7.7 3.2 1.9 4.4 1.3 1.3 3.2 2.7 6.6 2.7Z" stroke="white" opacity=".9" stroke-width="1.6" /><path d="M6.4 14.2c.8-2.2 3-3.6 5.6-3.6 1.9 0 3.6.8 4.7 2.1" stroke="white" opacity=".55" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <div class="title">Microsoft Edge</div>
+        </div>
+        <div class="winBtns"><div class="winBtn" data-min>—</div><div class="winBtn" data-max>▢</div><div class="winBtn danger" data-close>✕</div></div>
+      </div>
+      <div class="content" id="edgeContent"></div>
+    </div>
+
+    <div class="window" id="win-recycle" data-app="recycle">
+      <div class="titlebar" data-drag>
+        <div class="left">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M8 7h8" stroke="white" opacity=".9" stroke-width="1.6" stroke-linecap="round"/><path d="M9 7l.8-1.6c.2-.4.6-.7 1.1-.7h2.2c.5 0 .9.3 1.1.7L15 7" stroke="white" opacity=".85" stroke-width="1.6" stroke-linecap="round"/><path d="M7.5 9.2h9L15.9 20c-.1.8-.8 1.4-1.6 1.4H9.7c-.8 0-1.5-.6-1.6-1.4L7.5 9.2Z" stroke="white" opacity=".9" stroke-width="1.6" /></svg>
+          <div class="title">Recycle Bin</div>
+        </div>
+        <div class="winBtns"><div class="winBtn" data-min>—</div><div class="winBtn" data-max>▢</div><div class="winBtn danger" data-close>✕</div></div>
+      </div>
+      <div class="content" id="recycleContent"></div>
+    </div>
+
+    <div class="window" id="win-help" data-app="help">
+      <div class="titlebar" data-drag>
+        <div class="left">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="white" opacity=".9" stroke-width="1.6"/><path d="M9.5 9a2.5 2.5 0 1 1 3.8 2.1c-.9.6-1.3 1.1-1.3 2.2" stroke="white" opacity=".75" stroke-width="1.6" stroke-linecap="round"/><path d="M12 17h.01" stroke="white" opacity=".75" stroke-width="3.2" stroke-linecap="round"/></svg>
+          <div class="title">Help</div>
+        </div>
+        <div class="winBtns"><div class="winBtn" data-min>—</div><div class="winBtn" data-max>▢</div><div class="winBtn danger" data-close>✕</div></div>
+      </div>
+      <div class="content" id="helpContent"></div>
+    </div>
+
+    <div class="window" id="win-about" data-app="about">
+      <div class="titlebar" data-drag>
+        <div class="left">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="white" opacity=".9" stroke-width="1.6"/><path d="M12 11v6" stroke="white" opacity=".75" stroke-width="1.6" stroke-linecap="round"/><path d="M12 7.5h.01" stroke="white" opacity=".75" stroke-width="3.2" stroke-linecap="round"/></svg>
+          <div class="title">About this Lab</div>
+        </div>
+        <div class="winBtns"><div class="winBtn" data-min>—</div><div class="winBtn" data-max>▢</div><div class="winBtn danger" data-close>✕</div></div>
+      </div>
+      <div class="content" id="aboutContent"></div>
+    </div>
+
+    <!-- TASKBAR -->
+    <div class="taskbar" id="taskbar">
+      <div class="tb-left">
+        <button class="tb-btn" id="winBtn" title="Start">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3 4.5 11 3.5v8H3v-7Z" stroke="white" opacity=".9" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M13 3.3 21 2.5v9h-8v-8.2Z" stroke="white" opacity=".8" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M3 12.5h8v8l-8-1v-7Z" stroke="white" opacity=".8" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M13 12.5h8v9l-8-1v-8Z" stroke="white" opacity=".7" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="tb-btn" id="searchBtn" title="Search">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="white" opacity=".85" stroke-width="1.6"/>
+            <path d="M16.5 16.5 21 21" stroke="white" opacity=".75" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="tb-center">
+        <div class="tb-pill" id="tbSearchPill" title="Search">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" style="width:18px;height:18px; opacity:.9;">
+            <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="white" opacity=".85" stroke-width="1.6"/>
+            <path d="M16.5 16.5 21 21" stroke="white" opacity=".75" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <input id="tbSearchInput" placeholder="Search (simulation)" />
+        </div>
+      </div>
+      <div class="tb-right">
+        <div class="tb-tray">
+          <button class="tb-btn" id="quickBtn" title="Quick Settings">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 9h16" stroke="white" opacity=".85" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M7 9v8" stroke="white" opacity=".75" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M4 15h16" stroke="white" opacity=".85" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M17 15v6" stroke="white" opacity=".75" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button class="tb-btn" id="notifBtn" title="Notifications" style="position:relative;">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 22a2.2 2.2 0 0 0 2.2-2.2H9.8A2.2 2.2 0 0 0 12 22Z" stroke="white" opacity=".85" stroke-width="1.6"/>
+              <path d="M18 16.5H6c1.2-1.2 1.8-2.5 1.8-4.2V10a4.2 4.2 0 0 1 8.4 0v2.3c0 1.7.6 3 1.8 4.2Z" stroke="white" opacity=".85" stroke-width="1.6" stroke-linejoin="round"/>
+            </svg>
+            <span class="badge" id="notifBadge">2</span>
+          </button>
+          <div class="tb-time">
+            <div id="timeNow">--:--</div>
+            <div id="dateNow">---</div>
+          </div>
+          <span class="tray-dot" title="System tray (simulation)"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Lab config (unique per file) =====
+    const LAB = {"id": "lab30", "coachTitle": "Lab 30: Remote Help Basics", "subtitle": "Edge + Help + calm steps", "about": "Learn the basics of asking for help and collecting simple info before escalating (simulation).", "steps": [{"key": "openEdge", "title": "Open Microsoft Edge", "hint": "Open Edge from the desktop icon."}, {"key": "inPrivate", "title": "Open InPrivate (simulation)", "hint": "In Edge, click “Open InPrivate”."}, {"key": "openHelp", "title": "Open Help", "hint": "Open Help from Start."}, {"key": "troubleshoot", "title": "Open troubleshooter", "hint": "In Help, click “Open troubleshooter”."}, {"key": "openAbout", "title": "Open About Lab", "hint": "Open Start → click “About Lab”."}], "triggers": {"openAppStep": {"edge": "openEdge", "help": "openHelp"}, "pulseForStep": {"openEdge": null, "inPrivate": null, "openHelp": "start", "troubleshoot": null, "openAbout": "start"}, "actionMap": {"edge.inprivate": "inPrivate", "help.troubleshoot": "troubleshoot"}}, "apps": {"edge": {"intro": "InPrivate is useful on shared PCs (but it’s not ‘anonymous’).", "actions": [{"label": "Open InPrivate", "action": "edge.inprivate"}], "cards": [{"title": "Good support habit", "body": "Before you call for help, write down: what changed, exact error message, and what you tried."}]}, "help": {"actions": [{"label": "Open troubleshooter", "action": "help.troubleshoot"}], "cards": [{"title": "Real-world tip", "body": "If you’re remote helping someone: ask them to describe the issue, then reproduce, then verify the fix."}]}, "settings": {"cards": []}, "explorer": {"cards": []}}, "searchHint": null, "seedNotifs": null, "startToast": null};
+
+    // ===== State + Persistence =====
+    const LS_KEY = "w11_" + LAB.id + "_progress_v1";
+    const state = {
+      steps: {},
+      notifs: [],
+      toggles: { wifi:true, bt:false, air:false, night:false },
+      z: 10,
+      explorer: { folderCreated:false, fileRenamed:false, copied:false, hiddenShown:false, deleted:false },
+      settings: { sectionOpened:null, changedTheme:false, updatesChecked:false, defaultBrowserSet:false, focusOn:false, storageCleaned:false, pinSet:false },
+      edge: { downloaded:false, inPrivate:false },
+      misc: {}
+    };
+
+    function initSteps(){
+      LAB.steps.forEach(s => state.steps[s.key] = false);
+    }
+
+    function loadProgress(){
+      try{
+        const raw = localStorage.getItem(LS_KEY);
+        if(!raw) return;
+        const saved = JSON.parse(raw);
+        if(saved && saved.steps) state.steps = { ...state.steps, ...saved.steps };
+        if(Array.isArray(saved.notifs)) state.notifs = saved.notifs;
+        if(saved.toggles) state.toggles = { ...state.toggles, ...saved.toggles };
+        if(saved.explorer) state.explorer = { ...state.explorer, ...saved.explorer };
+        if(saved.settings) state.settings = { ...state.settings, ...saved.settings };
+        if(saved.edge) state.edge = { ...state.edge, ...saved.edge };
+        if(saved.misc) state.misc = { ...state.misc, ...saved.misc };
+      }catch(e){}
+    }
+    function saveProgress(){
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        steps: state.steps, notifs: state.notifs, toggles: state.toggles,
+        explorer: state.explorer, settings: state.settings, edge: state.edge, misc: state.misc
+      }));
+    }
+
+    // ===== Helpers =====
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    function closeAllPanels(){
+      ["startPanel","searchPanel","notifPanel","quickPanel"].forEach(id => $("#"+id).classList.remove("show"));
+      $("#winBtn").classList.remove("pulse");
+      $("#tbSearchPill").classList.remove("pulse");
+      $("#notifBtn").classList.remove("pulse");
+      $("#quickBtn").classList.remove("pulse");
+    }
+    function toast(title, body, ms=2400){
+      $("#toastTitle").textContent = title;
+      $("#toastBody").innerHTML = body;
+      $("#toast").classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(()=>$("#toast").classList.remove("show"), ms);
+    }
+    function setStepDone(key){
+      if(!state.steps[key]){
+        state.steps[key] = true;
+        saveProgress();
+        renderCoach();
+      }
+    }
+    function progressPct(){
+      const total = Object.keys(state.steps).length;
+      const done = Object.values(state.steps).filter(Boolean).length;
+      return Math.round((done/total)*100);
+    }
+
+    // ===== Coach render =====
+    function renderCoach(){
+      $("#labTitle").textContent = LAB.coachTitle;
+      $("#labSub").textContent = LAB.subtitle;
+      const stepsWrap = $("#steps");
+      stepsWrap.innerHTML = "";
+      LAB.steps.forEach((s, idx)=>{
+        const row = document.createElement("div");
+        row.className = "step";
+        row.dataset.step = s.key;
+        row.innerHTML = `
+          <div class="check ${state.steps[s.key] ? "done":""}" id="chk-${s.key}">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="text">
+            <p class="title">${idx+1}) ${s.title}</p>
+            <p class="hint">${s.hint}</p>
+          </div>
+        `;
+        stepsWrap.appendChild(row);
+      });
+      $("#bar").style.width = progressPct()+"%";
+      $("#notifBadge").textContent = String(state.notifs.length);
+      $("#notifBadge").style.display = state.notifs.length ? "inline-block" : "none";
+    }
+
+    // ===== Panels =====
+    function togglePanel(id){
+      const el = $("#"+id);
+      const isOpen = el.classList.contains("show");
+      closeAllPanels();
+      if(!isOpen) el.classList.add("show");
+    }
+
+    $("#winBtn").addEventListener("click", ()=>{
+      togglePanel("startPanel");
+      if(LAB.triggers.startOpensStep) setStepDone(LAB.triggers.startOpensStep);
+    });
+    $("#searchBtn").addEventListener("click", ()=>{
+      togglePanel("searchPanel");
+      $("#searchInput").focus();
+      if(LAB.triggers.openSearchStep) setStepDone(LAB.triggers.openSearchStep);
+    });
+    $("#tbSearchPill").addEventListener("click", ()=>{
+      togglePanel("searchPanel");
+      $("#searchInput").focus();
+      if(LAB.triggers.openSearchStep) setStepDone(LAB.triggers.openSearchStep);
+    });
+    $("#quickBtn").addEventListener("click", ()=>{
+      togglePanel("quickPanel");
+      if(LAB.triggers.openQuickStep) setStepDone(LAB.triggers.openQuickStep);
+    });
+    $("#notifBtn").addEventListener("click", ()=>{
+      togglePanel("notifPanel");
+      if(LAB.triggers.openNotifStep) setStepDone(LAB.triggers.openNotifStep);
+    });
+
+    document.addEventListener("mousedown", (e)=>{
+      const panels = ["#startPanel","#searchPanel","#notifPanel","#quickPanel"];
+      const clickedPanel = panels.some(sel => $(sel).contains(e.target));
+      const clickedTaskbar = $("#taskbar").contains(e.target);
+      if(!clickedPanel && !clickedTaskbar) closeAllPanels();
+    });
+
+    // Power (fun)
+    $("#powerBtn").addEventListener("click", ()=>{
+      toast("Power (simulation)", "In real Windows you can <b>sleep</b>, <b>restart</b>, or <b>shut down</b> from here.");
+    });
+
+    // ===== Quick settings =====
+    $$("#quickPanel .toggle").forEach(t=>{
+      t.addEventListener("click", ()=>{
+        const key = t.getAttribute("data-toggle");
+        state.toggles[key] = !state.toggles[key];
+        saveProgress();
+        renderQuick();
+        if(LAB.triggers.toggleMap && LAB.triggers.toggleMap[key]) setStepDone(LAB.triggers.toggleMap[key]);
+      });
+    });
+    function renderQuick(){
+      $$("#quickPanel .toggle").forEach(t=>{
+        const key = t.getAttribute("data-toggle");
+        t.classList.toggle("on", !!state.toggles[key]);
+      });
+      const b = Number($("#bright").value)/100;
+      document.body.style.filter = `brightness(${Math.max(.75, b)})`;
+    }
+    $("#bright").addEventListener("input", ()=>renderQuick());
+    $("#vol").addEventListener("input", ()=>saveProgress());
+
+    // ===== Notifications =====
+    function renderNotifs(){
+      const list = $("#notifList");
+      list.innerHTML = "";
+      state.notifs.forEach((n, idx)=>{
+        const div = document.createElement("div");
+        div.className = "notif";
+        div.innerHTML = `
+          <div class="top">
+            <div class="title"><b>${n.title}</b></div>
+            <div class="time">${n.time}</div>
+          </div>
+          <div class="body">${n.body}</div>
+          <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+            <button class="ghostBtn" data-dismiss="${idx}">Dismiss</button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+      if(state.notifs.length === 0){
+        const empty = document.createElement("div");
+        empty.className = "card";
+        empty.innerHTML = `<h4>All caught up</h4><p>No notifications (simulation).</p>`;
+        list.appendChild(empty);
+      }
+      saveProgress();
+      renderCoach();
+    }
+    $("#clearAllBtn").addEventListener("click", ()=>{
+      state.notifs = [];
+      renderNotifs();
+      if(LAB.triggers.clearNotifsStep) setStepDone(LAB.triggers.clearNotifsStep);
+      toast("Notifications", "Cleared all notifications.");
+    });
+    $("#newNotifBtn").addEventListener("click", ()=>{
+      const t = new Date();
+      state.notifs.unshift({
+        title:"Test notification",
+        body:"(Simulation) Notification received.",
+        time: t.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})
+      });
+      renderNotifs();
+      toast("Notification received", "Open the bell icon to view it.");
+    });
+    $("#notifList").addEventListener("click", (e)=>{
+      const btn = e.target.closest("[data-dismiss]");
+      if(!btn) return;
+      const idx = Number(btn.getAttribute("data-dismiss"));
+      state.notifs.splice(idx, 1);
+      renderNotifs();
+      if(LAB.triggers.dismissNotifStep) setStepDone(LAB.triggers.dismissNotifStep);
+    });
+
+    // ===== Search =====
+    const searchIndex = [
+      { key:"settings", title:"Settings", desc:"System and device settings", open:"settings" },
+      { key:"file explorer", title:"File Explorer", desc:"Browse files and folders", open:"explorer" },
+      { key:"edge", title:"Microsoft Edge", desc:"Web browser", open:"edge" },
+      { key:"notifications", title:"Notifications", desc:"Open Notification Center", open:"__notif" },
+      { key:"quick settings", title:"Quick Settings", desc:"Open Quick Settings", open:"__quick" },
+      { key:"help", title:"Help", desc:"Get help and troubleshoot", open:"help" }
+    ];
+
+    function renderSearchResults(query){
+      const wrap = $("#searchResults");
+      wrap.innerHTML = "";
+      const q = (query||"").trim().toLowerCase();
+
+      const results = q
+        ? searchIndex.filter(x => x.key.includes(q) || x.title.toLowerCase().includes(q))
+        : searchIndex.slice(0,3);
+
+      // complete "type X" step even if partially typed, as long as it contains the keyword
+      if(LAB.triggers.searchContains){
+        for(const [needle, stepKey] of Object.entries(LAB.triggers.searchContains)){
+          if(q.includes(needle)) setStepDone(stepKey);
+        }
+      }
+
+      results.slice(0,7).forEach(r=>{
+        const div = document.createElement("div");
+        div.className = "result";
+        div.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="white" opacity=".4" stroke-width="1.6"/>
+            <path d="M16.5 16.5 21 21" stroke="white" opacity=".35" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <div class="meta"><b style="font-size:12px;">${r.title}</b><small>${r.desc}</small></div>
+        `;
+        div.addEventListener("click", ()=>{
+          if(r.open === "__notif"){ closeAllPanels(); togglePanel("notifPanel"); if(LAB.triggers.openNotifStep) setStepDone(LAB.triggers.openNotifStep); return; }
+          if(r.open === "__quick"){ closeAllPanels(); togglePanel("quickPanel"); if(LAB.triggers.openQuickStep) setStepDone(LAB.triggers.openQuickStep); return; }
+          openApp(r.open);
+          closeAllPanels();
+        });
+        wrap.appendChild(div);
+      });
+
+      if(q && results.length === 0){
+        const empty = document.createElement("div");
+        empty.className = "card";
+        empty.innerHTML = `<h4>No results</h4><p>Try searching for <b>settings</b>, <b>edge</b>, or <b>file explorer</b>.</p>`;
+        wrap.appendChild(empty);
+      }
+    }
+
+    $("#searchInput").addEventListener("input", (e)=> renderSearchResults(e.target.value));
+    $("#tbSearchInput").addEventListener("input", (e)=>{
+      togglePanel("searchPanel");
+      $("#searchInput").value = e.target.value;
+      renderSearchResults(e.target.value);
+      $("#searchInput").focus();
+    });
+
+    // ===== App windows + desktop icons =====
+    const appToWin = {
+      settings: "#win-settings",
+      explorer: "#win-explorer",
+      edge: "#win-edge",
+      recycle: "#win-recycle",
+      help: "#win-help",
+      about: "#win-about"
+    };
+
+    function openApp(app){
+      const sel = appToWin[app];
+      if(!sel) return;
+      const win = $(sel);
+      win.style.zIndex = (++state.z);
+      win.classList.add("show");
+      const baseLeft = 140 + (state.z % 5)*22;
+      const baseTop  = 110 + (state.z % 4)*18;
+      win.style.left = baseLeft + "px";
+      win.style.top  = baseTop  + "px";
+      if(LAB.triggers.openAppStep && LAB.triggers.openAppStep[app]) setStepDone(LAB.triggers.openAppStep[app]);
+    }
+
+    $$("#desktopIcons .icon").forEach(ic=>{
+      ic.addEventListener("dblclick", ()=> openApp(ic.getAttribute("data-open")));
+      ic.addEventListener("click", ()=>{
+        const name = ic.querySelector(".label")?.textContent || "icon";
+        toast("Desktop", `Double-click <b>${name}</b> to open it.`);
+      });
+    });
+    $$("#startPanel .start-app").forEach(a=> a.addEventListener("click", ()=> openApp(a.getAttribute("data-open"))));
+
+    // Window controls + drag
+    $$(".window").forEach(win=>{
+      const closeBtn = win.querySelector("[data-close]");
+      const minBtn = win.querySelector("[data-min]");
+      const maxBtn = win.querySelector("[data-max]");
+      const titlebar = win.querySelector("[data-drag]");
+      closeBtn?.addEventListener("click", ()=> win.classList.remove("show"));
+      minBtn?.addEventListener("click", ()=>{ win.classList.remove("show"); toast("Minimised", "Window minimised (simulation)."); });
+      maxBtn?.addEventListener("click", ()=>{
+        const isMax = win.dataset.maxed === "1";
+        if(!isMax){
+          win.dataset.prev = JSON.stringify({left:win.style.left, top:win.style.top, width:win.style.width, height:win.style.height});
+          win.style.left = "18px"; win.style.top = "18px";
+          win.style.width = "calc(100% - 36px)"; win.style.height = "calc(100% - 92px)";
+          win.dataset.maxed = "1";
+        } else {
+          try{
+            const p = JSON.parse(win.dataset.prev || "{}");
+            win.style.left = p.left || "160px";
+            win.style.top = p.top || "120px";
+            win.style.width = p.width || "560px";
+            win.style.height = p.height || "390px";
+          }catch(e){}
+          win.dataset.maxed = "0";
+        }
+        win.style.zIndex = (++state.z);
+      });
+      win.addEventListener("mousedown", ()=> win.style.zIndex = (++state.z));
+      let dragging=false, ox=0, oy=0;
+      titlebar?.addEventListener("mousedown", (e)=>{
+        if(win.dataset.maxed === "1") return;
+        dragging=true;
+        const rect=win.getBoundingClientRect();
+        ox=e.clientX-rect.left; oy=e.clientY-rect.top;
+        win.style.zIndex=(++state.z);
+      });
+      document.addEventListener("mousemove",(e)=>{
+        if(!dragging) return;
+        const x=Math.max(8, Math.min(window.innerWidth-win.offsetWidth-8, e.clientX-ox));
+        const y=Math.max(8, Math.min(window.innerHeight-win.offsetHeight-74, e.clientY-oy));
+        win.style.left=x+"px"; win.style.top=y+"px";
+      });
+      document.addEventListener("mouseup", ()=> dragging=false);
+    });
+
+    // ===== Content render (per-lab) =====
+    function renderAppContents(){
+      // About
+      $("#aboutContent").innerHTML = `
+        <div class="card">
+          <h4>${LAB.coachTitle}</h4>
+          <p>${LAB.about}</p>
+        </div>
+        <div class="card">
+          <h4>How to pass</h4>
+          <p>Complete the ${LAB.steps.length} steps in the Lab Coach. Progress saves in your browser.</p>
+        </div>
+      `;
+
+      // Settings
+      const sc = LAB.apps.settings || {};
+      $("#settingsContent").innerHTML = `
+        <div class="card">
+          <h4>Settings (simulation)</h4>
+          <p>${sc.intro || "Use the buttons below to simulate visiting Settings areas."}</p>
+          <div class="actions">
+            ${(sc.actions||[]).map(a=>`<button class="actBtn" data-action="${a.action}">${a.label}</button>`).join("")}
+          </div>
+        </div>
+        ${(sc.cards||[]).map(c=>`
+          <div class="card">
+            <h4>${c.title}</h4>
+            <p>${c.body}</p>
+            ${c.actions ? `<div class="actions">${c.actions.map(a=>`<button class="actBtn" data-action="${a.action}">${a.label}</button>`).join("")}</div>` : ``}
+          </div>
+        `).join("")}
+      `;
+
+      // Explorer
+      const ec = LAB.apps.explorer || {};
+      $("#explorerContent").innerHTML = `
+        <div class="card">
+          <h4>File Explorer (simulation)</h4>
+          <p>${ec.intro || "Use these actions to simulate common Explorer tasks."}</p>
+          <div class="actions">
+            ${(ec.actions||[]).map(a=>`<button class="actBtn" data-action="${a.action}">${a.label}</button>`).join("")}
+          </div>
+        </div>
+        ${(ec.cards||[]).map(c=>`
+          <div class="card">
+            <h4>${c.title}</h4>
+            <p>${c.body}</p>
+            ${c.actions ? `<div class="actions">${c.actions.map(a=>`<button class="actBtn" data-action="${a.action}">${a.label}</button>`).join("")}</div>` : ``}
+          </div>
+        `).join("")}
+      `;
+
+      // Edge
+      const bc = LAB.apps.edge || {};
+      $("#edgeContent").innerHTML = `
+        <div class="card">
+          <h4>Microsoft Edge (simulation)</h4>
+          <p>${bc.intro || "Use actions below to simulate browser basics."}</p>
+          <div class="actions">
+            ${(bc.actions||[]).map(a=>`<button class="actBtn" data-action="${a.action}">${a.label}</button>`).join("")}
+          </div>
+        </div>
+        ${(bc.cards||[]).map(c=>`
+          <div class="card">
+            <h4>${c.title}</h4>
+            <p>${c.body}</p>
+            ${c.actions ? `<div class="actions">${c.actions.map(a=>`<button class="actBtn" data-action="${a.action}">${a.label}</button>`).join("")}</div>` : ``}
+          </div>
+        `).join("")}
+      `;
+
+      // Recycle Bin
+      $("#recycleContent").innerHTML = `
+        <div class="card">
+          <h4>Recycle Bin (simulation)</h4>
+          <p>Deleted items can be restored or permanently removed. (This sim uses actions.)</p>
+          <div class="actions">
+            <button class="actBtn" data-action="recycle.restore">Restore item</button>
+            <button class="actBtn" data-action="recycle.empty">Empty Recycle Bin</button>
+          </div>
+        </div>
+      `;
+
+      // Help
+      const hc = LAB.apps.help || {};
+      $("#helpContent").innerHTML = `
+        <div class="card">
+          <h4>Help (simulation)</h4>
+          <p>${hc.intro || "Use Help to search for instructions or troubleshoot."}</p>
+          <div class="actions">
+            ${(hc.actions||[]).map(a=>`<button class="actBtn" data-action="${a.action}">${a.label}</button>`).join("")}
+          </div>
+        </div>
+        ${(hc.cards||[]).map(c=>`
+          <div class="card">
+            <h4>${c.title}</h4>
+            <p>${c.body}</p>
+            ${c.actions ? `<div class="actions">${c.actions.map(a=>`<button class="actBtn" data-action="${a.action}">${a.label}</button>`).join("")}</div>` : ``}
+          </div>
+        `).join("")}
+      `;
+
+      // Search subtitle
+      $("#searchSub").innerHTML = LAB.searchHint || "Type to search (simulation).";
+    }
+
+    // ===== Action handling =====
+    function handleAction(action){
+      const map = LAB.triggers.actionMap || {};
+      if(map[action]) setStepDone(map[action]);
+
+      // small state changes for realism
+      if(action === "explorer.newFolder"){ state.explorer.folderCreated = true; toast("Explorer", "Created a new folder (simulation)."); }
+      if(action === "explorer.rename"){ state.explorer.fileRenamed = true; toast("Explorer", "Renamed an item (simulation)."); }
+      if(action === "explorer.copy"){ state.explorer.copied = true; toast("Explorer", "Copied an item (simulation)."); }
+      if(action === "explorer.hidden"){ state.explorer.hiddenShown = true; toast("Explorer", "Hidden items toggled (simulation)."); }
+      if(action === "explorer.delete"){ state.explorer.deleted = true; toast("Explorer", "Moved item to Recycle Bin (simulation)."); }
+      if(action === "settings.personalise"){ state.settings.sectionOpened="personalisation"; toast("Settings", "Opened Personalisation (simulation)."); }
+      if(action === "settings.theme"){ state.settings.changedTheme = true; toast("Settings", "Theme updated (simulation)."); }
+      if(action === "settings.updateCheck"){ state.settings.updatesChecked = true; toast("Windows Update", "Checked for updates (simulation)."); }
+      if(action === "settings.defaultBrowser"){ state.settings.defaultBrowserSet = true; toast("Default apps", "Default browser set (simulation)."); }
+      if(action === "settings.focus"){ state.settings.focusOn = true; toast("Focus", "Focus session started (simulation)."); }
+      if(action === "settings.storage"){ state.settings.storageCleaned = true; toast("Storage", "Cleanup started (simulation)."); }
+      if(action === "edge.download"){ state.edge.downloaded = true; toast("Edge", "File downloaded (simulation)."); }
+      if(action === "edge.inprivate"){ state.edge.inPrivate = true; toast("Edge", "InPrivate window opened (simulation)."); }
+      if(action === "help.troubleshoot"){ toast("Help", "Troubleshooter opened (simulation)."); }
+      if(action === "recycle.empty"){ toast("Recycle Bin", "Recycle Bin emptied (simulation)."); }
+      if(action === "recycle.restore"){ toast("Recycle Bin", "Item restored (simulation)."); }
+      saveProgress();
+    }
+
+    document.addEventListener("click", (e)=>{
+      const btn = e.target.closest("[data-action]");
+      if(!btn) return;
+      handleAction(btn.getAttribute("data-action"));
+    });
+
+    // ===== Hinting =====
+    function nextUndone(){
+      return LAB.steps.find(s => !state.steps[s.key])?.key || null;
+    }
+    function showHint(){
+      const next = nextUndone();
+      if(!next){ toast("Completed ✅", "All steps complete. Nice work!"); return; }
+      closeAllPanels();
+      const hint = LAB.steps.find(s=>s.key===next)?.hint || "";
+      const pulse = (LAB.triggers.pulseForStep||{})[next];
+      if(pulse === "start") $("#winBtn").classList.add("pulse");
+      if(pulse === "search") $("#tbSearchPill").classList.add("pulse");
+      if(pulse === "notif") $("#notifBtn").classList.add("pulse");
+      if(pulse === "quick") $("#quickBtn").classList.add("pulse");
+      toast("Next step", hint);
+    }
+    $("#hintBtn").addEventListener("click", showHint);
+
+    $("#resetBtn").addEventListener("click", ()=>{
+      localStorage.removeItem(LS_KEY);
+      initSteps();
+      seedNotifs();
+      renderNotifs();
+      renderQuick();
+      renderCoach();
+      toast("Reset", "Progress reset. Start again from Step 1.");
+    });
+
+    // ===== Seed notifications =====
+    function seedNotifs(){
+      state.notifs = (LAB.seedNotifs || [
+        { title:"Windows Tips", body:"Welcome. Use the Lab Coach to begin.", time:"Just now" },
+        { title:"Reminder", body:"(Simulation) Complete the steps to finish the lab.", time:"2m ago" }
+      ]);
+    }
+
+    // ===== Clock =====
+    function tick(){
+      const d = new Date();
+      $("#timeNow").textContent = d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+      $("#dateNow").textContent = d.toLocaleDateString([], {weekday:"short", month:"short", day:"2-digit"});
+    }
+
+    // ===== Init =====
+    initSteps();
+    loadProgress();
+    if(!state.notifs.length) seedNotifs();
+    renderAppContents();
+    renderCoach();
+    renderNotifs();
+    renderSearchResults("");
+    renderQuick();
+    tick();
+    setInterval(tick, 1000);
+
+    // Gentle starter cue
+    if(progressPct() === 0){
+      setTimeout(()=>toast(LAB.coachTitle, LAB.startToast || "Use the Lab Coach to begin."), 550);
+      const pulse = (LAB.triggers.pulseForStep||{})[LAB.steps[0]?.key];
+      if(pulse === "start") setTimeout(()=>$("#winBtn").classList.add("pulse"), 900);
+      if(pulse === "search") setTimeout(()=>$("#tbSearchPill").classList.add("pulse"), 900);
+    }
+  </script>
+</body>
+</html>
